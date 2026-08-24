@@ -90,9 +90,11 @@ class OtelTestCase(TruTestCase):
         # hackily convert things here.
         df["event_id"] = df["event_id"].apply(str)
         df["record_type"] = df["record_type"].apply(
-            lambda x: EventRecordType(x[len("EventRecordType.") :])
-            if x.startswith("EventRecordType.")
-            else EventRecordType(x)
+            lambda x: (
+                EventRecordType(x[len("EventRecordType.") :])
+                if x.startswith("EventRecordType.")
+                else EventRecordType(x)
+            )
         )
         df["start_timestamp"] = df["start_timestamp"].apply(pd.Timestamp)
         df["timestamp"] = df["timestamp"].apply(pd.Timestamp)

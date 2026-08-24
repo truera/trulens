@@ -33,6 +33,7 @@ Or in Python before importing TruLens:
 
 ```python
 import os
+
 os.environ["TRULENS_OTEL_TRACING"] = "0"
 ```
 
@@ -125,6 +126,7 @@ Attach a span type to any instrumented method using the `span_type` parameter:
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
+
 class MyRAG:
     @instrument(
         span_type=SpanAttributes.SpanType.RETRIEVAL,
@@ -133,12 +135,10 @@ class MyRAG:
             SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
         },
     )
-    def retrieve(self, query: str) -> list:
-        ...
+    def retrieve(self, query: str) -> list: ...
 
     @instrument(span_type=SpanAttributes.SpanType.GENERATION)
-    def generate(self, query: str, contexts: list) -> str:
-        ...
+    def generate(self, query: str, contexts: list) -> str: ...
 
     @instrument(
         span_type=SpanAttributes.SpanType.RECORD_ROOT,
@@ -147,8 +147,7 @@ class MyRAG:
             SpanAttributes.RECORD_ROOT.OUTPUT: "return",
         },
     )
-    def query(self, query: str) -> str:
-        ...
+    def query(self, query: str) -> str: ...
 ```
 
 The span type determines which feedback selectors can target the span and what attributes

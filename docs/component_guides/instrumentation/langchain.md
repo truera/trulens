@@ -109,7 +109,6 @@ As an example, below is an LLM chain set up with an async callback.
 !!! example "Create an async chain with LCEL"
 
     ```python
-
     from langchain.callbacks import AsyncIteratorCallbackHandler
     from langchain.chains import LLMChain
     from langchain.prompts import PromptTemplate

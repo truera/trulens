@@ -50,11 +50,13 @@ class TestOtelNestedRecordRoot(OtelTestCase):
 
         root_events = events[
             events["record_attributes"].apply(
-                lambda attrs: attrs.get(SpanAttributes.SPAN_TYPE)
-                in {
-                    SpanAttributes.SpanType.RECORD_ROOT,
-                    SpanAttributes.SpanType.NESTED_RECORD_ROOT,
-                }
+                lambda attrs: (
+                    attrs.get(SpanAttributes.SPAN_TYPE)
+                    in {
+                        SpanAttributes.SpanType.RECORD_ROOT,
+                        SpanAttributes.SpanType.NESTED_RECORD_ROOT,
+                    }
+                )
             )
         ]
 
@@ -67,14 +69,16 @@ class TestOtelNestedRecordRoot(OtelTestCase):
 
         outer_roots = root_events[
             root_events["resource_attributes"].apply(
-                lambda attrs: attrs.get(ResourceAttributes.APP_NAME)
-                == "outer_app"
+                lambda attrs: (
+                    attrs.get(ResourceAttributes.APP_NAME) == "outer_app"
+                )
             )
         ]
         inner_roots = root_events[
             root_events["resource_attributes"].apply(
-                lambda attrs: attrs.get(ResourceAttributes.APP_NAME)
-                == "inner_app"
+                lambda attrs: (
+                    attrs.get(ResourceAttributes.APP_NAME) == "inner_app"
+                )
             )
         ]
 
@@ -146,8 +150,10 @@ class TestOtelNestedRecordRoot(OtelTestCase):
 
         root_events = events[
             events["record_attributes"].apply(
-                lambda attrs: attrs.get(SpanAttributes.SPAN_TYPE)
-                == SpanAttributes.SpanType.RECORD_ROOT
+                lambda attrs: (
+                    attrs.get(SpanAttributes.SPAN_TYPE)
+                    == SpanAttributes.SpanType.RECORD_ROOT
+                )
             )
         ]
 
@@ -210,16 +216,20 @@ class TestOtelNestedRecordRoot(OtelTestCase):
 
         nested_roots = events[
             events["record_attributes"].apply(
-                lambda attrs: attrs.get(SpanAttributes.SPAN_TYPE)
-                == SpanAttributes.SpanType.NESTED_RECORD_ROOT
+                lambda attrs: (
+                    attrs.get(SpanAttributes.SPAN_TYPE)
+                    == SpanAttributes.SpanType.NESTED_RECORD_ROOT
+                )
             )
         ]
         self.assertEqual(0, len(nested_roots))
 
         record_roots = events[
             events["record_attributes"].apply(
-                lambda attrs: attrs.get(SpanAttributes.SPAN_TYPE)
-                == SpanAttributes.SpanType.RECORD_ROOT
+                lambda attrs: (
+                    attrs.get(SpanAttributes.SPAN_TYPE)
+                    == SpanAttributes.SpanType.RECORD_ROOT
+                )
             )
         ]
         self.assertEqual(1, len(record_roots))
@@ -279,8 +289,10 @@ class TestOtelNestedRecordRoot(OtelTestCase):
 
         nested_roots = events[
             events["record_attributes"].apply(
-                lambda attrs: attrs.get(SpanAttributes.SPAN_TYPE)
-                == SpanAttributes.SpanType.NESTED_RECORD_ROOT
+                lambda attrs: (
+                    attrs.get(SpanAttributes.SPAN_TYPE)
+                    == SpanAttributes.SpanType.NESTED_RECORD_ROOT
+                )
             )
         ]
         self.assertEqual(0, len(nested_roots))

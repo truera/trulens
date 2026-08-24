@@ -36,7 +36,7 @@ the app itself. These make up the `recorder`.
     # f_lang_match, f_qa_relevance, f_context_relevance are metrics
     tru_recorder = TruChain(
         chain,
-        app_name='ChatApplication',
+        app_name="ChatApplication",
         app_version="Chain1",
         feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance],
     )
@@ -65,7 +65,7 @@ you construct the recorder.
 
     tru_recorder = TruChain(
         chain,
-        app_name='ChatApplication',
+        app_name="ChatApplication",
         app_version="Chain1",
         feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance],
         feedback_mode=FeedbackMode.DEFERRED,
@@ -114,8 +114,8 @@ evaluate at 100%.
     ```python
     session.configure_online_eval(
         sample_rate={
-            "prod_rag": 0.1,   # sample 10% for this high-traffic app
-            "staging_rag": 1.0, # evaluate everything in staging
+            "prod_rag": 0.1,  # sample 10% for this high-traffic app
+            "staging_rag": 1.0,  # evaluate everything in staging
         },
     )
     ```
@@ -135,8 +135,8 @@ You can also limit the rate of evaluations and set a daily cost cap.
     ```python
     session.configure_online_eval(
         sample_rate=0.1,
-        throttle=100,       # max 100 evaluations per minute
-        cost_budget=10.0,   # daily $10 cap
+        throttle=100,  # max 100 evaluations per minute
+        cost_budget=10.0,  # daily $10 cap
     )
     ```
 

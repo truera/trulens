@@ -10,7 +10,7 @@ requires = [
 # early with a clear message rather than letting either surprise happen.
 requires-poetry = ">=2.0"
 name = "trulens"
-version = "2.13.0"
+version = "2.13.1"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -52,7 +52,7 @@ trulens-benchmark = { path = "src/benchmark", develop = true }
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.5"
-ruff = ">=0.5"
+ruff = "0.16.3"
 mypy = "^1.11"
 build = "^1.2"
 twine = "^6.0"
@@ -131,6 +131,16 @@ preview = true
 
 [tool.ruff.lint]
 preview = true
+# 0.16 ships a far larger default selection than the 0.5.x this repository was
+# formatted under: 413 rules against 60 with no configuration at all. Nothing
+# here ever chose that surface, so state the old default explicitly rather than
+# inherit a new one on a version bump. Adopting more is a separate decision.
+select = [
+  "E4",
+  "E7",
+  "E9",
+  "F",
+]
 ignore = [
   "E731",
 ]

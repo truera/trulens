@@ -1,6 +1,7 @@
 from collections.abc import Callable
 import logging
 from typing import (
+    TYPE_CHECKING,
     ClassVar,
     Optional,
 )
@@ -12,7 +13,6 @@ import pydantic
 from scipy import stats
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import matthews_corrcoef
-from sklearn.metrics import ndcg_score
 from sklearn.metrics import roc_auc_score
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema as pyschema_utils
@@ -21,11 +21,16 @@ from trulens.core.utils import stats as stats_utils
 from trulens.feedback import generated as feedback_generated
 from trulens.feedback import llm_provider
 
-with import_utils.OptionalImports(
-    messages=import_utils.format_import_errors(
-        "bert-score", purpose="measuring BERT Score"
-    )
-):
+# NOTE: bert-score is imported lazily, inside the one method that uses it.
+# `bert_score` imports torch and transformers at module scope, and this module is
+# re-exported by `trulens.feedback.__init__`, so importing it eagerly made every
+# importer of `trulens.feedback` pay for torch. torch's import also dlopens
+# bundled CUDA libraries, which has segfaulted Python 3.13 CI workers mid-test.
+_BERT_SCORE_MESSAGES = import_utils.format_import_errors(
+    "bert-score", purpose="measuring BERT Score"
+)
+
+if TYPE_CHECKING:
     from bert_score import BERTScorer
 
 with import_utils.OptionalImports(
@@ -40,6 +45,11 @@ logger = logging.getLogger(__name__)
 
 # Canonical implementation lives in trulens-core; re-export for back-compat.
 paired_permutation_pvalue = stats_utils.paired_permutation_pvalue
+
+
+def _dcg(scores: list[float]) -> float:
+    """Discounted cumulative gain: ``sum(score_i / log2(i + 2))`` (0-based)."""
+    return sum(score / np.log2(i + 2) for i, score in enumerate(scores))
 
 
 # TODEP
@@ -364,16 +374,18 @@ class GroundTruthAgreement(
                         index_in_golden
                     ]  # Use the true relevance score
 
-            # Step 5: Prepare the ground truth scores as a vector
-            # Ideal DCG (IDCG) is calculated by placing all relevant items at the top in descending order
-            ideal_golden_scores = sorted(golden_scores, reverse=True)[:k]
-
-            # Step 6: Calculate NDCG@k using sklearn's ndcg_score
-            return ndcg_score(
-                y_true=np.array([ideal_golden_scores]),
-                y_score=np.array([rel_scores[:k]]),  # Consider only top-k items
-                k=k,
-            )
+            # Step 5: Compute NDCG@k directly from the standard formula.
+            # DCG discounts each retrieved chunk's golden relevance by the
+            # log of its rank; IDCG is the best achievable DCG@k, i.e. the
+            # golden scores in descending order. This is computed by hand
+            # rather than via sklearn's ndcg_score, which requires matching
+            # y_true/y_score shapes (it raises when the golden set annotates
+            # fewer/more chunks than the retriever returns) and averages
+            # gains across tied y_score values, distorting the score when
+            # several retrieved chunks share the same (zero) relevance.
+            dcg = _dcg(rel_scores[:k])
+            ideal_dcg = _dcg(sorted(golden_scores, reverse=True)[:k])
+            return dcg / ideal_dcg if ideal_dcg > 0 else 0.0
         else:
             return np.nan
 
@@ -661,6 +673,9 @@ class GroundTruthAgreement(
             dict: with key 'ground_truth_response'
         """
         if self.bert_scorer is None:
+            with import_utils.OptionalImports(messages=_BERT_SCORE_MESSAGES):
+                from bert_score import BERTScorer
+
             self.bert_scorer = BERTScorer(lang="en", rescale_with_baseline=True)
         ground_truth_response = self._find_response(prompt)
         if ground_truth_response:
@@ -1094,12 +1109,18 @@ class GroundTruthAggregator(
             # threshold at 0.5 for binary classification
             scores = [1 if score >= threshold else 0 for score in scores]
 
-        if any(isinstance(label, float) for label in self.true_labels):
-            self.true_labels = [
-                1 if label >= threshold else 0 for label in self.true_labels
+        # convert to categorical if necessary; binarize into a local list so
+        # that self.true_labels is not mutated — mutating it here would
+        # silently corrupt every other metric computed afterwards (e.g. mae,
+        # brier_score) and make subsequent calls with a different threshold
+        # no-ops since the labels would already be ints.
+        true_labels = self.true_labels
+        if any(isinstance(label, float) for label in true_labels):
+            true_labels = [
+                1 if label >= threshold else 0 for label in true_labels
             ]
 
-        kappa = cohen_kappa_score(self.true_labels, scores)
+        kappa = cohen_kappa_score(true_labels, scores)
         return kappa
 
     def recall(self, scores: list[float] | list[list], threshold=0.5):

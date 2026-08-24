@@ -89,6 +89,7 @@ src/
 ### TruSession (main entry point)
 ```python
 from trulens.core import TruSession
+
 session = TruSession()  # Default SQLite
 session = TruSession(database_url="postgresql://...")
 ```
@@ -96,6 +97,7 @@ session = TruSession(database_url="postgresql://...")
 ### App wrappers
 ```python
 from trulens.apps.langchain import TruChain
+
 tru_app = TruChain(chain, app_name="MyApp", app_version="v1", feedbacks=[...])
 with tru_app as recording:
     result = chain.invoke("query")
@@ -106,6 +108,7 @@ with tru_app as recording:
 Basic instrumentation - captures function args and return as span attributes:
 ```python
 from trulens.core.otel.instrument import instrument
+
 
 @instrument()
 def my_function():
@@ -119,9 +122,11 @@ Use `span_type` to categorize spans for semantic meaning:
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
+
 @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
 def retrieve(self, query: str) -> list:
     pass
+
 
 @instrument(span_type=SpanAttributes.SpanType.GENERATION)
 def generate(self, prompt: str) -> str:
@@ -137,7 +142,7 @@ Map function args/return to semantic attributes:
 @instrument(
     span_type=SpanAttributes.SpanType.RETRIEVAL,
     attributes={
-        SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",      # maps "query" arg
+        SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",  # maps "query" arg
         SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",  # maps return value
     },
 )
@@ -157,12 +162,17 @@ For complex data extraction, use a lambda with signature `(ret, exception, *args
 ```python
 @instrument(
     attributes=lambda ret, exception, *args, **kwargs: {
-        SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: [doc["text"] for doc in ret],
+        SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: [
+            doc["text"] for doc in ret
+        ],
         SpanAttributes.RETRIEVAL.QUERY_TEXT: kwargs["query"].upper(),
     }
 )
 def retrieve_contexts(self, query: str) -> list:
-    return [{"text": "ctx1", "source": "doc.pdf"}, {"text": "ctx2", "source": "doc2.pdf"}]
+    return [
+        {"text": "ctx1", "source": "doc.pdf"},
+        {"text": "ctx2", "source": "doc2.pdf"},
+    ]
 ```
 
 Lambda parameters:
@@ -185,7 +195,7 @@ instrument_method(
     attributes={
         SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",
         SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
-    }
+    },
 )
 ```
 
@@ -199,7 +209,9 @@ from trulens.core import Feedback
 from trulens.providers.openai import OpenAI
 
 provider = OpenAI()
-f_relevance = Feedback(provider.relevance_with_cot_reasons).on_input().on_output()
+f_relevance = (
+    Feedback(provider.relevance_with_cot_reasons).on_input().on_output()
+)
 ```
 
 Shortcuts:
@@ -240,25 +252,29 @@ f_answer_relevance = (
 ```python
 # Evaluate each retrieved context individually
 f_context_relevance = (
-    Feedback(provider.context_relevance_with_cot_reasons, name="Context Relevance")
+    Feedback(
+        provider.context_relevance_with_cot_reasons, name="Context Relevance"
+    )
     .on_input()
     .on({
         "context": Selector(
             span_type=SpanAttributes.SpanType.RETRIEVAL,
             span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
-            collect_list=False
+            collect_list=False,
         ),
     })
 )
 
 # Evaluate groundedness against all contexts combined
 f_groundedness = (
-    Feedback(provider.groundedness_measure_with_cot_reasons, name="Groundedness")
+    Feedback(
+        provider.groundedness_measure_with_cot_reasons, name="Groundedness"
+    )
     .on({
         "context": Selector(
             span_type=SpanAttributes.SpanType.RETRIEVAL,
             span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
-            collect_list=True
+            collect_list=True,
         ),
     })
     .on_output()
@@ -268,6 +284,7 @@ f_groundedness = (
 ### Experimental features
 ```python
 from trulens.core.experimental import Feature
+
 session = TruSession(experimental_feature_flags=[Feature.OTEL_TRACING])
 ```
 

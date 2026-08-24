@@ -1179,9 +1179,9 @@ class TruSession(
             )
 
         assert not fork, "Fork mode not yet implemented."
-        assert (
-            (not fork) or (not return_when_done)
-        ), "fork=True implies running asynchronously but return_when_done=True does not!"
+        assert (not fork) or (not return_when_done), (
+            "fork=True implies running asynchronously but return_when_done=True does not!"
+        )
 
         if self._evaluator_proc is not None:
             if restart:
