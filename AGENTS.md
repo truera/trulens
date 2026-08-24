@@ -105,19 +105,15 @@ with tru_app as recording:
 
 ### OTEL instrumentation
 
-**OTEL tracing is enabled by default.** Do not set `TRULENS_OTEL_TRACING=1` and do not pass
-`Feature.OTEL_TRACING` - both are no-ops. `is_otel_tracing_enabled()` returns `True` unless the
-environment variable is explicitly set to `"0"` or `"false"`:
+**OTEL tracing is enabled by default.** There is nothing to turn on:
 
-```python
-# trulens/core/otel/utils.py
-def is_otel_tracing_enabled() -> bool:
-    return not _is_env_var_disabled("TRULENS_OTEL_TRACING")  # "0" / "false" only
-```
+- Do not set `TRULENS_OTEL_TRACING=1` - `is_otel_tracing_enabled()` returns `True` unless the
+  variable is explicitly `"0"` or `"false"`, so `"1"` is a no-op.
+- Do not pass `Feature.OTEL_TRACING` to `TruSession` - it is set and frozen to `True` during setup
+  whenever tracing is enabled, so passing it is redundant.
 
-The variable is only useful for *disabling* tracing. Note the failure mode that follows: a leftover
-`TRULENS_OTEL_TRACING=0` in a shell or `.env` silently produces no spans rather than an error, so
-check for it first when traces are missing.
+The variable is only useful for *disabling* tracing. Disabling it logs a warning, because the
+symptom is otherwise an absence of spans rather than an error.
 
 Basic instrumentation - captures function args and return as span attributes:
 ```python
@@ -295,25 +291,6 @@ f_groundedness = (
 )
 ```
 
-### Experimental features
-
-```python
-from trulens.core.experimental import Feature
-
-session = TruSession(experimental_feature_flags=[Feature.SIS_COMPATIBILITY])
-```
-
-`Feature.OTEL_TRACING` does not belong in this list. `TruSession` calls `is_otel_tracing_enabled()`
-during setup and, when it returns `True` (the default), sets that flag to `True` and freezes it:
-
-```python
-# trulens/core/experimental/__init__.py
-if is_otel_tracing_enabled():
-    self._experimental_feature(Feature.OTEL_TRACING, value=True, freeze=True)
-```
-
-Passing it explicitly is redundant.
-
 ## Adding new components
 
 ### New provider
@@ -342,4 +319,5 @@ Passing it explicitly is redundant.
 
 - **Circular imports**: Use `from __future__ import annotations` and `TYPE_CHECKING` blocks
 - **OTEL tests failing in batch**: Install pytest-xdist (`poetry install --with dev`) and use `make test-unit`
+- **No spans recorded / evaluations find nothing**: check for a leftover `TRULENS_OTEL_TRACING=0` in the shell or `.env`; tracing is on by default and disabling it logs a warning
 - **Missing optional deps**: TruLens uses lazy imports - install specific packages as needed
