@@ -45,7 +45,9 @@ class TestOtelUtils(TestCase):
         with mock.patch.dict(
             os.environ, {"TRULENS_OTEL_TRACING": "0"}, clear=True
         ):
-            with self.assertLogs(otel_utils.logger, level=logging.WARNING) as cm:
+            with self.assertLogs(
+                otel_utils.logger, level=logging.WARNING
+            ) as cm:
                 otel_utils.is_otel_tracing_enabled()
         self.assertTrue(
             any("TRULENS_OTEL_TRACING" in line for line in cm.output),
