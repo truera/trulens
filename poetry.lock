@@ -2518,8 +2518,7 @@ version = "3.5.5"
 description = "Lightweight in-process concurrent programming"
 optional = false
 python-versions = ">=3.10"
-groups = ["apps"]
-markers = "platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine == \"ppc64le\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\""
+groups = ["main", "apps", "benchmark", "connectors", "hotspots", "providers", "required", "snowflake"]
 files = [
     {file = "greenlet-3.5.5-cp310-cp310-macosx_11_0_universal2.whl", hash = "sha256:816230f469381ad0a43abc9fa8dda5a699e32fb78958dde32ded93213b70a667"},
     {file = "greenlet-3.5.5-cp310-cp310-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a5433cf291e0ef9114bd14d0d824db6e5e4a43033234bca48181a9597acca07b"},
@@ -2601,6 +2600,7 @@ files = [
     {file = "greenlet-3.5.5-cp315-cp315t-win_arm64.whl", hash = "sha256:7f049911ee81a16a03c33d5450d8d5867d27f596ca5fb201b86f4524e874468b"},
     {file = "greenlet-3.5.5.tar.gz", hash = "sha256:adb4bae02e91a8e863e48b177e4014bdcac8a6b5e047ea1df687a61534b85e6c"},
 ]
+markers = {main = "sys_platform == \"win32\" and platform_machine == \"AMD64\" and python_version == \"3.10\" or sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and python_version == \"3.10\"", apps = "platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine == \"ppc64le\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\"", benchmark = "sys_platform == \"win32\" and platform_machine == \"AMD64\" and python_version == \"3.10\" or sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and python_version == \"3.10\"", connectors = "sys_platform == \"win32\" and platform_machine == \"AMD64\" and python_version == \"3.10\" or sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and python_version == \"3.10\"", hotspots = "sys_platform == \"win32\" and platform_machine == \"AMD64\" and python_version == \"3.10\" or sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and python_version == \"3.10\"", providers = "sys_platform == \"win32\" and platform_machine == \"AMD64\" and python_version == \"3.10\" or sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and python_version == \"3.10\"", required = "sys_platform == \"win32\" and platform_machine == \"AMD64\" and python_version == \"3.10\" or sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and python_version == \"3.10\"", snowflake = "sys_platform == \"win32\" and platform_machine == \"AMD64\" and python_version == \"3.10\" or sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and python_version == \"3.10\""}
 
 [package.extras]
 docs = ["Sphinx", "furo"]
@@ -3498,7 +3498,7 @@ description = "Utility functions for Python class constructs"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
-markers = "(platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\") and (python_version < \"3.14\" or platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or sys_platform != \"linux\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\" and platform_machine != \"aarch64\" and platform_machine != \"x86_64\")"
+markers = "platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
 files = [
     {file = "jaraco.classes-3.4.0-py3-none-any.whl", hash = "sha256:f662826b6bed8cace05e7ff873ce0f9283b5c924470fe664fff1c2f00f581790"},
     {file = "jaraco.classes-3.4.0.tar.gz", hash = "sha256:47a024b51d0239c0dd8c8540c6c7f484be3b8fcf0b2d85c13825780d3b3f3acd"},
@@ -3523,7 +3523,7 @@ description = "Useful decorators and context managers"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
-markers = "(platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\") and (python_version < \"3.14\" or platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or sys_platform != \"linux\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\" and platform_machine != \"aarch64\" and platform_machine != \"x86_64\")"
+markers = "platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
 files = [
     {file = "jaraco_context-6.1.2-py3-none-any.whl", hash = "sha256:bf8150b79a2d5d91ae48629d8b427a8f7ba0e1097dd6202a9059f29a36379535"},
     {file = "jaraco_context-6.1.2.tar.gz", hash = "sha256:f1a6c9d391e661cc5b8d39861ff077a7dc24dc23833ccee564b234b81c82dfe3"},
@@ -3552,7 +3552,7 @@ description = "Functools like those found in stdlib"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
-markers = "(platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\") and (python_version < \"3.14\" or platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or sys_platform != \"linux\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\" and platform_machine != \"aarch64\" and platform_machine != \"x86_64\")"
+markers = "platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
 files = [
     {file = "jaraco_functools-4.6.0-py3-none-any.whl", hash = "sha256:99e3dc0060c5cbe8fcd1cdb36258e2a65ca40f1566b2033b12abb1bb44dd3c30"},
     {file = "jaraco_functools-4.6.0.tar.gz", hash = "sha256:880c577ec9720b3a052d5bc611fb9f2269b3d87902ef42440df443b88e443280"},
@@ -4310,7 +4310,7 @@ description = "Store and access your passwords safely."
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "(platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\") and (python_version < \"3.14\" or platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or sys_platform != \"linux\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\" and platform_machine != \"aarch64\" and platform_machine != \"x86_64\")"
+markers = "platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
 files = [
     {file = "keyring-25.7.0-py3-none-any.whl", hash = "sha256:be4a0b195f149690c166e850609a477c532ddbfbaed96a404d4e43f8d5e2689f"},
     {file = "keyring-25.7.0.tar.gz", hash = "sha256:fe01bd85eb3f8fb3dd0405defdeac9a5b4f6f0439edbb3149577f244a2e8245b"},
@@ -5779,7 +5779,7 @@ description = "More routines for operating on iterables, beyond itertools"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
-markers = "(platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\") and (python_version < \"3.14\" or platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or sys_platform != \"linux\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\" and platform_machine != \"aarch64\" and platform_machine != \"x86_64\")"
+markers = "platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
 files = [
     {file = "more_itertools-11.1.0-py3-none-any.whl", hash = "sha256:4b65538ae22f6fed0ce4874efd317463a7489796a0939fa66824dd542125a192"},
     {file = "more_itertools-11.1.0.tar.gz", hash = "sha256:48e8f4d9e7e5878571ecf6f2b4e57634f93cd474cc8cfbd2376f2d11b396e30d"},
@@ -12061,6 +12061,25 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
+name = "trulens-apps-client-hooks"
+version = "2.13.1"
+description = "TruLens instrumentation for client-side coding agent hooks."
+optional = false
+python-versions = "^3.10"
+groups = ["required"]
+files = []
+develop = true
+
+[package.dependencies]
+opentelemetry-api = ">=1.23.0"
+opentelemetry-sdk = ">=1.23.0"
+trulens-core = "^2.0.0"
+
+[package.source]
+type = "directory"
+url = "src/apps/client_hooks"
+
+[[package]]
 name = "trulens-apps-gepa"
 version = "2.13.1"
 description = "Library to systematically track and evaluate LLM based applications."
@@ -13880,4 +13899,4 @@ otlp = ["opentelemetry-exporter-otlp-proto-grpc"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "4298c9ed2f8513566427f43a51c37827b0e25a481c4e2e3d97f12dd5812bdc94"
+content-hash = "fa7bf57cb4fd3ff0f1187fb49790d01c2decc934be0d0625933caf52ac6fbdcf"

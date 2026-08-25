@@ -1,0 +1,39 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = [
+  "poetry-core",
+]
+
+[tool.poetry]
+name = "trulens-apps-client-hooks"
+version = "2.13.1"
+description = "TruLens instrumentation for client-side coding agent hooks."
+authors = [
+  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
+]
+license = "MIT"
+readme = "README.md"
+packages = [
+  { include = "trulens" },
+]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/getting_started/"
+repository = "https://github.com/truera/trulens"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+opentelemetry-api = ">=1.23.0"
+opentelemetry-sdk = ">=1.23.0"
+trulens-core = { version = "^2.0.0" }
+
+[tool.poetry.group.dev.dependencies]
+trulens-core = { path = "../../core" }
+
+[tool.poetry.scripts]
+trulens-client-hooks = "trulens.apps.client_hooks.cli:main"

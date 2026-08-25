@@ -108,6 +108,7 @@ trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = tr
 trulens-hotspots = { path = "src/hotspots", develop = true }
 
 [tool.poetry.group.required.dependencies]
+trulens-apps-client-hooks = { path = "src/apps/client_hooks", develop = true }
 trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-apps-gepa = { path = "src/apps/gepa", develop = true }
