@@ -16,9 +16,9 @@ Below is a quick example of usage. First, we'll create a standard LlamaIndex que
     from llama_index.core import VectorStoreIndex
     from llama_index.readers.web import SimpleWebPageReader
 
-    documents = SimpleWebPageReader(html_to_text=True).load_data(
-        ["http://paulgraham.com/worked.html"]
-    )
+    documents = SimpleWebPageReader(html_to_text=True).load_data([
+        "http://paulgraham.com/worked.html"
+    ])
     index = VectorStoreIndex.from_documents(documents)
 
     query_engine = index.as_query_engine()
@@ -82,9 +82,9 @@ As an example, below is an LlamaIndex async chat engine (`achat`).
     from llama_index.readers.web import SimpleWebPageReader
     from trulens.apps.llamaindex import TruLlama
 
-    documents = SimpleWebPageReader(html_to_text=True).load_data(
-        ["http://paulgraham.com/worked.html"]
-    )
+    documents = SimpleWebPageReader(html_to_text=True).load_data([
+        "http://paulgraham.com/worked.html"
+    ])
     index = VectorStoreIndex.from_documents(documents)
 
     chat_engine = index.as_chat_engine()
@@ -111,9 +111,9 @@ As an example, below is an LlamaIndex query engine with streaming.
     from llama_index.core import VectorStoreIndex
     from llama_index.readers.web import SimpleWebPageReader
 
-    documents = SimpleWebPageReader(html_to_text=True).load_data(
-        ["http://paulgraham.com/worked.html"]
-    )
+    documents = SimpleWebPageReader(html_to_text=True).load_data([
+        "http://paulgraham.com/worked.html"
+    ])
     index = VectorStoreIndex.from_documents(documents)
 
     chat_engine = index.as_chat_engine(streaming=True)
@@ -156,6 +156,7 @@ To instrument a LlamaIndex workflow, wrap it with `TruLlamaWorkflow`:
     from llama_index.llms.openai import OpenAI
     from trulens.apps.llamaindex import TruLlamaWorkflow
 
+
     class SimpleWorkflow(Workflow):
         """A simple workflow that generates a response."""
 
@@ -166,12 +167,11 @@ To instrument a LlamaIndex workflow, wrap it with `TruLlamaWorkflow`:
             response = await llm.acomplete(query)
             return StopEvent(result=str(response))
 
+
     # Create and instrument the workflow
     workflow = SimpleWorkflow()
     tru_workflow = TruLlamaWorkflow(
-        workflow,
-        app_name="simple_workflow",
-        app_version="1.0"
+        workflow, app_name="simple_workflow", app_version="1.0"
     )
 
     # Run the workflow with tracking
@@ -188,19 +188,30 @@ TruLlamaWorkflow automatically tracks all steps in your workflow, maintaining pr
 
     ```python
     from dataclasses import dataclass
-    from llama_index.core.workflow import Event, Workflow, StartEvent, StopEvent, step
+    from llama_index.core.workflow import (
+        Event,
+        Workflow,
+        StartEvent,
+        StopEvent,
+        step,
+    )
     from llama_index.llms.openai import OpenAI
     from trulens.apps.llamaindex import TruLlamaWorkflow
+
 
     @dataclass
     class TopicEvent(Event):
         """Event containing a topic."""
+
         topic: str
+
 
     @dataclass
     class JokeEvent(Event):
         """Event containing a generated joke."""
+
         joke: str
+
 
     class JokeWorkflow(Workflow):
         """A workflow that generates and critiques jokes."""
@@ -222,17 +233,13 @@ TruLlamaWorkflow automatically tracks all steps in your workflow, maintaining pr
             prompt = f"Critique this joke: {ev.joke}"
             response = await llm.acomplete(prompt)
 
-            return StopEvent(result={
-                "joke": ev.joke,
-                "critique": str(response)
-            })
+            return StopEvent(result={"joke": ev.joke, "critique": str(response)})
+
 
     # Create and instrument the workflow
     workflow = JokeWorkflow()
     tru_workflow = TruLlamaWorkflow(
-        workflow,
-        app_name="joke_workflow",
-        metadata={"category": "humor"}
+        workflow, app_name="joke_workflow", metadata={"category": "humor"}
     )
 
     # Run with tracking - all steps are automatically tracked

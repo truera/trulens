@@ -36,7 +36,8 @@ def generate_balanced_llm_aggrefact_benchmark(split="test", random_seed=42):
 
         # Sample min_count instances from each class
         df_balanced = (
-            df_subset.groupby("label")
+            df_subset
+            .groupby("label")
             .apply(lambda x: x.sample(min_count, random_state=random_seed))
             .reset_index(drop=True)
         )
@@ -95,9 +96,11 @@ def generate_summeval_groundedness_golden_set(
                 # Ensure the expected keys exist in the JSON
                 try:
                     row = data
-                    assert (
-                        len(row["machine_summaries"]) == len(row["consistency"])
-                    ), "Mismatch in lengths of machine_summaries and consistency"
+                    assert len(row["machine_summaries"]) == len(
+                        row["consistency"]
+                    ), (
+                        "Mismatch in lengths of machine_summaries and consistency"
+                    )
 
                     # Iterate over the summaries and create the desired dictionary structure
                     for i in range(len(row["machine_summaries"])):

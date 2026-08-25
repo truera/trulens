@@ -105,7 +105,8 @@ def _render_all_app_feedback_plot(
         _df[diff_col] = _df.var(axis=1)
 
     df_tab.dataframe(
-        _df.sort_values(diff_col, ascending=False)
+        _df
+        .sort_values(diff_col, ascending=False)
         .style.apply(_highlight_variance, axis=1)
         .format("{:.3f}"),
         width="stretch",
@@ -472,9 +473,9 @@ def _render_shared_records(
 
         if query_col is None:
             query_col = app_df[cols].rename(
-                columns=lambda x: f"{x}_{version}"
-                if x in cols and x != "input"
-                else x
+                columns=lambda x: (
+                    f"{x}_{version}" if x in cols and x != "input" else x
+                )
             )
         else:
             query_col = query_col.merge(
@@ -482,9 +483,9 @@ def _render_shared_records(
                 how="inner",
                 on="input",
             ).rename(
-                columns=lambda x: f"{x}_{version}"
-                if x in cols and x != "input"
-                else x
+                columns=lambda x: (
+                    f"{x}_{version}" if x in cols and x != "input" else x
+                )
             )
     assert query_col is not None
 
@@ -516,9 +517,8 @@ def _render_shared_records(
 
         if len(col_data) == 2:
             query_col[diff_col_name] = np.abs(
-                query_col.iloc[
-                    :, query_col.columns.str.startswith(feedback_col_name)
-                ]
+                query_col
+                .iloc[:, query_col.columns.str.startswith(feedback_col_name)]
                 .diff(axis=1)
                 .iloc[:, 1]
             )
@@ -667,9 +667,9 @@ def _render_version_selectors(
                 key=selectbox_key,
                 options=select_options,
                 index=select_idx,
-                format_func=lambda x: f"📌 {x}"
-                if pinned_versions and x in pinned_versions
-                else x,
+                format_func=lambda x: (
+                    f"📌 {x}" if pinned_versions and x in pinned_versions else x
+                ),
             ):
                 app_row = _lookup_app_version(versions_df, app_version=version)
                 app_id = app_row["app_id"] if app_row is not None else None

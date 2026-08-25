@@ -203,7 +203,8 @@ class Bedrock(llm_provider.LLMProvider):
             )
         elif base_model_id.startswith("ai21"):
             response_body = (
-                json.loads(response.get("body").read())
+                json
+                .loads(response.get("body").read())
                 .get("completions")[0]
                 .get("data")
                 .get("text")

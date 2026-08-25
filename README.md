@@ -102,6 +102,7 @@ or any OTLP-compatible backend.
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
+
 class MyRAG:
     @instrument(
         span_type=SpanAttributes.SpanType.RETRIEVAL,
@@ -110,8 +111,7 @@ class MyRAG:
             SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
         },
     )
-    def retrieve(self, query: str) -> list:
-        ...
+    def retrieve(self, query: str) -> list: ...
 ```
 
 ### 🤖 Agentic evaluations
@@ -161,8 +161,7 @@ with the `MCP` span type to capture tool name, arguments, output, and latency:
 
 ```python
 @instrument(span_type=SpanAttributes.SpanType.MCP)
-def call_mcp_tool(self, tool_name: str, arguments: dict) -> str:
-    ...
+def call_mcp_tool(self, tool_name: str, arguments: dict) -> str: ...
 ```
 
 ### 🎯 Selector API

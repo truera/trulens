@@ -495,12 +495,14 @@ any {
 
 ```python
 from trulens_eval import Tru
+
 tru = Tru(database_url)
 tru.reset_database()
 ```
 ```python
 from trulens.core.session import TruSession
 from trulens.core.database.connector.default import DefaultDBConnector
+
 connector = DefaultDBConnector(database_url)
 tru = TruSession(connector=connector)
 tru.reset_database()
@@ -510,31 +512,39 @@ tru.reset_database()
 
 ```python
 from trulens_eval import Tru
+
 tru = Tru()
 tru.run_dashboard()
 ```
 ```python
 from trulens.core.session import TruSession
 from trulens.core.database.connector.default import DefaultDBConnector
+
 connector = DefaultDBConnector()
 tru = TruSession(connector=connector)
 from trulens.dashboard import run_dashboard
-run_dashboard(session=tru, )
+
+run_dashboard(
+    session=tru,
+)
 ```
 
 ## Updates to Dashboard with port
 
 ```python
 from trulens_eval import Tru
+
 tru = Tru()
 tru.run_dashboard(port=888)
 ```
 ```python
 from trulens.core.session import TruSession
 from trulens.core.database.connector.default import DefaultDBConnector
+
 connector = DefaultDBConnector()
 tru = TruSession(connector=connector)
 from trulens.dashboard import run_dashboard
+
 run_dashboard(session=tru, port=888)
 ```
 
