@@ -80,6 +80,28 @@ def test_re_configured_rating_ignores_a_stated_scale(test_input, expected):
     )
 
 
+# Raised in review on #2726: when stripping the scale leaves MORE than one candidate,
+# the old code fell back to the un-stripped string and re-injected the bounds, so the
+# floor won anyway. The stripped text is now used consistently.
+multi_candidate_data = [
+    ("scale of 0 to 3, I give 2 or 3", 2),
+    ("Rating 0 to 3: between 2 and 3, call it 3", 2),
+]
+
+
+@pytest.mark.parametrize("test_input,expected", multi_candidate_data)
+def test_re_configured_rating_stripped_text_used_throughout(
+    test_input, expected
+):
+    """The stated bounds do not come back when several candidates remain."""
+
+    result = feedback_generated.re_configured_rating(test_input)
+
+    assert result == expected, (
+        f"Failed on {test_input}: expected {expected}, got {result}"
+    )
+
+
 out_of_data = [
     ("The rating is 1 out of 3.", 1),
 ]

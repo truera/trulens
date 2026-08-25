@@ -39,6 +39,35 @@ PATTERN_INTEGER: re.Pattern = re.compile(r"([+-]?[1-9][0-9]*|0)")
 """Regex that matches integers."""
 
 
+def _ratings_in_range(
+    s: str, min_score_val: int, max_score_val: int, allow_decimal: bool
+) -> set:
+    """Every number in ``s`` that falls inside the rating scale.
+
+    Args:
+        s: String to read numbers from.
+
+        min_score_val: Minimum value of the rating scale.
+
+        max_score_val: Maximum value of the rating scale.
+
+        allow_decimal: Whether to capture decimal numbers rather than truncate.
+
+    Returns:
+        set: The in-range values. Out-of-range numbers are logged and dropped.
+    """
+    found = set()
+    for match in PATTERN_NUMBER.findall(s):
+        rating = float(match) if allow_decimal else int(float(match))
+        if min_score_val <= rating <= max_score_val:
+            found.add(rating)
+        else:
+            logger.warning(
+                "Rating must be in [%s, %s].", min_score_val, max_score_val
+            )
+    return found
+
+
 def _strip_scale_statement(
     s: str, min_score_val: int, max_score_val: int
 ) -> str:
@@ -104,39 +133,28 @@ def re_configured_rating(
     if max_score_val <= min_score_val:
         raise ValueError("Max score must be greater than min score.")
 
-    matches = PATTERN_NUMBER.findall(s)
-    if not matches:
+    if not PATTERN_NUMBER.search(s):
         raise ParseError("int or float number", s, pattern=PATTERN_NUMBER)
 
-    def in_range(text: str) -> set:
-        found = set()
-        for match in PATTERN_NUMBER.findall(text):
-            rating = float(match) if allow_decimal else int(float(match))
-            if min_score_val <= rating <= max_score_val:
-                found.add(rating)
-        return found
-
-    # A judge that repeats its own scale ("on a scale of 0 to 3, I rate this 3")
-    # is naming the bounds, not scoring. Those bounds are in range, so they end up
-    # as candidate ratings and the min() below returns the floor instead of the
-    # rating. Drop an explicit scale statement first, and if exactly one candidate
-    # survives, that is the rating. Anything else falls through unchanged, so
-    # "N out of M" phrasing keeps its existing behaviour.
+    # A judge that repeats its own scale ("on a scale of 0 to 3, I rate this 3") is
+    # naming the bounds, not scoring. Those bounds are in range, so without this they
+    # become candidate ratings and the min() below returns the floor instead of the
+    # rating. Drop an explicit scale statement and read the rest, so the bounds cannot
+    # be re-injected further down. "N out of M" contains no scale statement, so it is
+    # untouched and keeps its existing behaviour.
     without_scale = _strip_scale_statement(s, min_score_val, max_score_val)
-    if without_scale != s:
-        narrowed = in_range(without_scale)
-        if len(narrowed) == 1:
-            return narrowed.pop()
+    considered = without_scale if without_scale != s else s
 
-    vals = set()
-    for match in matches:
-        rating = float(match) if allow_decimal else int(float(match))
-        if min_score_val <= rating <= max_score_val:
-            vals.add(rating)
-        else:
-            logger.warning(
-                "Rating must be in [%s, %s].", min_score_val, max_score_val
-            )
+    vals = _ratings_in_range(
+        considered, min_score_val, max_score_val, allow_decimal
+    )
+    if not vals and considered is not s:
+        # Stripping took the only numbers with it, so fall back to the whole string
+        # rather than raising on text the old behaviour could read.
+        considered = s
+        vals = _ratings_in_range(
+            considered, min_score_val, max_score_val, allow_decimal
+        )
 
     if not vals:
         raise ParseError(f"{min_score_val}-{max_score_val} rating", s)
