@@ -21,6 +21,7 @@ class MockLLMProvider(llm_provider.LLMProvider):
     # Declare test tracking fields as optional Pydantic fields
     last_system_prompt: Optional[str] = None
     last_user_prompt: Optional[str] = None
+    last_temperature: Optional[float] = None
 
     def __init__(self, **kwargs):
         # Initialize with minimal required fields
@@ -61,6 +62,7 @@ class MockLLMProvider(llm_provider.LLMProvider):
         """Mock generate_score that captures prompts."""
         self.last_system_prompt = system_prompt
         self.last_user_prompt = user_prompt
+        self.last_temperature = temperature
         return 0.67  # Normalized 2/3
 
     def generate_score_and_reasons(
@@ -74,6 +76,7 @@ class MockLLMProvider(llm_provider.LLMProvider):
         """Mock generate_score_and_reasons that captures prompts."""
         self.last_system_prompt = system_prompt
         self.last_user_prompt = user_prompt
+        self.last_temperature = temperature
         return 0.67, {"reason": "Test reason"}
 
 
@@ -354,6 +357,14 @@ class TestConversationAdditionalInstructions(TestCase):
             {"input": "What is 2+2?", "output": "Four."},
             {"input": "Why?", "output": "Two pairs total four items."},
         ]
+
+    def test_positional_nonzero_temperature_does_not_raise(self):
+        """Existing callers passed temperature positionally after records."""
+        result = self.provider.conversation_helpfulness(self.records, 0.7)
+
+        self.assertIsInstance(result, float)
+        self.assertEqual(self.provider.last_temperature, 0.7)
+        self.assertNotIn("0.7", self.provider.last_system_prompt or "")
 
     def test_coherence_across_turns_default_no_additional_instructions(self):
         """Test coherence across turns without additional instructions."""
