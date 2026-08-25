@@ -116,18 +116,14 @@ TruLens introduces **span groups** to handle repeated tool calls within a trace.
 
 ```python
 class App:
+    @instrument(attributes={SpanAttributes.SPAN_GROUPS: "idx"})
+    def clean_up_question(question: str, idx: str) -> str: ...
 
     @instrument(attributes={SpanAttributes.SPAN_GROUPS: "idx"})
-    def clean_up_question(question: str, idx: str) -> str:
-        ...
-
-    @instrument(attributes={SpanAttributes.SPAN_GROUPS: "idx"})
-    def clean_up_response(response: str, idx: str) -> str:
-        ...
+    def clean_up_response(response: str, idx: str) -> str: ...
 
     @instrument()
-    def combine_responses(cleaned_responses: List[str]) -> str:
-        ...
+    def combine_responses(cleaned_responses: List[str]) -> str: ...
 
     @instrument()
     def query(complex_question: str) -> str:
@@ -161,7 +157,7 @@ session.run_dashboard()
 
 Ready to get started?
 
-Today, we are launching a pre-release of TruLens on Otel. Below is a minimal walkthrough of using TruLens with OpenTelemetry. You can also find a curated list of examples of working with TruLens and Otel in this [folder](https://github.com/truera/trulens/tree/main/examples/experimental/otel/quickstart), including a new LangGraph quickstart - showing how to trace and evaluate a multi-agent graph.
+Today, we are launching a pre-release of TruLens on Otel. Below is a minimal walkthrough of using TruLens with OpenTelemetry. You can also find a curated list of examples of working with TruLens and Otel in this [folder](https://github.com/truera/trulens/tree/main/examples/quickstart), including a new LangGraph quickstart - showing how to trace and evaluate a multi-agent graph.
 
 1. **Install TruLens**:
 
@@ -180,6 +176,7 @@ pip install trulens-core==1.5.0
 
 ```python
 from trulens.core.otel.instrument import instrument
+
 
 @instrument(
     attributes={
@@ -256,6 +253,6 @@ run_dashboard(session)
 
 By building on top of **OpenTelemetry**, TruLens delivers a **universal tracing and evaluation platform** for modern AI systems. Whether your agents are built in Python, composed via MCP, or distributed across systems—TruLens provides a common observability layer for telemetry and evaluation.
 
-Try our new TruLens-OTel quickstarts for [custom python apps](https://github.com/truera/trulens/tree/main/examples/experimental/otel/quickstart/quickstart_otel.ipynb), [LangGraph](https://github.com/truera/trulens/tree/main/examples/experimental/otel/quickstart/langgraph_quickstart_otel.ipynb), and [LlamaIndex](https://github.com/truera/trulens/tree/main/examples/experimental/otel/quickstart/llama_index_quickstart_otel.ipynb).
+Try our new TruLens-OTel quickstarts for [custom python apps](https://github.com/truera/trulens/tree/main/examples/quickstart/quickstart.ipynb), [LangGraph](https://github.com/truera/trulens/tree/main/examples/expositional/frameworks/langchain/langgraph_quickstart.ipynb), and [LlamaIndex](https://github.com/truera/trulens/tree/main/examples/expositional/frameworks/llamaindex/llama_index_quickstart.ipynb).
 
 **Let’s build the future of trustworthy agentic AI together.**

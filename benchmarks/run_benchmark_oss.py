@@ -103,7 +103,8 @@ class RAG:
             return "I don't have enough information to answer this question."
         context = "\n---\n".join(context_list)
         completion = (
-            cortex_client.chat.completions.create(
+            cortex_client.chat.completions
+            .create(
                 model=self.model_name,
                 messages=[
                     {

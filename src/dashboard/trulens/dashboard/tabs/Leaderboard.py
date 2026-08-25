@@ -76,6 +76,11 @@ def init_page_state():
     ] = True
 
 
+def scored_count_col(feedback_col_name: str) -> str:
+    """Name of the helper column holding how many records a metric scored."""
+    return f"{feedback_col_name} __scored_count"
+
+
 def _preprocess_df(
     records_df: pd.DataFrame,
     app_versions_df: pd.DataFrame,
@@ -105,9 +110,13 @@ def _preprocess_df(
     for col in feedback_col_names:
         if col in records_df:
             agg_dict[col] = (col, "mean")
+            # `mean` skips records with no score; `Records` counts them. Keep
+            # the metric's own denominator so the two can be told apart.
+            agg_dict[scored_count_col(col)] = (col, "count")
 
     app_agg_df: pd.DataFrame = (
-        records_df.groupby(
+        records_df
+        .groupby(
             by=["app_version", "app_name", "app_id"], dropna=True, sort=True
         )
         .aggregate(**agg_dict)
@@ -198,6 +207,10 @@ def _build_grid_options(
         resizable=True,
         filter="agMultiColumnFilter",
     )
+
+    for feedback_col in feedback_col_names:
+        if scored_count_col(feedback_col) in df:
+            gb.configure_column(scored_count_col(feedback_col), hide=True)
 
     for feedback_col in feedback_col_names:
         if "distance" in feedback_col:
@@ -724,6 +737,12 @@ def _render_list_tab(
                     continue
                 col = feedback_cols[i % max_feedback_cols]
                 feedback_container = col.container(border=True)
+
+                scored = app_row.get(scored_count_col(col_name))
+                if scored is not None and scored < app_row["Records"]:
+                    feedback_container.caption(
+                        f"Scored {int(scored)} of {int(app_row['Records'])} records"
+                    )
 
                 higher_is_better = feedback_directions.get(col_name, True)
 

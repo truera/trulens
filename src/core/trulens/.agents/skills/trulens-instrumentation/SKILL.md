@@ -111,19 +111,22 @@ What data should be captured: The query text and the document texts (not scores/
     attributes={
         SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",
         SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
-    }
+    },
 )
 def retrieve_documents(query: str, top_k: int = 5) -> list:
     # If you need to extract just the text from complex returns:
     pass
+
 
 # Or with lambda for complex extraction:
 @instrument(
     span_type=SpanAttributes.SpanType.RETRIEVAL,
     attributes=lambda ret, exception, *args, **kwargs: {
         SpanAttributes.RETRIEVAL.QUERY_TEXT: kwargs.get("query", args[0]),
-        SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: [doc["text"] for doc in ret],
-    }
+        SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: [
+            doc["text"] for doc in ret
+        ],
+    },
 )
 def retrieve_documents(query: str, top_k: int = 5) -> list:
     pass
@@ -166,11 +169,7 @@ session = TruSession()
 ```python
 from trulens.apps.langchain import TruChain
 
-tru_recorder = TruChain(
-    chain,
-    app_name="MyLangChainApp",
-    app_version="v1"
-)
+tru_recorder = TruChain(chain, app_name="MyLangChainApp", app_version="v1")
 
 with tru_recorder as recording:
     result = chain.invoke("your query")
@@ -182,11 +181,7 @@ with tru_recorder as recording:
 from trulens.apps.langgraph import TruGraph
 
 # TruGraph auto-detects graph nodes and @task decorators
-tru_recorder = TruGraph(
-    graph,
-    app_name="MyLangGraphAgent",
-    app_version="v1"
-)
+tru_recorder = TruGraph(graph, app_name="MyLangGraphAgent", app_version="v1")
 
 with tru_recorder as recording:
     result = graph.invoke({"messages": [HumanMessage(content="your query")]})
@@ -203,9 +198,7 @@ from trulens.core import TruSession
 
 # Create the Deep Agent
 agent = create_deep_agent(
-    model=model,
-    tools=[your_tools],
-    system_prompt="Your prompt"
+    model=model, tools=[your_tools], system_prompt="Your prompt"
 )
 
 # Wrap with TruGraph - captures all internal nodes, tool calls, planning steps
@@ -213,7 +206,7 @@ tru_agent = TruGraph(
     agent,
     app_name="DeepAgent",
     app_version="v1",
-    feedbacks=[f_answer_relevance]
+    feedbacks=[f_answer_relevance],
 )
 
 with tru_agent as recording:
@@ -252,9 +245,7 @@ with tru_recorder as recording:
 from trulens.apps.llamaindex import TruLlamaWorkflow
 
 tru_recorder = TruLlamaWorkflow(
-    workflow,
-    app_name="MyLlamaWorkflow",
-    app_version="v1"
+    workflow, app_name="MyLlamaWorkflow", app_version="v1"
 )
 
 with tru_recorder as recording:
@@ -316,10 +307,12 @@ from trulens.apps.langgraph import TruGraph
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
+
 @instrument()
 def preprocess_input(topic: str) -> str:
     """Custom preprocessing - will appear in traces."""
     return f"Preprocessed: {topic}"
+
 
 @instrument(
     span_type=SpanAttributes.SpanType.RETRIEVAL,
@@ -331,6 +324,7 @@ def preprocess_input(topic: str) -> str:
 def custom_retrieve(query: str) -> list:
     """Custom retrieval with semantic attributes for evaluation."""
     return ["context1", "context2"]
+
 
 # TruGraph will capture both auto-instrumented spans and your @instrument spans
 tru_recorder = TruGraph(graph, app_name="EnhancedAgent", app_version="v1")
@@ -344,9 +338,13 @@ For complex data structures, use a lambda to extract attributes:
 @instrument(
     span_type=SpanAttributes.SpanType.RETRIEVAL,
     attributes=lambda ret, exception, *args, **kwargs: {
-        SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: [doc["text"] for doc in ret],
-        SpanAttributes.RETRIEVAL.QUERY_TEXT: kwargs.get("query", args[0] if args else ""),
-    }
+        SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: [
+            doc["text"] for doc in ret
+        ],
+        SpanAttributes.RETRIEVAL.QUERY_TEXT: kwargs.get(
+            "query", args[0] if args else ""
+        ),
+    },
 )
 def retrieve_documents(query: str) -> list:
     return [{"text": "doc1", "score": 0.9}, {"text": "doc2", "score": 0.8}]
@@ -367,7 +365,7 @@ instrument_method(
     attributes={
         SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",
         SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
-    }
+    },
 )
 ```
 
@@ -379,8 +377,10 @@ instrument_method(
 @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL, attributes={...})
 def retrieve(self, query): ...
 
+
 @instrument(span_type=SpanAttributes.SpanType.GENERATION)
 def generate(self, query, context): ...
+
 
 @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT, attributes={...})
 def query(self, query): ...
@@ -392,8 +392,10 @@ def query(self, query): ...
 @instrument(span_type=SpanAttributes.SpanType.AGENT)
 def run_agent(self, task): ...
 
+
 @instrument(span_type=SpanAttributes.SpanType.TOOL)
 def call_tool(self, tool_name, args): ...
+
 
 @instrument(span_type=SpanAttributes.SpanType.WORKFLOW)
 def execute_workflow(self, steps): ...
@@ -413,21 +415,21 @@ The `.on_input()` and `.on_output()` feedback selector shortcuts look for spans 
 # This WORKS - TruGraph creates RECORD_ROOT spans automatically
 tru_agent = TruGraph(agent, feedbacks=[f_answer_relevance])
 
+
 # This also WORKS - explicit RECORD_ROOT
 @instrument(
     span_type=SpanAttributes.SpanType.RECORD_ROOT,
     attributes={
         SpanAttributes.RECORD_ROOT.INPUT: "query",
         SpanAttributes.RECORD_ROOT.OUTPUT: "return",
-    }
+    },
 )
-def query(self, query: str) -> str:
-    ...
+def query(self, query: str) -> str: ...
+
 
 # This WILL NOT WORK with .on_input()/.on_output() shortcuts!
 @instrument(span_type=SpanAttributes.SpanType.AGENT)  # Wrong span type
-def run_agent(self, task):
-    ...
+def run_agent(self, task): ...
 ```
 
 **If your evaluations show empty feedback columns**, check that your root span uses `RECORD_ROOT` span type.

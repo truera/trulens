@@ -46,8 +46,8 @@ class TestOtelTruBasic(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
 
     def test_japanese(self) -> None:
         # Create and run app.
-        text_to_text_fn = (
-            lambda name: f"{name}が世界で一番かわいい赤ちゃんです！"
+        text_to_text_fn = lambda name: (
+            f"{name}が世界で一番かわいい赤ちゃんです！"
         )
         basic_app = TruBasicApp(text_to_text=text_to_text_fn)
         basic_app.instrumented_invoke_main_method(

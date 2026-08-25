@@ -327,7 +327,7 @@ class TestNoneModelNameNonOtel(unittest.TestCase):
             # _handle_response is called with positional args
             actual_model = call_args[0][0]
             assert actual_model == "gpt-4o-azure", (
-                f"Expected 'gpt-4o-azure' but got " f"'{actual_model}'"
+                f"Expected 'gpt-4o-azure' but got '{actual_model}'"
             )
 
 
