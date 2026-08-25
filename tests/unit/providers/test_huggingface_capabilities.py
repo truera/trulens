@@ -96,7 +96,7 @@ def test_context_relevance_returns_float(monkeypatch):
     assert result == 0.85
 
 
-@pytest.mark.optional
+@pytest.mark.huggingface
 def test_huggingface_local_model_loading_cached(monkeypatch):
     # Patch the transformers classes directly: the provider imports them inside
     # `_retrieve_tokenizer_and_model` rather than at module scope, so they are
