@@ -229,6 +229,8 @@ def test_assembler_creates_private_root_agent_and_tool_spans():
     assert root.attributes[SpanAttributes.RECORD_ROOT.INPUT] == (
         "[content not captured]"
     )
+    assert root.attributes[SpanAttributes.RUN_NAME] == "client-hooks"
+    assert root.attributes[SpanAttributes.INPUT_RECORDS_COUNT] == 1
     assert (
         root.context.trace_id == agent.context.trace_id == tool.context.trace_id
     )

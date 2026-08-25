@@ -79,9 +79,11 @@ class TraceAssembler:
         *,
         app_name: str = "coding-agent",
         app_version: str = "client-hooks",
+        run_name: str = "client-hooks",
     ) -> None:
         self.app_name = app_name
         self.app_version = app_version
+        self.run_name = run_name
 
     def assemble(
         self, events: List[models.HookEvent], *, stale: bool = False
@@ -104,6 +106,8 @@ class TraceAssembler:
             SpanAttributes.RECORD_ID: record_id,
             SpanAttributes.CONVERSATION_ID: first.conversation_id,
             SpanAttributes.INPUT_ID: turn_id,
+            SpanAttributes.RUN_NAME: self.run_name,
+            SpanAttributes.INPUT_RECORDS_COUNT: 1,
         }
         prompt = next((event.prompt for event in events if event.prompt), None)
         response = next(
