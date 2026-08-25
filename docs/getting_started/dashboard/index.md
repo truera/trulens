@@ -25,7 +25,8 @@ URL configured by [TruSession][trulens.core.TruSession].
 
     ```python
     from trulens.dashboard import run_dashboard
-    session = TruSession(database_url = ...) # or default.sqlite by default
+
+    session = TruSession(database_url=...)  # or default.sqlite by default
     run_dashboard(session)
     ```
 
@@ -35,6 +36,7 @@ By default, the dashboard will find and run on an unused port number. You can al
 
     ```python
     from trulens.dashboard import run_dashboard
+
     run_dashboard(port=8502)
     ```
 
@@ -54,14 +56,14 @@ Consider the below `app.py` which consists of a simple RAG application that is a
 !!! example "Simple Streamlit app with TruLens"
 
     ```python
-
     import streamlit as st
     from trulens.core import TruSession
 
-    from base import rag # a rag app with a query method
-    from base import tru_rag # a rag app wrapped by trulens
+    from base import rag  # a rag app with a query method
+    from base import tru_rag  # a rag app wrapped by trulens
 
     session = TruSession()
+
 
     def generate_and_log_response(input_text):
         with tru_rag as recording:
@@ -69,13 +71,13 @@ Consider the below `app.py` which consists of a simple RAG application that is a
         record = recording.get()
         return record, response
 
+
     with st.form("my_form"):
         text = st.text_area("Enter text:", "How do I launch a streamlit app?")
         submitted = st.form_submit_button("Submit")
         if submitted:
             record, response = generate_and_log_response(text)
             st.info(response)
-
     ```
 
 With the `record` in hand, we can easily add TruLens components to display the evaluation results of the provided record using [trulens_feedback][trulens.dashboard.streamlit.trulens_feedback]. This will display the _TruLens_ feedback result clickable pills as the feedback is available.

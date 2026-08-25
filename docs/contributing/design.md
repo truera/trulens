@@ -6,12 +6,13 @@
 Currently to get going, a user needs to add 4 lines of Python:
 
 ```python
-from trulens.dashboard import run_dashboard # line 1
-from trulens.apps.langchain import TruChain # line 2
-with TruChain(app): # 3
-    app.invoke("some question") # doesn't count since they already had this
+from trulens.dashboard import run_dashboard  # line 1
+from trulens.apps.langchain import TruChain  # line 2
 
-run_dashboard() # 4
+with TruChain(app):  # 3
+    app.invoke("some question")  # doesn't count since they already had this
+
+run_dashboard()  # 4
 ```
 
 3 of these lines are fixed so only #3 would vary in typical cases. From here

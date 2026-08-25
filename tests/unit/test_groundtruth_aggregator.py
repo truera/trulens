@@ -468,6 +468,55 @@ class TestGroundTruthAggregator(TestCase):
         )
 
     @pytest.mark.optional
+    def test_cohens_kappa_does_not_mutate_true_labels(self):
+        """Cohen's kappa must not mutate the stored true_labels in place.
+
+        Binarizing used to overwrite self.true_labels, silently corrupting
+        every metric computed afterwards (e.g. mae, brier_score) and making
+        subsequent calls with a different threshold no-ops since the labels
+        would already be ints.
+        """
+        true_labels = [0.0, 0.6, 0.7, 1.0]
+        scores = [0.55, 0.65, 0.68, 0.95]
+        aggregator = GroundTruthAggregator(true_labels=true_labels)
+
+        mae_before = aggregator.mae(scores)
+        brier_before = aggregator.brier_score(scores)
+
+        # The threshold applies to both true_labels and scores:
+        # t=0.5: true=[0,1,1,1], pred=[1,1,1,1] -> kappa=0.0
+        # t=0.7: true=[0,0,1,1], pred=[0,0,0,1] -> po=0.75, pe=0.5, kappa=0.5
+        self.assertEqual(
+            aggregator.cohens_kappa(scores, threshold=0.5),
+            0.0,
+            msg="Cohen's kappa should be 0.0 at threshold 0.5",
+        )
+        self.assertEqual(
+            aggregator.cohens_kappa(scores, threshold=0.7),
+            0.5,
+            msg=(
+                "A second call with a different threshold must binarize "
+                "against the original float labels, not previously mutated ints"
+            ),
+        )
+
+        self.assertEqual(
+            aggregator.true_labels,
+            true_labels,
+            msg="cohens_kappa must not mutate stored true_labels",
+        )
+        self.assertEqual(
+            aggregator.mae(scores),
+            mae_before,
+            msg="mae must be unaffected by prior cohens_kappa calls",
+        )
+        self.assertEqual(
+            aggregator.brier_score(scores),
+            brier_before,
+            msg="brier_score must be unaffected by prior cohens_kappa calls",
+        )
+
+    @pytest.mark.optional
     def test_mae(self):
         """Test Mean Absolute Error."""
         # Perfect predictions

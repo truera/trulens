@@ -51,7 +51,20 @@ except ImportError:
         from langchain_core.messages import Generation
         from langchain_core.outputs import LLMResult
 
+from langchain_community.callbacks.openai_info import MODEL_COST_PER_1K_TOKENS
 from langchain_community.callbacks.openai_info import OpenAICallbackHandler
+from langchain_community.callbacks.openai_info import (
+    get_openai_token_cost_for_model,
+)
+from langchain_community.callbacks.openai_info import standardize_model_name
+
+try:
+    from langchain_community.callbacks.openai_info import TokenType
+except ImportError:
+    # Older langchain-community versions distinguish completion tokens with an
+    # `is_completion` flag instead of a token type.
+    TokenType = None
+
 from opentelemetry import trace as otel_trace
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
@@ -116,6 +129,195 @@ TOpenAIResponse = TOpenAIReturn
 T = TypeVar("T")  # TODO bound
 
 
+def token_cost_for_model(
+    model_name: str, prompt_tokens: int, completion_tokens: int
+) -> Optional[float]:
+    """Price a prompt/completion token split using langchain's model table.
+
+    Returns None when the model is unknown to langchain, in which case the
+    caller should leave the recorded cost alone rather than reporting zero.
+    """
+    if not model_name:
+        return None
+
+    try:
+        standardized = standardize_model_name(model_name)
+        if standardized not in MODEL_COST_PER_1K_TOKENS:
+            return None
+
+        if TokenType is not None:
+            completion_cost = get_openai_token_cost_for_model(
+                standardized,
+                completion_tokens,
+                token_type=TokenType.COMPLETION,
+            )
+        else:
+            completion_cost = get_openai_token_cost_for_model(
+                standardized, completion_tokens, is_completion=True
+            )
+
+        return (
+            get_openai_token_cost_for_model(standardized, prompt_tokens)
+            + completion_cost
+        )
+    except Exception:
+        logger.debug(
+            "Could not determine token cost for model %s.",
+            model_name,
+            exc_info=True,
+        )
+        return None
+
+
+def cost_attributes(callback: Any, model_name: str) -> Dict[str, Any]:
+    """Build the span attributes describing what a call has cost so far."""
+    ret = {
+        SpanAttributes.COST.COST: callback.cost.cost,
+        SpanAttributes.COST.CURRENCY: callback.cost.cost_currency,
+        SpanAttributes.COST.NUM_TOKENS: callback.cost.n_tokens,
+        SpanAttributes.COST.NUM_PROMPT_TOKENS: callback.cost.n_prompt_tokens,
+        SpanAttributes.COST.NUM_COMPLETION_TOKENS: callback.cost.n_completion_tokens,
+        SpanAttributes.COST.NUM_REASONING_TOKENS: callback.cost.n_reasoning_tokens,
+    }
+    if model_name:
+        ret[SpanAttributes.COST.MODEL] = model_name
+
+    return ret
+
+
+class StreamingSpanUpdater:
+    """Keeps cost and streaming attributes current while a stream is consumed.
+
+    An openai client hands back a `Stream` as soon as the response headers
+    arrive, well before the model has produced anything. Cost tracking runs at
+    that moment, so a streamed call used to be recorded with zero tokens and
+    zero cost no matter how much it went on to generate. This updater rewrites
+    those attributes on the enclosing span as each chunk is consumed, which also
+    means a stream abandoned part way through still records what it produced.
+
+    The span is captured up front rather than looked up per chunk: chunks are
+    consumed from inside the caller's own generator, where the current OTEL
+    context is not guaranteed to still be the one the call was made under.
+    """
+
+    def __init__(
+        self,
+        span: Any,
+        callback: Any,
+        request_start: float,
+        first_token_time: Optional[float] = None,
+        model_name: str = "",
+    ) -> None:
+        self._span = span
+        self._callback = callback
+        self._request_start = request_start
+        self._first_token_time = first_token_time
+        self._last_token_time = first_token_time
+        self._model_name = model_name
+        self._chunks_received = 0
+
+    def attach(self, response: Any) -> Any:
+        """Interpose this updater on a stream's underlying iterator."""
+        iterator = getattr(response, "_iterator", None)
+        if iterator is None:
+            # Not an openai stream object, so there is nothing to hook into.
+            return response
+
+        if isinstance(response, openai.AsyncStream):
+            response._iterator = self._wrap_async(iterator)
+        else:
+            response._iterator = self._wrap_sync(iterator)
+
+        # Record what is known before any chunk is consumed so that a stream
+        # which is never iterated is still marked as one.
+        self._write()
+
+        return response
+
+    def _wrap_sync(self, iterator):
+        try:
+            for chunk in iterator:
+                yield self._observe(chunk)
+        finally:
+            self._write()
+
+    async def _wrap_async(self, iterator):
+        try:
+            async for chunk in iterator:
+                yield self._observe(chunk)
+        finally:
+            self._write()
+
+    def _observe(self, chunk: T) -> T:
+        now = time.perf_counter()
+        if self._first_token_time is None:
+            self._first_token_time = now
+        self._last_token_time = now
+        self._chunks_received += 1
+
+        if not self._model_name:
+            self._model_name = getattr(chunk, "model", "") or ""
+
+        self._write()
+
+        return chunk
+
+    def _time_to_first_token_ms(self) -> Optional[float]:
+        if self._first_token_time is None:
+            return None
+
+        return (self._first_token_time - self._request_start) * 1000.0
+
+    def _tokens_per_second(self) -> Optional[float]:
+        """Completion throughput across the streaming window.
+
+        Measured from the first chunk rather than from the request so that it
+        describes generation speed instead of being dragged down by
+        time-to-first-token. Returns None unless the completion token count is
+        known, which for a stream means the caller asked for
+        `stream_options={"include_usage": True}`.
+        """
+        completion_tokens = self._callback.cost.n_completion_tokens
+        if not completion_tokens:
+            return None
+
+        if self._first_token_time is None or self._last_token_time is None:
+            return None
+
+        elapsed = self._last_token_time - self._first_token_time
+        if elapsed <= 0:
+            return None
+
+        return completion_tokens / elapsed
+
+    def _write(self) -> None:
+        span = self._span
+        if span is None or not span.is_recording():
+            return
+
+        attributes = cost_attributes(self._callback, self._model_name)
+        attributes[SpanAttributes.GENERATION.IS_STREAMING] = True
+        attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED] = (
+            self._chunks_received
+        )
+
+        time_to_first_token_ms = self._time_to_first_token_ms()
+        if time_to_first_token_ms is not None:
+            attributes[SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS] = (
+                time_to_first_token_ms
+            )
+
+        tokens_per_second = self._tokens_per_second()
+        if tokens_per_second is not None:
+            attributes[SpanAttributes.GENERATION.TOKENS_PER_SECOND] = (
+                tokens_per_second
+            )
+
+        for key, value in attributes.items():
+            if value is not None:
+                span.set_attribute(key, value)
+
+
 class OpenAICostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
@@ -130,6 +332,13 @@ class OpenAICostComputer:
         model_name = ""
         streaming_attributes: Dict[str, Any] = {}
 
+        # The clock starts here rather than at the call site: by the time cost
+        # tracking sees the response the request has been dispatched and, for a
+        # stream, the client is waiting on the first chunk.
+        request_start = time.perf_counter()
+        first_token_time = None
+        is_streaming = isinstance(response, (openai.Stream, openai.AsyncStream))
+
         if hasattr(response, "__iter__") and not hasattr(response, "model"):
             streaming_attributes[GenAIAttributes.REQUEST.STREAM] = True
             request_returned_at = time.monotonic()
@@ -139,11 +348,11 @@ class OpenAICostComputer:
                 streaming_attributes[
                     GenAIAttributes.RESPONSE.TIME_TO_FIRST_CHUNK
                 ] = first_chunk_received_at - request_returned_at
+                # Pulling the first chunk is what blocks on the model, so this
+                # is the moment the first token arrived.
+                first_token_time = time.perf_counter()
                 model_name = first_chunk.model or ""
                 response = prepend_first_chunk(response, first_chunk)
-                response = _instrument_stream_span_attributes(
-                    response, first_chunk_received_at
-                )
             except Exception:
                 logger.exception(
                     "Exception occurred while consuming the first chunk from a streamed response."
@@ -159,17 +368,27 @@ class OpenAICostComputer:
             callbacks=[callback],
         )
 
-        ret = {
-            SpanAttributes.COST.COST: callback.cost.cost,
-            SpanAttributes.COST.CURRENCY: callback.cost.cost_currency,
-            SpanAttributes.COST.NUM_TOKENS: callback.cost.n_tokens,
-            SpanAttributes.COST.NUM_PROMPT_TOKENS: callback.cost.n_prompt_tokens,
-            SpanAttributes.COST.NUM_COMPLETION_TOKENS: callback.cost.n_completion_tokens,
-            SpanAttributes.COST.NUM_REASONING_TOKENS: callback.cost.n_reasoning_tokens,
-        }
-        if model_name:
-            ret[SpanAttributes.COST.MODEL] = model_name
+        ret = cost_attributes(callback, model_name)
+
+        # Cost tracking wraps every `create` on the client, including
+        # embeddings and moderations. Only say whether something streamed when
+        # it was a generation in the first place.
+        if is_streaming or hasattr(response, "choices"):
+            ret[SpanAttributes.GENERATION.IS_STREAMING] = is_streaming
+
         ret.update(streaming_attributes)
+
+        if is_streaming:
+            # Nothing has been generated yet, so the cost values above are all
+            # zero. Hand the still-open span to an updater which corrects them
+            # as the caller consumes the stream.
+            StreamingSpanUpdater(
+                span=otel_trace.get_current_span(),
+                callback=callback,
+                request_start=request_start,
+                first_token_time=first_token_time,
+                model_name=model_name,
+            ).attach(response)
 
         return ret
 
@@ -334,10 +553,54 @@ class OpenAICallback(core_endpoint.EndpointCallback):
     """Pairs where first element is the cost attribute name and second is
     attribute of langchain.OpenAICallbackHandler that corresponds to it."""
 
+    def handle_generation_usage(self, model_name: str, usage: Any) -> None:
+        """Record the token counts reported by a stream's usage chunk.
+
+        A streamed response only carries usage when the request asked for it
+        with `stream_options={"include_usage": True}`, and that chunk arrives
+        after the one bearing `finish_reason == "stop"`. It reports totals for
+        the whole stream, so these counts replace rather than add to what the
+        stop chunk already flushed (which is zero, having had no usage of its
+        own to report).
+        """
+        if isinstance(usage, pydantic.BaseModel):
+            usage = usage.model_dump()
+        elif isinstance(usage, v1BaseModel):
+            usage = usage.dict()
+        elif not isinstance(usage, dict):
+            usage = dict(usage)
+
+        prompt_tokens = usage.get("prompt_tokens") or 0
+        completion_tokens = usage.get("completion_tokens") or 0
+        total_tokens = usage.get("total_tokens") or (
+            prompt_tokens + completion_tokens
+        )
+        completion_details = usage.get("completion_tokens_details") or {}
+        reasoning_tokens = completion_details.get("reasoning_tokens") or 0
+
+        self.cost.n_prompt_tokens = prompt_tokens
+        self.cost.n_completion_tokens = completion_tokens
+        self.cost.n_tokens = total_tokens
+        self.cost.n_reasoning_tokens = reasoning_tokens
+
+        cost = token_cost_for_model(
+            model_name, prompt_tokens, completion_tokens
+        )
+        if cost is not None:
+            self.cost.cost = cost
+
     def handle_generation_chunk(self, response: Any) -> None:
         super().handle_generation_chunk(response=response)
 
         try:
+            usage = getattr(response, "usage", None)
+            if usage is not None:
+                self.handle_generation_usage(
+                    getattr(response, "model", "") or "", usage
+                )
+                self.chunks = []
+                return response
+
             if hasattr(response, "choices"):
                 choices = response.choices
 
@@ -675,62 +938,3 @@ def prepend_first_chunk(stream, first_chunk):
     stream._iterator = new_iter()
     return stream
 
-
-def _instrument_stream_span_attributes(stream, first_chunk_received_at: float):
-    """Wrap `stream`'s iterator to record `CHUNKS_RECEIVED` and, when usage
-    is available (e.g. the caller passed ``stream_options={"include_usage":
-    True}``), `TOKENS_PER_SECOND` on the span that is current *right now* --
-    which must be called before this function, i.e. synchronously as soon as
-    the streamed response object is returned.
-
-    This only works if that span is still open by the time the stream is
-    exhausted, which is the case when the calling code consumes the stream
-    inside the same instrumented function that issued the request (the
-    common pattern). If the raw stream is instead handed off elsewhere (e.g.
-    returned directly to an outer caller for pass-through streaming), the
-    span will have already ended and this becomes a silent no-op -- chunk
-    count/throughput just won't be recorded for that call, same as if this
-    function did not exist.
-    """
-    span = otel_trace.get_current_span()
-    if not span.get_span_context().is_valid:
-        return stream
-
-    state: Dict[str, Any] = {
-        "count": 0,
-        "last_chunk_at": first_chunk_received_at,
-        "completion_tokens": None,
-    }
-
-    def _record_chunk(chunk):
-        state["count"] += 1
-        state["last_chunk_at"] = time.monotonic()
-        usage = getattr(chunk, "usage", None)
-        completion_tokens = getattr(usage, "completion_tokens", None)
-        if completion_tokens:
-            state["completion_tokens"] = completion_tokens
-        return chunk
-
-    def _on_done(_chunks):
-        try:
-            span.set_attribute(
-                SpanAttributes.GENERATION.CHUNKS_RECEIVED, state["count"]
-            )
-            duration_s = state["last_chunk_at"] - first_chunk_received_at
-            if state["completion_tokens"] and duration_s > 0:
-                span.set_attribute(
-                    SpanAttributes.GENERATION.TOKENS_PER_SECOND,
-                    state["completion_tokens"] / duration_s,
-                )
-        except Exception:
-            logger.debug(
-                "Could not record streaming span attributes; the span may "
-                "have already ended.",
-                exc_info=True,
-            )
-
-    if isinstance(stream, openai.Stream):
-        stream._iterator = python_utils.wrap_generator(
-            stream._iterator, wrap=_record_chunk, on_done=_on_done
-        )
-    return stream

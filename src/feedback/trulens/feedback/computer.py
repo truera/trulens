@@ -706,8 +706,10 @@ def _remove_already_computed_feedbacks(
         return flattened_inputs
     eval_root_attributes = attributes[
         attributes.apply(
-            lambda curr: curr.get(SpanAttributes.SPAN_TYPE)
-            == SpanAttributes.SpanType.EVAL_ROOT
+            lambda curr: (
+                curr.get(SpanAttributes.SPAN_TYPE)
+                == SpanAttributes.SpanType.EVAL_ROOT
+            )
         )
     ]
     record_id_to_eval_root_attributes = eval_root_attributes.groupby(
@@ -1039,7 +1041,8 @@ def _call_feedback_function_under_eval_span(
         The score returned by the feedback function.
     """
     with (
-        trace.get_tracer_provider()
+        trace
+        .get_tracer_provider()
         .get_tracer(TRULENS_SERVICE_NAME)
         .start_as_current_span(f"eval-{eval_child_idx}")
     ) as eval_span:
