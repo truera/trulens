@@ -117,7 +117,9 @@ apps/records:
 record: Record = ...
 app: App = ...
 
-feedback_result: FeedbackResult = f_context_relevance.run(app=app, record=record)
+feedback_result: FeedbackResult = f_context_relevance.run(
+    app=app, record=record
+)
 ```
 
 The object can also be provided to an app wrapper for automatic evaluation:
@@ -327,7 +329,7 @@ For your app, you can inspect the JSON-like structure by using the `dict`
 method:
 
 ```python
-app = ... # your app, extending App
+app = ...  # your app, extending App
 print(app.dict())
 ```
 

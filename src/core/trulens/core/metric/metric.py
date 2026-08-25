@@ -583,9 +583,9 @@ class Metric(feedback_schema.FeedbackDefinition):
         return futures
 
     def __call__(self, *args, **kwargs) -> Any:
-        assert (
-            self.imp is not None
-        ), "Metric definition needs an implementation to call."
+        assert self.imp is not None, (
+            "Metric definition needs an implementation to call."
+        )
         overlap = self.implementation_kwargs.keys() & kwargs.keys()
         if overlap:
             raise ValueError(
@@ -1241,9 +1241,9 @@ Metric function signature:
                     )
                     result_val, meta = result_and_meta
 
-                    assert isinstance(
-                        meta, dict
-                    ), f"Metric metadata output must be a dictionary but was {type(meta)}."
+                    assert isinstance(meta, dict), (
+                        f"Metric metadata output must be a dictionary but was {type(meta)}."
+                    )
                 else:
                     # Otherwise it is just the float. We create empty metadata dict.
                     result_val = result_and_meta
@@ -1262,9 +1262,9 @@ Metric function signature:
                     )
 
                 else:
-                    assert isinstance(
-                        result_val, (int, float, list, dict)
-                    ), f"Metric function output must be a float or an int, a list of floats, or dict but was {type(result_val)}."
+                    assert isinstance(result_val, (int, float, list, dict)), (
+                        f"Metric function output must be a float or an int, a list of floats, or dict but was {type(result_val)}."
+                    )
                     feedback_call = feedback_schema.FeedbackCall(
                         args=ins, ret=result_val, meta=meta
                     )
@@ -1331,7 +1331,8 @@ Metric function signature:
         except Exception:
             # Convert traceback to a UTF-8 string, replacing errors to avoid encoding issues
             exc_tb = (
-                traceback.format_exc()
+                traceback
+                .format_exc()
                 .encode("utf-8", errors="replace")
                 .decode("utf-8")
             )
@@ -1380,7 +1381,8 @@ Metric function signature:
         except Exception:
             # Convert traceback to a UTF-8 string, replacing errors to avoid encoding issues
             exc_tb = (
-                traceback.format_exc()
+                traceback
+                .format_exc()
                 .encode("utf-8", errors="replace")
                 .decode("utf-8")
             )

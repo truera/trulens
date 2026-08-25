@@ -115,7 +115,8 @@ def _preprocess_df(
             agg_dict[scored_count_col(col)] = (col, "count")
 
     app_agg_df: pd.DataFrame = (
-        records_df.groupby(
+        records_df
+        .groupby(
             by=["app_version", "app_name", "app_id"], dropna=True, sort=True
         )
         .aggregate(**agg_dict)

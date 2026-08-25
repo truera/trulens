@@ -10,7 +10,7 @@ echo "Port: 8502"
 echo ""
 
 cd "${REPO_ROOT}"
-TRULENS_OTEL_TRACING=1 poetry run streamlit run \
+poetry run streamlit run \
   src/dashboard/trulens/dashboard/main.py \
   --server.port 8502 \
   --server.headless true \

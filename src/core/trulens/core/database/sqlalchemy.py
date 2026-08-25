@@ -454,7 +454,8 @@ class SQLAlchemyDB(core_db.DB):
         _rec = self.orm.Record.parse(record, redact_keys=self.redact_keys)
         with self.session.begin() as session:
             if (
-                session.query(self.orm.Record)
+                session
+                .query(self.orm.Record)
                 .filter_by(record_id=record.record_id)
                 .first()
             ):
@@ -491,7 +492,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             if (
-                _app := session.query(self.orm.AppDefinition)
+                _app := session
+                .query(self.orm.AppDefinition)
                 .filter_by(app_id=app_id)
                 .first()
             ):
@@ -511,7 +513,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             if (
-                _app := session.query(self.orm.AppDefinition)
+                _app := session
+                .query(self.orm.AppDefinition)
                 .filter_by(app_id=app_id)
                 .first()
             ):
@@ -541,7 +544,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             if (
-                _app := session.query(self.orm.AppDefinition)
+                _app := session
+                .query(self.orm.AppDefinition)
                 .filter_by(app_id=app.app_id)
                 .first()
             ):
@@ -567,7 +571,8 @@ class SQLAlchemyDB(core_db.DB):
         """
         with self.session.begin() as session:
             _app = (
-                session.query(self.orm.AppDefinition)
+                session
+                .query(self.orm.AppDefinition)
                 .filter_by(app_id=app_id)
                 .first()
             )
@@ -586,7 +591,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             if (
-                _fb_def := session.query(self.orm.FeedbackDefinition)
+                _fb_def := session
+                .query(self.orm.FeedbackDefinition)
                 .filter_by(
                     feedback_definition_id=feedback_definition.feedback_definition_id
                 )
@@ -1198,7 +1204,8 @@ class SQLAlchemyDB(core_db.DB):
         recent_cutoff = datetime.utcnow() - timedelta(days=7)
 
         base_stmt = (
-            sa.select(
+            sa
+            .select(
                 app_name_col,
                 app_version_col,
                 app_id_col,
@@ -1245,7 +1252,8 @@ class SQLAlchemyDB(core_db.DB):
             app_versions=app_versions,
         )
         eval_stmt = (
-            sa.select(
+            sa
+            .select(
                 self._json_extract_otel(
                     "resource_attributes", ResourceAttributes.APP_NAME
                 ).label("app_name"),
@@ -1276,7 +1284,8 @@ class SQLAlchemyDB(core_db.DB):
             app_versions=app_versions,
         )
         decision_stmt = (
-            sa.select(
+            sa
+            .select(
                 self._json_extract_otel(
                     "resource_attributes", ResourceAttributes.APP_NAME
                 ).label("app_name"),
@@ -1433,7 +1442,8 @@ class SQLAlchemyDB(core_db.DB):
         if end_time is not None:
             conditions.append(self.orm.Event.start_timestamp < end_time)
         stmt = (
-            sa.select(
+            sa
+            .select(
                 self._json_extract_otel(
                     "resource_attributes", ResourceAttributes.APP_NAME
                 ).label("app_name"),
@@ -1551,7 +1561,8 @@ class SQLAlchemyDB(core_db.DB):
         )
         group_cols = ["app_name", "app_version", "time_bucket", "currency"]
         return (
-            records.groupby(group_cols, as_index=False, dropna=False)
+            records
+            .groupby(group_cols, as_index=False, dropna=False)
             .agg(
                 record_count=("latency", "count"),
                 average_latency=("latency", "mean"),
@@ -1626,14 +1637,16 @@ class SQLAlchemyDB(core_db.DB):
         evals["currency"] = evals["currency"].fillna("USD")
         group_cols = ["app_name", "app_version", "time_bucket", "currency"]
         return (
-            evals.groupby(group_cols, as_index=False, dropna=False)
+            evals
+            .groupby(group_cols, as_index=False, dropna=False)
             .agg(
                 evaluated_record_count=("record_id", "nunique"),
                 total_eval_cost=("cost", "sum"),
             )
             .assign(
-                average_eval_cost=lambda frame: frame["total_eval_cost"]
-                / frame["evaluated_record_count"]
+                average_eval_cost=lambda frame: (
+                    frame["total_eval_cost"] / frame["evaluated_record_count"]
+                )
             )
             .sort_values("time_bucket")
         )
@@ -1688,7 +1701,8 @@ class SQLAlchemyDB(core_db.DB):
             "record_attributes", SpanAttributes.RECORD_ID
         )
         stmt = (
-            sa.select(record_id_expr.label("record_id"))
+            sa
+            .select(record_id_expr.label("record_id"))
             .where(sa.and_(*conditions))
             .group_by(record_id_expr)
         )
@@ -1734,7 +1748,8 @@ class SQLAlchemyDB(core_db.DB):
             base_rows = session.execute(record_stmt).all()
 
             fb_stmt = (
-                sa.select(
+                sa
+                .select(
                     self.orm.AppDefinition.app_name.label("app_name"),
                     self.orm.AppDefinition.app_version.label("app_version"),
                     self.orm.AppDefinition.app_id.label("app_id"),
@@ -1957,7 +1972,8 @@ class SQLAlchemyDB(core_db.DB):
         # TODO: thread safety
         with self.session.begin() as session:
             if (
-                _ground_truth := session.query(self.orm.GroundTruth)
+                _ground_truth := session
+                .query(self.orm.GroundTruth)
                 .filter_by(ground_truth_id=ground_truth.ground_truth_id)
                 .first()
             ):
@@ -1985,7 +2001,8 @@ class SQLAlchemyDB(core_db.DB):
 
             # Fetch existing GroundTruth records that match these ids in one query
             existing_ground_truths = (
-                session.query(self.orm.GroundTruth)
+                session
+                .query(self.orm.GroundTruth)
                 .filter(
                     self.orm.GroundTruth.ground_truth_id.in_(ground_truth_ids)
                 )
@@ -2022,7 +2039,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             if (
-                _ground_truth := session.query(self.orm.GroundTruth)
+                _ground_truth := session
+                .query(self.orm.GroundTruth)
                 .filter_by(ground_truth_id=ground_truth_id)
                 .first()
             ):
@@ -2128,7 +2146,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             if (
-                _dataset := session.query(self.orm.Dataset)
+                _dataset := session
+                .query(self.orm.Dataset)
                 .filter_by(dataset_id=dataset.dataset_id)
                 .first()
             ):
@@ -2388,9 +2407,9 @@ class AppsExtractor(core_db.BaseAppsExtractor):
                 with `apps`.
         """
 
-        assert (
-            apps is None or records is None
-        ), "`apps` and `records` are mutually exclusive"
+        assert apps is None or records is None, (
+            "`apps` and `records` are mutually exclusive"
+        )
 
         if apps is not None:
             df = pd.concat(self.extract_apps(apps))

@@ -447,7 +447,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
                 for item in df["meta"]
             ]
             return (
-                df.groupby([
+                df
+                .groupby([
                     "app_name",
                     "app_version",
                     str(group_by_metadata_key),
@@ -457,7 +458,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
             )
         else:
             return (
-                df.groupby(["app_name", "app_version"])[col_agg_list]
+                df
+                .groupby(["app_name", "app_version"])[col_agg_list]
                 .mean()
                 .sort_values(by=feedback_cols, ascending=False)
             )

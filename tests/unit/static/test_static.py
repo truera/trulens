@@ -47,9 +47,9 @@ optional_mods = dict(
 
 # snowflake (snowflake-snowpark-python) is not yet supported in python 3.12
 if sys.version_info >= (3, 12):
-    assert not module_installed(
-        "snowflake-snowpark-python"
-    ), "`snowflake-snowpark-python` should not be installed until it's available in Python 3.12."
+    assert not module_installed("snowflake-snowpark-python"), (
+        "`snowflake-snowpark-python` should not be installed until it's available in Python 3.12."
+    )
 
 optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 
