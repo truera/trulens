@@ -39,6 +39,39 @@ PATTERN_INTEGER: re.Pattern = re.compile(r"([+-]?[1-9][0-9]*|0)")
 """Regex that matches integers."""
 
 
+def _strip_scale_statement(
+    s: str, min_score_val: int, max_score_val: int
+) -> str:
+    """Remove an explicit statement of the rating scale from a judge's answer.
+
+    Covers the two shapes judges actually produce: a range ("0 to 3", "0-3",
+    "between 0 and 3") and a legend ("0 = irrelevant, 3 = highly relevant").
+    Only the configured bounds are removed, so a number that happens to equal a
+    bound but is the actual rating is left alone unless it appears inside one of
+    those shapes.
+
+    Args:
+        s: String to strip.
+
+        min_score_val: Minimum value of the rating scale.
+
+        max_score_val: Maximum value of the rating scale.
+
+    Returns:
+        str: The string with any scale statement removed.
+    """
+    lo = re.escape(str(min_score_val))
+    hi = re.escape(str(max_score_val))
+    patterns = (
+        rf"\b{lo}\s*(?:to|through|and|up to|\.\.\.?|[-‒-―])\s*{hi}\b",
+        rf"\b{lo}\s*=",
+        rf"\b{hi}\s*=",
+    )
+    for pattern in patterns:
+        s = re.sub(pattern, " ", s, flags=re.IGNORECASE)
+    return s
+
+
 def re_configured_rating(
     s: str,
     min_score_val: int = 0,
@@ -74,6 +107,26 @@ def re_configured_rating(
     matches = PATTERN_NUMBER.findall(s)
     if not matches:
         raise ParseError("int or float number", s, pattern=PATTERN_NUMBER)
+
+    def in_range(text: str) -> set:
+        found = set()
+        for match in PATTERN_NUMBER.findall(text):
+            rating = float(match) if allow_decimal else int(float(match))
+            if min_score_val <= rating <= max_score_val:
+                found.add(rating)
+        return found
+
+    # A judge that repeats its own scale ("on a scale of 0 to 3, I rate this 3")
+    # is naming the bounds, not scoring. Those bounds are in range, so they end up
+    # as candidate ratings and the min() below returns the floor instead of the
+    # rating. Drop an explicit scale statement first, and if exactly one candidate
+    # survives, that is the rating. Anything else falls through unchanged, so
+    # "N out of M" phrasing keeps its existing behaviour.
+    without_scale = _strip_scale_statement(s, min_score_val, max_score_val)
+    if without_scale != s:
+        narrowed = in_range(without_scale)
+        if len(narrowed) == 1:
+            return narrowed.pop()
 
     vals = set()
     for match in matches:
