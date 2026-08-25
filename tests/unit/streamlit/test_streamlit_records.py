@@ -1,9 +1,7 @@
-from unittest.mock import patch
-
 import pandas as pd
 from trulens.dashboard.tabs.Records import _conversation_metric_row
 from trulens.dashboard.tabs.Records import _conversation_turn_html
-from trulens.dashboard.tabs.Records import _get_record_ttft_ms
+from trulens.dashboard.tabs.Records import _first_token_latency_ms
 from trulens.dashboard.tabs.Records import _partition_feedback_scopes
 from trulens.dashboard.tabs.Records import _preprocess_df
 from trulens.dashboard.tabs.Records import _split_conversation_turns
@@ -124,11 +122,7 @@ def test_split_short_conversation_keeps_all_turns_visible():
     assert last.empty
 
 
-def _selected_row() -> pd.Series:
-    return pd.Series({"record_id": "record-1", "app_name": "Test App"})
-
-
-def test_get_record_ttft_ms_finds_streaming_generation_span():
+def test_first_token_latency_ms_finds_streaming_generation_span():
     spans = [
         {"record_attributes": {SpanAttributes.SPAN_TYPE: "record_root"}},
         {
@@ -136,60 +130,43 @@ def test_get_record_ttft_ms_finds_streaming_generation_span():
                 SpanAttributes.SPAN_TYPE: "generation",
                 SpanAttributes.GENERATION.IS_STREAMING: True,
                 SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS: 123.4,
-            }
+            },
+            "start_timestamp": 1,
         },
     ]
-    with (
-        patch(
-            "trulens.dashboard.tabs.Records.is_otel_tracing_enabled",
-            return_value=True,
-        ),
-        patch(
-            "trulens.dashboard.tabs.Records._get_event_otel_spans",
-            return_value=spans,
-        ),
-    ):
-        assert _get_record_ttft_ms(_selected_row()) == 123.4
+    assert _first_token_latency_ms(spans) == 123.4
 
 
-def test_get_record_ttft_ms_none_when_otel_tracing_disabled():
-    with patch(
-        "trulens.dashboard.tabs.Records.is_otel_tracing_enabled",
-        return_value=False,
-    ):
-        assert _get_record_ttft_ms(_selected_row()) is None
+def test_first_token_latency_ms_picks_earliest_of_several_streamed_spans():
+    spans = [
+        {
+            "record_attributes": {
+                SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS: 999.0,
+            },
+            "start_timestamp": 5,
+        },
+        {
+            "record_attributes": {
+                SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS: 42.0,
+            },
+            "start_timestamp": 1,
+        },
+    ]
+    assert _first_token_latency_ms(spans) == 42.0
 
 
-def test_get_record_ttft_ms_none_for_non_streaming_record():
+def test_first_token_latency_ms_none_when_no_spans():
+    assert _first_token_latency_ms(None) is None
+    assert _first_token_latency_ms([]) is None
+
+
+def test_first_token_latency_ms_none_for_non_streaming_record():
     spans = [
         {
             "record_attributes": {
                 SpanAttributes.SPAN_TYPE: "generation",
-            }
+            },
+            "start_timestamp": 1,
         }
     ]
-    with (
-        patch(
-            "trulens.dashboard.tabs.Records.is_otel_tracing_enabled",
-            return_value=True,
-        ),
-        patch(
-            "trulens.dashboard.tabs.Records._get_event_otel_spans",
-            return_value=spans,
-        ),
-    ):
-        assert _get_record_ttft_ms(_selected_row()) is None
-
-
-def test_get_record_ttft_ms_none_when_query_fails():
-    with (
-        patch(
-            "trulens.dashboard.tabs.Records.is_otel_tracing_enabled",
-            return_value=True,
-        ),
-        patch(
-            "trulens.dashboard.tabs.Records._get_event_otel_spans",
-            side_effect=RuntimeError("db unavailable"),
-        ),
-    ):
-        assert _get_record_ttft_ms(_selected_row()) is None
+    assert _first_token_latency_ms(spans) is None

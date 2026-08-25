@@ -70,6 +70,7 @@ instance), there are three options:
 
         ```python
         import os
+
         os.environ["OLLAMA_API_BASE"] = "http://my-ollama-host:11434"
 
         from trulens.providers.litellm import LiteLLM

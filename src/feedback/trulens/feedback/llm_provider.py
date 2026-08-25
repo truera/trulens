@@ -223,9 +223,9 @@ class LLMProvider(core_provider.Provider):
         """
 
         assert self.endpoint is not None, "Endpoint is not set."
-        assert (
-            max_score_val > min_score_val
-        ), "Max score must be greater than min score."
+        assert max_score_val > min_score_val, (
+            "Max score must be greater than min score."
+        )
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -336,9 +336,9 @@ class LLMProvider(core_provider.Provider):
                 reason metadata dictionary.
         """
         assert self.endpoint is not None, "Endpoint is not set."
-        assert (
-            max_score_val > min_score_val
-        ), "Max score must be greater than min score."
+        assert max_score_val > min_score_val, (
+            "Max score must be greater than min score."
+        )
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -4400,8 +4400,9 @@ class LLMProvider(core_provider.Provider):
     def conversation_helpfulness(
         self,
         records: Union[List[Any], str],
-        additional_instructions: Optional[str] = None,
         temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -4419,8 +4420,8 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
-            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
 
         Returns:
             float: A value between 0.0 (not helpful) and 1.0 (helpful).
@@ -4449,8 +4450,9 @@ class LLMProvider(core_provider.Provider):
     def conversation_helpfulness_with_cot_reasons(
         self,
         records: Union[List[Any], str],
-        additional_instructions: Optional[str] = None,
         temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -4469,8 +4471,8 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
-            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
 
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not helpful) and 1.0 (helpful) and a dictionary containing the reasons for the evaluation.
@@ -4503,8 +4505,9 @@ class LLMProvider(core_provider.Provider):
         self,
         records: Union[List[Any], str],
         reference_topics: List[str],
-        additional_instructions: Optional[str] = None,
         temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -4523,8 +4526,8 @@ class LLMProvider(core_provider.Provider):
         Args:
             records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
             reference_topics (List[str]): The topics the conversation is expected to adhere to.
-            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
 
         Returns:
             float: A value between 0.0 (off topic) and 1.0 (on topic).
@@ -4553,8 +4556,9 @@ class LLMProvider(core_provider.Provider):
         self,
         records: Union[List[Any], str],
         reference_topics: List[str],
-        additional_instructions: Optional[str] = None,
         temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -4574,8 +4578,8 @@ class LLMProvider(core_provider.Provider):
         Args:
             records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
             reference_topics (List[str]): The topics the conversation is expected to adhere to.
-            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
 
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (off topic) and 1.0 (on topic) and a dictionary containing the reasons for the evaluation.
@@ -4605,8 +4609,9 @@ class LLMProvider(core_provider.Provider):
         self,
         records: Union[List[Any], str],
         reference_goal: Optional[str] = None,
-        additional_instructions: Optional[str] = None,
         temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -4625,8 +4630,8 @@ class LLMProvider(core_provider.Provider):
         Args:
             records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
             reference_goal (Optional[str]): The goal the agent was expected to fulfill. Defaults to None, in which case the goal is inferred from the conversation.
-            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
 
         Returns:
             float: A value of 0.0 (goal not achieved) or 1.0 (goal achieved).
@@ -4656,8 +4661,9 @@ class LLMProvider(core_provider.Provider):
         self,
         records: Union[List[Any], str],
         reference_goal: Optional[str] = None,
-        additional_instructions: Optional[str] = None,
         temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -4677,8 +4683,8 @@ class LLMProvider(core_provider.Provider):
         Args:
             records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
             reference_goal (Optional[str]): The goal the agent was expected to fulfill. Defaults to None, in which case the goal is inferred from the conversation.
-            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
 
         Returns:
             Tuple[float, Dict]: A tuple containing a value of 0.0 (goal not achieved) or 1.0 (goal achieved) and a dictionary containing the reasons for the evaluation.
@@ -4708,8 +4714,9 @@ class LLMProvider(core_provider.Provider):
     def coherence_across_turns(
         self,
         records: Union[List[Any], str],
-        additional_instructions: Optional[str] = None,
         temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -4727,8 +4734,8 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
-            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
 
         Returns:
             float: A value between 0.0 (not coherent) and 1.0 (coherent).
@@ -4754,8 +4761,9 @@ class LLMProvider(core_provider.Provider):
     def coherence_across_turns_with_cot_reasons(
         self,
         records: Union[List[Any], str],
-        additional_instructions: Optional[str] = None,
         temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -4774,8 +4782,8 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
-            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
 
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not coherent) and 1.0 (coherent) and a dictionary containing the reasons for the evaluation.

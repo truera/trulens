@@ -9,6 +9,7 @@ import logging
 from multiprocessing import Process
 import threading
 from threading import Thread
+from time import monotonic
 from time import sleep
 from time import time
 from typing import (
@@ -52,6 +53,8 @@ from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 if TYPE_CHECKING:
+    from opentelemetry.sdk.metrics import MeterProvider
+    from opentelemetry.sdk.metrics.export import MetricExporter
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SpanExporter
     from trulens.core import app as base_app
@@ -107,6 +110,14 @@ class TruSession(
             is created.
 
         experimental_feature_flags: Experimental feature flags.
+
+        otel_exporter: OpenTelemetry exporter to use. Set to ``"otlp"`` to
+            export TruLens traces and GenAI metrics using OTLP. If omitted,
+            the existing TruLens/Snowflake exporter remains the default.
+
+        otlp_endpoint: Optional OTLP gRPC endpoint. This is only valid with
+            ``otel_exporter="otlp"``. If omitted, the standard OpenTelemetry
+            environment variables are used.
 
         **kwargs: All other arguments are used to initialize
             [DefaultDBConnector][trulens.core.database.connector.default.DefaultDBConnector].
@@ -178,6 +189,14 @@ class TruSession(
         pydantic.PrivateAttr(None)
     )
 
+    _experimental_otel_metric_exporter: Optional[MetricExporter] = (
+        pydantic.PrivateAttr(None)
+    )
+
+    _experimental_meter_provider: Optional[MeterProvider] = (
+        pydantic.PrivateAttr(None)
+    )
+
     @property
     def experimental_otel_exporter(
         self,
@@ -196,11 +215,12 @@ class TruSession(
         Force flush the OpenTelemetry exporters.
 
         Args:
-            timeout_millis: The maximum amount of time to wait for spans to be
-                processed.
+            timeout_millis: The maximum amount of time to wait for spans and
+                metrics to be processed.
 
         Returns:
-            False if the timeout is exceeded, feature is not enabled, or the provider doesn't exist, True otherwise.
+            False if the timeout is exceeded, feature is not enabled, or the
+            provider doesn't exist, True otherwise.
         """
 
         if (
@@ -211,7 +231,20 @@ class TruSession(
         ):
             return False
 
-        return self._experimental_tracer_provider.force_flush(timeout_millis)
+        flush_deadline = monotonic() + timeout_millis / 1000
+        traces_flushed = self._experimental_tracer_provider.force_flush(
+            timeout_millis
+        )
+        if self._experimental_meter_provider is None:
+            return traces_flushed
+
+        remaining_timeout_millis = max(
+            0, int((flush_deadline - monotonic()) * 1000)
+        )
+        metrics_flushed = self._experimental_meter_provider.force_flush(
+            remaining_timeout_millis
+        )
+        return traces_flushed and metrics_flushed
 
     def __str__(self) -> str:
         return f"TruSession({self.connector})"
@@ -232,7 +265,10 @@ class TruSession(
                 List[core_experimental.Feature],
             ]
         ] = None,
+        otel_exporter: Optional[str] = None,
+        otlp_endpoint: Optional[str] = None,
         _experimental_otel_exporter: Optional[SpanExporter] = None,
+        _experimental_otel_metric_exporter: Optional[MetricExporter] = None,
         **kwargs: Any,
     ):
         if python_utils.safe_hasattr(self, "connector"):
@@ -273,14 +309,37 @@ class TruSession(
         # for WithExperimentalSettings mixin
         self.experimental_set_features(experimental_feature_flags)
 
-        if (
-            _experimental_otel_exporter is not None
-            and not self.experimental_feature(
+        if otel_exporter is not None:
+            if not isinstance(otel_exporter, str):
+                raise ValueError("`otel_exporter` must be a string.")
+            otel_exporter = otel_exporter.lower()
+            if otel_exporter != "otlp":
+                raise ValueError('`otel_exporter` must be `None` or "otlp".')
+            if _experimental_otel_exporter is not None:
+                raise ValueError(
+                    'Cannot combine `otel_exporter="otlp"` with '
+                    "`_experimental_otel_exporter`."
+                )
+            if _experimental_otel_metric_exporter is not None:
+                raise ValueError(
+                    'Cannot combine `otel_exporter="otlp"` with '
+                    "`_experimental_otel_metric_exporter`."
+                )
+            self.experimental_enable_feature(
                 core_experimental.Feature.OTEL_TRACING
             )
+        elif otlp_endpoint is not None:
+            raise ValueError('`otlp_endpoint` requires `otel_exporter="otlp"`.')
+
+        if (
+            _experimental_otel_exporter is not None
+            or _experimental_otel_metric_exporter is not None
+        ) and not self.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
         ):
             raise ValueError(
-                "Cannot supply `_experimental_otel_exporter` without enabling OTEL tracing!"
+                "Cannot supply an experimental OTel exporter without enabling "
+                "OTEL tracing!"
             )
         if self.experimental_feature(core_experimental.Feature.OTEL_TRACING):
             otel_tracing_feature._FeatureSetup.assert_optionals_installed()
@@ -290,7 +349,12 @@ class TruSession(
             )
 
             _TruSession._set_up_otel_exporter(
-                self, connector, _experimental_otel_exporter
+                self,
+                connector,
+                _experimental_otel_exporter,
+                exporter_name=otel_exporter,
+                otlp_endpoint=otlp_endpoint,
+                metric_exporter=_experimental_otel_metric_exporter,
             )
 
             _TruSession._start_track_costs_background()
@@ -1115,9 +1179,9 @@ class TruSession(
             )
 
         assert not fork, "Fork mode not yet implemented."
-        assert (
-            (not fork) or (not return_when_done)
-        ), "fork=True implies running asynchronously but return_when_done=True does not!"
+        assert (not fork) or (not return_when_done), (
+            "fork=True implies running asynchronously but return_when_done=True does not!"
+        )
 
         if self._evaluator_proc is not None:
             if restart:

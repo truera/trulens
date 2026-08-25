@@ -224,9 +224,11 @@ class Record(serial_utils.SerialModel, Hashable):
         if calls is not None:
             self.calls = sorted(
                 self.calls,
-                key=lambda call: call.perf.end_time
-                if call.perf is not None
-                else datetime.datetime.max,
+                key=lambda call: (
+                    call.perf.end_time
+                    if call.perf is not None
+                    else datetime.datetime.max
+                ),
             )
 
         if record_id is None:

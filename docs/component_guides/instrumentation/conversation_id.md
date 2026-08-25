@@ -21,8 +21,9 @@ from trulens.apps.app import TruApp
 
 session = TruSession()
 
-tru_app = TruApp(my_app, app_name="MyApp", app_version="v1",
-                 main_method=my_app.query)
+tru_app = TruApp(
+    my_app, app_name="MyApp", app_version="v1", main_method=my_app.query
+)
 
 with tru_app(conversation_id="conv-abc-123") as recording:
     response = my_app.query("What is TruLens?")
