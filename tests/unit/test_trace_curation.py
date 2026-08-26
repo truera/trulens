@@ -515,6 +515,14 @@ class _RecordingDB:
 
     Batch boundaries are a property of the curation loop, not of SQL, so they
     are checked against a stub rather than through a real database.
+
+    Note:
+        This is deliberately not a full `DB` implementation. It covers only the
+        two calls curation makes — `insert_dataset` and
+        `batch_insert_ground_truth` — and has no read side at all, so anything
+        that needs to load a dataset back (`get_ground_truth`, and the rest of
+        the `DB` interface) must use a real database, as the other tests here
+        do.
     """
 
     def __init__(self):

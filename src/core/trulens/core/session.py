@@ -1116,11 +1116,10 @@ class TruSession(
         self,
         dataset_name: str,
         records: pandas.DataFrame,
-        mapping: Optional[core_dataset.TraceDatasetMapping] = None,
-        expected_response_fn: Optional[
-            Callable[[pandas.Series], Optional[str]]
-        ] = None,
-        dataset_metadata: Optional[Dict[str, Any]] = None,
+        mapping: core_dataset.TraceDatasetMapping | None = None,
+        expected_response_fn: Callable[[pandas.Series], str | None]
+        | None = None,
+        dataset_metadata: dict[str, Any] | None = None,
         on_error: str = core_dataset.ON_ERROR_RAISE,
         batch_size: int = core_dataset.DEFAULT_BATCH_SIZE,
         include_provenance: bool = True,

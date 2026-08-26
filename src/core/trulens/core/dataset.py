@@ -185,10 +185,10 @@ class CurationRowError(ValueError):
     [CurationError][trulens.core.dataset.CurationError] in `collect` mode.
     """
 
-    def __init__(self, reason: str, message: str, row_index: Any = None):
+    def __init__(self, row_index: Any, reason: str, message: str):
+        self.row_index = row_index
         self.reason = reason
         self.message = message
-        self.row_index = row_index
         super().__init__(f"row {row_index}: {message}")
 
 
@@ -208,7 +208,7 @@ def _is_missing(value: Any) -> bool:
     return False
 
 
-def _normalize_text(value: Any) -> Optional[str]:
+def _normalize_text(value: Any) -> str | None:
     """Resolve a recorded input or output into stable text.
 
     Records carry main inputs and outputs as strings in OTEL mode and as
@@ -240,7 +240,7 @@ def _normalize_text(value: Any) -> Optional[str]:
     return text
 
 
-def _normalize_contexts(value: Any) -> Optional[List[Dict[str, Any]]]:
+def _normalize_contexts(value: Any) -> list[dict[str, Any]] | None:
     """Normalize expected contexts into `GroundTruth.expected_chunks` shape.
 
     Accepts a list of dicts, a list of strings, a single string or dict, or a
@@ -335,7 +335,7 @@ def _ground_truth_of_row(
     dataset_id: types_schema.DatasetID,
     mapping: TraceDatasetMapping,
     available: Set[str],
-    expected_response_fn: Optional[Callable[[pd.Series], Optional[str]]],
+    expected_response_fn: Callable[[pd.Series], str | None] | None,
     include_provenance: bool = True,
 ) -> groundtruth_schema.GroundTruth:
     """Turn one dataframe row into a ground truth.
@@ -411,7 +411,7 @@ def _batched(items: Iterable[Any], batch_size: int) -> Iterable[List[Any]]:
 def _resolve_records(
     records: pd.DataFrame,
     mapping: TraceDatasetMapping,
-    record_resolver: Optional[Callable[[List[str]], pd.DataFrame]],
+    record_resolver: Callable[[list[str]], pd.DataFrame] | None,
 ) -> pd.DataFrame:
     """Fill in record content for a dataframe that only carries record ids.
 
@@ -481,13 +481,13 @@ def curate_records_to_dataset(
     dataset_name: str,
     records: pd.DataFrame,
     db: Any,
-    mapping: Optional[TraceDatasetMapping] = None,
-    expected_response_fn: Optional[Callable[[pd.Series], Optional[str]]] = None,
-    dataset_metadata: Optional[Dict[str, Any]] = None,
+    mapping: TraceDatasetMapping | None = None,
+    expected_response_fn: Callable[[pd.Series], str | None] | None = None,
+    dataset_metadata: dict[str, Any] | None = None,
     on_error: str = ON_ERROR_RAISE,
     batch_size: int = DEFAULT_BATCH_SIZE,
     include_provenance: bool = True,
-    record_resolver: Optional[Callable[[List[str]], pd.DataFrame]] = None,
+    record_resolver: Callable[[list[str]], pd.DataFrame] | None = None,
 ) -> CurationResult:
     """Curate a records dataframe into a persisted dataset.
 
