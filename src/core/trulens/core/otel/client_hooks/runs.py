@@ -74,6 +74,22 @@ def runs_enabled() -> bool:
     return value not in {"0", "false", "no", "off"}
 
 
+def _is_snowflake_run_capable(app: Any) -> bool:
+    """Return whether ``app`` owns a Snowflake AI Observability run store.
+
+    Run lifecycle (creating a run and driving it to a terminal status via
+    ``start_ingestion_query``) is a Snowflake AI Observability concept. The
+    Snowflake connector fuses a Snowflake ``RunDao`` onto the app as
+    ``snowflake_run_dao`` during ``augment_app``; OSS connectors only provide a
+    generic ``DefaultRunDao`` under ``run_dao``. Checking for the Snowflake-only
+    attribute (rather than any ``run_dao``) keeps run management scoped to
+    Snowflake destinations without importing the Snowflake connector into
+    trulens-core.
+    """
+
+    return getattr(app, "snowflake_run_dao", None) is not None
+
+
 class RunCoordinator:
     """Create and complete runs for exported coding-agent turns.
 
@@ -137,8 +153,10 @@ class RunCoordinator:
             connector=connector,
             start_evaluator=False,
         )
-        if app.run_dao is None:
-            self._unsupported("Destination does not support runs.")
+        if not _is_snowflake_run_capable(app):
+            self._unsupported(
+                "Destination does not support Snowflake AI Observability runs."
+            )
             return None
         self._apps[key] = app
         return app

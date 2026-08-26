@@ -121,8 +121,14 @@ record.
 
 ## Run lifecycle
 
-Each conversation maps to one run. Each exported turn contributes one invocation
-containing one input record:
+Run lifecycle — creating a run and driving it to a terminal status — is a
+Snowflake AI Observability concept. It is managed **only** when hook spans are
+exported to a Snowflake destination. OSS (local database/Postgres) and plain
+OTLP destinations export spans but skip run lifecycle entirely: no run is
+created and no ingestion is started.
+
+For a Snowflake destination, each conversation maps to one run. Each exported
+turn contributes one invocation containing one input record:
 
 ```text
 Run (run name = native conversation/session ID)
@@ -150,15 +156,18 @@ trace and logs a warning, but the run may remain non-terminal in the UI. A span
 export failure still releases the turn for retry with the journal's normal
 backoff.
 
-Destinations with no run concept, such as plain OTLP, still receive spans; there
-is simply no run to complete. To export spans without managing runs at all:
+Destinations without a Snowflake run store — OSS databases, plain OTLP, or a
+session with no connector — still receive spans; there is simply no run to create
+or complete, and this is treated as a quiet, expected state rather than an error.
+To additionally disable run management on a Snowflake destination (for example,
+to debug the span path in isolation):
 
 ```bash
 export TRULENS_MANAGE_RUNS=false
 ```
 
-Turns then never reach a terminal run status, so this is intended for debugging
-the span path in isolation.
+With run management disabled, turns never reach a terminal run status.
+
 
 ## Trace semantics
 
