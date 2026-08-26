@@ -14,13 +14,21 @@ from trulens.core.otel.client_hooks import models
 _TERMINAL_EVENTS = {
     "stop",
     "stopfailure",
+    "session.idle",
+    "session.error",
+    "sessionend",
 }
-_FAILED_EVENTS = {"stopfailure", "posttoolusefailure"}
+_FAILED_EVENTS = {
+    "stopfailure",
+    "posttoolusefailure",
+    "session.error",
+}
 _START_EVENTS = {
     "pretooluse",
     "subagentstart",
     "beforeshellexecution",
     "beforemcpexecution",
+    "tool.execute.before",
 }
 _END_EVENTS = {
     "posttooluse",
@@ -28,6 +36,8 @@ _END_EVENTS = {
     "subagentstop",
     "aftershellexecution",
     "aftermcpexecution",
+    "tool.execute.after",
+    "file.edited",
 }
 
 
@@ -92,6 +102,7 @@ def _category(event_name: str, tool_name: Optional[str]) -> str:
         "tool" in normalized
         or "shell" in normalized
         or "fileedit" in normalized
+        or "file.edit" in normalized
     ):
         return "tool"
     return "workflow"
@@ -127,16 +138,21 @@ def _parse(
     payload: Mapping[str, Any],
     spec: Optional[clients.ClientSpec] = None,
 ) -> models.HookEvent:
-    event_name = str(
-        _first(payload, "hook_event_name", "event_name", "event") or "unknown"
-    )
-    normalized_name = event_name.lower()
     aliases = spec.field_aliases if spec is not None else clients.FieldAliases()
     overrides = (
         spec.extract_overrides(payload)
         if spec is not None and spec.extract_overrides is not None
         else {}
     )
+    raw_event = overrides.get("event_name") or _first(
+        payload, "hook_event_name", "event_name", "event"
+    )
+    event_name = (
+        str(raw_event)
+        if raw_event is not None and not isinstance(raw_event, Mapping)
+        else "unknown"
+    )
+    normalized_name = event_name.lower()
     conversation_id = overrides.get("conversation_id") or _first(
         payload, *aliases.conversation
     )
@@ -147,7 +163,9 @@ def _parse(
     operation_id = overrides.get("operation_id") or _first(
         payload, *aliases.operation
     )
-    tool_name = _first(payload, "tool_name", "command_type")
+    tool_name = overrides.get("tool_name") or _first(
+        payload, "tool_name", "command_type", "tool"
+    )
     server_name = _first(payload, "mcp_server_name", "server_name")
     usage = payload.get("usage")
     if not isinstance(usage, Mapping):
@@ -161,11 +179,18 @@ def _parse(
     )
     known_keys = {
         "session_id",
+        "sessionID",
         "conversation_id",
         "generation_id",
         "turn_id",
         "prompt_id",
         "message_id",
+        "messageID",
+        "call_id",
+        "callID",
+        "tool",
+        "args",
+        "parts",
         "hook_event_name",
         "event_name",
         "event",
@@ -194,6 +219,7 @@ def _parse(
         "text",
         "tool_input",
         "tool_output",
+        "tool_response",
         "diff",
         "patch",
         "edits",
@@ -225,7 +251,7 @@ def _parse(
         category=_category(event_name, str(tool_name) if tool_name else None),
         terminal=normalized_name in _TERMINAL_EVENTS,
         failed=failed,
-        model=_first(payload, "model", "model_id"),
+        model=overrides.get("model") or _first(payload, "model", "model_id"),
         tool_name=str(tool_name) if tool_name is not None else None,
         server_name=str(server_name) if server_name is not None else None,
         duration_ms=_number(_first(payload, "duration_ms", "duration")),
@@ -236,11 +262,15 @@ def _parse(
             _first(payload, "output_tokens") or usage.get("output_tokens")
         ),
         cost=_number(payload.get("cost")),
-        prompt=payload.get("prompt"),
+        prompt=overrides.get("prompt", payload.get("prompt")),
         response=overrides.get("response")
         or _first(payload, *aliases.response),
-        tool_input=_first(payload, "tool_input", "command"),
-        tool_output=_first(payload, "tool_output", "result_json", "output"),
+        tool_input=overrides.get("tool_input")
+        or _first(payload, "tool_input", "command", "args"),
+        tool_output=overrides.get("tool_output")
+        or _first(
+            payload, "tool_output", "tool_response", "result_json", "output"
+        ),
         diff=_diff(payload),
         paths={
             "file_path": payload.get("file_path"),
@@ -265,6 +295,17 @@ def parse_cursor(payload: Mapping[str, Any]) -> models.HookEvent:
     return _parse("cursor", payload)
 
 
+def parse_opencode(payload: Mapping[str, Any]) -> models.HookEvent:
+    """Parse one OpenCode plugin hook payload."""
+
+    spec = None
+    try:
+        spec = clients.get_client("opencode")
+    except ValueError:
+        spec = None
+    return _parse("opencode", payload, spec=spec)
+
+
 def parse(client: str, payload: Mapping[str, Any]) -> models.HookEvent:
     """Parse a supported client's hook payload."""
 
@@ -275,5 +316,7 @@ def parse(client: str, payload: Mapping[str, Any]) -> models.HookEvent:
             return parse_claude(payload)
         if client == "cursor":
             return parse_cursor(payload)
+        if client == "opencode":
+            return parse_opencode(payload)
         raise
     return _parse(spec.name, payload, spec=spec)

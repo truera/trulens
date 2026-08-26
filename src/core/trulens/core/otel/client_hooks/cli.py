@@ -32,6 +32,14 @@ def _configuration(spec: clients.ClientSpec) -> dict:
     return dict(spec.build_config(_command(spec.name)))
 
 
+def _plugin_source(spec: clients.ClientSpec) -> Optional[str]:
+    return spec.build_plugin(_command(spec.name))
+
+
+def _is_plugin_client(spec: clients.ClientSpec) -> bool:
+    return spec.plugin_builder is not None
+
+
 def _write_atomic(path: Path, content: str) -> None:
     descriptor, temporary_name = tempfile.mkstemp(
         dir=path.parent, prefix=f".{path.name}.", suffix=".tmp"
@@ -111,7 +119,60 @@ def _config_path(spec: clients.ClientSpec, project: bool) -> Path:
     return path.expanduser()
 
 
+def _backup_path(path: Path) -> Path:
+    return path.with_suffix(path.suffix + ".trulens.bak")
+
+
+def _install_plugin(
+    spec: clients.ClientSpec, project: bool, dry_run: bool
+) -> int:
+    path = _config_path(spec, project)
+    rendered = _plugin_source(spec) or ""
+    if not rendered.endswith("\n"):
+        rendered += "\n"
+    if dry_run:
+        sys.stdout.write(rendered)
+        return 0
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        shutil.copy2(path, _backup_path(path))
+    _write_atomic(path, rendered)
+    sys.stdout.write(f"Installed TruLens hooks in {path}.\n")
+    return 0
+
+
+def _uninstall_plugin(
+    spec: clients.ClientSpec, project: bool, dry_run: bool
+) -> int:
+    path = _config_path(spec, project)
+    if not path.exists():
+        sys.stdout.write(f"No hook configuration found at {path}.\n")
+        return 0
+    current = path.read_text()
+    if dry_run:
+        sys.stdout.write(
+            current if not _is_managed_plugin(current, spec) else ""
+        )
+        return 0
+    if not _is_managed_plugin(current, spec):
+        sys.stdout.write(f"No TruLens-managed plugin found at {path}.\n")
+        return 0
+    shutil.copy2(path, _backup_path(path))
+    path.unlink()
+    sys.stdout.write(f"Removed TruLens hooks from {path}.\n")
+    return 0
+
+
+def _is_managed_plugin(content: str, spec: clients.ClientSpec) -> bool:
+    return _MARKER in content and (
+        f"ingest {spec.name}" in content
+        or f"ingest --client {spec.name}" in content
+    )
+
+
 def _install(spec: clients.ClientSpec, project: bool, dry_run: bool) -> int:
+    if _is_plugin_client(spec):
+        return _install_plugin(spec, project, dry_run)
     path = _config_path(spec, project)
     current = json.loads(path.read_text()) if path.exists() else {}
     configuration = dict(_configuration(spec))
@@ -125,14 +186,15 @@ def _install(spec: clients.ClientSpec, project: bool, dry_run: bool) -> int:
         return 0
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():
-        backup = path.with_suffix(path.suffix + ".trulens.bak")
-        shutil.copy2(path, backup)
+        shutil.copy2(path, _backup_path(path))
     _write_atomic(path, rendered)
     sys.stdout.write(f"Installed TruLens hooks in {path}.\n")
     return 0
 
 
 def _uninstall(spec: clients.ClientSpec, project: bool, dry_run: bool) -> int:
+    if _is_plugin_client(spec):
+        return _uninstall_plugin(spec, project, dry_run)
     path = _config_path(spec, project)
     if not path.exists():
         sys.stdout.write(f"No hook configuration found at {path}.\n")
@@ -143,8 +205,7 @@ def _uninstall(spec: clients.ClientSpec, project: bool, dry_run: bool) -> int:
     if dry_run:
         sys.stdout.write(rendered)
         return 0
-    backup = path.with_suffix(path.suffix + ".trulens.bak")
-    shutil.copy2(path, backup)
+    shutil.copy2(path, _backup_path(path))
     _write_atomic(path, rendered)
     sys.stdout.write(f"Removed TruLens hooks from {path}.\n")
     return 0
@@ -194,6 +255,18 @@ def _validate() -> int:
             "Snowflake export requires TRULENS_HOOKS_SNOWFLAKE_CONNECTION.\n"
         )
         return 1
+    if destination == "snowflake" and not all(
+        os.environ.get(name)
+        for name in (
+            "TRULENS_HOOKS_SNOWFLAKE_DATABASE",
+            "TRULENS_HOOKS_SNOWFLAKE_SCHEMA",
+        )
+    ):
+        sys.stderr.write(
+            "Snowflake export requires TRULENS_HOOKS_SNOWFLAKE_DATABASE and "
+            "TRULENS_HOOKS_SNOWFLAKE_SCHEMA unless both are set in the connection profile.\n"
+        )
+        return 1
     return 0
 
 
@@ -210,6 +283,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if args.command in {"config", "install", "uninstall", "status"}:
         spec = clients.get_client(args.client)
         if args.command == "config":
+            plugin = _plugin_source(spec)
+            if plugin is not None:
+                if not plugin.endswith("\n"):
+                    plugin += "\n"
+                sys.stdout.write(plugin)
+                return 0
             sys.stdout.write(json.dumps(_configuration(spec), indent=2) + "\n")
             return 0
         if args.command == "install":
@@ -219,8 +298,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         path = _config_path(spec, False)
         installed = False
         if path.exists():
-            current = json.loads(path.read_text())
-            installed = _is_managed_hook(current.get("hooks", {}), spec)
+            if _is_plugin_client(spec):
+                installed = _is_managed_plugin(path.read_text(), spec)
+            else:
+                current = json.loads(path.read_text())
+                installed = _is_managed_hook(current.get("hooks", {}), spec)
         sys.stdout.write(
             f"{spec.name}: {'installed' if installed else 'not installed'}\n"
         )

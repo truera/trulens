@@ -106,6 +106,7 @@ class EventJournal:
         return event.event_name.lower() in {
             "userpromptsubmit",
             "beforesubmitprompt",
+            "chat.message",
         }
 
     def append(self, event: models.HookEvent) -> Tuple[str, bool]:
@@ -116,8 +117,10 @@ class EventJournal:
             state,
         ):
             turn_id = event.turn_id
+            active_turn_id = state.get("active_turn")
+            if event.terminal and active_turn_id is not None:
+                turn_id = active_turn_id
             if turn_id is None and self._starts_turn(event):
-                active_turn_id = state.get("active_turn")
                 active_turn = state["turns"].get(active_turn_id, {})
                 if event.event_id in active_turn.get("event_ids", []):
                     turn_id = active_turn_id

@@ -2426,6 +2426,7 @@ python-versions = ">=3.10"
 groups = ["providers"]
 files = [
     {file = "google_auth-2.57.0-py3-none-any.whl", hash = "sha256:180dafe015cfb62193bea26b677500fab5b9fd51a1e825ebf3ad9b182047ae59"},
+    {file = "google_auth-2.57.0.tar.gz", hash = "sha256:9b4f96d6a1feb5f7201231f47cfb3de08d8f176f8a61f9e461555116e95a8789"},
 ]
 
 [package.dependencies]
@@ -12183,6 +12184,23 @@ type = "directory"
 url = "src/apps/llamaindex"
 
 [[package]]
+name = "trulens-apps-opencode"
+version = "2.13.1"
+description = "OpenCode hook instrumentation plugin for TruLens."
+optional = false
+python-versions = "^3.9"
+groups = ["apps"]
+files = []
+develop = true
+
+[package.dependencies]
+trulens-core = "^2.0.0"
+
+[package.source]
+type = "directory"
+url = "src/apps/opencode"
+
+[[package]]
 name = "trulens-apps-rl"
 version = "2.13.1"
 description = "RL reward integration for TruLens feedback metrics."
@@ -13914,4 +13932,4 @@ otlp = ["opentelemetry-exporter-otlp-proto-grpc"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "9c8d07531779bc3210fb034f0e516555a4085fcf51b571c1037f09a88f000166"
+content-hash = "cb032d20571ebbf5b831cf9de3561b1b9a53572409fa4565eed38eac5a41cf8e"

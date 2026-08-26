@@ -20,8 +20,10 @@ from trulens.core.otel.client_hooks import tracing
 from trulens.experimental.otel_tracing.core.exporter import (
     utils as exporter_utils,
 )
+from trulens.otel.semconv.trace import ErrorAttributes
 from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import GenAIEvents
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 
@@ -37,6 +39,15 @@ def _cursor(event_name: str, **values):
     return {
         "conversation_id": "conversation-1",
         "generation_id": "generation-1",
+        "hook_event_name": event_name,
+        **values,
+    }
+
+
+def _opencode(event_name: str, **values):
+    return {
+        "session_id": "session-1",
+        "message_id": "message-1",
         "hook_event_name": event_name,
         **values,
     }
@@ -59,6 +70,24 @@ def test_claude_parser_normalizes_tool_failure():
     assert event.failed
     assert event.operation_id == "tool-1"
     assert event.duration_ms == 10
+
+
+def test_opencode_parser_normalizes_tool_and_idle_events():
+    start = parsers.parse_opencode(
+        _opencode(
+            "tool.execute.before",
+            tool="bash",
+            call_id="call-1",
+            tool_input={"command": "pytest"},
+        )
+    )
+    stop = parsers.parse_opencode(_opencode("session.idle"))
+
+    assert start.category == "tool"
+    assert start.phase == "start"
+    assert start.operation_id == "call-1"
+    assert stop.terminal
+    assert not stop.failed
 
 
 def test_cursor_parser_preserves_unknown_metadata():
@@ -151,14 +180,13 @@ def test_apply_patch_diff_is_bounded_and_emitted_on_span():
     ).apply(event)
 
     spans = tracing.TraceAssembler().assemble([captured])
-    patch_span = next(span for span in spans if span.name == "ApplyPatch")
+    patch_span = next(
+        span for span in spans if span.name == "execute_tool ApplyPatch"
+    )
     assert (
         "[TRUNCATED]" in patch_span.attributes[SpanAttributes.CODING_AGENT.DIFF]
     )
-    assert (
-        patch_span.attributes["vcs.change.diff"]
-        == patch_span.attributes[SpanAttributes.CODING_AGENT.DIFF]
-    )
+    assert "vcs.change.diff" not in patch_span.attributes
 
 
 def test_journal_deduplicates_and_correlates_turn(tmp_path: Path):
@@ -244,6 +272,28 @@ def test_journal_groups_sequential_turns_by_conversation(tmp_path: Path):
     assert first_events[0].turn_id != second_events[0].turn_id
 
 
+def test_journal_correlates_terminal_event_to_active_cursor_turn(
+    tmp_path: Path,
+):
+    event_journal = journal.EventJournal(tmp_path)
+    prompt_payload = _cursor("beforeSubmitPrompt", prompt="hello")
+    prompt_payload["generation_id"] = "prompt-generation"
+    stop_payload = _cursor("stop")
+    stop_payload["generation_id"] = "stop-generation"
+
+    turn_id, _ = event_journal.append(parsers.parse_cursor(prompt_payload))
+    terminal_turn_id, terminal = event_journal.append(
+        parsers.parse_cursor(stop_payload)
+    )
+
+    assert terminal
+    assert terminal_turn_id == turn_id == "prompt-generation"
+    assert [
+        event.event_name
+        for event in event_journal.get_turn("cursor", "conversation-1", turn_id)
+    ] == ["beforeSubmitPrompt", "stop"]
+
+
 def test_assembler_creates_private_root_agent_and_tool_spans():
     policy = privacy.CapturePolicy()
     events = [
@@ -297,7 +347,7 @@ def test_assembler_creates_private_root_agent_and_tool_spans():
     assert root.attributes[SpanAttributes.RECORD_ROOT.INPUT] == (
         "[content not captured]"
     )
-    assert root.attributes[SpanAttributes.RUN_NAME] == "client-hooks"
+    assert root.attributes[SpanAttributes.RUN_NAME] == "conversation-1"
     assert root.attributes[SpanAttributes.INPUT_RECORDS_COUNT] == 1
     assert (
         root.context.trace_id == agent.context.trace_id == tool.context.trace_id
@@ -334,18 +384,7 @@ def test_cursor_after_response_waits_for_stop_and_captures_text():
         root.attributes[SpanAttributes.RECORD_ROOT.OUTPUT] == "final response"
     )
     assert root.attributes[SpanAttributes.CALL.RETURN] == '"final response"'
-    assert (
-        "final response"
-        in root.events[0].attributes[
-            GenAIEvents.EventAttributes.OUTPUT_MESSAGES
-        ]
-    )
-    assert json.loads(
-        root.events[0].attributes[GenAIEvents.EventAttributes.INPUT_MESSAGES]
-    ) == [{"role": "user", "content": "hello"}]
-    assert json.loads(
-        root.events[0].attributes[GenAIEvents.EventAttributes.OUTPUT_MESSAGES]
-    ) == [{"role": "assistant", "content": "final response"}]
+    assert not root.events
     response_span = next(
         span
         for span in spans
@@ -359,6 +398,27 @@ def test_cursor_after_response_waits_for_stop_and_captures_text():
         == SpanAttributes.SpanType.AGENT.value
     )
     assert response_span.parent.span_id == agent.context.span_id
+    assert response_span.name == "chat"
+    assert json.loads(
+        response_span.events[0].attributes[
+            GenAIEvents.EventAttributes.INPUT_MESSAGES
+        ]
+    ) == [
+        {
+            "role": "user",
+            "parts": [{"type": "text", "content": "hello"}],
+        }
+    ]
+    assert json.loads(
+        response_span.events[0].attributes[
+            GenAIEvents.EventAttributes.OUTPUT_MESSAGES
+        ]
+    ) == [
+        {
+            "role": "assistant",
+            "parts": [{"type": "text", "content": "final response"}],
+        }
+    ]
     assert response_span.attributes[SpanAttributes.CALL.RETURN] == (
         '"final response"'
     )
@@ -413,6 +473,110 @@ def test_tool_failure_does_not_fail_successful_turn():
         == SpanAttributes.SpanType.TOOL.value
     )
     assert tool.status.status_code.name == "ERROR"
+    assert tool.status.description == "exit 1"
+    assert tool.attributes[ErrorAttributes.TYPE] == "client_hook_error"
+    assert tool.name == "execute_tool Bash"
+    assert tool.attributes[GenAIAttributes.OPERATION.NAME] == "execute_tool"
+    assert tool.attributes[GenAIAttributes.TOOL.NAME] == "Bash"
+    assert tool.attributes[GenAIAttributes.TOOL.CALL_ID] == "tool-1"
+
+
+def test_generation_span_contains_complete_genai_contract():
+    events = [
+        parsers.parse_cursor(
+            _cursor("beforeSubmitPrompt", prompt="hello", model="claude-sonnet")
+        ),
+        parsers.parse_cursor(
+            _cursor(
+                "afterAgentResponse",
+                text="world",
+                model="claude-sonnet",
+                input_tokens=12,
+                output_tokens=4,
+            )
+        ),
+        parsers.parse_cursor(_cursor("stop", model="claude-sonnet")),
+    ]
+
+    spans = tracing.TraceAssembler().assemble(events)
+    generation = next(
+        span
+        for span in spans
+        if span.attributes[SpanAttributes.SPAN_TYPE]
+        == SpanAttributes.SpanType.GENERATION.value
+    )
+    agent = next(
+        span
+        for span in spans
+        if span.attributes[SpanAttributes.SPAN_TYPE]
+        == SpanAttributes.SpanType.AGENT.value
+    )
+
+    assert generation.name == "chat claude-sonnet"
+    assert generation.kind.name == "CLIENT"
+    assert generation.attributes[GenAIAttributes.OPERATION.NAME] == "chat"
+    assert (
+        generation.attributes[GenAIAttributes.REQUEST.MODEL] == "claude-sonnet"
+    )
+    assert (
+        generation.attributes[GenAIAttributes.RESPONSE.MODEL] == "claude-sonnet"
+    )
+    assert generation.attributes[GenAIAttributes.SYSTEM.NAME] == "anthropic"
+    assert generation.attributes[GenAIAttributes.USAGE.INPUT_TOKENS] == 12
+    assert generation.attributes[GenAIAttributes.USAGE.OUTPUT_TOKENS] == 4
+    assert GenAIAttributes.REQUEST.MODEL not in agent.attributes
+    assert GenAIAttributes.SYSTEM.NAME not in agent.attributes
+    assert GenAIAttributes.USAGE.INPUT_TOKENS not in agent.attributes
+    assert generation.resource.attributes["service.name"] == "cursor"
+
+
+def test_generation_omits_provider_when_model_provider_is_unknown():
+    events = [
+        parsers.parse_cursor(
+            _cursor("beforeSubmitPrompt", model="custom-model")
+        ),
+        parsers.parse_cursor(
+            _cursor("afterAgentResponse", text="done", model="custom-model")
+        ),
+        parsers.parse_cursor(_cursor("stop", model="custom-model")),
+    ]
+
+    generation = next(
+        span
+        for span in tracing.TraceAssembler().assemble(events)
+        if span.attributes[SpanAttributes.SPAN_TYPE]
+        == SpanAttributes.SpanType.GENERATION.value
+    )
+
+    assert GenAIAttributes.SYSTEM.NAME not in generation.attributes
+
+
+def test_generation_uses_latest_reported_usage_without_double_counting():
+    events = [
+        parsers.parse_cursor(
+            _cursor("beforeSubmitPrompt", prompt="hello", input_tokens=10)
+        ),
+        parsers.parse_cursor(
+            _cursor(
+                "afterAgentResponse",
+                text="done",
+                input_tokens=10,
+                output_tokens=3,
+            )
+        ),
+        parsers.parse_cursor(_cursor("stop", status="failed")),
+    ]
+
+    generation = next(
+        span
+        for span in tracing.TraceAssembler().assemble(events)
+        if span.attributes[SpanAttributes.SPAN_TYPE]
+        == SpanAttributes.SpanType.GENERATION.value
+    )
+
+    assert generation.attributes[GenAIAttributes.USAGE.INPUT_TOKENS] == 10
+    assert generation.attributes[GenAIAttributes.USAGE.OUTPUT_TOKENS] == 3
+    assert generation.status.status_code.name == "UNSET"
 
 
 class _Exporter:
@@ -455,6 +619,30 @@ def test_service_exports_terminal_turn_and_marks_it_complete(
 
     assert exporter.spans
     assert event_journal.pending_turns("cursor", "conversation-1") == []
+
+
+def test_service_reads_trace_identity_from_environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setenv("TRULENS_HOOKS_APP_NAME", "CURSOR_CODING_SESSION")
+    monkeypatch.setenv("TRULENS_HOOKS_APP_VERSION", "hooks-v3")
+    monkeypatch.setenv("TRULENS_HOOKS_RUN_NAME", "manual-cursor-run")
+
+    hook_service = service.HookService(journal=journal.EventJournal(tmp_path))
+
+    assert hook_service.assembler.app_name == "CURSOR_CODING_SESSION"
+    assert hook_service.assembler.app_version == "hooks-v3"
+    assert hook_service.assembler.run_name == "manual-cursor-run"
+
+
+def test_assembler_defaults_identity_to_native_client_and_conversation():
+    event = parsers.parse_cursor(_cursor("stop", cursor_version="3.17.19"))
+
+    root = tracing.TraceAssembler().assemble([event])[0]
+
+    assert root.attributes[ResourceAttributes.APP_NAME] == "cursor"
+    assert root.attributes[ResourceAttributes.APP_VERSION] == "3.17.19"
+    assert root.attributes[SpanAttributes.RUN_NAME] == "conversation-1"
 
 
 def test_service_flush_retries_completed_turn_without_new_event(tmp_path: Path):
@@ -510,4 +698,4 @@ def test_snowflake_span_proto_preserves_error_status():
     proto = exporter_utils.convert_readable_span_to_proto(root)
 
     assert proto.status.code == proto.status.STATUS_CODE_ERROR
-    assert proto.status.message == ""
+    assert proto.status.message == "Incomplete hook turn"

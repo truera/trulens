@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from datetime import timedelta
 import hashlib
-from importlib.metadata import PackageNotFoundError
-from importlib.metadata import version
 import json
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
@@ -16,6 +14,7 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.trace import Status
 from opentelemetry.trace import StatusCode
 from trulens.core.otel.client_hooks import models
+from trulens.otel.semconv.trace import ErrorAttributes
 from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import GenAIEvents
 from trulens.otel.semconv.trace import ResourceAttributes
@@ -30,6 +29,34 @@ def _otel_id(seed: str, bits: int) -> int:
 
 def _json(value: Any) -> str:
     return json.dumps(value, default=str, sort_keys=True, separators=(",", ":"))
+
+
+def _message(role: str, content: str) -> Dict[str, Any]:
+    """Build an OTEL GenAI structured text message."""
+
+    return {
+        "role": role,
+        "parts": [{"type": "text", "content": content}],
+    }
+
+
+def _provider_for_model(model: str) -> Optional[str]:
+    normalized = model.lower()
+    if normalized.startswith("claude") or "anthropic/" in normalized:
+        return "anthropic"
+    if (
+        normalized.startswith(("gpt-", "o1", "o3", "o4"))
+        or "openai/" in normalized
+    ):
+        return "openai"
+    return None
+
+
+def _reported_usage(events: Iterable[models.HookEvent], attribute: str) -> int:
+    """Use the latest reported usage to avoid summing cumulative hook values."""
+
+    values = [getattr(event, attribute) for event in events]
+    return next((value for value in reversed(values) if value is not None), 0)
 
 
 def _nanoseconds(event: models.HookEvent) -> int:
@@ -81,16 +108,11 @@ class TraceAssembler:
     def __init__(
         self,
         *,
-        app_name: str = "coding-agent",
+        app_name: Optional[str] = None,
         app_version: Optional[str] = None,
-        run_name: str = "client-hooks",
+        run_name: Optional[str] = None,
     ) -> None:
         self.app_name = app_name
-        if app_version is None:
-            try:
-                app_version = version("trulens-core")
-            except PackageNotFoundError:
-                app_version = "unknown"
         self.app_version = app_version
         self.run_name = run_name
 
@@ -105,23 +127,35 @@ class TraceAssembler:
         first = events[0]
         last = events[-1]
         turn_id = first.turn_id or first.event_id
+        app_name = self.app_name or first.client.removesuffix("-code")
+        app_version = (
+            self.app_version
+            or first.metadata.get("cursor_version")
+            or first.metadata.get("client_version")
+            or "unknown"
+        )
+        run_name = self.run_name or first.conversation_id
         record_id = f"{first.client}:{first.conversation_id}:{turn_id}"
         trace_id = _otel_id(f"trace:{record_id}", 128)
         agent_span_id = _otel_id(f"agent:{record_id}", 64)
         root_span_id = _otel_id(f"root:{record_id}", 64)
         response_span_id = _otel_id(f"response:{record_id}", 64)
         common = {
-            ResourceAttributes.APP_NAME: self.app_name,
-            ResourceAttributes.APP_VERSION: self.app_version,
+            ResourceAttributes.APP_NAME: app_name,
+            ResourceAttributes.APP_VERSION: app_version,
             SpanAttributes.RECORD_ID: record_id,
             SpanAttributes.CONVERSATION_ID: first.conversation_id,
             SpanAttributes.INPUT_ID: turn_id,
-            SpanAttributes.RUN_NAME: self.run_name,
+            SpanAttributes.RUN_NAME: run_name,
             SpanAttributes.INPUT_RECORDS_COUNT: 1,
         }
         prompt = next((event.prompt for event in events if event.prompt), None)
         response = next(
             (event.response for event in reversed(events) if event.response),
+            None,
+        )
+        response_event = next(
+            (event for event in reversed(events) if event.response),
             None,
         )
         terminal_failure = next(
@@ -150,35 +184,30 @@ class TraceAssembler:
             SpanAttributes.CALL.FUNCTION: f"{first.client}.turn",
             SpanAttributes.WORKFLOW.AGENT_NAME: first.client,
         }
-        root_event_attributes: Dict[str, Any] = {}
-        if prompt is not None:
-            root_event_attributes[
-                GenAIEvents.EventAttributes.INPUT_MESSAGES
-            ] = _json([{"role": "user", "content": prompt}])
         if response is not None:
             root_attributes[SpanAttributes.CALL.RETURN] = _json(response)
-            root_event_attributes[
-                GenAIEvents.EventAttributes.OUTPUT_MESSAGES
-            ] = _json([{"role": "assistant", "content": response}])
-        if root_error:
-            root_attributes[SpanAttributes.RECORD_ROOT.ERROR] = root_error
+        if root_failed:
+            if root_error:
+                root_attributes[SpanAttributes.RECORD_ROOT.ERROR] = root_error
+            root_attributes[ErrorAttributes.TYPE] = (
+                "incomplete_turn" if stale else "client_hook_error"
+            )
         agent_attributes = {
             **common,
             SpanAttributes.SPAN_TYPE: SpanAttributes.SpanType.AGENT.value,
             SpanAttributes.CALL.FUNCTION: first.client,
             SpanAttributes.WORKFLOW.AGENT_NAME: first.client,
         }
-        model = next((event.model for event in events if event.model), None)
-        if model:
-            agent_attributes[SpanAttributes.COST.MODEL] = model
-            agent_attributes[GenAIAttributes.REQUEST.MODEL] = model
-            agent_attributes[GenAIAttributes.SYSTEM.NAME] = (
-                "anthropic"
-                if first.client in {"claude", "claude-code"}
-                else "cursor"
-            )
-        input_tokens = sum(event.input_tokens or 0 for event in events)
-        output_tokens = sum(event.output_tokens or 0 for event in events)
+        request_model = next(
+            (event.model for event in events if event.model), None
+        )
+        response_model = (
+            response_event.model if response_event is not None else None
+        )
+        if request_model:
+            agent_attributes[SpanAttributes.COST.MODEL] = request_model
+        input_tokens = _reported_usage(events, "input_tokens")
+        output_tokens = _reported_usage(events, "output_tokens")
         if input_tokens or output_tokens:
             agent_attributes[SpanAttributes.COST.NUM_PROMPT_TOKENS] = (
                 input_tokens
@@ -188,10 +217,6 @@ class TraceAssembler:
             )
             agent_attributes[SpanAttributes.COST.NUM_TOKENS] = (
                 input_tokens + output_tokens
-            )
-            agent_attributes[GenAIAttributes.USAGE.INPUT_TOKENS] = input_tokens
-            agent_attributes[GenAIAttributes.USAGE.OUTPUT_TOKENS] = (
-                output_tokens
             )
         cost = sum(event.cost or 0.0 for event in events)
         if cost:
@@ -207,7 +232,7 @@ class TraceAssembler:
                 start_time=_nanoseconds(first),
                 end_time=max(_nanoseconds(last), _duration_end(last)),
                 failed=root_failed,
-                event_attributes=root_event_attributes,
+                status_description=root_error,
             )
         ]
         spans.append(
@@ -220,6 +245,7 @@ class TraceAssembler:
                 start_time=_nanoseconds(first),
                 end_time=max(_nanoseconds(last), _duration_end(last)),
                 failed=root_failed,
+                status_description=root_error,
             )
         )
         if response is not None:
@@ -231,22 +257,45 @@ class TraceAssembler:
                 SpanAttributes.RECORD_ROOT.OUTPUT: response,
                 GenAIAttributes.OPERATION.NAME: "chat",
             }
+            if request_model:
+                response_attributes[GenAIAttributes.REQUEST.MODEL] = (
+                    request_model
+                )
+                provider = _provider_for_model(request_model)
+                if provider:
+                    response_attributes[GenAIAttributes.SYSTEM.NAME] = provider
+            if response_model:
+                response_attributes[GenAIAttributes.RESPONSE.MODEL] = (
+                    response_model
+                )
+            if input_tokens or output_tokens:
+                response_attributes[GenAIAttributes.USAGE.INPUT_TOKENS] = (
+                    input_tokens
+                )
+                response_attributes[GenAIAttributes.USAGE.OUTPUT_TOKENS] = (
+                    output_tokens
+                )
+            response_event_attributes = {
+                GenAIEvents.EventAttributes.OUTPUT_MESSAGES: _json([
+                    _message("assistant", response)
+                ])
+            }
+            if prompt is not None:
+                response_event_attributes[
+                    GenAIEvents.EventAttributes.INPUT_MESSAGES
+                ] = _json([_message("user", prompt)])
             spans.append(
                 self._span(
-                    name=f"{first.client}.response_generation",
+                    name=f"chat {request_model}" if request_model else "chat",
                     trace_id=trace_id,
                     span_id=response_span_id,
                     parent_id=agent_span_id,
                     attributes=response_attributes,
-                    start_time=_nanoseconds(last),
-                    end_time=max(_nanoseconds(last), _duration_end(last)),
-                    failed=root_failed,
+                    start_time=_nanoseconds(first),
+                    end_time=_nanoseconds(response_event),
+                    failed=False,
                     kind=trace.SpanKind.CLIENT,
-                    event_attributes={
-                        GenAIEvents.EventAttributes.OUTPUT_MESSAGES: _json([
-                            {"role": "assistant", "content": response}
-                        ])
-                    },
+                    event_attributes=response_event_attributes,
                 )
             )
         for index, (start, finish) in enumerate(_pair_events(events)):
@@ -277,14 +326,20 @@ class TraceAssembler:
         parent_id: int,
         common: Mapping[str, Any],
     ) -> ReadableSpan:
-        name = start.tool_name or start.server_name or start.event_name
+        tool_name = start.tool_name or start.server_name or start.event_name
+        is_tool_operation = start.category in {"tool", "mcp"}
+        name = f"execute_tool {tool_name}" if is_tool_operation else tool_name
         attributes: Dict[str, Any] = {
             **common,
             SpanAttributes.SPAN_TYPE: _span_type(start.category).value,
-            SpanAttributes.CALL.FUNCTION: name,
+            SpanAttributes.CALL.FUNCTION: tool_name,
             SpanAttributes.CODING_AGENT.CLIENT: start.client,
             SpanAttributes.CODING_AGENT.NATIVE_EVENT: finish.event_name,
         }
+        if is_tool_operation:
+            attributes[GenAIAttributes.OPERATION.NAME] = "execute_tool"
+            if start.operation_id:
+                attributes[GenAIAttributes.TOOL.CALL_ID] = start.operation_id
         editor_version = finish.metadata.get(
             "cursor_version"
         ) or start.metadata.get("cursor_version")
@@ -303,8 +358,8 @@ class TraceAssembler:
             )
         if workspace:
             attributes[SpanAttributes.CODING_AGENT.WORKSPACE] = _json(workspace)
-        if start.tool_name:
-            attributes[GenAIAttributes.TOOL.NAME] = start.tool_name
+        if is_tool_operation:
+            attributes[GenAIAttributes.TOOL.NAME] = tool_name
         if start.tool_input is not None:
             attributes[GenAIAttributes.TOOL.CALL_ARGUMENTS] = _json(
                 start.tool_input
@@ -323,7 +378,6 @@ class TraceAssembler:
         if diff is not None:
             serialized_diff = _json(diff)
             attributes[SpanAttributes.CODING_AGENT.DIFF] = serialized_diff
-            attributes["vcs.change.diff"] = serialized_diff
             attributes[SpanAttributes.CALL.RETURN] = serialized_diff
         if start.category == "mcp":
             if start.tool_name:
@@ -345,6 +399,9 @@ class TraceAssembler:
                 )
         if finish.error:
             attributes[SpanAttributes.CALL.ERROR] = finish.error
+            attributes[ErrorAttributes.TYPE] = "client_hook_error"
+        elif finish.failed:
+            attributes[ErrorAttributes.TYPE] = "client_hook_error"
         start_time = _nanoseconds(start)
         if finish is start:
             end_time = _nanoseconds(finish)
@@ -367,6 +424,7 @@ class TraceAssembler:
             kind=trace.SpanKind.CLIENT
             if start.category == "mcp"
             else trace.SpanKind.INTERNAL,
+            status_description=finish.error,
         )
 
     @staticmethod
@@ -382,6 +440,7 @@ class TraceAssembler:
         failed: bool,
         kind: trace.SpanKind = trace.SpanKind.INTERNAL,
         event_attributes: Optional[Mapping[str, Any]] = None,
+        status_description: Optional[str] = None,
     ) -> ReadableSpan:
         context = trace.SpanContext(
             trace_id=trace_id,
@@ -401,7 +460,14 @@ class TraceAssembler:
             name=name,
             context=context,
             parent=parent,
-            resource=Resource.create({"service.name": "trulens-client-hooks"}),
+            resource=Resource.create({
+                "service.name": attributes.get(
+                    ResourceAttributes.APP_NAME, "trulens-client-hooks"
+                ),
+                "service.version": attributes.get(
+                    ResourceAttributes.APP_VERSION, "unknown"
+                ),
+            }),
             attributes=attributes,
             events=(
                 Event(
@@ -413,7 +479,10 @@ class TraceAssembler:
             if event_attributes
             else (),
             kind=kind,
-            status=Status(StatusCode.ERROR if failed else StatusCode.UNSET),
+            status=Status(
+                StatusCode.ERROR if failed else StatusCode.UNSET,
+                status_description if failed else None,
+            ),
             start_time=start_time,
             end_time=max(start_time, end_time),
         )

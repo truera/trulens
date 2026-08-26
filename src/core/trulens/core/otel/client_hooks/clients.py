@@ -14,16 +14,23 @@ CLIENT_HOOK_ENTRY_POINT = "trulens.client_hooks"
 class FieldAliases:
     """Native payload field aliases consumed by the shared normalizer."""
 
-    conversation: Tuple[str, ...] = ("conversation_id", "session_id")
+    conversation: Tuple[str, ...] = (
+        "conversation_id",
+        "session_id",
+        "sessionID",
+    )
     turn: Tuple[str, ...] = (
         "generation_id",
         "turn_id",
         "prompt_id",
         "message_id",
+        "messageID",
     )
     operation: Tuple[str, ...] = (
         "tool_use_id",
         "tool_call_id",
+        "call_id",
+        "callID",
         "operation_id",
         "subagent_id",
         "agent_id",
@@ -46,6 +53,7 @@ class ClientSpec:
     hook_events: Tuple[str, ...]
     field_aliases: FieldAliases = FieldAliases()
     config_builder: Optional[Callable[[str], Mapping[str, Any]]] = None
+    plugin_builder: Optional[Callable[[str], str]] = None
     extract_overrides: Optional[
         Callable[[Mapping[str, Any]], Mapping[str, Any]]
     ] = None
@@ -60,6 +68,13 @@ class ClientSpec:
                 },
             }
         return self.config_builder(command)
+
+    def build_plugin(self, command: str) -> Optional[str]:
+        """Build a native plugin source file when this client is not JSON-hooks."""
+
+        if self.plugin_builder is None:
+            return None
+        return self.plugin_builder(command)
 
 
 _REGISTERED_CLIENTS: MutableMapping[str, ClientSpec] = {}
@@ -103,6 +118,7 @@ def get_client(name: str) -> ClientSpec:
         "cursor": "trulens-apps-cursor",
         "claude": "trulens-apps-claude",
         "claude-code": "trulens-apps-claude",
+        "opencode": "trulens-apps-opencode",
     }.get(name)
     suffix = f" Install it with: pip install {package}." if package else ""
     raise ValueError(f"Client '{name}' is not installed.{suffix}")

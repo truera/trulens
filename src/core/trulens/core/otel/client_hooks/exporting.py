@@ -38,9 +38,14 @@ def _snowflake_session() -> core_session.TruSession:
         raise ValueError(
             "Set TRULENS_HOOKS_SNOWFLAKE_CONNECTION for Snowflake export."
         )
-    snowpark_session = Session.builder.config(
-        "connection_name", connection_name
-    ).create()
+    builder = Session.builder.config("connection_name", connection_name)
+    database = os.environ.get("TRULENS_HOOKS_SNOWFLAKE_DATABASE")
+    schema = os.environ.get("TRULENS_HOOKS_SNOWFLAKE_SCHEMA")
+    if database:
+        builder = builder.config("database", database)
+    if schema:
+        builder = builder.config("schema", schema)
+    snowpark_session = builder.create()
     connector = SnowflakeConnector(snowpark_session=snowpark_session)
     return core_session.TruSession(connector=connector)
 

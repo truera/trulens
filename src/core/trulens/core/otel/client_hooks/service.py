@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any, Mapping, Optional
 
 from trulens.core import session as core_session
@@ -27,7 +28,12 @@ class HookService:
         self.capture_policy = (
             capture_policy or privacy.CapturePolicy.from_environment()
         )
-        self.assembler = assembler or tracing.TraceAssembler()
+        self.assembler = assembler or tracing.TraceAssembler(
+            app_name=os.environ.get("TRULENS_HOOKS_APP_NAME"),
+            app_version=os.environ.get("TRULENS_HOOKS_APP_VERSION")
+            or os.environ.get("TRULENS_HOOKS_CLIENT_VERSION"),
+            run_name=os.environ.get("TRULENS_HOOKS_RUN_NAME"),
+        )
         self.session = session
 
     def ingest(self, client: str, payload: Mapping[str, Any]) -> bool:

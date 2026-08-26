@@ -82,6 +82,7 @@ mkdocs-section-index = ">=0.3"
 [tool.poetry.group.apps.dependencies]
 trulens-apps-claude = { path = "src/apps/claude", develop = true }
 trulens-apps-cursor = { path = "src/apps/cursor", develop = true }
+trulens-apps-opencode = { path = "src/apps/opencode", develop = true }
 trulens-apps-langchain = { path = "src/apps/langchain", develop = true }
 trulens-apps-langgraph = { path = "src/apps/langgraph", develop = true }
 trulens-apps-llamaindex = { path = "src/apps/llamaindex", develop = true }
