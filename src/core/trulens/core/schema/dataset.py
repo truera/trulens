@@ -146,10 +146,14 @@ def normalize_column_spec(column_spec: Dict[str, str]) -> Dict[str, str]:
             ignored.append(key)
 
     if ignored:
-        logger.debug(
+        # Warn rather than debug: a caller passing something like
+        # {"retrieval.query_text": "question"} expected those columns to be
+        # read, and a silent drop only surfaces later as missing item data.
+        logger.warning(
             "Ignoring column spec entries that do not map to dataset version "
-            "item fields: %s",
+            "item fields: %s. Supported fields: %s.",
             ", ".join(sorted(str(k) for k in ignored)),
+            ", ".join(sorted(COLUMN_SPEC_FIELDS)),
         )
 
     if "input" not in normalized:

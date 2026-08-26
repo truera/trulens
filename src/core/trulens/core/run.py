@@ -2047,9 +2047,8 @@ def compare_runs(
         and dataset_version_id_a != dataset_version_id_b
     ):
         logger.warning(
-            "The two runs were pinned to different dataset versions (%s vs "
-            "%s), so metric deltas mix changes in the app with changes in "
-            "the test set.",
+            "Runs pinned to different dataset versions (%s vs %s); metric "
+            "deltas include both app changes and test-set changes.",
             dataset_version_id_a,
             dataset_version_id_b,
         )

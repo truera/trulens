@@ -27,6 +27,7 @@ import pydantic
 from pydantic import Field
 import sqlalchemy as sa
 from sqlalchemy import Table
+from sqlalchemy import exc as sa_exc
 from sqlalchemy import inspect
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
@@ -55,6 +56,14 @@ from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
+
+_DATASET_VERSION_INSERT_ATTEMPTS = 5
+"""How many times a publish re-reads the latest version index before giving up.
+
+Each retry only loses a race to another publisher, so the bound exists to stop
+a pathological workload from spinning rather than because a legitimate publish
+is expected to need it.
+"""
 
 
 # Imported for backward compatibility. The Snowflake-specific Alembic impl is
@@ -2236,7 +2245,8 @@ class SQLAlchemyDB(core_db.DB):
 
         if dataset_id is not None:
             return (
-                session.query(self.orm.Dataset)
+                session
+                .query(self.orm.Dataset)
                 .filter_by(dataset_id=dataset_id)
                 .first()
             )
@@ -2271,7 +2281,8 @@ class SQLAlchemyDB(core_db.DB):
 
         items = []
         ground_truth_rows = (
-            session.query(self.orm.GroundTruth)
+            session
+            .query(self.orm.GroundTruth)
             .filter_by(dataset_id=dataset_row.dataset_id)
             .order_by(self.orm.GroundTruth.ground_truth_id)
             .all()
@@ -2311,14 +2322,59 @@ class SQLAlchemyDB(core_db.DB):
     def insert_dataset_version(
         self, dataset_version: dataset_schema.DatasetVersion
     ) -> types_schema.DatasetVersionID:
-        """See [DB.insert_dataset_version][trulens.core.database.base.DB.insert_dataset_version]."""
+        """See [DB.insert_dataset_version][trulens.core.database.base.DB.insert_dataset_version].
 
-        # TODO: thread safety. The unique constraint on
-        # (dataset_id, version_index) turns a lost race into an error rather
-        # than a corrupted history.
+        Choosing the next `version_index` is a read-increment-write, so two
+        concurrent publishes can read the same latest index and derive the same
+        next one. The unique constraint on `(dataset_id, version_index)` stops
+        that from corrupting the history, and the loop below turns the loser of
+        the race into a retry that re-reads the now-committed index rather than
+        an error the caller has to handle.
+
+        Retrying rather than locking keeps this portable: SQLite has no
+        `SELECT ... FOR UPDATE`, so a row lock would only serialize the
+        databases that support it.
+        """
+
+        # Both fields are derived from whatever the latest version turns out to
+        # be, so each attempt has to start from the caller's original values.
+        original_parent_id = dataset_version.parent_dataset_version_id
+        original_version_index = dataset_version.version_index
+
+        for attempt in range(_DATASET_VERSION_INSERT_ATTEMPTS):
+            dataset_version.parent_dataset_version_id = original_parent_id
+            dataset_version.version_index = original_version_index
+
+            try:
+                return self._insert_dataset_version_once(dataset_version)
+            except sa_exc.IntegrityError:
+                if attempt == _DATASET_VERSION_INSERT_ATTEMPTS - 1:
+                    raise
+
+                logger.info(
+                    "Another publish took the next version index for dataset "
+                    "%s; re-reading and retrying (attempt %d of %d).",
+                    dataset_version.dataset_id,
+                    attempt + 2,
+                    _DATASET_VERSION_INSERT_ATTEMPTS,
+                )
+
+        raise AssertionError("unreachable")  # pragma: no cover
+
+    def _insert_dataset_version_once(
+        self, dataset_version: dataset_schema.DatasetVersion
+    ) -> types_schema.DatasetVersionID:
+        """One attempt at publishing a version.
+
+        Raises:
+            sqlalchemy.exc.IntegrityError: If another publish committed the
+                same `version_index` first.
+        """
+
         with self.session.begin() as session:
             if (
-                session.query(self.orm.DatasetVersion)
+                session
+                .query(self.orm.DatasetVersion)
                 .filter_by(
                     dataset_version_id=dataset_version.dataset_version_id
                 )
@@ -2332,7 +2388,8 @@ class SQLAlchemyDB(core_db.DB):
                 return dataset_version.dataset_version_id
 
             latest = (
-                session.query(self.orm.DatasetVersion)
+                session
+                .query(self.orm.DatasetVersion)
                 .filter_by(dataset_id=dataset_version.dataset_id)
                 .order_by(self.orm.DatasetVersion.version_index.desc())
                 .first()
@@ -2410,7 +2467,8 @@ class SQLAlchemyDB(core_db.DB):
         with self.session.begin() as session:
             if dataset_version_id is not None:
                 row = (
-                    session.query(self.orm.DatasetVersion)
+                    session
+                    .query(self.orm.DatasetVersion)
                     .filter_by(dataset_version_id=dataset_version_id)
                     .first()
                 )
@@ -2425,7 +2483,8 @@ class SQLAlchemyDB(core_db.DB):
                 return None
 
             row = (
-                session.query(self.orm.DatasetVersion)
+                session
+                .query(self.orm.DatasetVersion)
                 .filter_by(dataset_id=dataset_row.dataset_id)
                 .order_by(self.orm.DatasetVersion.version_index.desc())
                 .first()
@@ -2463,7 +2522,8 @@ class SQLAlchemyDB(core_db.DB):
                 return pd.DataFrame(columns=columns)
 
             rows = (
-                session.query(self.orm.DatasetVersion)
+                session
+                .query(self.orm.DatasetVersion)
                 .filter_by(dataset_id=dataset_row.dataset_id)
                 .order_by(self.orm.DatasetVersion.version_index)
                 .all()
@@ -2514,7 +2574,8 @@ class SQLAlchemyDB(core_db.DB):
         """Load a version's items, in the order they were published."""
 
         rows = (
-            session.query(self.orm.DatasetVersionItem)
+            session
+            .query(self.orm.DatasetVersionItem)
             .filter_by(dataset_version_id=dataset_version_id)
             .order_by(self.orm.DatasetVersionItem.item_index)
             .all()

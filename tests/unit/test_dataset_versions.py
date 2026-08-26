@@ -8,10 +8,13 @@ version lookup, membership comparison, and run source provenance.
 
 import os
 import tempfile
+import threading
+import time
 import unittest
 from unittest import mock
 
 import pandas as pd
+from sqlalchemy import exc as sa_exc
 from trulens.core import run as core_run
 from trulens.core import session as core_session
 from trulens.core.dao import default_run as default_run_dao
@@ -225,7 +228,8 @@ class TestContentAddressing(DatasetVersionTestCase):
 
     def test_missing_values_normalize_to_none(self):
         without = (
-            EXAMPLES.head(1)
+            EXAMPLES
+            .head(1)
             .drop(columns=["expected_answer"])
             .assign(expected_answer=None)
         )
@@ -666,6 +670,112 @@ def extended_item_id(version, input_id):
         if item.input_id == input_id:
             return item.item_id
     raise AssertionError(f"No item with input_id {input_id}.")
+
+
+class TestConcurrentPublishing(DatasetVersionTestCase):
+    """Concurrent publishes must serialize into a clean version history.
+
+    Picking the next `version_index` is a read-increment-write, so this races
+    it for real rather than asserting the intent.
+    """
+
+    def publish_from_threads(self, payloads):
+        """Publish each payload from its own thread, against its own db."""
+
+        db_path = os.path.join(self._tempdir.name, "trulens.sqlite")
+        barrier = threading.Barrier(len(payloads))
+        results = [None] * len(payloads)
+        errors = [None] * len(payloads)
+
+        def worker(index, dataframe):
+            # A separate engine per thread, so the publishes contend through
+            # the database rather than through one shared session.
+            db = db_sqlalchemy.SQLAlchemyDB.from_db_url(f"sqlite:///{db_path}")
+            version = dataset_schema.DatasetVersion(
+                dataset_id=self.dataset_id,
+                items=self.session._dataset_version_items_of_dataframe(
+                    dataframe, COLUMN_SPEC
+                ),
+                source_meta={"dataset_name": "support-quality"},
+                created_at=time.time(),
+            )
+            try:
+                barrier.wait(timeout=30)
+                results[index] = db.insert_dataset_version(version)
+            except Exception as e:  # noqa: BLE001 - reported via `errors`
+                errors[index] = e
+
+        threads = [
+            threading.Thread(target=worker, args=(i, payload))
+            for i, payload in enumerate(payloads)
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=60)
+
+        return results, errors
+
+    def setUp(self):
+        super().setUp()
+        # Establish the dataset (and version zero) before racing.
+        self.publish()
+        self.dataset_id = self.db.get_dataset("support-quality").dataset_id
+
+    def _variant(self, answer: str) -> pd.DataFrame:
+        edited = EXAMPLES.copy()
+        edited.loc[0, "expected_answer"] = answer
+        return edited
+
+    def test_concurrent_distinct_publishes_all_succeed(self):
+        payloads = [self._variant(f"answer {i}") for i in range(4)]
+
+        results, errors = self.publish_from_threads(payloads)
+
+        self.assertEqual([e for e in errors if e is not None], [])
+        self.assertEqual(len([r for r in results if r]), len(payloads))
+
+    def test_concurrent_publishes_produce_a_gapless_history(self):
+        payloads = [self._variant(f"answer {i}") for i in range(4)]
+
+        self.publish_from_threads(payloads)
+
+        versions = self.session.list_dataset_versions(
+            dataset_name="support-quality"
+        )
+        indexes = sorted(versions["version_index"])
+        # Version zero plus one index per publish, each assigned exactly once.
+        self.assertEqual(indexes, list(range(len(indexes))))
+        self.assertEqual(len(set(indexes)), len(indexes))
+
+    def test_concurrent_identical_publishes_are_idempotent(self):
+        # Same content from every thread: one version, no duplicates, no error.
+        payloads = [self._variant("same answer") for _ in range(4)]
+
+        results, errors = self.publish_from_threads(payloads)
+
+        self.assertEqual([e for e in errors if e is not None], [])
+        self.assertEqual(len(set(r for r in results if r)), 1)
+
+        versions = self.session.list_dataset_versions(
+            dataset_name="support-quality"
+        )
+        self.assertEqual(len(versions), 2)  # version zero and the new one
+
+    def test_retry_budget_is_bounded(self):
+        # A publish that never wins its race must give up rather than spin.
+        with mock.patch.object(
+            self.db,
+            "_insert_dataset_version_once",
+            side_effect=sa_exc.IntegrityError("stmt", {}, Exception("dup")),
+        ) as attempt:
+            with self.assertRaises(sa_exc.IntegrityError):
+                self.publish(dataframe=self._variant("never lands"))
+
+        self.assertEqual(
+            attempt.call_count,
+            db_sqlalchemy._DATASET_VERSION_INSERT_ATTEMPTS,
+        )
 
 
 class TestPersistenceContract(DatasetVersionTestCase):
