@@ -15,7 +15,6 @@ def _config(command: str):
         "SubagentStart",
         "SubagentStop",
         "Stop",
-        "StopFailure",
     )
     return {
         "hooks": {
@@ -38,7 +37,6 @@ client_spec = ClientSpec(
         "SubagentStart",
         "SubagentStop",
         "Stop",
-        "StopFailure",
     ),
     field_aliases=FieldAliases(
         conversation=("session_id",),

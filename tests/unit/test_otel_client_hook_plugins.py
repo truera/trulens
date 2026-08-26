@@ -23,6 +23,16 @@ def test_claude_plugin_is_declarative():
     assert claude_spec.name == "claude-code"
     assert "claude" in claude_spec.aliases
     assert claude_spec.field_aliases.conversation == ("session_id",)
+    assert claude_spec.hook_events == (
+        "UserPromptSubmit",
+        "PreToolUse",
+        "PostToolUse",
+        "PostToolUseFailure",
+        "SubagentStart",
+        "SubagentStop",
+        "Stop",
+    )
+    assert "StopFailure" not in claude_spec.build_config("hook")["hooks"]
 
 
 def test_opencode_plugin_is_declarative():
