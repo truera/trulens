@@ -12,12 +12,12 @@ from trulens.core import session as core_session
 
 
 def _local_session() -> core_session.TruSession:
-    database_url = os.environ.get("TRULENS_HOOKS_DATABASE_URL")
+    database_url = os.environ.get("TRULENS_DATABASE_URL")
     if database_url:
         return core_session.TruSession(database_url=database_url)
     database_path = Path(
         os.environ.get(
-            "TRULENS_HOOKS_DATABASE_PATH",
+            "TRULENS_DATABASE_PATH",
             str(Path.home() / ".trulens" / "client-hooks.sqlite"),
         )
     ).expanduser()
@@ -33,14 +33,14 @@ def _snowflake_session() -> core_session.TruSession:
         raise ImportError(
             "Snowflake hook export requires trulens-connectors-snowflake."
         ) from exc
-    connection_name = os.environ.get("TRULENS_HOOKS_SNOWFLAKE_CONNECTION")
+    connection_name = os.environ.get("TRULENS_SNOWFLAKE_CONNECTION")
     if not connection_name:
         raise ValueError(
-            "Set TRULENS_HOOKS_SNOWFLAKE_CONNECTION for Snowflake export."
+            "Set TRULENS_SNOWFLAKE_CONNECTION for Snowflake export."
         )
     builder = Session.builder.config("connection_name", connection_name)
-    database = os.environ.get("TRULENS_HOOKS_SNOWFLAKE_DATABASE")
-    schema = os.environ.get("TRULENS_HOOKS_SNOWFLAKE_SCHEMA")
+    database = os.environ.get("TRULENS_SNOWFLAKE_DATABASE")
+    schema = os.environ.get("TRULENS_SNOWFLAKE_SCHEMA")
     if database:
         builder = builder.config("database", database)
     if schema:
@@ -53,18 +53,18 @@ def _snowflake_session() -> core_session.TruSession:
 def create_session() -> core_session.TruSession:
     """Create the configured database, Snowflake, or OTLP TruLens session."""
 
-    destination = os.environ.get("TRULENS_HOOKS_DESTINATION", "local").lower()
+    destination = os.environ.get("TRULENS_DESTINATION", "local").lower()
     if destination in {"local", "database"}:
         return _local_session()
     if destination == "snowflake":
         return _snowflake_session()
     if destination == "otlp":
-        endpoint = os.environ.get("TRULENS_HOOKS_OTLP_ENDPOINT")
+        endpoint = os.environ.get("TRULENS_OTLP_ENDPOINT")
         return core_session.TruSession(
             otel_exporter="otlp", otlp_endpoint=endpoint
         )
     raise ValueError(
-        "TRULENS_HOOKS_DESTINATION must be local, database, snowflake, or otlp."
+        "TRULENS_DESTINATION must be local, database, snowflake, or otlp."
     )
 
 

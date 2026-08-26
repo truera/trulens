@@ -29,10 +29,10 @@ class HookService:
             capture_policy or privacy.CapturePolicy.from_environment()
         )
         self.assembler = assembler or tracing.TraceAssembler(
-            app_name=os.environ.get("TRULENS_HOOKS_APP_NAME"),
-            app_version=os.environ.get("TRULENS_HOOKS_APP_VERSION")
-            or os.environ.get("TRULENS_HOOKS_CLIENT_VERSION"),
-            run_name=os.environ.get("TRULENS_HOOKS_RUN_NAME"),
+            app_name=os.environ.get("TRULENS_APP_NAME"),
+            app_version=os.environ.get("TRULENS_APP_VERSION")
+            or os.environ.get("TRULENS_CLIENT_VERSION"),
+            run_name=os.environ.get("TRULENS_RUN_NAME"),
         )
         self.stale_after = tracing.stale_after_from_environment()
         self.session = session

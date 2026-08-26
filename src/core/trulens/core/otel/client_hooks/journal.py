@@ -39,7 +39,7 @@ def _unlock(file_descriptor: int) -> None:
 def default_journal_dir() -> Path:
     """Return the configured or platform-neutral journal directory."""
 
-    configured = os.environ.get("TRULENS_HOOKS_JOURNAL_DIR")
+    configured = os.environ.get("TRULENS_JOURNAL_DIR")
     if configured:
         return Path(configured).expanduser()
     state_home = os.environ.get("XDG_STATE_HOME")
@@ -54,7 +54,7 @@ def export_lease_from_environment() -> timedelta:
     try:
         seconds = max(
             5.0,
-            float(os.environ.get("TRULENS_HOOKS_EXPORT_LEASE_SECONDS", "60")),
+            float(os.environ.get("TRULENS_EXPORT_LEASE_SECONDS", "60")),
         )
     except ValueError:
         seconds = 60.0

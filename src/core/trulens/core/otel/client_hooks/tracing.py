@@ -493,7 +493,7 @@ def stale_after_from_environment() -> timedelta:
 
     import os
 
-    raw_hours = os.environ.get("TRULENS_HOOKS_STALE_AFTER_HOURS", "24")
+    raw_hours = os.environ.get("TRULENS_STALE_AFTER_HOURS", "24")
     try:
         hours = max(1.0 / 60.0, float(raw_hours))
     except ValueError:

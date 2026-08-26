@@ -238,36 +238,32 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _validate() -> int:
-    destination = os.environ.get("TRULENS_HOOKS_DESTINATION", "local").lower()
+    destination = os.environ.get("TRULENS_DESTINATION", "local").lower()
     if destination not in {"local", "database", "snowflake", "otlp"}:
         sys.stderr.write(
-            "TRULENS_HOOKS_DESTINATION must be local, database, snowflake, or otlp.\n"
+            "TRULENS_DESTINATION must be local, database, snowflake, or otlp.\n"
         )
         return 1
-    if destination == "database" and not os.environ.get(
-        "TRULENS_HOOKS_DATABASE_URL"
-    ):
-        sys.stderr.write(
-            "Database export requires TRULENS_HOOKS_DATABASE_URL.\n"
-        )
+    if destination == "database" and not os.environ.get("TRULENS_DATABASE_URL"):
+        sys.stderr.write("Database export requires TRULENS_DATABASE_URL.\n")
         return 1
     if destination == "snowflake" and not os.environ.get(
-        "TRULENS_HOOKS_SNOWFLAKE_CONNECTION"
+        "TRULENS_SNOWFLAKE_CONNECTION"
     ):
         sys.stderr.write(
-            "Snowflake export requires TRULENS_HOOKS_SNOWFLAKE_CONNECTION.\n"
+            "Snowflake export requires TRULENS_SNOWFLAKE_CONNECTION.\n"
         )
         return 1
     if destination == "snowflake" and not all(
         os.environ.get(name)
         for name in (
-            "TRULENS_HOOKS_SNOWFLAKE_DATABASE",
-            "TRULENS_HOOKS_SNOWFLAKE_SCHEMA",
+            "TRULENS_SNOWFLAKE_DATABASE",
+            "TRULENS_SNOWFLAKE_SCHEMA",
         )
     ):
         sys.stderr.write(
-            "Snowflake export requires TRULENS_HOOKS_SNOWFLAKE_DATABASE and "
-            "TRULENS_HOOKS_SNOWFLAKE_SCHEMA unless both are set in the connection profile.\n"
+            "Snowflake export requires TRULENS_SNOWFLAKE_DATABASE and "
+            "TRULENS_SNOWFLAKE_SCHEMA unless both are set in the connection profile.\n"
         )
         return 1
     return 0

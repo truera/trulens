@@ -117,12 +117,8 @@ def run_worker() -> int:
 
     from trulens.core.otel.client_hooks import service
 
-    idle_seconds = float(
-        os.environ.get("TRULENS_HOOKS_WORKER_IDLE_SECONDS", "2")
-    )
-    poll_seconds = float(
-        os.environ.get("TRULENS_HOOKS_WORKER_POLL_SECONDS", "0.25")
-    )
+    idle_seconds = float(os.environ.get("TRULENS_WORKER_IDLE_SECONDS", "2"))
+    poll_seconds = float(os.environ.get("TRULENS_WORKER_POLL_SECONDS", "0.25"))
     hook_service = service.HookService()
     with singleton_worker(hook_service.journal.directory) as acquired:
         if not acquired:

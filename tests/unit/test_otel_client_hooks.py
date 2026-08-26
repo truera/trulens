@@ -632,15 +632,33 @@ def test_service_journals_without_exporting_until_flush(
 def test_service_reads_trace_identity_from_environment(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
-    monkeypatch.setenv("TRULENS_HOOKS_APP_NAME", "CURSOR_CODING_SESSION")
-    monkeypatch.setenv("TRULENS_HOOKS_APP_VERSION", "hooks-v3")
-    monkeypatch.setenv("TRULENS_HOOKS_RUN_NAME", "manual-cursor-run")
+    monkeypatch.setenv("TRULENS_APP_NAME", "CURSOR_CODING_SESSION")
+    monkeypatch.setenv("TRULENS_APP_VERSION", "hooks-v3")
+    monkeypatch.setenv("TRULENS_RUN_NAME", "manual-cursor-run")
 
     hook_service = service.HookService(journal=journal.EventJournal(tmp_path))
 
     assert hook_service.assembler.app_name == "CURSOR_CODING_SESSION"
     assert hook_service.assembler.app_version == "hooks-v3"
     assert hook_service.assembler.run_name == "manual-cursor-run"
+
+
+def test_capture_policy_reads_unscoped_environment_names(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("TRULENS_CAPTURE_CONTENT", "true")
+    monkeypatch.setenv("TRULENS_CAPTURE_TOOL_PAYLOADS", "true")
+    monkeypatch.setenv("TRULENS_CAPTURE_DIFFS", "true")
+    monkeypatch.setenv("TRULENS_CAPTURE_PATHS", "true")
+    monkeypatch.setenv("TRULENS_MAX_FIELD_BYTES", "256")
+
+    policy = privacy.CapturePolicy.from_environment()
+
+    assert policy.capture_content
+    assert policy.capture_tool_payloads
+    assert policy.capture_diffs
+    assert policy.capture_paths
+    assert policy.max_field_bytes == 256
 
 
 def test_assembler_defaults_identity_to_native_client_and_conversation():
@@ -711,7 +729,7 @@ def test_service_releases_claim_when_export_raises(
 def test_detached_worker_launcher_closes_parent_streams(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
-    monkeypatch.setenv("TRULENS_HOOKS_JOURNAL_DIR", str(tmp_path))
+    monkeypatch.setenv("TRULENS_JOURNAL_DIR", str(tmp_path))
     launched = {}
 
     class _Process:
@@ -734,7 +752,7 @@ def test_detached_worker_launcher_closes_parent_streams(
 def test_worker_launcher_failure_is_fail_open(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
-    monkeypatch.setenv("TRULENS_HOOKS_JOURNAL_DIR", str(tmp_path))
+    monkeypatch.setenv("TRULENS_JOURNAL_DIR", str(tmp_path))
     monkeypatch.setattr(
         worker.subprocess,
         "Popen",
@@ -782,7 +800,7 @@ def test_worker_retries_without_another_native_hook(
     monotonic = iter((0.0, 1.0))
     monkeypatch.setattr(worker.time, "monotonic", lambda: next(monotonic, 1.0))
     monkeypatch.setattr(worker.time, "sleep", lambda _: None)
-    monkeypatch.setenv("TRULENS_HOOKS_WORKER_IDLE_SECONDS", "0")
+    monkeypatch.setenv("TRULENS_WORKER_IDLE_SECONDS", "0")
 
     assert worker.run_worker() == 0
     assert fake_service.flushes >= 2

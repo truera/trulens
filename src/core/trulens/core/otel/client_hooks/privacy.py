@@ -77,18 +77,16 @@ class CapturePolicy:
     def from_environment(cls) -> "CapturePolicy":
         """Build a capture policy from TruLens hook environment variables."""
 
-        max_bytes = os.environ.get("TRULENS_HOOKS_MAX_FIELD_BYTES", "16384")
+        max_bytes = os.environ.get("TRULENS_MAX_FIELD_BYTES", "16384")
         try:
             parsed_max_bytes = max(256, int(max_bytes))
         except ValueError:
             parsed_max_bytes = 16_384
         return cls(
-            capture_content=_enabled("TRULENS_HOOKS_CAPTURE_CONTENT"),
-            capture_tool_payloads=_enabled(
-                "TRULENS_HOOKS_CAPTURE_TOOL_PAYLOADS"
-            ),
-            capture_diffs=_enabled("TRULENS_HOOKS_CAPTURE_DIFFS"),
-            capture_paths=_enabled("TRULENS_HOOKS_CAPTURE_PATHS"),
+            capture_content=_enabled("TRULENS_CAPTURE_CONTENT"),
+            capture_tool_payloads=_enabled("TRULENS_CAPTURE_TOOL_PAYLOADS"),
+            capture_diffs=_enabled("TRULENS_CAPTURE_DIFFS"),
+            capture_paths=_enabled("TRULENS_CAPTURE_PATHS"),
             max_field_bytes=parsed_max_bytes,
         )
 

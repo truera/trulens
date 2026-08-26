@@ -45,17 +45,17 @@ The default is a local SQLite database. Set a database URL for a custom SQLite
 file or PostgreSQL:
 
 ```bash
-export TRULENS_HOOKS_DESTINATION=database
-export TRULENS_HOOKS_DATABASE_URL="postgresql+psycopg://trulens@localhost/traces"
+export TRULENS_DESTINATION=database
+export TRULENS_DATABASE_URL="postgresql+psycopg://trulens@localhost/traces"
 ```
 
 For Snowflake, use a named `connections.toml` profile:
 
 ```bash
-export TRULENS_HOOKS_DESTINATION=snowflake
-export TRULENS_HOOKS_SNOWFLAKE_CONNECTION=my_connection
-export TRULENS_HOOKS_SNOWFLAKE_DATABASE=TRULENS_TRACES
-export TRULENS_HOOKS_SNOWFLAKE_SCHEMA=CLIENT_HOOKS
+export TRULENS_DESTINATION=snowflake
+export TRULENS_SNOWFLAKE_CONNECTION=my_connection
+export TRULENS_SNOWFLAKE_DATABASE=TRULENS_TRACES
+export TRULENS_SNOWFLAKE_SCHEMA=CLIENT_HOOKS
 ```
 
 By default, the native client determines identity: the app name is `cursor`,
@@ -64,16 +64,16 @@ and the run name is the native conversation/session ID. Launchers can provide a
 client version when the hook payload does not include one:
 
 ```bash
-export TRULENS_HOOKS_CLIENT_VERSION=3.17.19
+export TRULENS_CLIENT_VERSION=3.17.19
 ```
 
-`TRULENS_HOOKS_APP_NAME`, `TRULENS_HOOKS_APP_VERSION`, and
-`TRULENS_HOOKS_RUN_NAME` remain available as explicit overrides.
+`TRULENS_APP_NAME`, `TRULENS_APP_VERSION`, and `TRULENS_RUN_NAME` remain
+available as explicit overrides.
 
 For OTLP gRPC:
 
 ```bash
-export TRULENS_HOOKS_DESTINATION=otlp
+export TRULENS_DESTINATION=otlp
 export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317"
 ```
 
@@ -82,10 +82,10 @@ export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317"
 Lifecycle metadata is captured by default. Source-bearing content is opt-in:
 
 ```bash
-export TRULENS_HOOKS_CAPTURE_CONTENT=true
-export TRULENS_HOOKS_CAPTURE_TOOL_PAYLOADS=true
-export TRULENS_HOOKS_CAPTURE_DIFFS=true
-export TRULENS_HOOKS_CAPTURE_PATHS=true
+export TRULENS_CAPTURE_CONTENT=true
+export TRULENS_CAPTURE_TOOL_PAYLOADS=true
+export TRULENS_CAPTURE_DIFFS=true
+export TRULENS_CAPTURE_PATHS=true
 ```
 
 Diffs include Cursor `afterFileEdit` old/new pairs and explicit patches. They
@@ -134,8 +134,8 @@ singleton worker exports completed turns and retries transient destination
 failures without blocking the coding client. Configure worker behavior with:
 
 ```bash
-export TRULENS_HOOKS_EXPORT_LEASE_SECONDS=60
-export TRULENS_HOOKS_WORKER_IDLE_SECONDS=2
+export TRULENS_EXPORT_LEASE_SECONDS=60
+export TRULENS_WORKER_IDLE_SECONDS=2
 ```
 
 `status` reports worker, pending, claimed, and retry state. `flush` remains a

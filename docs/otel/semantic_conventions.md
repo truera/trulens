@@ -137,8 +137,8 @@ normally:
 ```bash
 pip install trulens-core trulens-apps-cursor
 
-export TRULENS_HOOKS_CAPTURE_CONTENT=true
-export TRULENS_HOOKS_CAPTURE_TOOL_PAYLOADS=true
+export TRULENS_CAPTURE_CONTENT=true
+export TRULENS_CAPTURE_TOOL_PAYLOADS=true
 
 trulens-client-hooks install cursor --project
 trulens-client-hooks status cursor --project
