@@ -124,6 +124,8 @@ the relevant generation, retrieval, tool, graph, and workflow spans. Custom
 `@instrument()` spans can be used alongside a wrapper when application-owned
 operations or attributes are not exposed by the framework integration.
 
+### Coding-agent hooks
+
 Coding-agent hooks follow the same model: the client integration translates
 native lifecycle events into normal TruLens span types, emits applicable OTEL
 GenAI fields, and uses `ai.observability.coding_agent.*` only for concepts that
