@@ -1,4 +1,4 @@
-"""Tests for trulens.openeval.
+"""Tests for trulens.connectors.openeval.
 
 These exercise to_openeval()/from_openeval() against DataFrames shaped
 exactly like Run.get_records() actually returns them (record_id, input,
@@ -18,8 +18,8 @@ from openeval.validate import validate_result_set
 from openeval.validate import validate_suite
 import pandas as pd
 import pytest
-from trulens.openeval import from_openeval
-from trulens.openeval import to_openeval
+from trulens.connectors.openeval import from_openeval
+from trulens.connectors.openeval import to_openeval
 
 
 def _records_df(rows, attrs=None):
