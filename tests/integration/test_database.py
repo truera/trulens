@@ -494,16 +494,7 @@ def _populate_data(db: core_db.DB):
 
 
 class TestDatasetGroundTruthRoundTrip(TestCase):
-    """Round-trip persistence for datasets and ground truths.
-
-    Regression tests for two bugs where the read path referenced attributes
-    that do not exist on the ORM objects:
-
-    - ``get_ground_truth`` called ``json.loads`` on the ORM row instead of its
-      ``ground_truth_json`` column, raising ``TypeError``.
-    - ``get_datasets`` read ``ds.name`` / ``ds.meta``, which are not columns
-      (they live inside ``dataset_json``), raising ``AttributeError``.
-    """
+    """Round-trip persistence for datasets and ground truths."""
 
     def _seed(self, db: sqlalchemy_db.SQLAlchemyDB):
         from trulens.core.schema.dataset import Dataset
@@ -528,8 +519,8 @@ class TestDatasetGroundTruthRoundTrip(TestCase):
 
             datasets = db.get_datasets()
 
-            self.assertListEqual(
-                list(datasets.columns), ["dataset_id", "name", "meta"]
+            self.assertEqual(
+                datasets.columns.tolist(), ["dataset_id", "name", "meta"]
             )
             self.assertEqual(len(datasets), 1)
             row = datasets.iloc[0]
