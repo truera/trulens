@@ -1715,22 +1715,18 @@ class SQLAlchemyDB(core_db.DB):
         app_versions: Optional[List[types_schema.AppVersion]] = None,
     ) -> Tuple[pd.DataFrame, List[str]]:
         with self.session.begin() as session:
+            # cost_json/perf_json are stored as TEXT (TYPE_JSON = Text), so
+            # SQLAlchemy's [] subscript raises NotImplementedError at statement
+            # construction time.  Fetch individual rows and aggregate in Python
+            # using the existing _extract_tokens_and_cost/_extract_latency
+            # helpers instead of relying on database-level JSON extraction.
             record_stmt = sa.select(
                 self.orm.AppDefinition.app_name.label("app_name"),
                 self.orm.AppDefinition.app_version.label("app_version"),
                 self.orm.AppDefinition.app_id.label("app_id"),
-                sa.func.count(sa.distinct(self.orm.Record.record_id)).label(
-                    "Records"
-                ),
-                sa.func.avg(
-                    self.orm.Record.cost_json["n_tokens"].as_float()
-                ).label("Total Tokens"),
-                sa.func.avg(self.orm.Record.latency).label(
-                    "Average Latency (s)"
-                ),
-                sa.func.sum(self.orm.Record.cost_json["cost"].as_float()).label(
-                    "Total Cost (USD)"
-                ),
+                self.orm.Record.record_id.label("record_id"),
+                self.orm.Record.cost_json.label("cost_json"),
+                self.orm.Record.perf_json.label("perf_json"),
             ).join(self.orm.Record.app)
             if app_name:
                 record_stmt = record_stmt.where(
@@ -1740,11 +1736,6 @@ class SQLAlchemyDB(core_db.DB):
                 record_stmt = record_stmt.where(
                     self.orm.AppDefinition.app_version.in_(app_versions)
                 )
-            record_stmt = record_stmt.group_by(
-                self.orm.AppDefinition.app_name,
-                self.orm.AppDefinition.app_version,
-                self.orm.AppDefinition.app_id,
-            )
             base_rows = session.execute(record_stmt).all()
 
             fb_stmt = (
@@ -1781,20 +1772,50 @@ class SQLAlchemyDB(core_db.DB):
             )
             fb_rows = session.execute(fb_stmt).all()
 
-        base_df = pd.DataFrame(
+        raw_df = pd.DataFrame(
             base_rows,
             columns=[
                 "app_name",
                 "app_version",
                 "app_id",
-                "Records",
-                "Total Tokens",
-                "Average Latency (s)",
-                "Total Cost (USD)",
+                "record_id",
+                "cost_json",
+                "perf_json",
             ],
         )
-        if base_df.empty:
-            return base_df, []
+        if raw_df.empty:
+            empty = pd.DataFrame(
+                columns=[
+                    "app_name",
+                    "app_version",
+                    "app_id",
+                    "Records",
+                    "Total Tokens",
+                    "Average Latency (s)",
+                    "Total Cost (USD)",
+                ]
+            )
+            empty["Total Cost (Snowflake Credits)"] = pd.Series(
+                dtype=float
+            )
+            empty["tags"] = pd.Series(dtype=str)
+            return empty, []
+
+        cost_cols = _extract_tokens_and_cost(raw_df["cost_json"])
+        raw_df = pd.concat([raw_df, cost_cols], axis=1)
+        raw_df["_latency"] = _extract_latency(raw_df["perf_json"])
+
+        base_df = (
+            raw_df.groupby(
+                ["app_name", "app_version", "app_id"], as_index=False
+            )
+            .agg(
+                Records=("record_id", "nunique"),
+                **{"Total Tokens": ("total_tokens", "sum")},
+                **{"Average Latency (s)": ("_latency", "mean")},
+                **{"Total Cost (USD)": ("total_cost", "sum")},
+            )
+        )
 
         base_df["Total Cost (Snowflake Credits)"] = 0.0
         base_df["tags"] = ""
