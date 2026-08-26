@@ -126,7 +126,6 @@ async function ingest(payload) {{
       stdin: "pipe",
       stdout: "ignore",
       stderr: "pipe",
-      env: {{ ...process.env, TRULENS_APP_VERSION: VERSION || "unknown" }},
     }})
     proc.stdin.write(JSON.stringify(payload))
     proc.stdin.end()
