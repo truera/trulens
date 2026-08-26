@@ -21,6 +21,114 @@ application-routing attributes despite the historical `ResourceAttributes`
 Python class name. Instrumentation also places `service.name` and
 `service.version` on the actual OpenTelemetry resource.
 
+## How TruLens emits conventions
+
+Most applications should not set raw `gen_ai.*` or `ai.observability.*`
+strings. Instead, declare the semantic span type and values with
+[`@instrument()`][trulens.core.otel.instrument.instrument] and
+[`SpanAttributes`][trulens.otel.semconv.trace.SpanAttributes]. TruLens emits
+the corresponding `ai.observability.*` attributes and, where an official
+OpenTelemetry convention exists, the applicable `gen_ai.*` attributes and
+events.
+
+| Instrumentation path | What the user provides | What TruLens emits |
+|---|---|---|
+| Custom instrumentation | `SpanAttributes.SpanType` plus mappings from `SpanAttributes` keys to function arguments or `return` | Function-call attributes, the selected TruLens semantic attributes, and applicable OTEL GenAI attributes/events |
+| Framework auto-instrumentation | A supported app wrapped by `TruChain`, `TruGraph`, or `TruLlama` | Record-root and framework component spans, including generation, retrieval, tool, graph, and workflow semantics available from the framework |
+| Coding-agent auto-instrumentation | Cursor, Claude Code, or OpenCode lifecycle hooks | Record, agent, generation, tool, MCP, workflow, error, resource, and coding-agent extension attributes after privacy filtering |
+| Direct OpenTelemetry instrumentation | Explicit OTEL spans and attributes | Exactly the fields supplied by the application; TruLens does not reinterpret arbitrary raw OTEL spans |
+
+### Custom instrumentation
+
+Use a `RECORD_ROOT` span to define the main application input and output, and
+semantic child spans for operations that should be selectable for evaluation:
+
+```python
+from trulens.core.otel.instrument import instrument
+from trulens.otel.semconv.trace import SpanAttributes
+
+
+class RAG:
+    @instrument(
+        span_type=SpanAttributes.SpanType.RETRIEVAL,
+        attributes={
+            SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",
+            SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
+        },
+    )
+    def retrieve(self, query: str) -> list[str]:
+        ...
+
+    @instrument(
+        span_type=SpanAttributes.SpanType.GENERATION,
+        attributes={
+            SpanAttributes.COST.MODEL: "model",
+            SpanAttributes.COST.NUM_PROMPT_TOKENS: "input_tokens",
+            SpanAttributes.COST.NUM_COMPLETION_TOKENS: "output_tokens",
+            "prompt": "prompt",
+            "completion": "return",
+        },
+    )
+    def generate(
+        self,
+        prompt: str,
+        model: str,
+        input_tokens: int,
+        output_tokens: int,
+    ) -> str:
+        ...
+
+    @instrument(
+        span_type=SpanAttributes.SpanType.RECORD_ROOT,
+        attributes={
+            SpanAttributes.RECORD_ROOT.INPUT: "query",
+            SpanAttributes.RECORD_ROOT.OUTPUT: "return",
+        },
+    )
+    def query(self, query: str) -> str:
+        contexts = self.retrieve(query)
+        return self.generate(...)
+```
+
+The generation declaration above emits the TruLens cost attributes and, when
+their mapped values are present, derives `gen_ai.operation.name`,
+`gen_ai.request.model`, `gen_ai.usage.input_tokens`, and
+`gen_ai.usage.output_tokens`. The `prompt` and `completion` mappings produce a
+`gen_ai.client.inference.operation.details` event with structured input and
+output messages. A `TOOL` or `MCP` span similarly derives `gen_ai.tool.name`
+from the instrumented function name and can derive tool arguments and results
+from `call_arguments` and `call_result` mappings.
+
+Attribute mappings name the runtime source of each value. A string such as
+`"query"` reads a function argument, while `"return"` reads the function's
+return value. Use a callable mapping when values must be extracted from nested
+objects.
+
+### Framework auto-instrumentation
+
+Framework wrappers apply the same semantic conventions without requiring
+decorators on framework-owned code:
+
+```python
+from trulens.apps.langchain import TruChain
+from trulens.apps.langgraph import TruGraph
+from trulens.apps.llamaindex import TruLlama
+
+chain_recorder = TruChain(chain, app_name="rag", app_version="v1")
+graph_recorder = TruGraph(graph, app_name="agent", app_version="v1")
+llama_recorder = TruLlama(query_engine, app_name="search", app_version="v1")
+```
+
+The wrappers create record-root spans and translate framework callbacks into
+the relevant generation, retrieval, tool, graph, and workflow spans. Custom
+`@instrument()` spans can be used alongside a wrapper when application-owned
+operations or attributes are not exposed by the framework integration.
+
+Coding-agent hooks follow the same model: the client integration translates
+native lifecycle events into normal TruLens span types, emits applicable OTEL
+GenAI fields, and uses `ai.observability.coding_agent.*` only for concepts that
+have no official OTEL equivalent.
+
 ## Semantic convention reference
 
 All conventions use the same reference columns:
