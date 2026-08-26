@@ -12061,23 +12061,38 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
-name = "trulens-apps-client-hooks"
+name = "trulens-apps-claude"
 version = "2.13.1"
-description = "TruLens instrumentation for client-side coding agent hooks."
+description = "Claude Code hook instrumentation plugin for TruLens."
 optional = false
-python-versions = "^3.10"
-groups = ["required"]
+python-versions = "^3.9"
+groups = ["apps"]
 files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = ">=1.23.0"
-opentelemetry-sdk = ">=1.23.0"
 trulens-core = "^2.0.0"
 
 [package.source]
 type = "directory"
-url = "src/apps/client_hooks"
+url = "src/apps/claude"
+
+[[package]]
+name = "trulens-apps-cursor"
+version = "2.13.1"
+description = "Cursor hook instrumentation plugin for TruLens."
+optional = false
+python-versions = "^3.9"
+groups = ["apps"]
+files = []
+develop = true
+
+[package.dependencies]
+trulens-core = "^2.0.0"
+
+[package.source]
+type = "directory"
+url = "src/apps/cursor"
 
 [[package]]
 name = "trulens-apps-gepa"
@@ -13899,4 +13914,4 @@ otlp = ["opentelemetry-exporter-otlp-proto-grpc"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "fa7bf57cb4fd3ff0f1187fb49790d01c2decc934be0d0625933caf52ac6fbdcf"
+content-hash = "9c8d07531779bc3210fb034f0e516555a4085fcf51b571c1037f09a88f000166"

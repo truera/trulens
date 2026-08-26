@@ -1,4 +1,4 @@
-"""Client-neutral hook event models."""
+"""Client-neutral coding-agent hook event models."""
 
 from __future__ import annotations
 
@@ -36,6 +36,7 @@ class HookEvent:
     response: Optional[Any] = None
     tool_input: Optional[Any] = None
     tool_output: Optional[Any] = None
+    diff: Optional[Any] = None
     paths: Optional[Any] = None
     error: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)

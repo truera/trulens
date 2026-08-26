@@ -592,6 +592,26 @@ class SpanAttributes:
         EXECUTION_TIME_MS = base + ".execution_time_ms"
         """Time taken to execute the MCP tool call in milliseconds."""
 
+    class CODING_AGENT:
+        """Attributes specific to coding-agent client instrumentation."""
+
+        base = BASE_SCOPE + ".coding_agent"
+
+        CLIENT = base + ".client"
+        """Coding-agent client name, such as Cursor or Claude Code."""
+
+        NATIVE_EVENT = base + ".native_event"
+        """Native lifecycle event emitted by the coding-agent client."""
+
+        DIFF = base + ".diff"
+        """Source diff or old/new edit pairs captured from an edit event."""
+
+        EDITOR_VERSION = base + ".editor_version"
+        """Version of the coding-agent editor or CLI when available."""
+
+        WORKSPACE = base + ".workspace"
+        """Workspace path or identifier when path capture is enabled."""
+
     class GUARDRAIL:
         """Attributes relevant for guardrail check spans."""
 

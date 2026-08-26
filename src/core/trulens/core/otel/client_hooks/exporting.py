@@ -1,4 +1,4 @@
-"""Destination configuration and span export for client hooks."""
+"""Destination configuration and span export for coding-agent hooks."""
 
 from __future__ import annotations
 
@@ -46,15 +46,20 @@ def _snowflake_session() -> core_session.TruSession:
 
 
 def create_session() -> core_session.TruSession:
-    """Create the configured local or Snowflake TruLens session."""
+    """Create the configured database, Snowflake, or OTLP TruLens session."""
 
     destination = os.environ.get("TRULENS_HOOKS_DESTINATION", "local").lower()
-    if destination == "local":
+    if destination in {"local", "database"}:
         return _local_session()
     if destination == "snowflake":
         return _snowflake_session()
+    if destination == "otlp":
+        endpoint = os.environ.get("TRULENS_HOOKS_OTLP_ENDPOINT")
+        return core_session.TruSession(
+            otel_exporter="otlp", otlp_endpoint=endpoint
+        )
     raise ValueError(
-        "TRULENS_HOOKS_DESTINATION must be 'local' or 'snowflake'."
+        "TRULENS_HOOKS_DESTINATION must be local, database, snowflake, or otlp."
     )
 
 
@@ -72,5 +77,5 @@ def export_spans(
     if exporter is None:
         return False
     result = exporter.export(spans)
-    active_session.force_flush()
-    return result == SpanExportResult.SUCCESS
+    flushed = active_session.force_flush()
+    return result == SpanExportResult.SUCCESS and flushed is not False

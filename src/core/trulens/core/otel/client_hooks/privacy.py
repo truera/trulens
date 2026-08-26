@@ -8,7 +8,7 @@ import os
 import re
 from typing import Any, Dict, Mapping
 
-from trulens.apps.client_hooks import models
+from trulens.core.otel.client_hooks import models
 
 _SECRET_KEY = re.compile(
     r"(?:api[_-]?key|authorization|cookie|credential|password|private[_-]?key|secret|token)",
@@ -20,6 +20,7 @@ _SAFE_METADATA_KEYS = {
     "permission_mode",
     "sandbox",
     "source",
+    "cursor_version",
 }
 
 
@@ -62,11 +63,13 @@ class CapturePolicy:
         *,
         capture_content: bool = False,
         capture_tool_payloads: bool = False,
+        capture_diffs: bool = False,
         capture_paths: bool = False,
         max_field_bytes: int = 16_384,
     ) -> None:
         self.capture_content = capture_content
         self.capture_tool_payloads = capture_tool_payloads
+        self.capture_diffs = capture_diffs
         self.capture_paths = capture_paths
         self.max_field_bytes = max_field_bytes
 
@@ -84,6 +87,7 @@ class CapturePolicy:
             capture_tool_payloads=_enabled(
                 "TRULENS_HOOKS_CAPTURE_TOOL_PAYLOADS"
             ),
+            capture_diffs=_enabled("TRULENS_HOOKS_CAPTURE_DIFFS"),
             capture_paths=_enabled("TRULENS_HOOKS_CAPTURE_PATHS"),
             max_field_bytes=parsed_max_bytes,
         )
@@ -109,6 +113,9 @@ class CapturePolicy:
             else None,
             tool_output=_bounded(event.tool_output, self.max_field_bytes)
             if self.capture_tool_payloads
+            else None,
+            diff=_bounded(event.diff, self.max_field_bytes)
+            if self.capture_diffs
             else None,
             paths=_bounded(event.paths, self.max_field_bytes)
             if self.capture_paths

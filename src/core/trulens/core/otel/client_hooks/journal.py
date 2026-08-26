@@ -14,7 +14,7 @@ import secrets
 import tempfile
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
-from trulens.apps.client_hooks import models
+from trulens.core.otel.client_hooks import models
 
 if os.name == "nt":
     import msvcrt
@@ -77,7 +77,10 @@ class EventJournal:
                 try:
                     state = json.loads(state_path.read_text(encoding="utf-8"))
                 except (json.JSONDecodeError, OSError):
-                    state = {"active_turn": None, "turns": {}}
+                    state = {
+                        "active_turn": None,
+                        "turns": {},
+                    }
             yield state_path, state
             self._write_atomic(state_path, state)
             _unlock(lock_file.fileno())
@@ -163,6 +166,25 @@ class EventJournal:
                 ],
                 key=lambda event: event.observed_at,
             )
+
+    def conversations(self) -> List[Tuple[str, str]]:
+        """Discover client/conversation pairs represented in the journal."""
+
+        if not self.directory.exists():
+            return []
+        result = set()
+        for state_path in self.directory.glob("*.json"):
+            try:
+                state = json.loads(state_path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                continue
+            for turn in state.get("turns", {}).values():
+                events = turn.get("events", [])
+                if events:
+                    event = events[0]
+                    result.add((event["client"], event["conversation_id"]))
+                    break
+        return sorted(result)
 
     def mark_exported(
         self, client: str, conversation_id: str, turn_id: str

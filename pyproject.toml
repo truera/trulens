@@ -80,6 +80,8 @@ mkdocs-literate-nav = ">=0.6"
 mkdocs-section-index = ">=0.3"
 
 [tool.poetry.group.apps.dependencies]
+trulens-apps-claude = { path = "src/apps/claude", develop = true }
+trulens-apps-cursor = { path = "src/apps/cursor", develop = true }
 trulens-apps-langchain = { path = "src/apps/langchain", develop = true }
 trulens-apps-langgraph = { path = "src/apps/langgraph", develop = true }
 trulens-apps-llamaindex = { path = "src/apps/llamaindex", develop = true }
@@ -108,7 +110,6 @@ trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = tr
 trulens-hotspots = { path = "src/hotspots", develop = true }
 
 [tool.poetry.group.required.dependencies]
-trulens-apps-client-hooks = { path = "src/apps/client_hooks", develop = true }
 trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-apps-gepa = { path = "src/apps/gepa", develop = true }

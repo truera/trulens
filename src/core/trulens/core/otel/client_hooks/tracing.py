@@ -4,16 +4,20 @@ from __future__ import annotations
 
 from datetime import timedelta
 import hashlib
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version
 import json
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import Event
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.trace import Status
 from opentelemetry.trace import StatusCode
-from trulens.apps.client_hooks import models
+from trulens.core.otel.client_hooks import models
 from trulens.otel.semconv.trace import GenAIAttributes
+from trulens.otel.semconv.trace import GenAIEvents
 from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -78,10 +82,15 @@ class TraceAssembler:
         self,
         *,
         app_name: str = "coding-agent",
-        app_version: str = "client-hooks",
+        app_version: Optional[str] = None,
         run_name: str = "client-hooks",
     ) -> None:
         self.app_name = app_name
+        if app_version is None:
+            try:
+                app_version = version("trulens-core")
+            except PackageNotFoundError:
+                app_version = "unknown"
         self.app_version = app_version
         self.run_name = run_name
 
@@ -98,8 +107,9 @@ class TraceAssembler:
         turn_id = first.turn_id or first.event_id
         record_id = f"{first.client}:{first.conversation_id}:{turn_id}"
         trace_id = _otel_id(f"trace:{record_id}", 128)
-        root_span_id = _otel_id(f"root:{record_id}", 64)
         agent_span_id = _otel_id(f"agent:{record_id}", 64)
+        root_span_id = _otel_id(f"root:{record_id}", 64)
+        response_span_id = _otel_id(f"response:{record_id}", 64)
         common = {
             ResourceAttributes.APP_NAME: self.app_name,
             ResourceAttributes.APP_VERSION: self.app_version,
@@ -140,20 +150,18 @@ class TraceAssembler:
             SpanAttributes.CALL.FUNCTION: f"{first.client}.turn",
             SpanAttributes.WORKFLOW.AGENT_NAME: first.client,
         }
+        root_event_attributes: Dict[str, Any] = {}
+        if prompt is not None:
+            root_event_attributes[
+                GenAIEvents.EventAttributes.INPUT_MESSAGES
+            ] = _json([{"role": "user", "content": prompt}])
+        if response is not None:
+            root_attributes[SpanAttributes.CALL.RETURN] = _json(response)
+            root_event_attributes[
+                GenAIEvents.EventAttributes.OUTPUT_MESSAGES
+            ] = _json([{"role": "assistant", "content": response}])
         if root_error:
             root_attributes[SpanAttributes.RECORD_ROOT.ERROR] = root_error
-        spans = [
-            self._span(
-                name=f"{first.client}.turn",
-                trace_id=trace_id,
-                span_id=root_span_id,
-                parent_id=None,
-                attributes=root_attributes,
-                start_time=_nanoseconds(first),
-                end_time=max(_nanoseconds(last), _duration_end(last)),
-                failed=root_failed,
-            )
-        ]
         agent_attributes = {
             **common,
             SpanAttributes.SPAN_TYPE: SpanAttributes.SpanType.AGENT.value,
@@ -165,7 +173,9 @@ class TraceAssembler:
             agent_attributes[SpanAttributes.COST.MODEL] = model
             agent_attributes[GenAIAttributes.REQUEST.MODEL] = model
             agent_attributes[GenAIAttributes.SYSTEM.NAME] = (
-                "anthropic" if first.client == "claude" else "cursor"
+                "anthropic"
+                if first.client in {"claude", "claude-code"}
+                else "cursor"
             )
         input_tokens = sum(event.input_tokens or 0 for event in events)
         output_tokens = sum(event.output_tokens or 0 for event in events)
@@ -187,6 +197,19 @@ class TraceAssembler:
         if cost:
             agent_attributes[SpanAttributes.COST.COST] = cost
             agent_attributes[SpanAttributes.COST.CURRENCY] = "USD"
+        spans = [
+            self._span(
+                name=f"{first.client}.request_response",
+                trace_id=trace_id,
+                span_id=root_span_id,
+                parent_id=None,
+                attributes=root_attributes,
+                start_time=_nanoseconds(first),
+                end_time=max(_nanoseconds(last), _duration_end(last)),
+                failed=root_failed,
+                event_attributes=root_event_attributes,
+            )
+        ]
         spans.append(
             self._span(
                 name=f"{first.client}.agent",
@@ -199,6 +222,33 @@ class TraceAssembler:
                 failed=root_failed,
             )
         )
+        if response is not None:
+            response_attributes = {
+                **common,
+                SpanAttributes.SPAN_TYPE: SpanAttributes.SpanType.GENERATION.value,
+                SpanAttributes.CALL.FUNCTION: "response_generation",
+                SpanAttributes.CALL.RETURN: _json(response),
+                SpanAttributes.RECORD_ROOT.OUTPUT: response,
+                GenAIAttributes.OPERATION.NAME: "chat",
+            }
+            spans.append(
+                self._span(
+                    name=f"{first.client}.response_generation",
+                    trace_id=trace_id,
+                    span_id=response_span_id,
+                    parent_id=agent_span_id,
+                    attributes=response_attributes,
+                    start_time=_nanoseconds(last),
+                    end_time=max(_nanoseconds(last), _duration_end(last)),
+                    failed=root_failed,
+                    kind=trace.SpanKind.CLIENT,
+                    event_attributes={
+                        GenAIEvents.EventAttributes.OUTPUT_MESSAGES: _json([
+                            {"role": "assistant", "content": response}
+                        ])
+                    },
+                )
+            )
         for index, (start, finish) in enumerate(_pair_events(events)):
             if start.category == "workflow" and (
                 start.event_name.lower()
@@ -232,9 +282,27 @@ class TraceAssembler:
             **common,
             SpanAttributes.SPAN_TYPE: _span_type(start.category).value,
             SpanAttributes.CALL.FUNCTION: name,
-            "coding_agent.client": start.client,
-            "coding_agent.hook_event": finish.event_name,
+            SpanAttributes.CODING_AGENT.CLIENT: start.client,
+            SpanAttributes.CODING_AGENT.NATIVE_EVENT: finish.event_name,
         }
+        editor_version = finish.metadata.get(
+            "cursor_version"
+        ) or start.metadata.get("cursor_version")
+        if editor_version:
+            attributes[SpanAttributes.CODING_AGENT.EDITOR_VERSION] = (
+                editor_version
+            )
+        workspace = None
+        if finish.paths:
+            workspace = finish.paths.get("workspace_roots") or finish.paths.get(
+                "cwd"
+            )
+        if workspace is None and start.paths:
+            workspace = start.paths.get("workspace_roots") or start.paths.get(
+                "cwd"
+            )
+        if workspace:
+            attributes[SpanAttributes.CODING_AGENT.WORKSPACE] = _json(workspace)
         if start.tool_name:
             attributes[GenAIAttributes.TOOL.NAME] = start.tool_name
         if start.tool_input is not None:
@@ -249,6 +317,14 @@ class TraceAssembler:
                 finish.tool_output
             )
             attributes[SpanAttributes.CALL.RETURN] = _json(finish.tool_output)
+        if finish.response is not None:
+            attributes[SpanAttributes.CALL.RETURN] = _json(finish.response)
+        diff = finish.diff if finish.diff is not None else start.diff
+        if diff is not None:
+            serialized_diff = _json(diff)
+            attributes[SpanAttributes.CODING_AGENT.DIFF] = serialized_diff
+            attributes["vcs.change.diff"] = serialized_diff
+            attributes[SpanAttributes.CALL.RETURN] = serialized_diff
         if start.category == "mcp":
             if start.tool_name:
                 attributes[SpanAttributes.MCP.TOOL_NAME] = start.tool_name
@@ -305,6 +381,7 @@ class TraceAssembler:
         end_time: int,
         failed: bool,
         kind: trace.SpanKind = trace.SpanKind.INTERNAL,
+        event_attributes: Optional[Mapping[str, Any]] = None,
     ) -> ReadableSpan:
         context = trace.SpanContext(
             trace_id=trace_id,
@@ -326,6 +403,15 @@ class TraceAssembler:
             parent=parent,
             resource=Resource.create({"service.name": "trulens-client-hooks"}),
             attributes=attributes,
+            events=(
+                Event(
+                    GenAIEvents.CLIENT_INFERENCE_OPERATION_DETAILS,
+                    attributes=event_attributes,
+                    timestamp=end_time,
+                ),
+            )
+            if event_attributes
+            else (),
             kind=kind,
             status=Status(StatusCode.ERROR if failed else StatusCode.UNSET),
             start_time=start_time,

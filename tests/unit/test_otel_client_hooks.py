@@ -12,15 +12,16 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 import pytest
-from trulens.apps.client_hooks import journal
-from trulens.apps.client_hooks import parsers
-from trulens.apps.client_hooks import privacy
-from trulens.apps.client_hooks import service
-from trulens.apps.client_hooks import tracing
+from trulens.core.otel.client_hooks import journal
+from trulens.core.otel.client_hooks import parsers
+from trulens.core.otel.client_hooks import privacy
+from trulens.core.otel.client_hooks import service
+from trulens.core.otel.client_hooks import tracing
 from trulens.experimental.otel_tracing.core.exporter import (
     utils as exporter_utils,
 )
 from trulens.otel.semconv.trace import GenAIAttributes
+from trulens.otel.semconv.trace import GenAIEvents
 from trulens.otel.semconv.trace import SpanAttributes
 
 
@@ -113,6 +114,53 @@ def test_capture_policy_hides_error_content_by_default():
     assert captured.error == "[error content not captured]"
 
 
+def test_cursor_file_edit_captures_diff_only_when_enabled():
+    event = parsers.parse_cursor(
+        _cursor(
+            "afterFileEdit",
+            file_path="src/app.py",
+            edits=[
+                {
+                    "old_string": "password = 'secret'",
+                    "new_string": "password = os.environ['PASSWORD']",
+                }
+            ],
+        )
+    )
+
+    assert event.category == "tool"
+    assert privacy.CapturePolicy().apply(event).diff is None
+    captured = privacy.CapturePolicy(
+        capture_diffs=True, capture_paths=True
+    ).apply(event)
+    assert captured.diff["file_path"] == "src/app.py"
+    assert captured.paths["file_path"] == "src/app.py"
+
+
+def test_apply_patch_diff_is_bounded_and_emitted_on_span():
+    event = parsers.parse_claude(
+        _claude(
+            "PostToolUse",
+            tool_name="ApplyPatch",
+            tool_use_id="patch-1",
+            tool_input={"patch": "@@\n- old\n+ new\n" + "x" * 500},
+        )
+    )
+    captured = privacy.CapturePolicy(
+        capture_diffs=True, max_field_bytes=256
+    ).apply(event)
+
+    spans = tracing.TraceAssembler().assemble([captured])
+    patch_span = next(span for span in spans if span.name == "ApplyPatch")
+    assert (
+        "[TRUNCATED]" in patch_span.attributes[SpanAttributes.CODING_AGENT.DIFF]
+    )
+    assert (
+        patch_span.attributes["vcs.change.diff"]
+        == patch_span.attributes[SpanAttributes.CODING_AGENT.DIFF]
+    )
+
+
 def test_journal_deduplicates_and_correlates_turn(tmp_path: Path):
     event_journal = journal.EventJournal(tmp_path)
     prompt = privacy.CapturePolicy(capture_content=True).apply(
@@ -176,6 +224,26 @@ def test_journal_claims_pending_turn_once(tmp_path: Path):
     assert event_journal.claim_pending_turns("claude", "session-1") == []
 
 
+def test_journal_groups_sequential_turns_by_conversation(tmp_path: Path):
+    event_journal = journal.EventJournal(tmp_path)
+    first_turn, _ = event_journal.append(
+        parsers.parse_cursor(_cursor("beforeSubmitPrompt", prompt="first"))
+    )
+    event_journal.append(parsers.parse_cursor(_cursor("stop")))
+    second_payload = _cursor("beforeSubmitPrompt", prompt="second")
+    second_payload["generation_id"] = "generation-2"
+    second_turn, _ = event_journal.append(parsers.parse_cursor(second_payload))
+
+    first_events = event_journal.get_turn(
+        "cursor", "conversation-1", first_turn
+    )
+    second_events = event_journal.get_turn(
+        "cursor", "conversation-1", second_turn
+    )
+    assert first_events[0].conversation_id == second_events[0].conversation_id
+    assert first_events[0].turn_id != second_events[0].turn_id
+
+
 def test_assembler_creates_private_root_agent_and_tool_spans():
     policy = privacy.CapturePolicy()
     events = [
@@ -234,6 +302,7 @@ def test_assembler_creates_private_root_agent_and_tool_spans():
     assert (
         root.context.trace_id == agent.context.trace_id == tool.context.trace_id
     )
+    assert root.parent is None
     assert agent.parent.span_id == root.context.span_id
     assert tool.parent.span_id == agent.context.span_id
     assert GenAIAttributes.TOOL.CALL_ARGUMENTS not in tool.attributes
@@ -255,8 +324,43 @@ def test_cursor_after_response_waits_for_stop_and_captures_text():
 
     assert not events[1].terminal
     spans = tracing.TraceAssembler().assemble(events)
-    assert spans[0].attributes[SpanAttributes.RECORD_ROOT.OUTPUT] == (
+    root = next(
+        span
+        for span in spans
+        if span.attributes[SpanAttributes.SPAN_TYPE]
+        == SpanAttributes.SpanType.RECORD_ROOT.value
+    )
+    assert (
+        root.attributes[SpanAttributes.RECORD_ROOT.OUTPUT] == "final response"
+    )
+    assert root.attributes[SpanAttributes.CALL.RETURN] == '"final response"'
+    assert (
         "final response"
+        in root.events[0].attributes[
+            GenAIEvents.EventAttributes.OUTPUT_MESSAGES
+        ]
+    )
+    assert json.loads(
+        root.events[0].attributes[GenAIEvents.EventAttributes.INPUT_MESSAGES]
+    ) == [{"role": "user", "content": "hello"}]
+    assert json.loads(
+        root.events[0].attributes[GenAIEvents.EventAttributes.OUTPUT_MESSAGES]
+    ) == [{"role": "assistant", "content": "final response"}]
+    response_span = next(
+        span
+        for span in spans
+        if span.attributes[SpanAttributes.SPAN_TYPE]
+        == SpanAttributes.SpanType.GENERATION.value
+    )
+    agent = next(
+        span
+        for span in spans
+        if span.attributes[SpanAttributes.SPAN_TYPE]
+        == SpanAttributes.SpanType.AGENT.value
+    )
+    assert response_span.parent.span_id == agent.context.span_id
+    assert response_span.attributes[SpanAttributes.CALL.RETURN] == (
+        '"final response"'
     )
 
 
@@ -273,7 +377,12 @@ def test_assembler_marks_stale_turn_as_error():
 
     spans = tracing.TraceAssembler().assemble(events, stale=True)
 
-    root = spans[0]
+    root = next(
+        span
+        for span in spans
+        if span.attributes[SpanAttributes.SPAN_TYPE]
+        == SpanAttributes.SpanType.RECORD_ROOT.value
+    )
     assert root.status.status_code.name == "ERROR"
     assert root.attributes[SpanAttributes.RECORD_ROOT.ERROR] == (
         "Incomplete hook turn"
@@ -324,6 +433,11 @@ class _Session:
         return True
 
 
+class _FailedFlushSession(_Session):
+    def force_flush(self):
+        return False
+
+
 def test_service_exports_terminal_turn_and_marks_it_complete(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
@@ -341,6 +455,40 @@ def test_service_exports_terminal_turn_and_marks_it_complete(
 
     assert exporter.spans
     assert event_journal.pending_turns("cursor", "conversation-1") == []
+
+
+def test_service_flush_retries_completed_turn_without_new_event(tmp_path: Path):
+    event_journal = journal.EventJournal(tmp_path)
+    event_journal.append(parsers.parse_cursor(_cursor("beforeSubmitPrompt")))
+    event_journal.append(parsers.parse_cursor(_cursor("stop")))
+    exporter = _Exporter(result=SpanExportResult.FAILURE)
+    hook_service = service.HookService(
+        journal=event_journal,
+        session=_Session(exporter),
+    )
+
+    assert not hook_service.flush()
+    event_journal.release_claim(
+        "cursor", "conversation-1", "generation-1", failed=False
+    )
+    exporter.result = SpanExportResult.SUCCESS
+    assert hook_service.flush()
+    assert event_journal.pending_turns("cursor", "conversation-1") == []
+
+
+def test_service_does_not_mark_exported_when_force_flush_fails(tmp_path: Path):
+    exporter = _Exporter()
+    event_journal = journal.EventJournal(tmp_path)
+    hook_service = service.HookService(
+        journal=event_journal,
+        session=_FailedFlushSession(exporter),
+    )
+
+    assert hook_service.ingest("cursor", _cursor("beforeSubmitPrompt"))
+    assert not hook_service.ingest("cursor", _cursor("stop"))
+    assert event_journal.pending_turns("cursor", "conversation-1") == [
+        "generation-1"
+    ]
 
 
 def test_trace_batch_can_use_standard_in_memory_exporter():

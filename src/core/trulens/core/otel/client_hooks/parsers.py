@@ -8,7 +8,8 @@ import hashlib
 import json
 from typing import Any, Mapping, Optional
 
-from trulens.apps.client_hooks import models
+from trulens.core.otel.client_hooks import clients
+from trulens.core.otel.client_hooks import models
 
 _TERMINAL_EVENTS = {
     "stop",
@@ -87,7 +88,11 @@ def _category(event_name: str, tool_name: Optional[str]) -> str:
         return "agent"
     if "mcp" in normalized or (tool_name or "").lower().startswith("mcp"):
         return "mcp"
-    if "tool" in normalized or "shell" in normalized:
+    if (
+        "tool" in normalized
+        or "shell" in normalized
+        or "fileedit" in normalized
+    ):
         return "tool"
     return "workflow"
 
@@ -101,28 +106,46 @@ def _phase(event_name: str) -> str:
     return "instant"
 
 
-def _parse(client: str, payload: Mapping[str, Any]) -> models.HookEvent:
+def _diff(payload: Mapping[str, Any]) -> Any:
+    explicit_diff = _first(payload, "diff", "patch")
+    if explicit_diff is not None:
+        return explicit_diff
+    edits = payload.get("edits")
+    if edits is not None:
+        return {
+            "file_path": payload.get("file_path"),
+            "edits": edits,
+        }
+    tool_input = payload.get("tool_input")
+    if isinstance(tool_input, Mapping):
+        return _first(tool_input, "diff", "patch")
+    return None
+
+
+def _parse(
+    client: str,
+    payload: Mapping[str, Any],
+    spec: Optional[clients.ClientSpec] = None,
+) -> models.HookEvent:
     event_name = str(
         _first(payload, "hook_event_name", "event_name", "event") or "unknown"
     )
     normalized_name = event_name.lower()
-    conversation_id = str(
-        _first(payload, "session_id", "conversation_id") or "unknown"
+    aliases = spec.field_aliases if spec is not None else clients.FieldAliases()
+    overrides = (
+        spec.extract_overrides(payload)
+        if spec is not None and spec.extract_overrides is not None
+        else {}
     )
-    turn_id = _first(
-        payload,
-        "generation_id",
-        "turn_id",
-        "prompt_id",
-        "message_id",
+    conversation_id = overrides.get("conversation_id") or _first(
+        payload, *aliases.conversation
     )
-    operation_id = _first(
-        payload,
-        "tool_use_id",
-        "tool_call_id",
-        "operation_id",
-        "subagent_id",
-        "agent_id",
+    if conversation_id is None:
+        raise ValueError(f"{client} hook payload is missing a conversation ID.")
+    conversation_id = str(conversation_id)
+    turn_id = overrides.get("turn_id") or _first(payload, *aliases.turn)
+    operation_id = overrides.get("operation_id") or _first(
+        payload, *aliases.operation
     )
     tool_name = _first(payload, "tool_name", "command_type")
     server_name = _first(payload, "mcp_server_name", "server_name")
@@ -171,6 +194,10 @@ def _parse(client: str, payload: Mapping[str, Any]) -> models.HookEvent:
         "text",
         "tool_input",
         "tool_output",
+        "diff",
+        "patch",
+        "edits",
+        "file_path",
         "result_json",
         "output",
         "command",
@@ -210,10 +237,13 @@ def _parse(client: str, payload: Mapping[str, Any]) -> models.HookEvent:
         ),
         cost=_number(payload.get("cost")),
         prompt=payload.get("prompt"),
-        response=_first(payload, "response", "last_assistant_message", "text"),
+        response=overrides.get("response")
+        or _first(payload, *aliases.response),
         tool_input=_first(payload, "tool_input", "command"),
         tool_output=_first(payload, "tool_output", "result_json", "output"),
+        diff=_diff(payload),
         paths={
+            "file_path": payload.get("file_path"),
             "cwd": payload.get("cwd"),
             "workspace_roots": payload.get("workspace_roots"),
             "transcript_path": payload.get("transcript_path"),
@@ -238,8 +268,12 @@ def parse_cursor(payload: Mapping[str, Any]) -> models.HookEvent:
 def parse(client: str, payload: Mapping[str, Any]) -> models.HookEvent:
     """Parse a supported client's hook payload."""
 
-    if client == "claude":
-        return parse_claude(payload)
-    if client == "cursor":
-        return parse_cursor(payload)
-    raise ValueError(f"Unsupported client: {client}")
+    try:
+        spec = clients.get_client(client)
+    except ValueError:
+        if client == "claude":
+            return parse_claude(payload)
+        if client == "cursor":
+            return parse_cursor(payload)
+        raise
+    return _parse(spec.name, payload, spec=spec)

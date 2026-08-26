@@ -1,71 +1,107 @@
-# Instrument Claude Code and Cursor
+# Instrument Cursor and Claude Code
 
-`trulens-apps-client-hooks` turns coding-agent lifecycle hooks into TruLens
-OpenTelemetry traces. It supports Claude Code and Cursor without wrapping or
-modifying either client.
+TruLens can capture coding-agent lifecycle hooks without wrapping application
+code. The shared runtime ships in `trulens-core`; each coding client is a thin
+plugin containing only its native hook and configuration contract.
 
-## Install and configure
+## Install a client
+
+For Cursor:
 
 ```bash
-pip install trulens-apps-client-hooks
-python -m trulens.apps.client_hooks config --client claude
-python -m trulens.apps.client_hooks config --client cursor
+pip install trulens-core trulens-apps-cursor
+trulens-client-hooks install cursor --dry-run
+trulens-client-hooks install cursor
 ```
 
-Generated snippets use the installed `trulens-client-hooks` executable when it
-is available, so the editor does not need to resolve the correct Python
-environment itself.
-
-Merge the generated JSON into `~/.claude/settings.json` or
-`~/.cursor/hooks.json`. Validate environment configuration with:
+For Claude Code:
 
 ```bash
-python -m trulens.apps.client_hooks validate
+pip install trulens-core trulens-apps-claude
+trulens-client-hooks install claude-code --dry-run
+trulens-client-hooks install claude-code
 ```
 
-Local persistence is enabled by default. To use Snowflake AI Observability:
+Use `--project` to install into the current repository instead of the user's
+global client configuration. The installer preserves unrelated hooks, creates a
+backup, and is idempotent.
+
+## Choose a destination
+
+The default is a local SQLite database. Set a database URL for a custom SQLite
+file or PostgreSQL:
 
 ```bash
-pip install trulens-connectors-snowflake
+export TRULENS_HOOKS_DESTINATION=database
+export TRULENS_HOOKS_DATABASE_URL="postgresql+psycopg://trulens@localhost/traces"
+```
+
+For Snowflake, use a named `connections.toml` profile:
+
+```bash
 export TRULENS_HOOKS_DESTINATION=snowflake
 export TRULENS_HOOKS_SNOWFLAKE_CONNECTION=my_connection
 ```
 
-The connection name refers to a normal Snowflake `connections.toml` entry, so
-credentials do not need to be included in hook configuration.
+For OTLP gRPC:
 
-## Captured spans
+```bash
+export TRULENS_HOOKS_DESTINATION=otlp
+export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317"
+```
 
-| Client activity | TruLens span type |
-| --- | --- |
-| User prompt or generation | `RECORD_ROOT` |
-| Coding-agent turn | `AGENT` |
-| Shell, read, edit, search, or generic tool | `TOOL` |
-| MCP invocation | `MCP` |
-| Subagent | `AGENT` |
-| Other lifecycle event | `WORKFLOW_STEP` |
+## Configure privacy
 
-The client session or conversation ID is stored as `CONVERSATION_ID`, linking
-multiple prompt records into one interaction.
-
-## Privacy defaults
-
-Only metadata is captured by default. Prompts, responses, commands, tool
-payloads, file paths, and transcript paths are omitted. Enable specific content
-classes explicitly:
+Lifecycle metadata is captured by default. Source-bearing content is opt-in:
 
 ```bash
 export TRULENS_HOOKS_CAPTURE_CONTENT=true
 export TRULENS_HOOKS_CAPTURE_TOOL_PAYLOADS=true
+export TRULENS_HOOKS_CAPTURE_DIFFS=true
 export TRULENS_HOOKS_CAPTURE_PATHS=true
 ```
 
-Secret-like mapping keys are redacted and captured values are size-limited.
-Review your organization's data handling requirements before enabling content.
+Diffs include Cursor `afterFileEdit` old/new pairs and explicit patches. They
+can contain source code or credentials, so they remain independently opt-in.
+Values are redacted and size-bounded before durable journaling.
 
-## Lifecycle behavior
+## Trace semantics
 
-Each hook is a separate process, so the adapter journals sanitized events and
-creates completed spans at turn boundaries. The journal is locked for concurrent
-hooks, deduplicates repeated events, and retains failed exports for retry.
-Instrumentation failures are written to stderr and never block the client.
+Native Cursor `conversation_id` and Claude Code `session_id` map to the existing
+TruLens `SpanAttributes.CONVERSATION_ID`. Each prompt gets distinct `RECORD_ID`
+and `INPUT_ID` values. There is no separate thread identity contract.
+
+Each turn emits the same semantic conventions as other TruLens apps:
+
+```text
+Agent span
+├── Request/response RECORD_ROOT span
+├── Tool, edit, shell, MCP, and subagent spans
+└── Response-generation span
+```
+
+Existing input/output and trace-level selectors work without client-specific
+logic. Coding-agent-only metadata such as client name, native hook event, editor
+version, workspace, and diff is defined centrally in `trulens-otel-semconv`.
+
+## Validate and inspect
+
+```bash
+trulens-client-hooks clients
+trulens-client-hooks validate
+trulens-client-hooks status cursor
+trulens-client-hooks flush
+```
+
+Every hook invocation retries eligible exports across the journal. `flush`
+also retries completed turns and exports stale turns without waiting for another
+client event, which is useful after reconnecting an unavailable destination.
+
+Remove only the TruLens-managed hook entries while preserving other hooks:
+
+```bash
+trulens-client-hooks uninstall cursor
+```
+
+Runtime hooks always fail open: telemetry errors are written to stderr and never
+block the coding client.
