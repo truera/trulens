@@ -185,11 +185,18 @@ GENERATION
 TOOL
   ai.observability.span_type = "tool"
   ai.observability.coding_agent.client = "cursor"
-  ai.observability.coding_agent.native_event = "preToolUse"
+  ai.observability.coding_agent.native_event = "postToolUse"
   gen_ai.operation.name = "execute_tool"
-  gen_ai.tool.name = "<native-tool-name>"
+  gen_ai.tool.name = "Read"
   gen_ai.tool.call.id = "<cursor-tool-call-id>"
 ```
+
+`gen_ai.tool.name` identifies the logical tool that ran, such as `Read`,
+`Bash`, or `ApplyPatch`. `ai.observability.coding_agent.native_event` preserves
+the coding client's lifecycle hook name. A completed tool span pairs the
+client's pre- and post-tool events, so its native event is normally the
+finishing event, such as `postToolUse`; an unmatched start can instead retain
+`preToolUse`.
 
 The prompt and response therefore appear twice for different consumers:
 `ai.observability.record_root.input` and `.output` are TruLens record fields
