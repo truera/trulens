@@ -157,23 +157,54 @@ RECORD_ROOT
     └── WORKFLOW
 ```
 
-The spans include both portable OTEL fields and TruLens fields used for record
-selection and evaluation. Most values below are **span attributes**: key/value
-metadata attached directly to a span. Prompt and response messages use a
-different OTEL data structure, explained after the example.
+The following is the complete attribute shape for a successful Cursor turn that
+reports a model, token usage, and one `Read` tool call. Fields whose source data
+is unavailable are omitted. `COMMON SPAN ATTRIBUTES` are repeated on every span
+in the turn; they are factored out below only to keep the example readable.
+Most values are **span attributes**: key/value metadata attached directly to a
+span. Prompt and response messages use a different OTEL data structure,
+explained after the example.
 
 ```text
+RESOURCE ATTRIBUTES ON EVERY SPAN
+  service.name = "cursor"
+  service.version = "<cursor-version>"
+
+COMMON SPAN ATTRIBUTES ON EVERY SPAN
+  ai.observability.app_name = "cursor"
+  ai.observability.app_version = "<cursor-version>"
+  ai.observability.record_id = "cursor:<conversation-id>:<turn-id>"
+  ai.observability.conversation_id = "<conversation-id>"
+  ai.observability.input_id = "<turn-id>"
+  ai.observability.run.name = "<conversation-id>"
+  ai.observability.input_records_count = 1
+
 RECORD_ROOT
   ai.observability.span_type = "record_root"
-  ai.observability.conversation_id = "<cursor-conversation-id>"
   ai.observability.record_root.input = "<captured-user-prompt>"
   ai.observability.record_root.output = "<captured-agent-response>"
+  ai.observability.call.function = "cursor.turn"
+  ai.observability.call.return = "<captured-agent-response>"
+  ai.observability.workflow.agent_name = "cursor"
+
+AGENT
+  ai.observability.span_type = "agent"
+  ai.observability.call.function = "cursor"
+  ai.observability.workflow.agent_name = "cursor"
+  ai.observability.cost.model = "<model-name>"
+  ai.observability.cost.num_prompt_tokens = <reported-input-token-count>
+  ai.observability.cost.num_completion_tokens = <reported-output-token-count>
+  ai.observability.cost.num_tokens = <reported-total-token-count>
 
 GENERATION
-  # Attributes attached directly to the generation span
   ai.observability.span_type = "generation"
+  ai.observability.call.function = "response_generation"
+  ai.observability.call.return = "<captured-agent-response>"
+  ai.observability.record_root.output = "<captured-agent-response>"
   gen_ai.operation.name = "chat"
   gen_ai.request.model = "<model-name>"
+  gen_ai.response.model = "<response-model-name>"
+  gen_ai.system = "<provider-name>"
   gen_ai.usage.input_tokens = <reported-input-token-count>
   gen_ai.usage.output_tokens = <reported-output-token-count>
 
@@ -198,12 +229,25 @@ GENERATION
 
 TOOL
   ai.observability.span_type = "tool"
+  ai.observability.call.function = "Read"
+  ai.observability.call.kwargs.input = "<captured-tool-arguments>"
+  ai.observability.call.return = "<captured-tool-result>"
   ai.observability.coding_agent.client = "cursor"
   ai.observability.coding_agent.native_event = "postToolUse"
+  ai.observability.coding_agent.editor_version = "<cursor-version>"
   gen_ai.operation.name = "execute_tool"
   gen_ai.tool.name = "Read"
-  gen_ai.tool.call.id = "<cursor-tool-call-id>"
+  gen_ai.tool.call.id = "<tool-call-id>"
+  gen_ai.tool.call.arguments = "<captured-tool-arguments>"
+  gen_ai.tool.call.result = "<captured-tool-result>"
 ```
+
+`gen_ai.system` is present only when the provider is known from native metadata
+or can be inferred unambiguously from the model. Cost and currency attributes
+are added to the agent span when the client reports cost. Workspace and diff
+attributes are added to operation spans only when their independent privacy
+controls are enabled and those values are present. Failed spans additionally
+carry `error.type`, OTEL error status, and the applicable TruLens error field.
 
 An OpenTelemetry **span event** is a timestamped record nested inside a span;
 it is not a separate span. Events have their own attributes, which is why the
