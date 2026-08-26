@@ -131,6 +131,69 @@ native lifecycle events into normal TruLens span types, emits applicable OTEL
 GenAI fields, and uses `ai.observability.coding_agent.*` only for concepts that
 have no official OTEL equivalent.
 
+For example, install the Cursor integration into a project and then use Cursor
+normally:
+
+```bash
+pip install trulens-core trulens-apps-cursor
+
+export TRULENS_HOOKS_CAPTURE_CONTENT=true
+export TRULENS_HOOKS_CAPTURE_TOOL_PAYLOADS=true
+
+trulens-client-hooks install cursor --project
+trulens-client-hooks status cursor --project
+```
+
+A real Cursor Desktop validation produced one trace with 80 spans: one record
+root, one agent, one generation, 76 tool calls, and one workflow span. The
+native conversation ID became the TruLens run and conversation ID, and the
+generation reported Cursor's `auto-smart` model:
+
+```text
+Run / conversation  973c79be-0f0c-4cea-93b8-fca4776c578b
+Trace               09c02e4421922659c904786f78adf332
+
+RECORD_ROOT
+└── AGENT    cursor
+    ├── GENERATION  chat auto-smart
+    ├── TOOL        execute_tool <native-tool-name>
+    ├── ...         75 additional tool spans
+    └── WORKFLOW
+```
+
+The spans include both portable OTEL fields and TruLens fields used for record
+selection and evaluation. Representative attributes from that trace are:
+
+```text
+RECORD_ROOT
+  ai.observability.span_type = "record_root"
+  ai.observability.conversation_id = "<cursor-conversation-id>"
+  ai.observability.record_root.input = "<captured-user-prompt>"
+  ai.observability.record_root.output = "<captured-agent-response>"
+
+GENERATION
+  ai.observability.span_type = "generation"
+  gen_ai.operation.name = "chat"
+  gen_ai.request.model = "auto-smart"
+  gen_ai.usage.input_tokens = <reported-input-token-count>
+  gen_ai.usage.output_tokens = <reported-output-token-count>
+
+TOOL
+  ai.observability.span_type = "tool"
+  ai.observability.coding_agent.client = "cursor"
+  ai.observability.coding_agent.native_event = "preToolUse"
+  gen_ai.operation.name = "execute_tool"
+  gen_ai.tool.name = "<native-tool-name>"
+  gen_ai.tool.call.id = "<cursor-tool-call-id>"
+```
+
+Content and tool payloads are omitted by default; the opt-ins above are what
+make the prompt, response, arguments, and results available. Path and diff
+capture require separate opt-ins because they may contain source code or
+credentials. See [Instrument Cursor, Claude Code, and
+OpenCode](../component_guides/instrumentation/client_hooks.md) for destination,
+privacy, worker, and uninstall configuration.
+
 ## Semantic convention reference
 
 All conventions use the same reference columns:
