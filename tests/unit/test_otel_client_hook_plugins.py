@@ -194,6 +194,32 @@ def test_claude_stop_recovers_response_and_usage_from_transcript(
     )
     clients.register_client(claude_spec)
 
+    prompt = parsers.parse(
+        "claude-code",
+        {
+            "session_id": "session-1",
+            "hook_event_name": "UserPromptSubmit",
+            "prompt": "hello",
+        },
+    )
+    tool_start = parsers.parse(
+        "claude-code",
+        {
+            "session_id": "session-1",
+            "hook_event_name": "PreToolUse",
+            "tool_use_id": "tool-1",
+            "tool_name": "Read",
+        },
+    )
+    tool_end = parsers.parse(
+        "claude-code",
+        {
+            "session_id": "session-1",
+            "hook_event_name": "PostToolUse",
+            "tool_use_id": "tool-1",
+            "tool_name": "Read",
+        },
+    )
     event = parsers.parse(
         "claude-code",
         {
@@ -207,6 +233,18 @@ def test_claude_stop_recovers_response_and_usage_from_transcript(
     assert event.model == "claude-opus-4-5"
     assert event.input_tokens == 65
     assert event.output_tokens == 7
+    spans = tracing.TraceAssembler().assemble([
+        prompt,
+        tool_start,
+        tool_end,
+        event,
+    ])
+    assert [span.name for span in spans] == [
+        "claude-code.request_response",
+        "claude-code.agent",
+        "chat claude-opus-4-5",
+        "execute_tool Read",
+    ]
 
 
 def test_claude_stop_uses_only_current_turn_and_skips_bad_transcript_lines(
