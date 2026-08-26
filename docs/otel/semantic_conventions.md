@@ -158,7 +158,9 @@ RECORD_ROOT
 ```
 
 The spans include both portable OTEL fields and TruLens fields used for record
-selection and evaluation. Representative attributes are:
+selection and evaluation. Most values below are **span attributes**: key/value
+metadata attached directly to a span. Prompt and response messages use a
+different OTEL data structure, explained after the example.
 
 ```text
 RECORD_ROOT
@@ -168,18 +170,30 @@ RECORD_ROOT
   ai.observability.record_root.output = "<captured-agent-response>"
 
 GENERATION
+  # Attributes attached directly to the generation span
   ai.observability.span_type = "generation"
   gen_ai.operation.name = "chat"
   gen_ai.request.model = "<model-name>"
   gen_ai.usage.input_tokens = <reported-input-token-count>
   gen_ai.usage.output_tokens = <reported-output-token-count>
 
-  event: gen_ai.client.inference.operation.details
-    gen_ai.input.messages = [
-      {"role":"user","parts":[{"type":"text","content":"<captured-user-prompt>"}]}
+  # One timestamped span event attached to the generation span
+  EVENT gen_ai.client.inference.operation.details
+    ATTRIBUTE gen_ai.input.messages = [
+      {
+        "role": "user",
+        "parts": [
+          {"type": "text", "content": "<captured-user-prompt>"}
+        ]
+      }
     ]
-    gen_ai.output.messages = [
-      {"role":"assistant","parts":[{"type":"text","content":"<captured-agent-response>"}]}
+    ATTRIBUTE gen_ai.output.messages = [
+      {
+        "role": "assistant",
+        "parts": [
+          {"type": "text", "content": "<captured-agent-response>"}
+        ]
+      }
     ]
 
 TOOL
@@ -191,20 +205,28 @@ TOOL
   gen_ai.tool.call.id = "<cursor-tool-call-id>"
 ```
 
-`gen_ai.tool.name` identifies the logical tool that ran, such as `Read`,
-`Bash`, or `ApplyPatch`. `ai.observability.coding_agent.native_event` preserves
-the coding client's lifecycle hook name. A completed tool span pairs the
-client's pre- and post-tool events, so its native event is normally the
+An OpenTelemetry **span event** is a timestamped record nested inside a span;
+it is not a separate span. Events have their own attributes, which is why the
+message fields are indented under `EVENT` instead of aligned with
+`gen_ai.request.model` and the other generation-span attributes. The OTEL GenAI
+specification defines captured input and output content on the
+`gen_ai.client.inference.operation.details` event. Its structured message
+arrays preserve roles and typed parts, allowing text and other content types to
+share one representation.
+
+The prompt and response appear in both convention families for different
+consumers. `ai.observability.record_root.input` and `.output` are TruLens record
+attributes used by selectors and evaluations. `gen_ai.input.messages` and
+`gen_ai.output.messages` are portable OTEL GenAI event attributes used by OTEL
+collectors. They carry the same captured content but have different semantic
+scope and structure.
+
+Separately, `gen_ai.tool.name` identifies the logical tool that ran, such as
+`Read`, `Bash`, or `ApplyPatch`. `ai.observability.coding_agent.native_event`
+preserves the coding client's lifecycle hook name. A completed tool span pairs
+the client's pre- and post-tool events, so its native event is normally the
 finishing event, such as `postToolUse`; an unmatched start can instead retain
 `preToolUse`.
-
-The prompt and response therefore appear twice for different consumers:
-`ai.observability.record_root.input` and `.output` are TruLens record fields
-used by selectors and evaluations, while `gen_ai.input.messages` and
-`gen_ai.output.messages` are the portable OTEL GenAI representation. Per the
-OTEL specification, the structured message fields are attributes of the
-`gen_ai.client.inference.operation.details` event attached to the generation
-span, not attributes directly on the generation span.
 
 Content and tool payloads are omitted by default; the opt-ins above are what
 make the prompt, response, arguments, and results available. Path and diff
