@@ -1,3 +1,59 @@
+# Semantic Conventions
+
+TruLens traces combine standard OpenTelemetry conventions with TruLens-owned
+extensions. Use an official OpenTelemetry convention whenever one exists. Use
+the `ai.observability.*` namespace only for record, evaluation, agentic, and
+framework concepts that OpenTelemetry does not define.
+
+## Convention ownership
+
+| Namespace or field | Owner | Standard | Usage |
+|---|---|---|---|
+| `gen_ai.*` | OpenTelemetry | [Generative AI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/) | Model inference, structured messages, token usage, and tool execution. Do not add TruLens-specific fields to this namespace. |
+| `error.type` | OpenTelemetry | [Recording errors](https://opentelemetry.io/docs/specs/semconv/general/recording-errors/) | Stable error class or category on failed spans, paired with OTEL error status. |
+| `service.name`, `service.version` | OpenTelemetry | [Resource semantic conventions](https://opentelemetry.io/docs/specs/semconv/resource/) | Application identity on the OTEL resource. |
+| `ai.observability.*` | TruLens | TruLens semantic conventions | Record/evaluation identity, selectors, costs, framework spans, and concepts without an OTEL equivalent. |
+| `ai.observability.coding_agent.*` | TruLens extension | No OTEL coding-agent convention currently exists | Coding client, native lifecycle event, editor version, workspace, and privacy-controlled diffs. |
+| `ai.observability.mcp.*` | TruLens extension | No OTEL MCP convention currently exists | MCP server identity, schemas, arguments, outputs, errors, and duration. MCP tool execution also emits applicable official `gen_ai.tool.*` fields. |
+
+`ai.observability.app_name` and `ai.observability.app_version` are TruLens
+application-routing attributes despite the historical `ResourceAttributes`
+Python class name. Instrumentation also places `service.name` and
+`service.version` on the actual OpenTelemetry resource.
+
+## Official OpenTelemetry GenAI fields emitted by TruLens
+
+TruLens may emit these official fields alongside its own record and evaluation
+attributes. Their requiredness and allowed values are defined by OpenTelemetry,
+not by TruLens.
+
+| Attribute or event | Applies to | Notes |
+|---|---|---|
+| `gen_ai.operation.name` | Generation and tool spans | `chat` for conversational inference and `execute_tool` for tool execution. |
+| `gen_ai.request.model` | Generation spans | Model requested by the client. |
+| `gen_ai.response.model` | Generation spans | Emitted only when the response-side model is known. |
+| `gen_ai.system` | Generation spans | Provider/system identity emitted only when known; coding clients such as Cursor are not providers. |
+| `gen_ai.usage.input_tokens` | Generation spans | Latest provider-reported input-token usage. |
+| `gen_ai.usage.output_tokens` | Generation spans | Latest provider-reported output-token usage. |
+| `gen_ai.tool.name` | Tool and MCP spans | Name of the executed tool. |
+| `gen_ai.tool.call.id` | Tool and MCP spans | Native tool-call identifier when available. |
+| `gen_ai.tool.call.arguments` | Tool and MCP spans | JSON-serialized call arguments, subject to content-capture policy. |
+| `gen_ai.tool.call.result` | Tool and MCP spans | JSON-serialized result, subject to content-capture policy. |
+| `gen_ai.client.inference.operation.details` | Generation span event | Carries privacy-controlled structured input and output messages. |
+| `gen_ai.input.messages` | Inference-details event | JSON array of messages using `role` and `parts`; text parts use `{ "type": "text", "content": "..." }`. |
+| `gen_ai.output.messages` | Inference-details event | Same structured message schema as input messages. |
+
+TruLens currently follows the `gen_ai.system` convention selected by its OTEL
+compatibility baseline. `gen_ai.provider.name` exists in newer OTEL revisions,
+but instrumentation must not emit both revisions or switch defaults without an
+explicit compatibility change.
+
+## TruLens conventions
+
+Every attribute in the following table uses the TruLens-owned
+`ai.observability.*` namespace. These are extensions to OpenTelemetry, not
+official OpenTelemetry GenAI fields.
+
 | Attribute/Namespace | <div style="width:500px">Meaning</div> | When Required? | Is Namespace? | Type |
 |:--------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------|:------------------------------|:----------------------|
 | `ai.observability.span_type` | Span type. This states what kind of span this is. E.g. "retrieval", "generation", "unknown", "record root". Given a span type, we can assume there might be relevant fields in `ai.observability.<span type>`. For example, for a span of type "record_root", there'll be more span attributes in the namespace `ai.observability.record_root` | Never | | str |
@@ -53,6 +109,12 @@
 | `ai.observability.mcp.output_content` | Content returned by the MCP tool. | Never | | str |
 | `ai.observability.mcp.output_is_error` | Whether the MCP tool call resulted in an error. | Never | | bool |
 | `ai.observability.mcp.execution_time_ms` | Time taken to execute the MCP tool call in milliseconds. | Never | | float |
+| `ai.observability.coding_agent` | Namespace for coding-agent client extensions without an OTEL equivalent. | | Y | |
+| `ai.observability.coding_agent.client` | Native coding client, such as Cursor, Claude Code, or OpenCode. | Never | | str |
+| `ai.observability.coding_agent.native_event` | Native lifecycle event reported by the coding client. | Never | | str |
+| `ai.observability.coding_agent.diff` | Privacy-controlled source diff or old/new edit pairs. | Never | | str |
+| `ai.observability.coding_agent.editor_version` | Native editor or CLI version. | Never | | str |
+| `ai.observability.coding_agent.workspace` | Privacy-controlled workspace path or identifier. | Never | | str |
 | `ai.observability.generation` | Namespace for attributes specific to a generation span. | | Y | |
 | `ai.observability.generation.is_streaming` | Whether the generation was streamed back incrementally. | Never | | bool |
 | `ai.observability.generation.time_to_first_token_ms` | Milliseconds spent waiting for the first chunk of a streamed generation. | Never | | float |
