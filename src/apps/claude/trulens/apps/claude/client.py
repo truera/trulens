@@ -43,6 +43,7 @@ def _transcript_overrides(payload: Mapping[str, Any]) -> Mapping[str, Any]:
     messages: Dict[str, Mapping[str, Any]] = {}
     response_parts: Dict[str, list[str]] = {}
     response_order: list[str] = []
+    client_version = None
     try:
         with Path(str(transcript_path)).open(encoding="utf-8") as transcript:
             for line in transcript:
@@ -52,6 +53,8 @@ def _transcript_overrides(payload: Mapping[str, Any]) -> Mapping[str, Any]:
                     continue
                 if not isinstance(entry, Mapping):
                     continue
+                if entry.get("version"):
+                    client_version = entry["version"]
                 if _is_human_prompt(entry):
                     messages.clear()
                     response_parts.clear()
@@ -99,6 +102,8 @@ def _transcript_overrides(payload: Mapping[str, Any]) -> Mapping[str, Any]:
         output_tokens += _usage_value(usage, "output_tokens")
 
     overrides: Dict[str, Any] = {}
+    if client_version:
+        overrides["client_version"] = client_version
     if messages:
         last_message = next(reversed(messages.values()))
         if last_message.get("model"):

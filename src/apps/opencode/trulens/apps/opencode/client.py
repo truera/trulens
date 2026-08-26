@@ -99,6 +99,14 @@ def _plugin(command: str) -> str:
     encoded = json.dumps(command)
     return f"""// managed_by: trulens-client-hooks
 const COMMAND = {encoded}
+const VERSION = (() => {{
+  try {{
+    const result = Bun.spawnSync(["opencode", "--version"])
+    return new TextDecoder().decode(result.stdout).trim() || undefined
+  }} catch (_error) {{
+    return undefined
+  }}
+}})()
 
 async function ingest(payload) {{
   try {{
@@ -131,7 +139,7 @@ export const TruLensClientHooks = async ({{ directory }}) => {{
     if (payload.session_id) {{
       lastSessionId = payload.session_id
     }}
-    await ingest({{ cwd: directory, ...payload }})
+    await ingest({{ cwd: directory, client_version: VERSION, ...payload }})
   }}
   return {{
     "chat.message": async (input, output) => {{

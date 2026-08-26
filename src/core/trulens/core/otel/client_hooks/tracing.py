@@ -130,8 +130,16 @@ class TraceAssembler:
         app_name = self.app_name or first.client.removesuffix("-code")
         app_version = (
             self.app_version
-            or first.metadata.get("cursor_version")
-            or first.metadata.get("client_version")
+            or next(
+                (
+                    event.metadata.get("cursor_version")
+                    or event.metadata.get("client_version")
+                    for event in reversed(events)
+                    if event.metadata.get("cursor_version")
+                    or event.metadata.get("client_version")
+                ),
+                None,
+            )
             or "unknown"
         )
         run_name = self.run_name or first.conversation_id

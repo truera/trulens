@@ -59,13 +59,10 @@ export TRULENS_SNOWFLAKE_SCHEMA=CLIENT_HOOKS
 ```
 
 By default, the native client determines identity: the app name is `cursor`,
-`claude`, or `opencode`, the app version is the native client version,
-and the run name is the native conversation/session ID. Launchers can provide a
-client version when the hook payload does not include one:
-
-```bash
-export TRULENS_CLIENT_VERSION=3.17.19
-```
+`claude`, or `opencode`, the app version is detected from the native client,
+and the run name is the native conversation/session ID. Cursor supplies its
+version in hook payloads, Claude Code supplies it in the native transcript, and
+the OpenCode plugin detects it from the installed CLI.
 
 `TRULENS_APP_NAME`, `TRULENS_APP_VERSION`, and `TRULENS_RUN_NAME` remain
 available as explicit overrides.

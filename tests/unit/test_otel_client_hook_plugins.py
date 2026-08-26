@@ -44,6 +44,8 @@ def test_opencode_plugin_is_declarative():
     assert "managed_by: trulens-client-hooks" in plugin
     assert "ingest opencode" in plugin
     assert "chat.message" in plugin
+    assert 'Bun.spawnSync(["opencode", "--version"])' in plugin
+    assert "client_version: VERSION" in plugin
 
 
 def test_client_registry_supports_direct_registration():
@@ -167,6 +169,7 @@ def test_claude_stop_recovers_response_and_usage_from_transcript(
                 {
                     "type": "assistant",
                     "isSidechain": False,
+                    "version": "2.1.19",
                     "message": {
                         "id": "message-1",
                         "model": "claude-opus-4-5",
@@ -231,6 +234,7 @@ def test_claude_stop_recovers_response_and_usage_from_transcript(
 
     assert event.response == "final answer"
     assert event.model == "claude-opus-4-5"
+    assert event.metadata["client_version"] == "2.1.19"
     assert event.input_tokens == 65
     assert event.output_tokens == 7
     spans = tracing.TraceAssembler().assemble([

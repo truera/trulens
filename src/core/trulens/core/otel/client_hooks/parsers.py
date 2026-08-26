@@ -207,6 +207,7 @@ def _parse(
         "server_name",
         "model",
         "model_id",
+        "client_version",
         "duration_ms",
         "duration",
         "input_tokens",
@@ -239,6 +240,11 @@ def _parse(
     metadata = {
         key: value for key, value in payload.items() if key not in known_keys
     }
+    client_version = overrides.get("client_version") or payload.get(
+        "client_version"
+    )
+    if client_version is not None:
+        metadata["client_version"] = str(client_version)
     return models.HookEvent(
         client=client,
         event_name=event_name,
