@@ -89,6 +89,47 @@ Diffs include Cursor `afterFileEdit` old/new pairs and explicit patches. They
 can contain source code or credentials, so they remain independently opt-in.
 Values are redacted and size-bounded before durable journaling.
 
+## Run lifecycle
+
+Exporting spans is not enough to make a turn observable. A run's status is
+derived from its invocation metadata, not from the presence of spans, so a run
+whose ingestion never started renders as perpetually in-progress even though its
+spans arrived.
+
+Each conversation maps to one run, and each exported turn contributes one
+completed invocation to it:
+
+```text
+Run (run name = native conversation/session ID)
+├── invocation for turn 1  -> COMPLETED
+├── invocation for turn 2  -> COMPLETED
+└── invocation for turn 3  -> COMPLETED
+```
+
+For every turn the exporter creates the run if it does not exist, exports the
+turn's spans, then starts ingestion for that turn. Run creation comes first
+because the spans carry the run name, and ingestion comes last so the ingestion
+window does not open before the spans it waits for have been sent. The run
+therefore becomes terminal after the first turn and stays terminal as later
+turns arrive, because status resolves against the most recent invocation.
+
+Runs are created in `LOG_INGESTION` mode: spans are assembled from journalled
+native events rather than by invoking a Python app.
+
+A turn is only marked exported once both its span export and its ingestion
+succeed. If either fails the turn is released for retry with the journal's usual
+backoff, since spans without ingestion would leave the run in-progress forever.
+
+Destinations with no run concept, such as plain OTLP, still receive spans; there
+is simply no run to complete. To export spans without managing runs at all:
+
+```bash
+export TRULENS_MANAGE_RUNS=false
+```
+
+Turns then never reach a terminal run status, so this is intended for debugging
+the span path in isolation.
+
 ## Trace semantics
 
 Native Cursor `conversation_id`, Claude Code `session_id`, and OpenCode

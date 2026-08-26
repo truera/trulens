@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import timedelta
 import hashlib
 import json
@@ -102,6 +103,26 @@ def _span_type(category: str) -> SpanAttributes.SpanType:
     }.get(category, SpanAttributes.SpanType.UNKNOWN)
 
 
+@dataclass(frozen=True)
+class TurnIdentity:
+    """Run and record identity for one assembled coding-agent turn.
+
+    A turn is the unit of export and the unit of ingestion: each turn
+    contributes exactly one record to its run. ``run_name`` is shared by every
+    turn in a conversation, so a conversation maps to one run carrying one
+    completed invocation per turn.
+    """
+
+    client: str
+    conversation_id: str
+    turn_id: str
+    record_id: str
+    app_name: str
+    app_version: str
+    run_name: str
+    input_records_count: int = 1
+
+
 class TraceAssembler:
     """Convert one completed client turn into TruLens-compatible spans."""
 
@@ -116,16 +137,20 @@ class TraceAssembler:
         self.app_version = app_version
         self.run_name = run_name
 
-    def assemble(
-        self, events: List[models.HookEvent], *, stale: bool = False
-    ) -> List[ReadableSpan]:
-        """Assemble root, agent, and operation spans for one turn."""
+    def identify(
+        self, events: List[models.HookEvent]
+    ) -> Optional[TurnIdentity]:
+        """Resolve run and record identity for one turn.
+
+        Returns ``None`` for an empty turn. Identity is derived from the native
+        client payloads so that it stays stable across retries: re-exporting a
+        turn reuses the same record and run names rather than creating new ones.
+        """
 
         if not events:
-            return []
+            return None
         events = sorted(events, key=lambda event: event.observed_at)
         first = events[0]
-        last = events[-1]
         turn_id = first.turn_id or first.event_id
         app_name = self.app_name or first.client.removesuffix("-code")
         app_version = (
@@ -142,8 +167,32 @@ class TraceAssembler:
             )
             or "unknown"
         )
-        run_name = self.run_name or first.conversation_id
-        record_id = f"{first.client}:{first.conversation_id}:{turn_id}"
+        return TurnIdentity(
+            client=first.client,
+            conversation_id=first.conversation_id,
+            turn_id=turn_id,
+            record_id=f"{first.client}:{first.conversation_id}:{turn_id}",
+            app_name=app_name,
+            app_version=app_version,
+            run_name=self.run_name or first.conversation_id,
+        )
+
+    def assemble(
+        self, events: List[models.HookEvent], *, stale: bool = False
+    ) -> List[ReadableSpan]:
+        """Assemble root, agent, and operation spans for one turn."""
+
+        if not events:
+            return []
+        events = sorted(events, key=lambda event: event.observed_at)
+        first = events[0]
+        last = events[-1]
+        identity = self.identify(events)
+        turn_id = identity.turn_id
+        app_name = identity.app_name
+        app_version = identity.app_version
+        run_name = identity.run_name
+        record_id = identity.record_id
         trace_id = _otel_id(f"trace:{record_id}", 128)
         agent_span_id = _otel_id(f"agent:{record_id}", 64)
         root_span_id = _otel_id(f"root:{record_id}", 64)
@@ -155,7 +204,7 @@ class TraceAssembler:
             SpanAttributes.CONVERSATION_ID: first.conversation_id,
             SpanAttributes.INPUT_ID: turn_id,
             SpanAttributes.RUN_NAME: run_name,
-            SpanAttributes.INPUT_RECORDS_COUNT: 1,
+            SpanAttributes.INPUT_RECORDS_COUNT: identity.input_records_count,
         }
         prompt = next((event.prompt for event in events if event.prompt), None)
         response = next(

@@ -12,9 +12,11 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 import pytest
+from trulens.core.enums import Mode
 from trulens.core.otel.client_hooks import journal
 from trulens.core.otel.client_hooks import parsers
 from trulens.core.otel.client_hooks import privacy
+from trulens.core.otel.client_hooks import runs
 from trulens.core.otel.client_hooks import service
 from trulens.core.otel.client_hooks import tracing
 from trulens.core.otel.client_hooks import worker
@@ -850,3 +852,232 @@ def test_snowflake_span_proto_preserves_error_status():
 
     assert proto.status.code == proto.status.STATUS_CODE_ERROR
     assert proto.status.message == "Incomplete hook turn"
+
+
+class _RecordingRunDao:
+    def __init__(self, fail: bool = False):
+        self.ingestions = []
+        self.fail = fail
+
+    def start_ingestion_query(
+        self,
+        object_name,
+        object_version,
+        object_type,
+        run_name,
+        input_records_count,
+    ):
+        if self.fail:
+            raise RuntimeError("ingestion unavailable")
+        self.ingestions.append((run_name, input_records_count))
+
+
+class _FakeRun:
+    def __init__(self, run_name, run_dao):
+        self.run_name = run_name
+        self.run_dao = run_dao
+        self.object_name = "agent"
+        self.object_type = "EXTERNAL AGENT"
+        self.object_version = "v1"
+
+
+class _FakeApp:
+    def __init__(self, run_dao):
+        self.run_dao = run_dao
+        self.run_configs = []
+
+    def add_run(self, run_config):
+        self.run_configs.append(run_config)
+        return _FakeRun(run_config.run_name, self.run_dao)
+
+
+class _FakeCoordinator:
+    """Records run lifecycle calls interleaved with span exports."""
+
+    def __init__(self, exporter=None, fail_complete: bool = False):
+        self.calls = []
+        self.exporter = exporter
+        self.fail_complete = fail_complete
+        self.session = None
+
+    def ensure_run(self, identity):
+        self.calls.append(("ensure_run", identity.run_name, self._exported()))
+        return _FakeRun(identity.run_name, _RecordingRunDao())
+
+    def complete_turn(self, identity, run=None):
+        self.calls.append((
+            "complete_turn",
+            identity.run_name,
+            self._exported(),
+        ))
+        if self.fail_complete:
+            raise RuntimeError("ingestion unavailable")
+        return True
+
+    def _exported(self):
+        return 0 if self.exporter is None else len(self.exporter.spans)
+
+
+def _coordinator_with_app(run_dao, **kwargs):
+    coordinator = runs.RunCoordinator(session=object(), **kwargs)
+    coordinator._apps[("cursor", "unknown")] = _FakeApp(run_dao)
+    return coordinator
+
+
+def _cursor_identity(turn_id: str = "generation-1"):
+    events = [
+        parsers.parse_cursor(_cursor("beforeSubmitPrompt")),
+        parsers.parse_cursor(_cursor("stop")),
+    ]
+    identity = tracing.TraceAssembler().identify(events)
+    return tracing.TurnIdentity(
+        client=identity.client,
+        conversation_id=identity.conversation_id,
+        turn_id=turn_id,
+        record_id=f"cursor:conversation-1:{turn_id}",
+        app_name=identity.app_name,
+        app_version=identity.app_version,
+        run_name=identity.run_name,
+    )
+
+
+def test_turn_identity_matches_exported_span_attributes():
+    events = [
+        parsers.parse_cursor(_cursor("beforeSubmitPrompt")),
+        parsers.parse_cursor(_cursor("stop")),
+    ]
+    assembler = tracing.TraceAssembler()
+
+    identity = assembler.identify(events)
+    root = assembler.assemble(events)[0]
+
+    assert identity.run_name == "conversation-1"
+    assert root.attributes[SpanAttributes.RUN_NAME] == identity.run_name, (
+        "spans must carry the run name the coordinator creates"
+    )
+    assert root.attributes[SpanAttributes.RECORD_ID] == identity.record_id
+    assert (
+        root.attributes[SpanAttributes.INPUT_RECORDS_COUNT]
+        == identity.input_records_count
+    )
+    assert root.attributes[ResourceAttributes.APP_NAME] == identity.app_name
+    assert (
+        root.attributes[ResourceAttributes.APP_VERSION] == identity.app_version
+    )
+
+
+def test_turn_identity_is_none_for_empty_turn():
+    assert tracing.TraceAssembler().identify([]) is None
+
+
+def test_service_flush_creates_run_before_export_and_ingests_after(
+    tmp_path: Path,
+):
+    event_journal = journal.EventJournal(tmp_path)
+    event_journal.append(parsers.parse_cursor(_cursor("beforeSubmitPrompt")))
+    event_journal.append(parsers.parse_cursor(_cursor("stop")))
+    exporter = _Exporter()
+    coordinator = _FakeCoordinator(exporter=exporter)
+    hook_service = service.HookService(
+        journal=event_journal,
+        session=_Session(exporter),
+        coordinator=coordinator,
+    )
+
+    assert hook_service.flush()
+
+    names = [call[0] for call in coordinator.calls]
+    assert names == ["ensure_run", "complete_turn"]
+    # The run must exist before any span carrying its name is exported, and
+    # ingestion must only start once those spans have been sent.
+    assert coordinator.calls[0][2] == 0
+    assert coordinator.calls[1][2] == len(exporter.spans)
+    assert exporter.spans
+
+
+def test_service_flush_retries_turn_when_ingestion_fails(tmp_path: Path):
+    event_journal = journal.EventJournal(tmp_path)
+    event_journal.append(parsers.parse_cursor(_cursor("beforeSubmitPrompt")))
+    event_journal.append(parsers.parse_cursor(_cursor("stop")))
+    exporter = _Exporter()
+    hook_service = service.HookService(
+        journal=event_journal,
+        session=_Session(exporter),
+        coordinator=_FakeCoordinator(exporter=exporter, fail_complete=True),
+    )
+
+    assert not hook_service.flush()
+    # A turn whose ingestion never started is not finished: leaving it exported
+    # would strand its run in a non-terminal state with no retry.
+    assert event_journal.pending_turns("cursor", "conversation-1") == [
+        "generation-1"
+    ]
+
+
+def test_service_flush_marks_exported_when_destination_has_no_runs(
+    tmp_path: Path,
+):
+    event_journal = journal.EventJournal(tmp_path)
+    event_journal.append(parsers.parse_cursor(_cursor("beforeSubmitPrompt")))
+    event_journal.append(parsers.parse_cursor(_cursor("stop")))
+    exporter = _Exporter()
+    # _Session has no connector, so there is no run store to write to.
+    hook_service = service.HookService(
+        journal=event_journal,
+        session=_Session(exporter),
+    )
+
+    assert hook_service.flush()
+    assert exporter.spans
+    assert event_journal.pending_turns("cursor", "conversation-1") == []
+
+
+def test_run_coordinator_creates_run_once_and_ingests_each_turn():
+    run_dao = _RecordingRunDao()
+    coordinator = _coordinator_with_app(run_dao)
+    first = _cursor_identity("generation-1")
+    second = _cursor_identity("generation-2")
+
+    for identity in (first, second):
+        run = coordinator.ensure_run(identity)
+        coordinator.complete_turn(identity, run)
+
+    app = coordinator._apps[("cursor", "unknown")]
+    # One run per conversation, reused across turns.
+    assert len(app.run_configs) == 1
+    assert app.run_configs[0].run_name == "conversation-1"
+    assert app.run_configs[0].mode == Mode.LOG_INGESTION
+    # One completed invocation per turn, each contributing a single record.
+    assert run_dao.ingestions == [
+        ("conversation-1", 1),
+        ("conversation-1", 1),
+    ]
+
+
+def test_run_coordinator_raises_when_ingestion_fails():
+    coordinator = _coordinator_with_app(_RecordingRunDao(fail=True))
+    identity = _cursor_identity()
+    run = coordinator.ensure_run(identity)
+
+    with pytest.raises(RuntimeError):
+        coordinator.complete_turn(identity, run)
+
+
+def test_run_coordinator_can_be_disabled(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("TRULENS_MANAGE_RUNS", "false")
+    run_dao = _RecordingRunDao()
+    coordinator = runs.RunCoordinator(session=object())
+    coordinator._apps[("cursor", "unknown")] = _FakeApp(run_dao)
+    identity = _cursor_identity()
+
+    assert not coordinator.enabled
+    assert coordinator.ensure_run(identity) is None
+    assert coordinator.complete_turn(identity) is False
+    assert run_dao.ingestions == []
+
+
+def test_run_coordinator_skips_destination_without_connector():
+    coordinator = runs.RunCoordinator(session=_Session(_Exporter()))
+
+    assert coordinator.ensure_run(_cursor_identity()) is None
+    assert coordinator.complete_turn(_cursor_identity()) is False

@@ -4,6 +4,7 @@ from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version
 
 from trulens.core.otel.client_hooks.models import HookEvent
+from trulens.core.otel.client_hooks.runs import RunCoordinator
 from trulens.core.otel.client_hooks.service import HookService
 
 try:
@@ -11,4 +12,4 @@ try:
 except PackageNotFoundError:
     __version__ = "unknown"
 
-__all__ = ["HookEvent", "HookService", "__version__"]
+__all__ = ["HookEvent", "HookService", "RunCoordinator", "__version__"]
