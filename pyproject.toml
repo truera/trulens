@@ -115,10 +115,10 @@ trulens-apps-rl = { path = "src/apps/rl", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true }
 trulens-otel-semconv = { path = "src/otel/semconv", develop = true }
 # tests/unit/test_openeval.py lives in the root test suite (run by every
-# basic/optional/snowflake CI job), so trulens-connectors-openeval must be installed
+# basic/optional/snowflake CI job), so trulens-openeval must be installed
 # wherever that suite runs -- the required group, same as every other
 # path dependency whose tests live directly under tests/unit/.
-trulens-connectors-openeval = { path = "src/connectors/openeval", develop = true }
+trulens-openeval = { path = "src/openeval", develop = true }
 # Remove after deprecation period.
 trulens_eval = { path = "src/trulens_eval", develop = true }
 
