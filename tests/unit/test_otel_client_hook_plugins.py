@@ -156,6 +156,143 @@ def test_plugin_parse_uses_canonical_claude_name():
     assert agent.attributes[SpanAttributes.WORKFLOW.AGENT_NAME] == "claude-code"
 
 
+def test_claude_stop_recovers_response_and_usage_from_transcript(
+    tmp_path,
+):
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        "\n".join(
+            json.dumps(entry)
+            for entry in (
+                {
+                    "type": "assistant",
+                    "isSidechain": False,
+                    "message": {
+                        "id": "message-1",
+                        "model": "claude-opus-4-5",
+                        "content": [{"type": "text", "text": "working"}],
+                        "usage": {
+                            "input_tokens": 10,
+                            "cache_creation_input_tokens": 20,
+                            "cache_read_input_tokens": 30,
+                            "output_tokens": 4,
+                        },
+                    },
+                },
+                {
+                    "type": "assistant",
+                    "isSidechain": False,
+                    "message": {
+                        "id": "message-2",
+                        "model": "claude-opus-4-5",
+                        "content": [{"type": "text", "text": "final answer"}],
+                        "usage": {"input_tokens": 5, "output_tokens": 3},
+                    },
+                },
+            )
+        )
+    )
+    clients.register_client(claude_spec)
+
+    event = parsers.parse(
+        "claude-code",
+        {
+            "session_id": "session-1",
+            "hook_event_name": "Stop",
+            "transcript_path": str(transcript),
+        },
+    )
+
+    assert event.response == "final answer"
+    assert event.model == "claude-opus-4-5"
+    assert event.input_tokens == 65
+    assert event.output_tokens == 7
+
+
+def test_claude_stop_uses_only_current_turn_and_skips_bad_transcript_lines(
+    tmp_path,
+):
+    transcript = tmp_path / "session.jsonl"
+    entries = [
+        {
+            "type": "user",
+            "message": {"role": "user", "content": "first"},
+        },
+        {
+            "type": "assistant",
+            "message": {
+                "id": "old-message",
+                "model": "claude-opus-4-5",
+                "content": [{"type": "text", "text": "old answer"}],
+                "usage": {"input_tokens": 100, "output_tokens": 50},
+            },
+        },
+        {
+            "type": "user",
+            "message": {"role": "user", "content": "second"},
+        },
+        None,
+        {
+            "type": "assistant",
+            "message": {
+                "id": "new-message",
+                "model": "claude-sonnet-4-5",
+                "content": [{"type": "text", "text": "draft"}],
+                "usage": {"input_tokens": "bad", "output_tokens": 2},
+            },
+        },
+        {
+            "type": "user",
+            "message": {
+                "role": "user",
+                "content": [{"type": "tool_result", "tool_use_id": "tool-1"}],
+            },
+        },
+        {
+            "type": "user",
+            "message": {"role": "user", "content": [{}]},
+        },
+        {
+            "type": "assistant",
+            "message": {
+                "id": "malformed-message",
+                "model": "claude-sonnet-4-5",
+                "content": None,
+                "usage": {"input_tokens": 2, "output_tokens": 1},
+            },
+        },
+        {
+            "type": "assistant",
+            "message": {
+                "id": "new-message",
+                "model": "claude-sonnet-4-5",
+                "content": [{"type": "text", "text": "final answer"}],
+                "usage": {"input_tokens": 7, "output_tokens": 3},
+            },
+        },
+    ]
+    transcript.write_text(
+        "\n".join([json.dumps(entries[0]), "not-json"])
+        + "\n"
+        + "\n".join(json.dumps(entry) for entry in entries[1:])
+    )
+    clients.register_client(claude_spec)
+
+    event = parsers.parse(
+        "claude-code",
+        {
+            "session_id": "session-1",
+            "hook_event_name": "Stop",
+            "transcript_path": str(transcript),
+        },
+    )
+
+    assert event.response == "final answer"
+    assert event.model == "claude-sonnet-4-5"
+    assert event.input_tokens == 9
+    assert event.output_tokens == 4
+
+
 def test_plugin_parse_rejects_missing_conversation_identity():
     clients.register_client(cursor_spec)
     with pytest.raises(ValueError, match="missing a conversation ID"):

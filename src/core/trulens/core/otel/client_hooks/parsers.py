@@ -256,10 +256,14 @@ def _parse(
         server_name=str(server_name) if server_name is not None else None,
         duration_ms=_number(_first(payload, "duration_ms", "duration")),
         input_tokens=_integer(
-            _first(payload, "input_tokens") or usage.get("input_tokens")
+            overrides.get("input_tokens")
+            or _first(payload, "input_tokens")
+            or usage.get("input_tokens")
         ),
         output_tokens=_integer(
-            _first(payload, "output_tokens") or usage.get("output_tokens")
+            overrides.get("output_tokens")
+            or _first(payload, "output_tokens")
+            or usage.get("output_tokens")
         ),
         cost=_number(payload.get("cost")),
         prompt=overrides.get("prompt", payload.get("prompt")),
