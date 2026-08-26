@@ -295,6 +295,30 @@ def test_journal_correlates_terminal_event_to_active_cursor_turn(
     ] == ["beforeSubmitPrompt", "stop"]
 
 
+def test_journal_correlates_opencode_response_to_active_prompt_turn(
+    tmp_path: Path,
+):
+    event_journal = journal.EventJournal(tmp_path)
+    prompt = parsers.parse_opencode(_opencode("chat.message", prompt="hello"))
+    response_payload = _opencode("experimental.text.complete", text="done")
+    response_payload["message_id"] = "response-message"
+    response = parsers.parse_opencode(response_payload)
+    idle = parsers.parse_opencode(_opencode("session.idle"))
+
+    prompt_turn, _ = event_journal.append(prompt)
+    response_turn, _ = event_journal.append(response)
+    terminal_turn, terminal = event_journal.append(idle)
+
+    assert terminal
+    assert prompt_turn == response_turn == terminal_turn == "message-1"
+    assert [
+        event.event_name
+        for event in event_journal.get_turn(
+            "opencode", "session-1", prompt_turn
+        )
+    ] == ["chat.message", "experimental.text.complete", "session.idle"]
+
+
 def test_assembler_creates_private_root_agent_and_tool_spans():
     policy = privacy.CapturePolicy()
     events = [

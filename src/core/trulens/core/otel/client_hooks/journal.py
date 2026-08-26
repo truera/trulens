@@ -131,6 +131,12 @@ class EventJournal:
         ):
             turn_id = event.turn_id
             active_turn_id = state.get("active_turn")
+            if (
+                event.client == "opencode"
+                and event.response is not None
+                and active_turn_id is not None
+            ):
+                turn_id = active_turn_id
             if event.terminal and active_turn_id is not None:
                 turn_id = active_turn_id
             if turn_id is None and self._starts_turn(event):

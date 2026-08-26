@@ -49,7 +49,7 @@ def test_opencode_plugin_is_declarative():
     assert "chat.message" in plugin
     assert 'const VERSION = "1.18.23"' in plugin
     assert "client_version: VERSION" in plugin
-    assert "message_id: activeTurnId || input.messageID" in plugin
+    assert "TRULENS_APP_VERSION: VERSION" in plugin
 
 
 def test_client_registry_supports_direct_registration():
@@ -450,6 +450,7 @@ def test_opencode_install_writes_managed_plugin_file(tmp_path, monkeypatch):
     contents = plugin_path.read_text()
     assert "managed_by: trulens-client-hooks" in contents
     assert 'const VERSION = "1.18.23"' in contents
+    assert "TRULENS_APP_VERSION=1.18.23" in contents
     assert not plugin_path.with_suffix(".js.trulens.bak").exists()
     assert cli.main(["install", "opencode"]) == 0
     assert plugin_path.with_suffix(".js.trulens.bak").exists()

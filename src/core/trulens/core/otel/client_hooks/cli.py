@@ -34,7 +34,11 @@ def _configuration(spec: clients.ClientSpec) -> dict:
 
 
 def _plugin_source(spec: clients.ClientSpec) -> Optional[str]:
-    return spec.build_plugin(_command(spec.name), spec.detect_version())
+    version = spec.detect_version()
+    command = _command(spec.name)
+    if version:
+        command = f"TRULENS_APP_VERSION={shlex.quote(version)} {command}"
+    return spec.build_plugin(command, version)
 
 
 def _is_plugin_client(spec: clients.ClientSpec) -> bool:

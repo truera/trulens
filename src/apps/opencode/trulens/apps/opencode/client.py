@@ -126,6 +126,7 @@ async function ingest(payload) {{
       stdin: "pipe",
       stdout: "ignore",
       stderr: "pipe",
+      env: {{ ...process.env, TRULENS_APP_VERSION: VERSION || "unknown" }},
     }})
     proc.stdin.write(JSON.stringify(payload))
     proc.stdin.end()
@@ -147,7 +148,6 @@ function textFromParts(parts) {{
 
 export const TruLensClientHooks = async ({{ directory }}) => {{
   let lastSessionId
-  let activeTurnId
   const send = async (payload) => {{
     if (payload.session_id) {{
       lastSessionId = payload.session_id
@@ -156,7 +156,6 @@ export const TruLensClientHooks = async ({{ directory }}) => {{
   }}
   return {{
     "chat.message": async (input, output) => {{
-      activeTurnId = input.messageID
       await send({{
         session_id: input.sessionID,
         message_id: input.messageID,
@@ -187,7 +186,7 @@ export const TruLensClientHooks = async ({{ directory }}) => {{
     "experimental.text.complete": async (input, output) => {{
       await send({{
         session_id: input.sessionID,
-        message_id: activeTurnId || input.messageID,
+        message_id: input.messageID,
         response_message_id: input.messageID,
         hook_event_name: "experimental.text.complete",
         text: output && output.text,
@@ -201,7 +200,6 @@ export const TruLensClientHooks = async ({{ directory }}) => {{
       if (type === "session.idle" || type === "session.error") {{
         await send({{
           session_id: sessionId,
-          message_id: activeTurnId,
           hook_event_name: type,
           status: type === "session.error" ? "error" : "completed",
           error:
