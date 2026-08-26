@@ -89,15 +89,40 @@ Diffs include Cursor `afterFileEdit` old/new pairs and explicit patches. They
 can contain source code or credentials, so they remain independently opt-in.
 Values are redacted and size-bounded before durable journaling.
 
+## Identity and correlation
+
+TruLens preserves the native client identity instead of creating a separate
+thread identifier. The mapping is:
+
+| TruLens field | Value |
+| --- | --- |
+| `SpanAttributes.CONVERSATION_ID` | Native conversation or session ID |
+| `SpanAttributes.RUN_NAME` | The same native conversation or session ID |
+| `SpanAttributes.INPUT_ID` | Correlated native turn ID |
+| `SpanAttributes.RECORD_ID` | `<client>:<conversation-id>:<turn-id>` |
+| OpenTelemetry trace ID | Deterministically derived from `RECORD_ID` |
+
+The native conversation fields are Cursor `conversation_id`, Claude Code
+`session_id`, and OpenCode `sessionID`. A conversation therefore maps to one
+TruLens conversation and, for destinations that support runs, one run. Each user
+prompt within it maps to a distinct turn and `RECORD_ROOT` span.
+
+The durable journal correlates prompt, tool, edit, shell, MCP, subagent,
+response, and terminal events into that turn. TruLens uses a native turn ID when
+the client supplies one. Otherwise it generates a stable `turn:<hex>` ID when
+the prompt arrives. Later events without a turn ID join the active turn, and the
+terminal event closes it. OpenCode response events are explicitly correlated to
+the active prompt turn because OpenCode gives the response a different message
+ID.
+
+Identity is deterministic across retries. Re-exporting the same journalled turn
+reuses its run name, record ID, input ID, and trace ID instead of creating a new
+record.
+
 ## Run lifecycle
 
-Exporting spans is not enough to make a turn observable. A run's status is
-derived from its invocation metadata, not from the presence of spans, so a run
-whose ingestion never started renders as perpetually in-progress even though its
-spans arrived.
-
-Each conversation maps to one run, and each exported turn contributes one
-completed invocation to it:
+Each conversation maps to one run. Each exported turn contributes one invocation
+containing one input record:
 
 ```text
 Run (run name = native conversation/session ID)
@@ -109,16 +134,21 @@ Run (run name = native conversation/session ID)
 For every turn the exporter creates the run if it does not exist, exports the
 turn's spans, then starts ingestion for that turn. Run creation comes first
 because the spans carry the run name, and ingestion comes last so the ingestion
-window does not open before the spans it waits for have been sent. The run
-therefore becomes terminal after the first turn and stays terminal as later
-turns arrive, because status resolves against the most recent invocation.
+window does not open before the spans it waits for have been sent. When ingestion
+can start, the run becomes terminal after the first turn and stays terminal as
+later turns arrive because status resolves against the most recent invocation.
 
 Runs are created in `LOG_INGESTION` mode: spans are assembled from journalled
-native events rather than by invoking a Python app.
+native events rather than by invoking a Python app. Run identity is idempotent on
+`(app_name, app_version, run_name)`, where the app version is the detected native
+client version.
 
-A turn is only marked exported once both its span export and its ingestion
-succeed. If either fails the turn is released for retry with the journal's usual
-backoff, since spans without ingestion would leave the run in-progress forever.
+Snowflake run completion starts an ingestion task after span export. This step
+requires `CREATE TASK` on the target schema and `EXECUTE TASK` on the account. If
+those privileges are unavailable, TruLens retains the successfully exported
+trace and logs a warning, but the run may remain non-terminal in the UI. A span
+export failure still releases the turn for retry with the journal's normal
+backoff.
 
 Destinations with no run concept, such as plain OTLP, still receive spans; there
 is simply no run to complete. To export spans without managing runs at all:
@@ -131,11 +161,6 @@ Turns then never reach a terminal run status, so this is intended for debugging
 the span path in isolation.
 
 ## Trace semantics
-
-Native Cursor `conversation_id`, Claude Code `session_id`, and OpenCode
-`sessionID` map to the existing TruLens
-`SpanAttributes.CONVERSATION_ID`. Each prompt gets distinct `RECORD_ID` and
-`INPUT_ID` values. There is no separate thread identity contract.
 
 Each turn emits the same semantic conventions as other TruLens apps:
 
