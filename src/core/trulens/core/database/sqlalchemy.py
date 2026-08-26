@@ -2044,7 +2044,7 @@ class SQLAlchemyDB(core_db.DB):
                 .filter_by(ground_truth_id=ground_truth_id)
                 .first()
             ):
-                return json.loads(_ground_truth)
+                return json.loads(_ground_truth.ground_truth_json)
 
     def get_ground_truths_by_dataset(
         self, dataset_name: str
@@ -2171,8 +2171,18 @@ class SQLAlchemyDB(core_db.DB):
         with self.session.begin() as session:
             results = session.query(self.orm.Dataset)
 
+            def _row(ds):
+                # Dataset ORM stores everything except the id in dataset_json;
+                # name and meta are not columns.
+                dataset_json = json.loads(ds.dataset_json)
+                return (
+                    ds.dataset_id,
+                    dataset_json.get("name"),
+                    dataset_json.get("meta"),
+                )
+
             return pd.DataFrame(
-                data=((ds.dataset_id, ds.name, ds.meta) for ds in results),
+                data=[_row(ds) for ds in results],
                 columns=["dataset_id", "name", "meta"],
             )
 
