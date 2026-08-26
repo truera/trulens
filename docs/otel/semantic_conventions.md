@@ -144,25 +144,21 @@ trulens-client-hooks install cursor --project
 trulens-client-hooks status cursor --project
 ```
 
-A real Cursor Desktop validation produced one trace with 80 spans: one record
-root, one agent, one generation, 76 tool calls, and one workflow span. The
-native conversation ID became the TruLens run and conversation ID, and the
-generation reported Cursor's `auto-smart` model:
+A Cursor turn is assembled into the same trace structure used by other TruLens
+applications. The native conversation ID becomes the TruLens run and
+conversation ID:
 
 ```text
-Run / conversation  973c79be-0f0c-4cea-93b8-fca4776c578b
-Trace               09c02e4421922659c904786f78adf332
-
 RECORD_ROOT
 └── AGENT    cursor
-    ├── GENERATION  chat auto-smart
+    ├── GENERATION  chat <model-name>
     ├── TOOL        execute_tool <native-tool-name>
-    ├── ...         75 additional tool spans
+    ├── MCP         execute_tool <mcp-tool-name>
     └── WORKFLOW
 ```
 
 The spans include both portable OTEL fields and TruLens fields used for record
-selection and evaluation. Representative attributes from that trace are:
+selection and evaluation. Representative attributes are:
 
 ```text
 RECORD_ROOT
@@ -174,7 +170,7 @@ RECORD_ROOT
 GENERATION
   ai.observability.span_type = "generation"
   gen_ai.operation.name = "chat"
-  gen_ai.request.model = "auto-smart"
+  gen_ai.request.model = "<model-name>"
   gen_ai.usage.input_tokens = <reported-input-token-count>
   gen_ai.usage.output_tokens = <reported-output-token-count>
 
