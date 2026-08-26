@@ -178,6 +178,14 @@ GENERATION
   gen_ai.usage.input_tokens = <reported-input-token-count>
   gen_ai.usage.output_tokens = <reported-output-token-count>
 
+  event: gen_ai.client.inference.operation.details
+    gen_ai.input.messages = [
+      {"role":"user","parts":[{"type":"text","content":"<captured-user-prompt>"}]}
+    ]
+    gen_ai.output.messages = [
+      {"role":"assistant","parts":[{"type":"text","content":"<captured-agent-response>"}]}
+    ]
+
 TOOL
   ai.observability.span_type = "tool"
   ai.observability.coding_agent.client = "cursor"
@@ -186,6 +194,14 @@ TOOL
   gen_ai.tool.name = "<native-tool-name>"
   gen_ai.tool.call.id = "<cursor-tool-call-id>"
 ```
+
+The prompt and response therefore appear twice for different consumers:
+`ai.observability.record_root.input` and `.output` are TruLens record fields
+used by selectors and evaluations, while `gen_ai.input.messages` and
+`gen_ai.output.messages` are the portable OTEL GenAI representation. Per the
+OTEL specification, the structured message fields are attributes of the
+`gen_ai.client.inference.operation.details` event attached to the generation
+span, not attributes directly on the generation span.
 
 Content and tool payloads are omitted by default; the opt-ins above are what
 make the prompt, response, arguments, and results available. Path and diff
