@@ -48,6 +48,19 @@ def default_journal_dir() -> Path:
     return Path.home() / ".trulens" / "client-hooks"
 
 
+def export_lease_from_environment() -> timedelta:
+    """Return the configured bounded export claim duration."""
+
+    try:
+        seconds = max(
+            5.0,
+            float(os.environ.get("TRULENS_HOOKS_EXPORT_LEASE_SECONDS", "60")),
+        )
+    except ValueError:
+        seconds = 60.0
+    return timedelta(seconds=seconds)
+
+
 class EventJournal:
     """Persist and correlate hook events across independent processes."""
 
@@ -188,6 +201,74 @@ class EventJournal:
                     result.add((event["client"], event["conversation_id"]))
                     break
         return sorted(result)
+
+    def has_exportable_turns(
+        self, *, stale_after: timedelta = timedelta(hours=24)
+    ) -> bool:
+        """Return whether any complete, stale, or retryable turn can be exported."""
+
+        return any(
+            self.pending_turns(client, conversation_id, stale_after=stale_after)
+            for client, conversation_id in self.conversations()
+        )
+
+    def next_retry_delay(self) -> Optional[float]:
+        """Return seconds until the earliest retry or claim lease expires."""
+
+        now = datetime.now(timezone.utc)
+        delays = []
+        if not self.directory.exists():
+            return None
+        for state_path in self.directory.glob("*.json"):
+            try:
+                state = json.loads(state_path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                continue
+            for turn in state.get("turns", {}).values():
+                if turn.get("exported"):
+                    continue
+                for key in ("next_retry_at", "claimed_until"):
+                    value = turn.get(key)
+                    if value:
+                        delays.append(
+                            max(
+                                0.0,
+                                (
+                                    datetime.fromisoformat(value) - now
+                                ).total_seconds(),
+                            )
+                        )
+        return min(delays) if delays else None
+
+    def status(self) -> Dict[str, Any]:
+        """Summarize pending, claimed, and retrying journal turns."""
+
+        now = datetime.now(timezone.utc)
+        summary = {"pending": 0, "claimed": 0, "retrying": 0}
+        if not self.directory.exists():
+            return summary
+        for state_path in self.directory.glob("*.json"):
+            try:
+                state = json.loads(state_path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                continue
+            for turn in state.get("turns", {}).values():
+                if turn.get("exported"):
+                    continue
+                summary["pending"] += 1
+                claimed_until = turn.get("claimed_until")
+                if (
+                    claimed_until
+                    and datetime.fromisoformat(claimed_until) > now
+                ):
+                    summary["claimed"] += 1
+                next_retry_at = turn.get("next_retry_at")
+                if (
+                    next_retry_at
+                    and datetime.fromisoformat(next_retry_at) > now
+                ):
+                    summary["retrying"] += 1
+        return summary
 
     def mark_exported(
         self, client: str, conversation_id: str, turn_id: str

@@ -17,6 +17,7 @@ from trulens.core.otel.client_hooks import parsers
 from trulens.core.otel.client_hooks import privacy
 from trulens.core.otel.client_hooks import service
 from trulens.core.otel.client_hooks import tracing
+from trulens.core.otel.client_hooks import worker
 from trulens.experimental.otel_tracing.core.exporter import (
     utils as exporter_utils,
 )
@@ -602,7 +603,7 @@ class _FailedFlushSession(_Session):
         return False
 
 
-def test_service_exports_terminal_turn_and_marks_it_complete(
+def test_service_journals_without_exporting_until_flush(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     exporter = _Exporter()
@@ -612,11 +613,18 @@ def test_service_exports_terminal_turn_and_marks_it_complete(
         session=_Session(exporter),
     )
 
-    assert hook_service.ingest(
+    turn_id, terminal = hook_service.ingest(
         "cursor", _cursor("beforeSubmitPrompt", prompt="private")
     )
-    assert hook_service.ingest("cursor", _cursor("stop", status="completed"))
+    assert turn_id == "generation-1"
+    assert not terminal
+    _, terminal = hook_service.ingest(
+        "cursor", _cursor("stop", status="completed")
+    )
+    assert terminal
+    assert not exporter.spans
 
+    assert hook_service.flush()
     assert exporter.spans
     assert event_journal.pending_turns("cursor", "conversation-1") == []
 
@@ -672,11 +680,112 @@ def test_service_does_not_mark_exported_when_force_flush_fails(tmp_path: Path):
         session=_FailedFlushSession(exporter),
     )
 
-    assert hook_service.ingest("cursor", _cursor("beforeSubmitPrompt"))
-    assert not hook_service.ingest("cursor", _cursor("stop"))
+    hook_service.ingest("cursor", _cursor("beforeSubmitPrompt"))
+    hook_service.ingest("cursor", _cursor("stop"))
+    assert not hook_service.flush()
     assert event_journal.pending_turns("cursor", "conversation-1") == [
         "generation-1"
     ]
+
+
+def test_service_releases_claim_when_export_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    event_journal = journal.EventJournal(tmp_path)
+    hook_service = service.HookService(journal=event_journal)
+    hook_service.ingest("cursor", _cursor("beforeSubmitPrompt"))
+    hook_service.ingest("cursor", _cursor("stop"))
+    monkeypatch.setattr(
+        "trulens.core.otel.client_hooks.exporting.export_spans",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("offline")),
+    )
+
+    assert not hook_service.flush()
+    state = json.loads(next(tmp_path.glob("*.json")).read_text())
+    turn = state["turns"]["generation-1"]
+    assert turn["claimed_until"] is None
+    assert turn["export_attempts"] == 1
+    assert turn["next_retry_at"] is not None
+
+
+def test_detached_worker_launcher_closes_parent_streams(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setenv("TRULENS_HOOKS_JOURNAL_DIR", str(tmp_path))
+    launched = {}
+
+    class _Process:
+        pass
+
+    def _popen(command, **kwargs):
+        launched["command"] = command
+        launched["kwargs"] = kwargs
+        return _Process()
+
+    monkeypatch.setattr(worker.subprocess, "Popen", _popen)
+
+    assert worker.ensure_worker()
+    assert launched["command"][-1] == "worker"
+    assert launched["kwargs"]["stdin"] is worker.subprocess.DEVNULL
+    assert launched["kwargs"]["close_fds"]
+    assert launched["kwargs"].get("start_new_session", True)
+
+
+def test_worker_launcher_failure_is_fail_open(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setenv("TRULENS_HOOKS_JOURNAL_DIR", str(tmp_path))
+    monkeypatch.setattr(
+        worker.subprocess,
+        "Popen",
+        lambda *args, **kwargs: (_ for _ in ()).throw(OSError("blocked")),
+    )
+
+    assert not worker.ensure_worker()
+
+
+def test_singleton_worker_allows_only_one_owner(tmp_path: Path):
+    with worker.singleton_worker(tmp_path) as first:
+        with worker.singleton_worker(tmp_path) as second:
+            assert first
+            assert not second
+
+
+def test_worker_retries_without_another_native_hook(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    class _Journal:
+        directory = tmp_path
+
+        def __init__(self):
+            self.checks = iter((True, False, False))
+
+        def has_exportable_turns(self, **kwargs):
+            return next(self.checks)
+
+        def next_retry_delay(self):
+            return 0
+
+    class _Service:
+        journal = _Journal()
+        stale_after = timedelta(hours=24)
+
+        def __init__(self):
+            self.flushes = 0
+
+        def flush(self):
+            self.flushes += 1
+            return self.flushes > 1
+
+    fake_service = _Service()
+    monkeypatch.setattr(service, "HookService", lambda: fake_service)
+    monotonic = iter((0.0, 1.0))
+    monkeypatch.setattr(worker.time, "monotonic", lambda: next(monotonic, 1.0))
+    monkeypatch.setattr(worker.time, "sleep", lambda _: None)
+    monkeypatch.setenv("TRULENS_HOOKS_WORKER_IDLE_SECONDS", "0")
+
+    assert worker.run_worker() == 0
+    assert fake_service.flushes >= 2
 
 
 def test_trace_batch_can_use_standard_in_memory_exporter():

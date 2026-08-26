@@ -14,6 +14,7 @@ from typing import Any, MutableMapping, Optional, Sequence
 
 from trulens.core.otel.client_hooks import clients
 from trulens.core.otel.client_hooks import service
+from trulens.core.otel.client_hooks import worker
 
 _MARKER = "trulens-client-hooks"
 
@@ -228,8 +229,10 @@ def _parser() -> argparse.ArgumentParser:
     uninstall.add_argument("--dry-run", action="store_true")
     status = subparsers.add_parser("status")
     status.add_argument("client")
+    status.add_argument("--project", action="store_true")
     subparsers.add_parser("clients")
     subparsers.add_parser("flush")
+    subparsers.add_parser("worker", help=argparse.SUPPRESS)
     subparsers.add_parser("validate")
     return parser
 
@@ -280,6 +283,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return _validate()
     if args.command == "flush":
         return 0 if service.HookService().flush() else 1
+    if args.command == "worker":
+        return worker.run_worker()
     if args.command in {"config", "install", "uninstall", "status"}:
         spec = clients.get_client(args.client)
         if args.command == "config":
@@ -295,7 +300,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             return _install(spec, args.project, args.dry_run)
         if args.command == "uninstall":
             return _uninstall(spec, args.project, args.dry_run)
-        path = _config_path(spec, False)
+        path = _config_path(spec, args.project)
         installed = False
         if path.exists():
             if _is_plugin_client(spec):
@@ -306,14 +311,23 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         sys.stdout.write(
             f"{spec.name}: {'installed' if installed else 'not installed'}\n"
         )
+        journal = service.HookService().journal
+        state = journal.status()
+        sys.stdout.write(
+            "worker: "
+            f"{'running' if worker.is_worker_running(journal.directory) else 'stopped'}; "
+            f"pending={state['pending']}; claimed={state['claimed']}; "
+            f"retrying={state['retrying']}; log={worker.worker_log_path(journal.directory)}\n"
+        )
         return 0
     if args.command == "ingest":
         try:
             payload = json.load(sys.stdin)
             if not isinstance(payload, dict):
                 raise ValueError("Hook payload must be a JSON object.")
-            if not service.HookService().ingest(args.client, payload):
-                sys.stderr.write("TruLens hook export will be retried.\n")
+            service.HookService().ingest(args.client, payload)
+            if not worker.ensure_worker():
+                sys.stderr.write("TruLens hook worker could not be started.\n")
         except Exception as exc:
             sys.stderr.write(f"TruLens hook instrumentation failed: {exc}\n")
         sys.stdout.write("{}\n")

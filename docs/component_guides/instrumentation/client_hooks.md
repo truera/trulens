@@ -111,6 +111,8 @@ Agent span
 Existing input/output and trace-level selectors work without client-specific
 logic. Coding-agent-only metadata such as client name, native hook event, editor
 version, workspace, and diff is defined centrally in `trulens-otel-semconv`.
+See [Evaluating Coding-Agent Hook Traces](coding_agent_evals.md) for how
+post-hoc metrics would run on those records.
 
 Official OTEL GenAI conventions are used for model inference, structured
 messages, token usage, and tool execution. TruLens record/evaluation fields and
@@ -127,9 +129,18 @@ trulens-client-hooks status cursor
 trulens-client-hooks flush
 ```
 
-Every hook invocation retries eligible exports across the journal. `flush`
-also retries completed turns and exports stale turns without waiting for another
-client event, which is useful after reconnecting an unavailable destination.
+Each hook invocation returns after writing to a locked local journal. A detached
+singleton worker exports completed turns and retries transient destination
+failures without blocking the coding client. Configure worker behavior with:
+
+```bash
+export TRULENS_HOOKS_EXPORT_LEASE_SECONDS=60
+export TRULENS_HOOKS_WORKER_IDLE_SECONDS=2
+```
+
+`status` reports worker, pending, claimed, and retry state. `flush` remains a
+synchronous recovery command for troubleshooting after a machine or process
+crash.
 
 Remove only the TruLens-managed hook entries while preserving other hooks:
 

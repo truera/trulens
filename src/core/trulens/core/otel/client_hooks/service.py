@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, Tuple
 
 from trulens.core import session as core_session
 from trulens.core.otel.client_hooks import exporting
@@ -34,14 +34,16 @@ class HookService:
             or os.environ.get("TRULENS_HOOKS_CLIENT_VERSION"),
             run_name=os.environ.get("TRULENS_HOOKS_RUN_NAME"),
         )
+        self.stale_after = tracing.stale_after_from_environment()
         self.session = session
 
-    def ingest(self, client: str, payload: Mapping[str, Any]) -> bool:
-        """Process one hook payload and export any newly complete turns."""
+    def ingest(
+        self, client: str, payload: Mapping[str, Any]
+    ) -> Tuple[str, bool]:
+        """Normalize and durably journal one hook payload without exporting."""
 
         event = self.capture_policy.apply(parsers.parse(client, payload))
-        self.journal.append(event)
-        return self.flush()
+        return self.journal.append(event)
 
     def flush(self) -> bool:
         """Export all complete, retryable, or stale turns in the journal."""
@@ -51,12 +53,26 @@ class HookService:
             for turn_id in self.journal.claim_pending_turns(
                 client,
                 conversation_id,
-                stale_after=tracing.stale_after_from_environment(),
+                stale_after=self.stale_after,
+                lease_for=journal_module.export_lease_from_environment(),
             ):
                 turn = self.journal.get_turn(client, conversation_id, turn_id)
                 stale = not any(item.terminal for item in turn)
                 spans = self.assembler.assemble(turn, stale=stale)
-                if exporting.export_spans(spans, session=self.session):
+                try:
+                    exported = exporting.export_spans(
+                        spans, session=self.session
+                    )
+                except Exception:
+                    self.journal.release_claim(
+                        client,
+                        conversation_id,
+                        turn_id,
+                        failed=True,
+                    )
+                    success = False
+                    continue
+                if exported:
                     self.journal.mark_exported(client, conversation_id, turn_id)
                 else:
                     self.journal.release_claim(
