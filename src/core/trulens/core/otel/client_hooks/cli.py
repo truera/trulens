@@ -34,7 +34,7 @@ def _configuration(spec: clients.ClientSpec) -> dict:
 
 
 def _plugin_source(spec: clients.ClientSpec) -> Optional[str]:
-    return spec.build_plugin(_command(spec.name))
+    return spec.build_plugin(_command(spec.name), spec.detect_version())
 
 
 def _is_plugin_client(spec: clients.ClientSpec) -> bool:

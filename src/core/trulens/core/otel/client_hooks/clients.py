@@ -53,7 +53,8 @@ class ClientSpec:
     hook_events: Tuple[str, ...]
     field_aliases: FieldAliases = FieldAliases()
     config_builder: Optional[Callable[[str], Mapping[str, Any]]] = None
-    plugin_builder: Optional[Callable[[str], str]] = None
+    plugin_builder: Optional[Callable[[str, Optional[str]], str]] = None
+    version_detector: Optional[Callable[[], Optional[str]]] = None
     extract_overrides: Optional[
         Callable[[Mapping[str, Any]], Mapping[str, Any]]
     ] = None
@@ -69,12 +70,21 @@ class ClientSpec:
             }
         return self.config_builder(command)
 
-    def build_plugin(self, command: str) -> Optional[str]:
+    def build_plugin(
+        self, command: str, client_version: Optional[str] = None
+    ) -> Optional[str]:
         """Build a native plugin source file when this client is not JSON-hooks."""
 
         if self.plugin_builder is None:
             return None
-        return self.plugin_builder(command)
+        return self.plugin_builder(command, client_version)
+
+    def detect_version(self) -> Optional[str]:
+        """Detect the installed native client version when supported."""
+
+        if self.version_detector is None:
+            return None
+        return self.version_detector()
 
 
 _REGISTERED_CLIENTS: MutableMapping[str, ClientSpec] = {}

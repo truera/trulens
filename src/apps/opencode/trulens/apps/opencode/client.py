@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import shutil
+import subprocess
 from typing import Any, Mapping
 
 from trulens.core.otel.client_hooks.clients import ClientSpec
@@ -95,19 +97,29 @@ def extract_overrides(payload: Mapping[str, Any]) -> Mapping[str, Any]:
     return {key: value for key, value in overrides.items() if value is not None}
 
 
-def _plugin(command: str) -> str:
+def _detect_version() -> str | None:
+    executable = shutil.which("opencode")
+    if executable is None:
+        return None
+    try:
+        result = subprocess.run(
+            [executable, "--version"],
+            capture_output=True,
+            check=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return result.stdout.strip() or None
+
+
+def _plugin(command: str, client_version: str | None = None) -> str:
     encoded = json.dumps(command)
+    encoded_version = json.dumps(client_version)
     return f"""// managed_by: trulens-client-hooks
 const COMMAND = {encoded}
-const VERSION = (() => {{
-  try {{
-    const result = Bun.spawnSync(["opencode", "--version"])
-    return new TextDecoder().decode(result.stdout).trim() || undefined
-  }} catch (_error) {{
-    return undefined
-  }}
-}})()
-
+const VERSION = {encoded_version}
 async function ingest(payload) {{
   try {{
     const proc = Bun.spawn(["sh", "-c", COMMAND], {{
@@ -135,6 +147,7 @@ function textFromParts(parts) {{
 
 export const TruLensClientHooks = async ({{ directory }}) => {{
   let lastSessionId
+  let activeTurnId
   const send = async (payload) => {{
     if (payload.session_id) {{
       lastSessionId = payload.session_id
@@ -143,6 +156,7 @@ export const TruLensClientHooks = async ({{ directory }}) => {{
   }}
   return {{
     "chat.message": async (input, output) => {{
+      activeTurnId = input.messageID
       await send({{
         session_id: input.sessionID,
         message_id: input.messageID,
@@ -173,7 +187,8 @@ export const TruLensClientHooks = async ({{ directory }}) => {{
     "experimental.text.complete": async (input, output) => {{
       await send({{
         session_id: input.sessionID,
-        message_id: input.messageID,
+        message_id: activeTurnId || input.messageID,
+        response_message_id: input.messageID,
         hook_event_name: "experimental.text.complete",
         text: output && output.text,
       }})
@@ -186,6 +201,7 @@ export const TruLensClientHooks = async ({{ directory }}) => {{
       if (type === "session.idle" || type === "session.error") {{
         await send({{
           session_id: sessionId,
+          message_id: activeTurnId,
           hook_event_name: type,
           status: type === "session.error" ? "error" : "completed",
           error:
@@ -220,5 +236,6 @@ client_spec = ClientSpec(
         response=("text", "response", "output"),
     ),
     plugin_builder=_plugin,
+    version_detector=_detect_version,
     extract_overrides=extract_overrides,
 )

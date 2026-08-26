@@ -10,6 +10,7 @@ from trulens.core.otel.client_hooks import cli
 from trulens.core.otel.client_hooks import clients
 from trulens.core.otel.client_hooks import parsers
 from trulens.core.otel.client_hooks import tracing
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 
@@ -40,12 +41,15 @@ def test_opencode_plugin_is_declarative():
     assert "open-code" in opencode_spec.aliases
     assert "chat.message" in opencode_spec.hook_events
     assert opencode_spec.plugin_builder is not None
-    plugin = opencode_spec.build_plugin("trulens-client-hooks ingest opencode")
+    plugin = opencode_spec.build_plugin(
+        "trulens-client-hooks ingest opencode", "1.18.23"
+    )
     assert "managed_by: trulens-client-hooks" in plugin
     assert "ingest opencode" in plugin
     assert "chat.message" in plugin
-    assert 'Bun.spawnSync(["opencode", "--version"])' in plugin
+    assert 'const VERSION = "1.18.23"' in plugin
     assert "client_version: VERSION" in plugin
+    assert "message_id: activeTurnId || input.messageID" in plugin
 
 
 def test_client_registry_supports_direct_registration():
@@ -386,6 +390,48 @@ def test_opencode_parse_flattens_native_payloads():
     assert not idle.failed
 
 
+def test_opencode_response_and_idle_correlate_to_prompt_turn():
+    clients.register_client(opencode_spec)
+    prompt = parsers.parse(
+        "opencode",
+        {
+            "session_id": "session-1",
+            "message_id": "prompt-1",
+            "hook_event_name": "chat.message",
+            "prompt": "hello",
+            "model": "big-pickle",
+            "client_version": "1.18.23",
+        },
+    )
+    response = parsers.parse(
+        "opencode",
+        {
+            "session_id": "session-1",
+            "message_id": "prompt-1",
+            "response_message_id": "response-1",
+            "hook_event_name": "experimental.text.complete",
+            "text": "done",
+            "client_version": "1.18.23",
+        },
+    )
+    idle = parsers.parse(
+        "opencode",
+        {
+            "session_id": "session-1",
+            "message_id": "prompt-1",
+            "hook_event_name": "session.idle",
+            "client_version": "1.18.23",
+        },
+    )
+
+    spans = tracing.TraceAssembler().assemble([prompt, response, idle])
+
+    assert {event.turn_id for event in (prompt, response, idle)} == {"prompt-1"}
+    assert spans[0].attributes[SpanAttributes.RECORD_ROOT.OUTPUT] == "done"
+    assert spans[0].attributes[ResourceAttributes.APP_VERSION] == "1.18.23"
+    assert any(span.name == "chat big-pickle" for span in spans)
+
+
 def test_opencode_install_writes_managed_plugin_file(tmp_path, monkeypatch):
     plugin_path = tmp_path / "trulens-client-hooks.js"
     spec = clients.ClientSpec(
@@ -395,6 +441,7 @@ def test_opencode_install_writes_managed_plugin_file(tmp_path, monkeypatch):
         project_config_path=None,
         hook_events=("chat.message",),
         plugin_builder=opencode_spec.plugin_builder,
+        version_detector=lambda: "1.18.23",
     )
     monkeypatch.setattr(clients, "get_client", lambda _: spec)
 
@@ -402,6 +449,7 @@ def test_opencode_install_writes_managed_plugin_file(tmp_path, monkeypatch):
     assert cli.main(["install", "opencode"]) == 0
     contents = plugin_path.read_text()
     assert "managed_by: trulens-client-hooks" in contents
+    assert 'const VERSION = "1.18.23"' in contents
     assert not plugin_path.with_suffix(".js.trulens.bak").exists()
     assert cli.main(["install", "opencode"]) == 0
     assert plugin_path.with_suffix(".js.trulens.bak").exists()
