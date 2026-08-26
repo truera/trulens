@@ -697,6 +697,21 @@ def test_assembler_defaults_identity_to_native_client_and_conversation():
     assert root.attributes[SpanAttributes.RUN_NAME] == "conversation-1"
 
 
+def test_privacy_preserves_native_client_version_metadata():
+    event = parsers.parse(
+        "claude",
+        {
+            "session_id": "session-1",
+            "hook_event_name": "Stop",
+            "client_version": "2.1.19",
+        },
+    )
+
+    captured = privacy.CapturePolicy().apply(event)
+
+    assert captured.metadata["client_version"] == "2.1.19"
+
+
 def test_service_flush_retries_completed_turn_without_new_event(tmp_path: Path):
     event_journal = journal.EventJournal(tmp_path)
     event_journal.append(parsers.parse_cursor(_cursor("beforeSubmitPrompt")))
@@ -995,7 +1010,7 @@ def test_service_flush_creates_run_before_export_and_ingests_after(
     assert exporter.spans
 
 
-def test_service_flush_retries_turn_when_ingestion_fails(tmp_path: Path):
+def test_service_flush_keeps_exported_turn_when_ingestion_fails(tmp_path: Path):
     event_journal = journal.EventJournal(tmp_path)
     event_journal.append(parsers.parse_cursor(_cursor("beforeSubmitPrompt")))
     event_journal.append(parsers.parse_cursor(_cursor("stop")))
@@ -1006,12 +1021,9 @@ def test_service_flush_retries_turn_when_ingestion_fails(tmp_path: Path):
         coordinator=_FakeCoordinator(exporter=exporter, fail_complete=True),
     )
 
-    assert not hook_service.flush()
-    # A turn whose ingestion never started is not finished: leaving it exported
-    # would strand its run in a non-terminal state with no retry.
-    assert event_journal.pending_turns("cursor", "conversation-1") == [
-        "generation-1"
-    ]
+    assert hook_service.flush()
+    assert exporter.spans
+    assert event_journal.pending_turns("cursor", "conversation-1") == []
 
 
 def test_service_flush_marks_exported_when_destination_has_no_runs(

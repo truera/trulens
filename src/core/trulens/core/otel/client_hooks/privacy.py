@@ -21,6 +21,7 @@ _SAFE_METADATA_KEYS = {
     "sandbox",
     "source",
     "cursor_version",
+    "client_version",
 }
 
 

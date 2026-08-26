@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any, Mapping, Optional, Tuple
 
@@ -12,6 +13,8 @@ from trulens.core.otel.client_hooks import parsers
 from trulens.core.otel.client_hooks import privacy
 from trulens.core.otel.client_hooks import runs
 from trulens.core.otel.client_hooks import tracing
+
+logger = logging.getLogger(__name__)
 
 
 class HookService:
@@ -92,7 +95,15 @@ class HookService:
                     )
                     exported = exporting.export_spans(spans, session=session)
                     if exported and identity is not None:
-                        self.coordinator.complete_turn(identity, run)
+                        try:
+                            self.coordinator.complete_turn(identity, run)
+                        except Exception:
+                            logger.warning(
+                                "Spans exported, but run lifecycle completion "
+                                "failed. The trace is available, but its run "
+                                "may remain non-terminal.",
+                                exc_info=True,
+                            )
                 except Exception:
                     self.journal.release_claim(
                         client,
