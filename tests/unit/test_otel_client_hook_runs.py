@@ -123,7 +123,9 @@ def test_oss_session_exports_spans_without_runs(
     assert event_journal.pending_turns("cursor", conversation_id) == []
 
 
-def test_oss_session_is_reported_unsupported(tmp_path: Path, hook_session: TruSession):
+def test_oss_session_is_reported_unsupported(
+    tmp_path: Path, hook_session: TruSession
+):
     conversation_id = f"conversation-{uuid.uuid4().hex[:8]}"
     event_journal = journal.EventJournal(tmp_path / "journal")
     _journal_turn(event_journal, conversation_id)
@@ -198,7 +200,9 @@ def test_run_lifecycle_can_be_disabled(
 def _identity_for(conversation_id: str, turn_id: str):
     events = [
         parsers.parse_cursor(
-            _cursor("beforeSubmitPrompt", conversation_id, generation_id=turn_id)
+            _cursor(
+                "beforeSubmitPrompt", conversation_id, generation_id=turn_id
+            )
         ),
         parsers.parse_cursor(
             _cursor("stop", conversation_id, generation_id=turn_id)
