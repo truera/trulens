@@ -385,7 +385,9 @@ class GroundTruthAgreement(
             # several retrieved chunks share the same (zero) relevance.
             dcg = _dcg(rel_scores[:k])
             ideal_dcg = _dcg(sorted(golden_scores, reverse=True)[:k])
-            return dcg / ideal_dcg if ideal_dcg > 0 else 0.0
+            # ideal_dcg of 0 means the golden set annotates nothing relevant,
+            # so nDCG has no denominator. Undefined, not a measured zero.
+            return dcg / ideal_dcg if ideal_dcg > 0 else np.nan
         else:
             return np.nan
 
@@ -443,7 +445,8 @@ class GroundTruthAgreement(
             return (
                 relevant_retrieved / len(retrieved_top_k)
                 if len(retrieved_top_k) > 0
-                else 0.0
+                # Nothing retrieved, so precision has no denominator.
+                else np.nan
             )
         else:
             return np.nan
@@ -502,7 +505,8 @@ class GroundTruthAgreement(
             return (
                 relevant_retrieved / len(golden_chunks)
                 if len(golden_chunks) > 0
-                else 0.0
+                # No relevant chunks exist, so recall has no denominator.
+                else np.nan
             )
         else:
             return np.nan
@@ -542,6 +546,11 @@ class GroundTruthAgreement(
                 ]
 
             # Find the rank of the first relevant item in the sorted list
+            # No relevant chunks at all means there was nothing to rank, which
+            # is undefined. Retrieving none of several that DO exist is a real 0.
+            if not golden_chunks:
+                return np.nan
+
             for i, chunk in enumerate(retrieved_context_chunks):
                 if chunk in golden_chunks:
                     return 1 / (
@@ -579,6 +588,9 @@ class GroundTruthAgreement(
             golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
 
             # Calculate hit rate at k (1 if at least one relevant item is retrieved, 0 otherwise)
+            # Same split as mrr: an empty golden set is undefined, a miss is 0.
+            if not golden_chunks:
+                return np.nan
             return (
                 1.0
                 if any(
@@ -876,8 +888,10 @@ class GroundTruthAgreement(
         expected = self._find_expected_memories(query)
         if expected is None:
             return np.nan
+        # An empty expected set means there was nothing to find, which is
+        # not the same event as retrieving nothing relevant.
         if not expected:
-            return 0.0
+            return np.nan
         if retrieved_memories is None:
             raise TypeError("retrieved_memories must be a list, not None")
         if not retrieved_memories:
@@ -925,8 +939,10 @@ class GroundTruthAgreement(
         expected = self._find_expected_memories(query)
         if expected is None:
             return np.nan
+        # An empty expected set means there was nothing to find, which is
+        # not the same event as retrieving nothing relevant.
         if not expected:
-            return 0.0
+            return np.nan
         if retrieved_memories is None:
             raise TypeError("retrieved_memories must be a list, not None")
         if not retrieved_memories:
@@ -1160,8 +1176,11 @@ class GroundTruthAggregator(
         )
 
         # Handle the case where there are no actual positives to avoid division by zero
+        # Undefined: the ground truth holds no positives, so there was nothing to recall.
+        # Same reasoning as brier_score below: 0.0 here is indistinguishable
+        # from a measured zero once these are averaged across a run.
         if true_positives + false_negatives == 0:
-            return 0.0  # or handle as needed (e.g., return None, raise an exception)
+            return np.nan
 
         # Calculate recall
         recall = true_positives / (true_positives + false_negatives)
@@ -1197,8 +1216,11 @@ class GroundTruthAggregator(
         )
 
         # Handle the case where there are no predicted positives to avoid division by zero
+        # Undefined: nothing was predicted positive, so there is nothing to be right about.
+        # Same reasoning as brier_score below: 0.0 here is indistinguishable
+        # from a measured zero once these are averaged across a run.
         if true_positives + false_positives == 0:
-            return 0.0  # or handle as needed (e.g., return None, raise an exception)
+            return np.nan
 
         # Calculate precision
         precision = true_positives / (true_positives + false_positives)
