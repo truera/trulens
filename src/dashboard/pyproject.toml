@@ -46,5 +46,8 @@ full = [
   "streamlit-aggrid",
 ]
 
+[tool.poetry.scripts]
+trulens-dashboard = "trulens.dashboard.cli:main"
+
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../core" }

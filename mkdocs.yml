@@ -265,6 +265,7 @@ nav:
         - component_guides/instrumentation/langchain.md
         - component_guides/instrumentation/langgraph.md
         - component_guides/instrumentation/llama_index.md
+        - Client Hooks: component_guides/instrumentation/client_hooks.md
         - MCP: component_guides/instrumentation/mcp.md
         - Span Groups: component_guides/instrumentation/span_groups.md
         - Conversation ID: component_guides/instrumentation/conversation_id.md
