@@ -2,9 +2,11 @@ import pandas as pd
 from trulens.dashboard.tabs.Records import _build_thread_summary
 from trulens.dashboard.tabs.Records import _conversation_metric_row
 from trulens.dashboard.tabs.Records import _conversation_turn_html
+from trulens.dashboard.tabs.Records import _first_token_latency_ms
 from trulens.dashboard.tabs.Records import _partition_feedback_scopes
 from trulens.dashboard.tabs.Records import _preprocess_df
 from trulens.dashboard.tabs.Records import _split_conversation_turns
+from trulens.otel.semconv.trace import SpanAttributes
 
 
 def _records() -> pd.DataFrame:
@@ -119,6 +121,56 @@ def test_split_short_conversation_keeps_all_turns_visible():
     assert first["record_id"].tolist() == ["turn-0", "turn-1"]
     assert middle.empty
     assert last.empty
+
+
+def test_first_token_latency_ms_finds_streaming_generation_span():
+    spans = [
+        {"record_attributes": {SpanAttributes.SPAN_TYPE: "record_root"}},
+        {
+            "record_attributes": {
+                SpanAttributes.SPAN_TYPE: "generation",
+                SpanAttributes.GENERATION.IS_STREAMING: True,
+                SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS: 123.4,
+            },
+            "start_timestamp": 1,
+        },
+    ]
+    assert _first_token_latency_ms(spans) == 123.4
+
+
+def test_first_token_latency_ms_picks_earliest_of_several_streamed_spans():
+    spans = [
+        {
+            "record_attributes": {
+                SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS: 999.0,
+            },
+            "start_timestamp": 5,
+        },
+        {
+            "record_attributes": {
+                SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS: 42.0,
+            },
+            "start_timestamp": 1,
+        },
+    ]
+    assert _first_token_latency_ms(spans) == 42.0
+
+
+def test_first_token_latency_ms_none_when_no_spans():
+    assert _first_token_latency_ms(None) is None
+    assert _first_token_latency_ms([]) is None
+
+
+def test_first_token_latency_ms_none_for_non_streaming_record():
+    spans = [
+        {
+            "record_attributes": {
+                SpanAttributes.SPAN_TYPE: "generation",
+            },
+            "start_timestamp": 1,
+        }
+    ]
+    assert _first_token_latency_ms(spans) is None
 
 
 def _conversation_thread_records() -> pd.DataFrame:
