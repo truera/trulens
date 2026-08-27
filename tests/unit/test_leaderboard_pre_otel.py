@@ -5,6 +5,7 @@ disabled does not raise NotImplementedError due to SQLAlchemy [] subscript
 being unsupported on TEXT columns (cost_json, perf_json are TYPE_JSON = Text).
 """
 
+import datetime
 import json
 import unittest
 
@@ -32,15 +33,9 @@ class TestLeaderboardPreOtel(TruTestCase):
 
     def test_leaderboard_with_records_aggregates_correctly(self):
         """Leaderboard aggregation works end-to-end with real SQLite records."""
-        import datetime
-
-        from trulens.core import schema as core_schema
-        from trulens.core.schema import base as base_schema
-
         tru_session = self._make_session()
         db = tru_session.connector.db
 
-        # Insert a minimal AppDefinition
         app_id = "test_app_v1"
         app_json = json.dumps({"app_name": "test_app", "app_version": "v1"})
         with db.session.begin() as s:
@@ -55,22 +50,29 @@ class TestLeaderboardPreOtel(TruTestCase):
             )
             s.add(app_row)
 
-        # Insert two records with cost/perf JSON stored as text strings
         cost1 = json.dumps(
-            {"n_tokens": 100, "n_prompt_tokens": 60,
-             "n_completion_tokens": 40, "cost": 0.01, "cost_currency": "USD"}
+            {
+                "n_tokens": 100,
+                "n_prompt_tokens": 60,
+                "n_completion_tokens": 40,
+                "cost": 0.01,
+                "cost_currency": "USD",
+            }
         )
         cost2 = json.dumps(
-            {"n_tokens": 200, "n_prompt_tokens": 120,
-             "n_completion_tokens": 80, "cost": 0.02, "cost_currency": "USD"}
+            {
+                "n_tokens": 200,
+                "n_prompt_tokens": 120,
+                "n_completion_tokens": 80,
+                "cost": 0.02,
+                "cost_currency": "USD",
+            }
         )
         now = datetime.datetime.now(tz=datetime.timezone.utc)
         perf = json.dumps(
             {
                 "start_time": now.isoformat(),
-                "end_time": (
-                    now + datetime.timedelta(seconds=2)
-                ).isoformat(),
+                "end_time": (now + datetime.timedelta(seconds=2)).isoformat(),
             }
         )
 
@@ -111,17 +113,12 @@ class TestLeaderboardPreOtel(TruTestCase):
         tru_session = self._make_session()
         db = tru_session.connector.db
 
-        import datetime
-        cost = json.dumps(
-            {"n_tokens": 50, "cost": 0.005, "cost_currency": "USD"}
-        )
+        cost = json.dumps({"n_tokens": 50, "cost": 0.005, "cost_currency": "USD"})
         now = datetime.datetime.now(tz=datetime.timezone.utc)
         perf = json.dumps(
             {
                 "start_time": now.isoformat(),
-                "end_time": (
-                    now + datetime.timedelta(seconds=1)
-                ).isoformat(),
+                "end_time": (now + datetime.timedelta(seconds=1)).isoformat(),
             }
         )
 
