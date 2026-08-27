@@ -9,11 +9,13 @@ import logging
 from multiprocessing import Process
 import threading
 from threading import Thread
+from time import monotonic
 from time import sleep
 from time import time
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     Dict,
     Iterable,
     List,
@@ -27,6 +29,7 @@ import warnings
 
 import pandas
 import pydantic
+from trulens.core import dataset as core_dataset
 from trulens.core import experimental as core_experimental
 from trulens.core import prompt as core_prompt
 from trulens.core._utils import optional as optional_utils
@@ -54,6 +57,8 @@ from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 if TYPE_CHECKING:
+    from opentelemetry.sdk.metrics import MeterProvider
+    from opentelemetry.sdk.metrics.export import MetricExporter
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SpanExporter
     from trulens.core import app as base_app
@@ -109,6 +114,14 @@ class TruSession(
             is created.
 
         experimental_feature_flags: Experimental feature flags.
+
+        otel_exporter: OpenTelemetry exporter to use. Set to ``"otlp"`` to
+            export TruLens traces and GenAI metrics using OTLP. If omitted,
+            the existing TruLens/Snowflake exporter remains the default.
+
+        otlp_endpoint: Optional OTLP gRPC endpoint. This is only valid with
+            ``otel_exporter="otlp"``. If omitted, the standard OpenTelemetry
+            environment variables are used.
 
         **kwargs: All other arguments are used to initialize
             [DefaultDBConnector][trulens.core.database.connector.default.DefaultDBConnector].
@@ -183,6 +196,14 @@ class TruSession(
         pydantic.PrivateAttr(None)
     )
 
+    _experimental_otel_metric_exporter: Optional[MetricExporter] = (
+        pydantic.PrivateAttr(None)
+    )
+
+    _experimental_meter_provider: Optional[MeterProvider] = (
+        pydantic.PrivateAttr(None)
+    )
+
     @property
     def experimental_otel_exporter(
         self,
@@ -201,11 +222,12 @@ class TruSession(
         Force flush the OpenTelemetry exporters.
 
         Args:
-            timeout_millis: The maximum amount of time to wait for spans to be
-                processed.
+            timeout_millis: The maximum amount of time to wait for spans and
+                metrics to be processed.
 
         Returns:
-            False if the timeout is exceeded, feature is not enabled, or the provider doesn't exist, True otherwise.
+            False if the timeout is exceeded, feature is not enabled, or the
+            provider doesn't exist, True otherwise.
         """
 
         if (
@@ -216,7 +238,20 @@ class TruSession(
         ):
             return False
 
-        return self._experimental_tracer_provider.force_flush(timeout_millis)
+        flush_deadline = monotonic() + timeout_millis / 1000
+        traces_flushed = self._experimental_tracer_provider.force_flush(
+            timeout_millis
+        )
+        if self._experimental_meter_provider is None:
+            return traces_flushed
+
+        remaining_timeout_millis = max(
+            0, int((flush_deadline - monotonic()) * 1000)
+        )
+        metrics_flushed = self._experimental_meter_provider.force_flush(
+            remaining_timeout_millis
+        )
+        return traces_flushed and metrics_flushed
 
     def __str__(self) -> str:
         return f"TruSession({self.connector})"
@@ -237,7 +272,10 @@ class TruSession(
                 List[core_experimental.Feature],
             ]
         ] = None,
+        otel_exporter: Optional[str] = None,
+        otlp_endpoint: Optional[str] = None,
         _experimental_otel_exporter: Optional[SpanExporter] = None,
+        _experimental_otel_metric_exporter: Optional[MetricExporter] = None,
         **kwargs: Any,
     ):
         if python_utils.safe_hasattr(self, "connector"):
@@ -278,14 +316,37 @@ class TruSession(
         # for WithExperimentalSettings mixin
         self.experimental_set_features(experimental_feature_flags)
 
-        if (
-            _experimental_otel_exporter is not None
-            and not self.experimental_feature(
+        if otel_exporter is not None:
+            if not isinstance(otel_exporter, str):
+                raise ValueError("`otel_exporter` must be a string.")
+            otel_exporter = otel_exporter.lower()
+            if otel_exporter != "otlp":
+                raise ValueError('`otel_exporter` must be `None` or "otlp".')
+            if _experimental_otel_exporter is not None:
+                raise ValueError(
+                    'Cannot combine `otel_exporter="otlp"` with '
+                    "`_experimental_otel_exporter`."
+                )
+            if _experimental_otel_metric_exporter is not None:
+                raise ValueError(
+                    'Cannot combine `otel_exporter="otlp"` with '
+                    "`_experimental_otel_metric_exporter`."
+                )
+            self.experimental_enable_feature(
                 core_experimental.Feature.OTEL_TRACING
             )
+        elif otlp_endpoint is not None:
+            raise ValueError('`otlp_endpoint` requires `otel_exporter="otlp"`.')
+
+        if (
+            _experimental_otel_exporter is not None
+            or _experimental_otel_metric_exporter is not None
+        ) and not self.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
         ):
             raise ValueError(
-                "Cannot supply `_experimental_otel_exporter` without enabling OTEL tracing!"
+                "Cannot supply an experimental OTel exporter without enabling "
+                "OTEL tracing!"
             )
         if self.experimental_feature(core_experimental.Feature.OTEL_TRACING):
             otel_tracing_feature._FeatureSetup.assert_optionals_installed()
@@ -295,7 +356,12 @@ class TruSession(
             )
 
             _TruSession._set_up_otel_exporter(
-                self, connector, _experimental_otel_exporter
+                self,
+                connector,
+                _experimental_otel_exporter,
+                exporter_name=otel_exporter,
+                otlp_endpoint=otlp_endpoint,
+                metric_exporter=_experimental_otel_metric_exporter,
             )
 
             _TruSession._start_track_costs_background()
@@ -1052,6 +1118,107 @@ class TruSession(
         if buffer:
             self.connector.db.batch_insert_ground_truth(buffer)
 
+    def curate_records_to_dataset(
+        self,
+        dataset_name: str,
+        records: pandas.DataFrame,
+        mapping: core_dataset.TraceDatasetMapping | None = None,
+        expected_response_fn: Callable[[pandas.Series], str | None]
+        | None = None,
+        dataset_metadata: dict[str, Any] | None = None,
+        on_error: str = core_dataset.ON_ERROR_RAISE,
+        batch_size: int = core_dataset.DEFAULT_BATCH_SIZE,
+        include_provenance: bool = True,
+    ) -> core_dataset.CurationResult:
+        """Curate recorded traces into a persisted evaluation dataset.
+
+        Turns a records dataframe into
+        [GroundTruth][trulens.core.schema.groundtruth.GroundTruth] rows: it
+        validates the mapping against the dataframe, resolves recorded inputs
+        and outputs into stable text, normalizes expected contexts, preserves
+        provenance in metadata, and writes in bounded batches. Ground truth
+        ids are content-addressed, so curating the same rows twice does not
+        create duplicate rows.
+
+        Accepted inputs:
+
+        - a dataframe from
+          [get_records_and_feedback][trulens.core.session.TruSession.get_records_and_feedback];
+        - a dataframe carrying a `record_id` column but not the record
+          content, which is resolved through the session before mapping;
+        - a review export (CSV, JSON, ...) that the caller has loaded into a
+          dataframe.
+
+        Example:
+            ```python
+            result = session.curate_records_to_dataset(
+                dataset_name="production-failures",
+                records=records_df,
+                mapping=TraceDatasetMapping(
+                    query="input",
+                    expected_response="corrected_output",
+                    metadata={"groundedness": "Groundedness"},
+                ),
+                on_error="collect",
+            )
+            ```
+
+        Args:
+            dataset_name: Name of the dataset to write to. It is created if it
+                does not exist.
+            records: The rows to curate.
+            mapping: Which dataframe columns supply which ground truth fields.
+                Values are column names, never expressions. Defaults to
+                `TraceDatasetMapping()`, which reads `input` and `record_id`.
+            expected_response_fn: Synchronous callback returning the expected
+                response for a row. Only consulted when the mapped
+                `expected_response` column is absent or empty for that row —
+                a mapped correction always wins. TruLens never calls an LLM on
+                your behalf here.
+            dataset_metadata: Metadata for the dataset itself.
+            on_error: `"raise"` to fail on the first unusable row, or
+                `"collect"` to skip it and report it in the result. Malformed
+                rows are never written in either mode.
+            batch_size: Ground truths written per database round trip. Peak
+                memory is one batch beyond the input dataframe.
+            include_provenance: Whether to copy the source record id and app
+                name/version into each ground truth's metadata. A ground truth
+                id covers its metadata, so leaving this on means two records
+                with identical content but different provenance stay distinct;
+                turn it off to deduplicate purely on example content.
+
+        Returns:
+            A [CurationResult][trulens.core.dataset.CurationResult] with the
+            accepted, duplicate and rejected counts, the ids written, and one
+            error row per rejection.
+
+        Raises:
+            ValueError: If `on_error` or `batch_size` is invalid, or a mapped
+                column is missing from `records`. Column validation happens
+                before anything is written.
+            core_dataset.CurationRowError: In `"raise"` mode, on the first
+                unusable row. Batches written before that point stay written;
+                because ids are content-addressed, re-running after fixing the
+                data is safe.
+        """
+
+        def _resolve(record_ids: List[str]) -> pandas.DataFrame:
+            resolved, _ = self.get_records_and_feedback(record_ids=record_ids)
+            return resolved
+
+        return core_dataset.curate_records_to_dataset(
+            dataset_name=dataset_name,
+            records=records,
+            db=self.connector.db,
+            mapping=mapping,
+            expected_response_fn=expected_response_fn,
+            dataset_metadata=dataset_metadata,
+            on_error=on_error,
+            batch_size=batch_size,
+            include_provenance=include_provenance,
+            record_resolver=_resolve,
+        )
+
     def get_ground_truth(
         self,
         dataset_name: Optional[str] = None,
@@ -1338,9 +1505,9 @@ class TruSession(
             )
 
         assert not fork, "Fork mode not yet implemented."
-        assert (
-            (not fork) or (not return_when_done)
-        ), "fork=True implies running asynchronously but return_when_done=True does not!"
+        assert (not fork) or (not return_when_done), (
+            "fork=True implies running asynchronously but return_when_done=True does not!"
+        )
 
         if self._evaluator_proc is not None:
             if restart:

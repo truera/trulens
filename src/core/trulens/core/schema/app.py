@@ -36,7 +36,6 @@ from trulens.core.utils import threading as threading_utils
 if TYPE_CHECKING:
     from trulens.core._utils.pycompat import Future  # import style exception
     from trulens.core.database import connector as db_connector
-    from trulens.core.feedback import feedback as core_feedback
 
 logger = logging.getLogger(__name__)
 
@@ -267,9 +266,9 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
         ]
 
         if initial_app_loader is None:
-            assert (
-                serial_bytes_json is not None
-            ), "Cannot create new session without `initial_app_loader`."
+            assert serial_bytes_json is not None, (
+                "Cannot create new session without `initial_app_loader`."
+            )
 
             serial_bytes = serial_utils.SerialBytes.model_validate(
                 serial_bytes_json
@@ -351,9 +350,9 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
                 )
 
         else:
-            assert (
-                app_id == app.app_id
-            ), "Record was produced by a different app."
+            assert app_id == app.app_id, (
+                "Record was produced by a different app."
+            )
 
             if connector.get_app(app_id=app.app_id) is None:
                 logger.warning(

@@ -33,12 +33,12 @@ def rag_triad(
         context: Selector for the context part.
     """
 
-    assert hasattr(
-        provider, "relevance"
-    ), "Need a provider with the `relevance` feedback function."
-    assert hasattr(
-        provider, "context_relevance"
-    ), "Need a provider with the `context_relevance` feedback function."
+    assert hasattr(provider, "relevance"), (
+        "Need a provider with the `relevance` feedback function."
+    )
+    assert hasattr(provider, "context_relevance"), (
+        "Need a provider with the `context_relevance` feedback function."
+    )
 
     are_complete: bool = True
 

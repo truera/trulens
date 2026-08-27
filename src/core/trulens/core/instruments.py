@@ -358,9 +358,9 @@ class _RecordingContext:
             # (which returns last) is also last in the calls list:
             sorted_calls = sorted(
                 current_calls.values(),
-                key=lambda c: c.perf.end_time
-                if c.perf is not None
-                else datetime.max,
+                key=lambda c: (
+                    c.perf.end_time if c.perf is not None else datetime.max
+                ),
             )
 
             record = calls_to_record(

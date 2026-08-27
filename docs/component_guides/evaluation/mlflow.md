@@ -52,7 +52,9 @@ scorer = Groundedness(model="openai:/gpt-4o")
 
 feedback = scorer(
     outputs="Paris is the capital of France.",
-    expectations={"context": "France is a country in Europe. Its capital is Paris."},
+    expectations={
+        "context": "France is a country in Europe. Its capital is Paris."
+    },
 )
 
 print(feedback.value)  # "yes" or "no"
@@ -63,7 +65,11 @@ print(feedback.metadata["score"])  # 0.0 to 1.0
 
 ```python
 import mlflow
-from mlflow.genai.scorers.trulens import Groundedness, ContextRelevance, AnswerRelevance
+from mlflow.genai.scorers.trulens import (
+    Groundedness,
+    ContextRelevance,
+    AnswerRelevance,
+)
 
 eval_dataset = [
     {
@@ -166,10 +172,12 @@ from mlflow.genai.scorers.trulens import Groundedness
 # Enable tracing
 mlflow.openai.autolog()
 
+
 @mlflow.trace
 def my_rag_app(question: str) -> str:
     # Your RAG logic here
     return response
+
 
 # Evaluate using trace
 scorer = Groundedness(model="openai:/gpt-4o")

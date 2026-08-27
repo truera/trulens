@@ -683,6 +683,15 @@ class Run(BaseModel):
                 )
                 return RunStatus.UNKNOWN
 
+        # An invocation exists but carries no completion status yet, which means
+        # ingestion has been requested and has not reported back. Returning None
+        # here would make the status unresolvable for callers and renderers.
+        logger.warning(
+            f"No completion status set for invocation {latest_invocation.id}; "
+            "treating the invocation as in progress."
+        )
+        return RunStatus.INVOCATION_IN_PROGRESS
+
     def _metrics_computation_started(self, run: Run) -> bool:
         return (
             run.run_metadata.metrics is not None

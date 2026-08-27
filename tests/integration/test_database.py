@@ -339,9 +339,9 @@ def _test_db_migration(db: sqlalchemy_db.SQLAlchemyDB):
 
     # apply each upgrade at a time up to head revision
     for i, next_rev in enumerate(history):
-        assert (
-            int(next_rev) == i + 1
-        ), f"Versions must be monotonically increasing from 1: {history}"
+        assert int(next_rev) == i + 1, (
+            f"Versions must be monotonically increasing from 1: {history}"
+        )
         assert_revision(engine, curr_rev, "behind")
         db_migrations.upgrade_db(engine, revision=next_rev)
         curr_rev = next_rev
@@ -491,3 +491,61 @@ def _populate_data(db: core_db.DB):
         print("  ", res)
 
     return fb, app, rec
+
+
+class TestDatasetGroundTruthRoundTrip(TestCase):
+    """Round-trip persistence for datasets and ground truths."""
+
+    def _seed(self, db: sqlalchemy_db.SQLAlchemyDB):
+        from trulens.core.schema.dataset import Dataset
+        from trulens.core.schema.groundtruth import GroundTruth
+
+        dataset_id = db.insert_dataset(
+            Dataset(name="support-quality", meta={"source": "prod"})
+        )
+        ground_truth_id = db.insert_ground_truth(
+            GroundTruth(
+                query="what is the refund window?",
+                dataset_id=dataset_id,
+                expected_response="30 days from purchase.",
+            )
+        )
+        return dataset_id, ground_truth_id
+
+    def test_get_datasets_round_trip(self) -> None:
+        with clean_db("sqlite_file") as db:
+            db.migrate_database()
+            dataset_id, _ = self._seed(db)
+
+            datasets = db.get_datasets()
+
+            self.assertEqual(
+                datasets.columns.tolist(), ["dataset_id", "name", "meta"]
+            )
+            self.assertEqual(len(datasets), 1)
+            row = datasets.iloc[0]
+            self.assertEqual(row["dataset_id"], dataset_id)
+            self.assertEqual(row["name"], "support-quality")
+            self.assertEqual(row["meta"], {"source": "prod"})
+
+    def test_get_ground_truth_round_trip(self) -> None:
+        with clean_db("sqlite_file") as db:
+            db.migrate_database()
+            dataset_id, ground_truth_id = self._seed(db)
+
+            ground_truth = db.get_ground_truth(ground_truth_id)
+
+            self.assertIsInstance(ground_truth, dict)
+            self.assertEqual(ground_truth["ground_truth_id"], ground_truth_id)
+            self.assertEqual(
+                ground_truth["query"], "what is the refund window?"
+            )
+            self.assertEqual(
+                ground_truth["expected_response"], "30 days from purchase."
+            )
+            self.assertEqual(ground_truth["dataset_id"], dataset_id)
+
+    def test_get_ground_truth_missing_id_returns_none(self) -> None:
+        with clean_db("sqlite_file") as db:
+            db.migrate_database()
+            self.assertIsNone(db.get_ground_truth("does-not-exist"))

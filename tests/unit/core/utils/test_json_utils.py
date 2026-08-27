@@ -50,10 +50,10 @@ def test_recursive_hash(test_input, matching_input, expected):
 
     if matching_input is not None:
         matching_result = _recursive_hash(matching_input)
-        assert (
-            result == matching_result
-        ), f"Failed on {test_input}: Hashes for {test_input} ({result}) should match {matching_input} ({matching_result})"
+        assert result == matching_result, (
+            f"Failed on {test_input}: Hashes for {test_input} ({result}) should match {matching_input} ({matching_result})"
+        )
 
-    assert (
-        result == expected
-    ), f"Failed on {test_input}: got {result}, expected {expected}"
+    assert result == expected, (
+        f"Failed on {test_input}: got {result}, expected {expected}"
+    )

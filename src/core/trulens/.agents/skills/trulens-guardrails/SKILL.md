@@ -52,20 +52,25 @@ from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
 # 1. Define feedback functions
-f_criminality_input = Metric(provider.criminality, higher_is_better=False).on_input()
-f_criminality_output = Metric(provider.criminality, higher_is_better=False).on_output()
+f_criminality_input = Metric(
+    provider.criminality, higher_is_better=False
+).on_input()
+f_criminality_output = Metric(
+    provider.criminality, higher_is_better=False
+).on_output()
+
 
 class SafeChatApp:
     @instrument(span_type=SpanAttributes.SpanType.GENERATION)
     @block_input(
         feedback=f_criminality_input,
-        threshold=0.9, # If criminality is >= 0.9, block it
+        threshold=0.9,  # If criminality is >= 0.9, block it
         keyword_for_prompt="question",
-        return_value="I can't answer that question.", # Fallback response
+        return_value="I can't answer that question.",  # Fallback response
     )
     @block_output(
         feedback=f_criminality_output,
-        threshold=0.5, # If output criminality is >= 0.5, block it
+        threshold=0.5,  # If output criminality is >= 0.5, block it
         return_value="The generated response was deemed unsafe.",
     )
     def generate_completion(self, question: str) -> str:
@@ -92,17 +97,22 @@ feedback = Metric(implementation=provider.context_relevance)
 filtered_retriever = WithFeedbackFilterDocuments.of_retriever(
     retriever=base_retriever,
     feedback=feedback,
-    threshold=0.7 # Only keep documents with relevance >= 0.7
+    threshold=0.7,  # Only keep documents with relevance >= 0.7
 )
 
 # Use the filtered retriever in your RAG chain
-rag_chain = {
-    "context": filtered_retriever | format_docs,
-    "question": RunnablePassthrough()
-} | prompt | llm | StrOutputParser()
+rag_chain = (
+    {
+        "context": filtered_retriever | format_docs,
+        "question": RunnablePassthrough(),
+    }
+    | prompt
+    | llm
+    | StrOutputParser()
+)
 
 # Record as usual
-tru_recorder = TruChain(rag_chain, app_name='SafeRAG')
+tru_recorder = TruChain(rag_chain, app_name="SafeRAG")
 with tru_recorder as recording:
     llm_response = rag_chain.invoke("What is Task Decomposition?")
 ```
@@ -120,13 +130,15 @@ feedback = Metric(implementation=provider.context_relevance)
 filtered_query_engine = WithFeedbackFilterNodes(
     query_engine=base_query_engine,
     feedback=feedback,
-    threshold=0.7 # Only keep nodes with relevance >= 0.7
+    threshold=0.7,  # Only keep nodes with relevance >= 0.7
 )
 
 # Record as usual
 tru_recorder = TruLlama(filtered_query_engine, app_name="SafeLlamaIndex")
 with tru_recorder as recording:
-    llm_response = filtered_query_engine.query("What did the author do growing up?")
+    llm_response = filtered_query_engine.query(
+        "What did the author do growing up?"
+    )
 ```
 
 > [!TIP]
@@ -153,6 +165,7 @@ You can monitor the performance and trigger rates of your guardrails using the T
 
 ```python
 from trulens.dashboard import run_dashboard
+
 run_dashboard(session)
 ```
 

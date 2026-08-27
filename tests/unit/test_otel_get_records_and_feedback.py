@@ -289,7 +289,8 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
         # Fill in template values
         event_data = (
-            template.replace("{{event_id}}", event_id)
+            template
+            .replace("{{event_id}}", event_id)
             .replace("{{app_name}}", app_name)
             .replace("{{app_version}}", app_version)
             .replace("{{app_id}}", app_id)
