@@ -2196,7 +2196,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             if (
-                _prompt := session.query(self.orm.Prompt)
+                _prompt := session
+                .query(self.orm.Prompt)
                 .filter_by(prompt_id=prompt.prompt_id)
                 .first()
             ):
@@ -2288,7 +2289,8 @@ class SQLAlchemyDB(core_db.DB):
     ) -> types_schema.PromptVersionID:
         with self.session.begin() as session:
             _prompt = (
-                session.query(self.orm.Prompt)
+                session
+                .query(self.orm.Prompt)
                 .filter_by(prompt_id=version.prompt_id)
                 .first()
             )
@@ -2303,7 +2305,8 @@ class SQLAlchemyDB(core_db.DB):
                 )
 
             existing = (
-                session.query(self.orm.PromptVersion)
+                session
+                .query(self.orm.PromptVersion)
                 .filter_by(version_id=version.version_id)
                 .first()
             )
@@ -2336,7 +2339,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             _version = (
-                session.query(self.orm.PromptVersion)
+                session
+                .query(self.orm.PromptVersion)
                 .filter_by(version_id=version_id)
                 .first()
             )
@@ -2354,7 +2358,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             results = (
-                session.query(self.orm.PromptVersion)
+                session
+                .query(self.orm.PromptVersion)
                 .filter_by(prompt_id=prompt_id)
                 .order_by(self.orm.PromptVersion.created_at)
             )
@@ -2373,7 +2378,8 @@ class SQLAlchemyDB(core_db.DB):
         now = datetime.now(timezone.utc)
 
         _label = (
-            session.query(self.orm.PromptLabel)
+            session
+            .query(self.orm.PromptLabel)
             .filter_by(prompt_id=prompt_id, label=label)
             .with_for_update()
             .first()
@@ -2438,7 +2444,8 @@ class SQLAlchemyDB(core_db.DB):
     ) -> prompt_schema.PromptLabel:
         with self.session.begin() as session:
             _version = (
-                session.query(self.orm.PromptVersion)
+                session
+                .query(self.orm.PromptVersion)
                 .filter_by(version_id=version_id, prompt_id=prompt_id)
                 .first()
             )
@@ -2463,7 +2470,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             _label = (
-                session.query(self.orm.PromptLabel)
+                session
+                .query(self.orm.PromptLabel)
                 .filter_by(prompt_id=prompt_id, label=label)
                 .first()
             )
@@ -2486,7 +2494,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             results = (
-                session.query(self.orm.PromptLabel)
+                session
+                .query(self.orm.PromptLabel)
                 .filter_by(prompt_id=prompt_id)
                 .order_by(self.orm.PromptLabel.label)
             )
