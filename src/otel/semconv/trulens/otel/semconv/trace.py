@@ -29,6 +29,10 @@ class GenAIAttributes:
     interoperability with the official OpenTelemetry Generative AI
     semantic conventions.
 
+    Only constants present in the linked OpenTelemetry GenAI specification
+    belong in this class. TruLens-specific concepts belong under
+    :class:`SpanAttributes` instead.
+
     See: https://opentelemetry.io/docs/specs/semconv/gen-ai/
     """
 
@@ -83,7 +87,7 @@ class GenAIAttributes:
         """Name of the GenAI provider (e.g. ``openai``, ``anthropic``)."""
 
     class RETRIEVAL:
-        """Attributes for a retrieval operation."""
+        """Legacy TruLens aliases; not official OTEL GenAI attributes."""
 
         QUERY_TEXT = GEN_AI_SCOPE + ".retrieval.query.text"
         """Query text used for retrieval."""
@@ -97,6 +101,9 @@ class GenAIAttributes:
         NAME = GEN_AI_SCOPE + ".tool.name"
         """Name of the tool being called."""
 
+        CALL_ID = GEN_AI_SCOPE + ".tool.call.id"
+        """Provider-assigned identifier for the tool call."""
+
         CALL_ARGUMENTS = GEN_AI_SCOPE + ".tool.call.arguments"
         """Arguments passed to the tool (JSON-serialised)."""
 
@@ -108,6 +115,10 @@ class GenAIEvents:
     """OTEL GenAI semantic convention event names and event attribute keys.
 
     See: https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-events/
+
+    ``CLIENT_INFERENCE_OPERATION_DETAILS`` and its input/output message
+    attributes are official OTEL GenAI conventions. Retrieval event constants
+    below are legacy TruLens aliases and must not be used for new telemetry.
     """
 
     CLIENT_INFERENCE_OPERATION_DETAILS = (
@@ -150,6 +161,12 @@ class GenAIEvents:
 
 
 class ResourceAttributes:
+    """TruLens application-routing attributes carried on every app span.
+
+    Despite the historical class name, these are ``ai.observability.*``
+    extensions rather than standard OpenTelemetry resource attributes.
+    """
+
     APP_ID = BASE_SCOPE + ".app_id"
     """ID of the app that the span belongs to."""
 
@@ -564,7 +581,7 @@ class SpanAttributes:
         """Output scores after reranking."""
 
     class MCP:
-        """Attributes relevant for Model Context Protocol (MCP) tool calls."""
+        """TruLens MCP extensions used where OTEL has no MCP convention."""
 
         base = BASE_SCOPE + ".mcp"
 
@@ -591,6 +608,26 @@ class SpanAttributes:
 
         EXECUTION_TIME_MS = base + ".execution_time_ms"
         """Time taken to execute the MCP tool call in milliseconds."""
+
+    class CODING_AGENT:
+        """TruLens extensions for coding-agent client instrumentation."""
+
+        base = BASE_SCOPE + ".coding_agent"
+
+        CLIENT = base + ".client"
+        """Coding-agent client name, such as Cursor or Claude Code."""
+
+        NATIVE_EVENT = base + ".native_event"
+        """Native lifecycle event emitted by the coding-agent client."""
+
+        DIFF = base + ".diff"
+        """Source diff or old/new edit pairs captured from an edit event."""
+
+        EDITOR_VERSION = base + ".editor_version"
+        """Version of the coding-agent editor or CLI when available."""
+
+        WORKSPACE = base + ".workspace"
+        """Workspace path or identifier when path capture is enabled."""
 
     class GUARDRAIL:
         """Attributes relevant for guardrail check spans."""

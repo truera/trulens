@@ -69,6 +69,9 @@ otlp = [
   "opentelemetry-exporter-otlp-proto-grpc",
 ]
 
+[tool.poetry.scripts]
+trulens-client-hooks = "trulens.core.otel.client_hooks.cli:main"
+
 [tool.poetry.group.dev]
 optional = true
 
