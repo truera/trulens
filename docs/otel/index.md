@@ -21,7 +21,7 @@ TruLens works seamlessly with existing OTEL setups in two directions:
    any OTEL-compatible backend (Jaeger, Grafana Tempo, Datadog, Honeycomb) alongside your
    existing traces.
 
-## Enabling OTEL tracing
+## Disabling OTEL tracing
 
 OTEL tracing is **enabled by default** in TruLens. To disable it, set:
 

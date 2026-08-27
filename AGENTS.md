@@ -105,6 +105,16 @@ with tru_app as recording:
 
 ### OTEL instrumentation
 
+**OTEL tracing is enabled by default.** There is nothing to turn on:
+
+- Do not set `TRULENS_OTEL_TRACING=1` - `is_otel_tracing_enabled()` returns `True` unless the
+  variable is explicitly `"0"` or `"false"`, so `"1"` is a no-op.
+- Do not pass `Feature.OTEL_TRACING` to `TruSession` - it is set and frozen to `True` during setup
+  whenever tracing is enabled, so passing it is redundant.
+
+The variable is only useful for *disabling* tracing. Disabling it logs a warning, because the
+symptom is otherwise an absence of spans rather than an error.
+
 Basic instrumentation - captures function args and return as span attributes:
 ```python
 from trulens.core.otel.instrument import instrument
@@ -281,13 +291,6 @@ f_groundedness = (
 )
 ```
 
-### Experimental features
-```python
-from trulens.core.experimental import Feature
-
-session = TruSession(experimental_feature_flags=[Feature.OTEL_TRACING])
-```
-
 ## Adding new components
 
 ### New provider
@@ -316,4 +319,5 @@ session = TruSession(experimental_feature_flags=[Feature.OTEL_TRACING])
 
 - **Circular imports**: Use `from __future__ import annotations` and `TYPE_CHECKING` blocks
 - **OTEL tests failing in batch**: Install pytest-xdist (`poetry install --with dev`) and use `make test-unit`
+- **No spans recorded / evaluations find nothing**: check for a leftover `TRULENS_OTEL_TRACING=0` in the shell or `.env`; tracing is on by default and disabling it logs a warning
 - **Missing optional deps**: TruLens uses lazy imports - install specific packages as needed

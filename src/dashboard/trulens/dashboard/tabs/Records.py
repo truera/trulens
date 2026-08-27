@@ -856,6 +856,7 @@ def _build_thread_summary(
         df["is_match"] = True
 
     rows = []
+    conversation_cols, _ = _partition_feedback_scopes(df, feedback_col_names)
     for thread_key, group in df.groupby("_thread_key", dropna=False):
         group_sorted = group.sort_values("ts")
         first = group_sorted.iloc[0]
@@ -898,7 +899,18 @@ def _build_thread_summary(
                     worst_index, "record_id"
                 ]
         for fcol in feedback_col_names:
-            if fcol in ranking_group.columns:
+            if fcol not in ranking_group.columns:
+                continue
+            if fcol in conversation_cols:
+                # Conversation-scoped metrics describe the whole thread, not a
+                # single turn, so averaging across the thread's records is wrong
+                # (e.g. records of [1.0, 0.0] would surface as 0.5 here while the
+                # conversation-metrics detail view shows 0.0). Use the latest
+                # recorded value, matching _conversation_metric_row.
+                conv_values = group_sorted[fcol].dropna()
+                if not conv_values.empty:
+                    row[fcol] = conv_values.iloc[-1]
+            else:
                 row[fcol] = ranking_group[fcol].mean(skipna=True)
         rows.append(row)
 

@@ -26,6 +26,12 @@ _SPAN_KIND_TO_PROTO = {
     SpanKind.CONSUMER: SpanProto.SpanKind.SPAN_KIND_CONSUMER,
 }
 
+_STATUS_CODE_TO_PROTO = {
+    StatusCode.UNSET: Status.StatusCode.STATUS_CODE_UNSET,
+    StatusCode.ERROR: Status.StatusCode.STATUS_CODE_ERROR,
+    StatusCode.OK: Status.StatusCode.STATUS_CODE_OK,
+}
+
 
 def convert_to_any_value(value: Any) -> AnyValue:
     """
@@ -102,7 +108,13 @@ def convert_readable_span_to_proto(span: ReadableSpan) -> SpanProto:
         ]
         if span.attributes
         else None,
-        status=Status(code=Status.StatusCode.STATUS_CODE_UNSET),
+        status=Status(
+            code=_STATUS_CODE_TO_PROTO.get(
+                span.status.status_code,
+                Status.StatusCode.STATUS_CODE_UNSET,
+            ),
+            message=span.status.description or "",
+        ),
     )
     # TODO(otel): Remove this once the Snowflake backend no longer uses this!
     span_proto.attributes.append(
