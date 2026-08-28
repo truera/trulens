@@ -1795,9 +1795,7 @@ class SQLAlchemyDB(core_db.DB):
                     "Total Cost (USD)",
                 ]
             )
-            empty["Total Cost (Snowflake Credits)"] = pd.Series(
-                dtype=float
-            )
+            empty["Total Cost (Snowflake Credits)"] = pd.Series(dtype=float)
             empty["tags"] = pd.Series(dtype=str)
             return empty, []
 
