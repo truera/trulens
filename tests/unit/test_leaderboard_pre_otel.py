@@ -44,9 +44,6 @@ class TestLeaderboardPreOtel(TruTestCase):
                 app_name="test_app",
                 app_version="v1",
                 app_json=app_json,
-                tags="",
-                metadata_json="{}",
-                db_type="virtual",
             )
             s.add(app_row)
 
@@ -87,9 +84,8 @@ class TestLeaderboardPreOtel(TruTestCase):
                         record_json="{}",
                         cost_json=cost,
                         perf_json=perf,
-                        ts=now,
+                        ts=now.timestamp(),
                         tags="",
-                        meta="{}",
                     )
                 )
 
@@ -132,9 +128,6 @@ class TestLeaderboardPreOtel(TruTestCase):
                         app_json=json.dumps(
                             {"app_name": app_name, "app_version": "v1"}
                         ),
-                        tags="",
-                        metadata_json="{}",
-                        db_type="virtual",
                     )
                 )
                 s.add(
@@ -146,9 +139,8 @@ class TestLeaderboardPreOtel(TruTestCase):
                         record_json="{}",
                         cost_json=cost,
                         perf_json=perf,
-                        ts=now,
+                        ts=now.timestamp(),
                         tags="",
-                        meta="{}",
                     )
                 )
 
