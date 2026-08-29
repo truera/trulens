@@ -12591,6 +12591,26 @@ type = "directory"
 url = "src/providers/openai"
 
 [[package]]
+name = "trulens-providers-orcarouter"
+version = "2.13.1"
+description = "A TruLens extension package adding OrcaRouter gateway support for LLM App evaluation."
+optional = false
+python-versions = "^3.9"
+groups = ["providers"]
+files = []
+develop = true
+
+[package.dependencies]
+openai = ">=1.52.1,<2.0.0"
+trulens-core = "^2.0.0"
+trulens-feedback = "^2.0.0"
+trulens-providers-openai = "^2.0.0"
+
+[package.source]
+type = "directory"
+url = "src/providers/orcarouter"
+
+[[package]]
 name = "truststore"
 version = "0.10.4"
 description = "Verify certificates using native system trust stores"
@@ -13932,4 +13952,4 @@ otlp = ["opentelemetry-exporter-otlp-proto-grpc"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "cb032d20571ebbf5b831cf9de3561b1b9a53572409fa4565eed38eac5a41cf8e"
+content-hash = "12d92258b78f557474671ed9e04005fa1fb7c036c1b8cefa54288057c1351bdf"

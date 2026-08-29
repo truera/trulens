@@ -106,6 +106,7 @@ plugins:
             - src/providers/litellm
             - src/providers/ollama
             - src/providers/openai
+            - src/providers/orcarouter
             - src/connectors/snowflake
             - src/trulens_eval # to remove after deprecation
             - examples/

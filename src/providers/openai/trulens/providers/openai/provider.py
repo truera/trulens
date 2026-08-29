@@ -62,8 +62,8 @@ class OpenAI(llm_provider.LLMProvider):
         ```
 
         OpenAI-compatible endpoints work by forwarding client kwargs such as
-        `base_url` and `api_key` (OpenRouter, Together, Fireworks, DaoXE,
-        vLLM, and similar):
+        `base_url` and `api_key` (OpenRouter, OrcaRouter, Together, Fireworks,
+        DaoXE, vLLM, and similar):
 
         ```python
         import os
