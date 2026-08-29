@@ -47,31 +47,25 @@ class TestLeaderboardPreOtel(TruTestCase):
             )
             s.add(app_row)
 
-        cost1 = json.dumps(
-            {
-                "n_tokens": 100,
-                "n_prompt_tokens": 60,
-                "n_completion_tokens": 40,
-                "cost": 0.01,
-                "cost_currency": "USD",
-            }
-        )
-        cost2 = json.dumps(
-            {
-                "n_tokens": 200,
-                "n_prompt_tokens": 120,
-                "n_completion_tokens": 80,
-                "cost": 0.02,
-                "cost_currency": "USD",
-            }
-        )
+        cost1 = json.dumps({
+            "n_tokens": 100,
+            "n_prompt_tokens": 60,
+            "n_completion_tokens": 40,
+            "cost": 0.01,
+            "cost_currency": "USD",
+        })
+        cost2 = json.dumps({
+            "n_tokens": 200,
+            "n_prompt_tokens": 120,
+            "n_completion_tokens": 80,
+            "cost": 0.02,
+            "cost_currency": "USD",
+        })
         now = datetime.datetime.now(tz=datetime.timezone.utc)
-        perf = json.dumps(
-            {
-                "start_time": now.isoformat(),
-                "end_time": (now + datetime.timedelta(seconds=2)).isoformat(),
-            }
-        )
+        perf = json.dumps({
+            "start_time": now.isoformat(),
+            "end_time": (now + datetime.timedelta(seconds=2)).isoformat(),
+        })
 
         with db.session.begin() as s:
             for rid, cost in [("rec1", cost1), ("rec2", cost2)]:
@@ -109,14 +103,16 @@ class TestLeaderboardPreOtel(TruTestCase):
         tru_session = self._make_session()
         db = tru_session.connector.db
 
-        cost = json.dumps({"n_tokens": 50, "cost": 0.005, "cost_currency": "USD"})
+        cost = json.dumps({
+            "n_tokens": 50,
+            "cost": 0.005,
+            "cost_currency": "USD",
+        })
         now = datetime.datetime.now(tz=datetime.timezone.utc)
-        perf = json.dumps(
-            {
-                "start_time": now.isoformat(),
-                "end_time": (now + datetime.timedelta(seconds=1)).isoformat(),
-            }
-        )
+        perf = json.dumps({
+            "start_time": now.isoformat(),
+            "end_time": (now + datetime.timedelta(seconds=1)).isoformat(),
+        })
 
         for app_name, app_id in [("appA", "appA_v1"), ("appB", "appB_v1")]:
             with db.session.begin() as s:
@@ -125,9 +121,10 @@ class TestLeaderboardPreOtel(TruTestCase):
                         app_id=app_id,
                         app_name=app_name,
                         app_version="v1",
-                        app_json=json.dumps(
-                            {"app_name": app_name, "app_version": "v1"}
-                        ),
+                        app_json=json.dumps({
+                            "app_name": app_name,
+                            "app_version": "v1",
+                        }),
                     )
                 )
                 s.add(

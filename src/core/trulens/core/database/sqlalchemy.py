@@ -1714,19 +1714,56 @@ class SQLAlchemyDB(core_db.DB):
         app_name: Optional[types_schema.AppName] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
     ) -> Tuple[pd.DataFrame, List[str]]:
+        # cost_json/perf_json are stored as TEXT (TYPE_JSON = Text).
+        # _json_path_expr extracts scalar values from text-encoded JSON at the
+        # database level (json_extract on SQLite/MySQL, json_extract_path_text
+        # on PostgreSQL) so all aggregation stays in SQL rather than pulling
+        # every raw record into Python.
+        n_tokens_expr = sa.cast(
+            sa.func.coalesce(
+                self._json_path_expr(self.orm.Record.cost_json, "n_tokens"),
+                sa.literal("0"),
+            ),
+            sa.Float,
+        )
+        cost_expr = sa.cast(
+            sa.func.coalesce(
+                self._json_path_expr(self.orm.Record.cost_json, "cost"),
+                sa.literal("0"),
+            ),
+            sa.Float,
+        )
+
+        # Dialect-aware average latency from ISO datetime strings in perf_json.
+        start_str = self._json_path_expr(
+            self.orm.Record.perf_json, "start_time"
+        )
+        end_str = self._json_path_expr(self.orm.Record.perf_json, "end_time")
+        if self.engine.dialect.name == "postgresql":
+            latency_expr = sa.func.avg(
+                sa.extract(
+                    "epoch",
+                    sa.cast(end_str, sa.DateTime)
+                    - sa.cast(start_str, sa.DateTime),
+                )
+            )
+        else:
+            latency_expr = sa.func.avg(
+                (sa.func.julianday(end_str) - sa.func.julianday(start_str))
+                * 86400
+            )
+
         with self.session.begin() as session:
-            # cost_json/perf_json are stored as TEXT (TYPE_JSON = Text), so
-            # SQLAlchemy's [] subscript raises NotImplementedError at statement
-            # construction time.  Fetch individual rows and aggregate in Python
-            # using the existing _extract_tokens_and_cost/_extract_latency
-            # helpers instead of relying on database-level JSON extraction.
             record_stmt = sa.select(
                 self.orm.AppDefinition.app_name.label("app_name"),
                 self.orm.AppDefinition.app_version.label("app_version"),
                 self.orm.AppDefinition.app_id.label("app_id"),
-                self.orm.Record.record_id.label("record_id"),
-                self.orm.Record.cost_json.label("cost_json"),
-                self.orm.Record.perf_json.label("perf_json"),
+                sa.func.count(sa.distinct(self.orm.Record.record_id)).label(
+                    "Records"
+                ),
+                sa.func.sum(n_tokens_expr).label("Total Tokens"),
+                latency_expr.label("Average Latency (s)"),
+                sa.func.sum(cost_expr).label("Total Cost (USD)"),
             ).join(self.orm.Record.app)
             if app_name:
                 record_stmt = record_stmt.where(
@@ -1736,6 +1773,11 @@ class SQLAlchemyDB(core_db.DB):
                 record_stmt = record_stmt.where(
                     self.orm.AppDefinition.app_version.in_(app_versions)
                 )
+            record_stmt = record_stmt.group_by(
+                self.orm.AppDefinition.app_name,
+                self.orm.AppDefinition.app_version,
+                self.orm.AppDefinition.app_id,
+            )
             base_rows = session.execute(record_stmt).all()
 
             fb_stmt = (
@@ -1772,18 +1814,19 @@ class SQLAlchemyDB(core_db.DB):
             )
             fb_rows = session.execute(fb_stmt).all()
 
-        raw_df = pd.DataFrame(
+        base_df = pd.DataFrame(
             base_rows,
             columns=[
                 "app_name",
                 "app_version",
                 "app_id",
-                "record_id",
-                "cost_json",
-                "perf_json",
+                "Records",
+                "Total Tokens",
+                "Average Latency (s)",
+                "Total Cost (USD)",
             ],
         )
-        if raw_df.empty:
+        if base_df.empty:
             empty = pd.DataFrame(
                 columns=[
                     "app_name",
@@ -1798,22 +1841,6 @@ class SQLAlchemyDB(core_db.DB):
             empty["Total Cost (Snowflake Credits)"] = pd.Series(dtype=float)
             empty["tags"] = pd.Series(dtype=str)
             return empty, []
-
-        cost_cols = _extract_tokens_and_cost(raw_df["cost_json"])
-        raw_df = pd.concat([raw_df, cost_cols], axis=1)
-        raw_df["_latency"] = _extract_latency(raw_df["perf_json"])
-
-        base_df = (
-            raw_df.groupby(
-                ["app_name", "app_version", "app_id"], as_index=False
-            )
-            .agg(
-                Records=("record_id", "nunique"),
-                **{"Total Tokens": ("total_tokens", "sum")},
-                **{"Average Latency (s)": ("_latency", "mean")},
-                **{"Total Cost (USD)": ("total_cost", "sum")},
-            )
-        )
 
         base_df["Total Cost (Snowflake Credits)"] = 0.0
         base_df["tags"] = ""
