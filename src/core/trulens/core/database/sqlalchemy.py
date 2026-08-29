@@ -598,7 +598,9 @@ class SQLAlchemyDB(core_db.DB):
                 )
                 .first()
             ):
-                _fb_def.app_json = feedback_definition.model_dump_json()
+                _fb_def.feedback_json = self.orm.FeedbackDefinition.parse(
+                    feedback_definition, redact_keys=self.redact_keys
+                ).feedback_json
             else:
                 _fb_def = self.orm.FeedbackDefinition.parse(
                     feedback_definition, redact_keys=self.redact_keys
