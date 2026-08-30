@@ -1018,6 +1018,22 @@ class GroundTruthAggregator(
 
         setattr(self, name, lambda scores: func(scores, self))
 
+    def _check_length(self, scores: list) -> None:
+        """Refuse a score list that does not line up with the labels.
+
+        recall and precision walk the two lists with zip, which stops at the
+        shorter one. A score list that lost a row somewhere upstream is then
+        scored against the wrong labels for every row after the gap, and the
+        result is an ordinary-looking number. brier_score, ece and
+        cohens_kappa already refuse this; this makes the classification
+        metrics do the same.
+        """
+        if len(scores) != len(self.true_labels):
+            raise ValueError(
+                "The length of true_labels and scores must be the same; "
+                f"got {len(self.true_labels)} labels and {len(scores)} scores."
+            )
+
     def auc(self, scores: list[float]) -> float:
         """
         Calculate the area under the ROC curve. Can be used for meta-evaluation.
@@ -1158,15 +1174,10 @@ class GroundTruthAggregator(
         - float: The recall score.
         """
 
-        try:
-            if isinstance(scores[0], list):
-                scores = [score for score, _ in scores]
-        except Exception as e:  # noqa: BLE001
-            import traceback
+        if isinstance(scores[0], list):
+            scores = [score for score, _ in scores]
+        self._check_length(scores)
 
-            traceback.print_exc()
-            logger.error(f"scores processing failed in Recall aggregator: {e}")
-            print(f"scores processing failed in Recall aggregator: {e}")
         # Convert scores to binary predictions based on the threshold
         predictions = [1 if score >= threshold else 0 for score in scores]
 
@@ -1206,6 +1217,7 @@ class GroundTruthAggregator(
         """
         if isinstance(scores[0], list):
             scores = [score for score, _ in scores]
+        self._check_length(scores)
 
         # Convert scores to binary predictions based on the threshold
         predictions = [1 if score >= threshold else 0 for score in scores]
