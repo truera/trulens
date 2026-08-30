@@ -2,9 +2,7 @@
 [![Azure Build Status](https://dev.azure.com/truera/trulens/_apis/build/status%2FTruLens%20E2E%20Tests?branchName=main)](https://dev.azure.com/truera/trulens/_build/latest?definitionId=8&branchName=main)
 ![GitHub](https://img.shields.io/github/license/truera/trulens)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens-core)
-[![Discourse](https://img.shields.io/discourse/users?server=https://snowflake.discourse.group/)](https://snowflake.discourse.group/c/ai-research-and-development-community/trulens/97)
 [![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/getting_started/)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/examples/quickstart/quickstart.ipynb)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/truera/trulens)
 
 # 🦑 TruLens
@@ -104,6 +102,7 @@ or any OTLP-compatible backend.
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
+
 class MyRAG:
     @instrument(
         span_type=SpanAttributes.SpanType.RETRIEVAL,
@@ -112,8 +111,7 @@ class MyRAG:
             SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
         },
     )
-    def retrieve(self, query: str) -> list:
-        ...
+    def retrieve(self, query: str) -> list: ...
 ```
 
 ### 🤖 Agentic evaluations
@@ -163,8 +161,7 @@ with the `MCP` span type to capture tool name, arguments, output, and latency:
 
 ```python
 @instrument(span_type=SpanAttributes.SpanType.MCP)
-def call_mcp_tool(self, tool_name: str, arguments: dict) -> str:
-    ...
+def call_mcp_tool(self, tool_name: str, arguments: dict) -> str: ...
 ```
 
 ### 🎯 Selector API

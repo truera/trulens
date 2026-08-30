@@ -2,6 +2,7 @@
 
 from unittest.mock import patch
 
+import pandas as pd
 import pytest
 import trulens.dashboard.constants as dashboard_constants
 
@@ -110,6 +111,19 @@ class TestLeaderboardUI:
 
         app = AppTestHelper.create_and_run_app(test_app)
         AppTestHelper.assert_no_errors(app)
+
+    def test_sample_rate_display(self):
+        from trulens.dashboard.tabs.Leaderboard import _add_sample_rate_display
+
+        df = pd.DataFrame({
+            "Sample Rate": [0.1, 0.25, None],
+            "Sample Rate Min": [0.1, 0.1, None],
+            "Sample Rate Max": [0.1, 0.25, None],
+        })
+
+        result = _add_sample_rate_display(df)
+
+        assert result["Sample rate"].tolist() == ["10%", "25%", "—"]
 
     def test_render_list_tab(self):
         """Test list tab rendering with app data."""

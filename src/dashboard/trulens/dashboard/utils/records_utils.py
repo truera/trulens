@@ -1,3 +1,4 @@
+import json
 import pprint as pp
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -57,10 +58,11 @@ def _identify_span_types(
     eval_calls = []
 
     for c in call:
+        span_type = str(c.get("span_type", "")).lower()
         # For OTel spans, use explicit span_type field
-        if c.get("span_type") == "EVAL_ROOT":
+        if span_type == "eval_root":
             eval_root_calls.append(c)
-        elif c.get("span_type") == "EVAL":
+        elif span_type == "eval":
             eval_calls.append(c)
         # For legacy spans (pre-OTel), all calls should contain the following fields: args, ret, and meta
         elif "args" in c and "ret" in c and "meta" in c:
@@ -109,6 +111,7 @@ def _filter_eval_calls_by_root(
 
 def _process_eval_calls_for_display(
     eval_calls: List[Dict[str, Any]],
+    conversation_args_by_root: Optional[Dict[str, set[str]]] = None,
 ) -> pd.DataFrame:
     """Process EVAL calls into a displayable DataFrame.
 
@@ -118,11 +121,15 @@ def _process_eval_calls_for_display(
     Returns:
         DataFrame ready for display
     """
-    # Convert non-string args to formatted strings
+    conversation_args_by_root = conversation_args_by_root or {}
+    conversation_argument = None
     for c in eval_calls:
         args: Dict = c["args"]
         for k, v in args.items():
-            if not isinstance(v, str):
+            if k in conversation_args_by_root.get(c.get("eval_root_id"), set()):
+                args[k] = _conversation_records_to_transcript(v)
+                conversation_argument = k
+            elif not isinstance(v, str):
                 args[k] = pp.pformat(v)
 
     # Create DataFrame from processed calls
@@ -135,9 +142,48 @@ def _process_eval_calls_for_display(
         eval_calls[i]["meta"] for i in range(len(eval_calls))
     ])
 
-    return df.join(df.meta.apply(lambda m: pd.Series(m))).drop(
+    df = df.join(df.meta.apply(lambda m: pd.Series(m))).drop(
         columns=["meta", "output", "metadata"], errors="ignore"
     )
+    if conversation_argument is not None:
+        df = df.rename(columns={conversation_argument: "input"})
+        columns = ["input", "score"]
+        if (
+            "explanation" in df.columns
+            and df["explanation"]
+            .apply(
+                lambda value: (
+                    pd.notna(value)
+                    and (not isinstance(value, str) or bool(value.strip()))
+                )
+            )
+            .any()
+        ):
+            columns.append("explanation")
+        return df[columns]
+    return df
+
+
+def _conversation_records_to_transcript(value: Any) -> Any:
+    """Convert serialized conversation records into a display transcript."""
+    records = value
+    if isinstance(records, str):
+        try:
+            records = json.loads(records)
+        except json.JSONDecodeError:
+            return value
+    if not isinstance(records, list) or not all(
+        isinstance(record, dict) for record in records
+    ):
+        return value
+
+    lines = []
+    for index, record in enumerate(records, start=1):
+        if record.get("input") is not None:
+            lines.append(f"Turn {index} User: {record['input']}")
+        if record.get("output") is not None:
+            lines.append(f"Turn {index} Assistant: {record['output']}")
+    return "\n".join(lines)
 
 
 def display_feedback_call(
@@ -161,6 +207,16 @@ def display_feedback_call(
     # First, identify and separate EVAL_ROOT and feedback calls (EVAL spans)
     eval_root_calls, eval_calls = _identify_span_types(call)
 
+    conversation_args_by_root = {
+        root["eval_root_id"]: {
+            argument
+            for argument, source in root.get("args_span_attribute", {}).items()
+            if source == "conversation.records"
+        }
+        for root in eval_root_calls
+        if root.get("eval_root_id") is not None
+    }
+
     # For OTel spans only: filter EVAL_ROOT spans to get most recent ones
     eval_calls = _filter_eval_calls_by_root(eval_root_calls, eval_calls)
 
@@ -169,7 +225,10 @@ def display_feedback_call(
         return
 
     # Process feedback calls (EVAL spans) for display
-    df = _process_eval_calls_for_display(eval_calls)
+    df = _process_eval_calls_for_display(
+        eval_calls,
+        conversation_args_by_root=conversation_args_by_root,
+    )
 
     # Handle groundedness feedback specially
     if "groundedness" in feedback_name.lower():

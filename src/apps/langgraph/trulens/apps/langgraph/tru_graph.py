@@ -130,8 +130,8 @@ class LangGraphInstrument(core_instruments.Instrument):
         MODULES = {"langgraph", "langchain_mcp_adapters"}
         """Modules by prefix to instrument."""
 
-        CLASSES = (
-            lambda: {
+        CLASSES = lambda: (
+            {
                 Pregel,
                 StateGraph,
                 Command,
@@ -160,12 +160,11 @@ class LangGraphInstrument(core_instruments.Instrument):
                 "__init__",
                 ToolNode if ToolNode else object,
                 SpanAttributes.SpanType.UNKNOWN,
-                lambda ret,
-                exception,
-                *args,
-                **kwargs: TruGraph._register_toolnode_tools(
-                    args[0] if args else None,
-                    args[1] if len(args) > 1 else kwargs.get("tools"),
+                lambda ret, exception, *args, **kwargs: (
+                    TruGraph._register_toolnode_tools(
+                        args[0] if args else None,
+                        args[1] if len(args) > 1 else kwargs.get("tools"),
+                    )
                 ),
             ),
             InstrumentedMethod(

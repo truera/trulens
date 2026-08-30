@@ -93,6 +93,7 @@ pytest tests/unit/streamlit/ --cov=trulens.dashboard.streamlit --cov-report=html
 def test_component_with_scenario(self, mock_data):
     """Test description explaining what this verifies."""
     with MockManager.mock_dashboard_utils(mock_data):
+
         def test_app():
             # Your component test code
             pass

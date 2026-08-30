@@ -16,9 +16,9 @@ def test_base_feedback_response_schema_has_additional_properties_false():
     from trulens.feedback.output_schemas import BaseFeedbackResponse
 
     schema = BaseFeedbackResponse.model_json_schema()
-    assert (
-        schema.get("additionalProperties") is False
-    ), "BaseFeedbackResponse schema must include 'additionalProperties: false' for Databricks compatibility"
+    assert schema.get("additionalProperties") is False, (
+        "BaseFeedbackResponse schema must include 'additionalProperties: false' for Databricks compatibility"
+    )
 
 
 def test_chain_of_thought_response_schema_has_additional_properties_false():
@@ -26,9 +26,9 @@ def test_chain_of_thought_response_schema_has_additional_properties_false():
     from trulens.feedback.output_schemas import ChainOfThoughtResponse
 
     schema = ChainOfThoughtResponse.model_json_schema()
-    assert (
-        schema.get("additionalProperties") is False
-    ), "ChainOfThoughtResponse schema must include 'additionalProperties: false' for Databricks compatibility"
+    assert schema.get("additionalProperties") is False, (
+        "ChainOfThoughtResponse schema must include 'additionalProperties: false' for Databricks compatibility"
+    )
 
 
 def test_base_feedback_response_rejects_extra_fields():

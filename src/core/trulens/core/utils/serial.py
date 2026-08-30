@@ -600,7 +600,7 @@ class SerialModel(pydantic.BaseModel):
 
         if is_circular:
             SerialModel._exit_formatting(tok)
-            return f"{python_utils.class_name(type(self))}" f"@0x{id(self):x}"
+            return f"{python_utils.class_name(type(self))}@0x{id(self):x}"
 
         try:
             fields = []
@@ -612,7 +612,7 @@ class SerialModel(pydantic.BaseModel):
                         fields.append(f"{k}={v!r}")
                 except RecursionError:
                     fields.append(f"{k}=..." if k is not None else "...")
-            return f"{type(self).__name__}" f"({', '.join(fields)})"
+            return f"{type(self).__name__}({', '.join(fields)})"
         except RecursionError:
             return f"{type(self).__name__}(...)"
         finally:
@@ -624,7 +624,7 @@ class SerialModel(pydantic.BaseModel):
         tok, is_circular = self._enter_formatting()
 
         if is_circular:
-            yield (f"{python_utils.class_name(type(self))}" f"@0x{id(self):x}")
+            yield (f"{python_utils.class_name(type(self))}@0x{id(self):x}")
             SerialModel._exit_formatting(tok)
             return
 
@@ -1071,9 +1071,9 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     def get_sole_item(self, obj: Any) -> Any:
         all_objects = list(self.get(obj))
 
-        assert (
-            len(all_objects) == 1
-        ), f"Lens {self} did not address exactly a single object."
+        assert len(all_objects) == 1, (
+            f"Lens {self} did not address exactly a single object."
+        )
 
         return all_objects[0]
 

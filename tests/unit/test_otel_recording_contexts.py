@@ -1,6 +1,9 @@
+import time
 from typing import Optional
+from unittest.mock import MagicMock
 
 from trulens.apps.app import TruApp
+from trulens.core import Metric
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import ResourceAttributes
@@ -114,6 +117,61 @@ class TestOtelRecordingContexts(OtelTestCase):
                 SpanAttributes.CONVERSATION_ID, event["record_attributes"]
             )
 
+    def test_conversation_context_retains_recording_batch(self):
+        self._tru_recorder.feedbacks.append(
+            MagicMock(is_conversation_level=True)
+        )
+        self._tru_recorder._evaluator.enqueue_conversation = MagicMock()
+        with self._tru_recorder(conversation_id="conv-123") as recording:
+            self._app.greet(name="Turn1")
+            self._app.greet(name="Turn2")
+
+            context = self._tru_recorder._current_context_manager
+            self.assertIsNotNone(context)
+            self.assertEqual(
+                context.record_ids,
+                [record.record_id for record in recording.records],
+            )
+            self._tru_recorder._evaluator.enqueue_conversation.assert_not_called()
+
+        self.assertEqual(len(recording), 2)
+        self._tru_recorder._evaluator.enqueue_conversation.assert_called_once_with(
+            "conv-123", [record.record_id for record in recording.records]
+        )
+
+    def test_conversation_records_round_trip(self):
+        with self._tru_recorder(conversation_id="conversation-1") as recording:
+            self._app.greet(name="first")
+            self._app.greet(name="second")
+            self._app.greet(name="third")
+
+        session = TruSession()
+        session.force_flush()
+        expected_record_ids = [record.record_id for record in recording.records]
+
+        conversations = session.get_conversations(
+            app_id=self._tru_recorder.app_id
+        )
+        self.assertEqual(
+            expected_record_ids,
+            conversations["conversation-1"].record_ids,
+        )
+
+        records = session.get_records_by_conversation(
+            "conversation-1", app_id=self._tru_recorder.app_id
+        )
+        self.assertEqual(
+            expected_record_ids, [record.record_id for record in records]
+        )
+        self.assertEqual(
+            ["conversation-1"] * 3,
+            [record.conversation_id for record in records],
+        )
+        self.assertEqual(
+            ["first", "second", "third"],
+            [record.main_input for record in records],
+        )
+
     def test_legacy_context_manager_no_conversation_id(self):
         """Plain `with tru_app as recording:` works and has no conversation_id."""
         with self._tru_recorder:
@@ -156,3 +214,98 @@ class TestOtelRecordingContexts(OtelTestCase):
                 event["record_attributes"][SpanAttributes.CONVERSATION_ID],
                 conv_id,
             )
+
+    def test_conversation_feedback(self):
+        received_conversations = []
+
+        def conversation_score(records: list) -> float:
+            received_conversations.append(records)
+            return float(len(records)) / 2.0
+
+        metric = Metric(
+            implementation=conversation_score,
+            name="conversation_score",
+        ).on_conversation()
+        recorder = TruApp(
+            self._app,
+            app_name="Conversation Greeter",
+            app_version="v1",
+            main_method=self._app.greet,
+            feedbacks=[metric],
+            start_evaluator=False,
+        )
+
+        with recorder(conversation_id="conversation-1"):
+            self._app.greet(name="first")
+        with recorder(conversation_id="conversation-1"):
+            self._app.greet(name="second")
+        with recorder(conversation_id="conversation-2"):
+            self._app.greet(name="other")
+        TruSession().force_flush()
+
+        recorder.compute_feedbacks()
+        TruSession().force_flush()
+
+        self.assertEqual(sorted(map(len, received_conversations)), [1, 2])
+        for conversation in received_conversations:
+            for record in conversation:
+                self.assertEqual(set(record), {"input", "output"})
+        events = self._get_events()
+        eval_roots = events[
+            events["record_attributes"].apply(
+                lambda attributes: (
+                    attributes.get(SpanAttributes.SPAN_TYPE)
+                    == SpanAttributes.SpanType.EVAL_ROOT
+                )
+            )
+        ]
+        self.assertEqual(len(eval_roots), 2)
+        self.assertEqual(
+            {
+                attributes[SpanAttributes.CONVERSATION_ID]
+                for attributes in eval_roots["record_attributes"]
+            },
+            {"conversation-1", "conversation-2"},
+        )
+        for attributes in eval_roots["record_attributes"]:
+            self.assertIsInstance(
+                attributes[f"{SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID}.records"],
+                list,
+            )
+
+        old_event_count = len(events)
+        recorder.compute_feedbacks(raise_error_on_no_feedbacks_computed=False)
+        TruSession().force_flush()
+        self.assertEqual(len(self._get_events()), old_event_count)
+
+    def test_conversation_feedback_runs_once_after_context_exit(self):
+        received_conversations = []
+
+        def conversation_score(records: list) -> float:
+            received_conversations.append(records)
+            return 1.0
+
+        metric = Metric(
+            implementation=conversation_score,
+            name="online_conversation_score",
+        ).on_conversation()
+        recorder = TruApp(
+            self._app,
+            app_name="Online Conversation Greeter",
+            app_version="v1",
+            main_method=self._app.greet,
+            feedbacks=[metric],
+        )
+
+        with recorder(conversation_id="conversation-1"):
+            self._app.greet(name="first")
+            self._app.greet(name="second")
+            self._app.greet(name="third")
+            self.assertEqual([], received_conversations)
+
+        deadline = time.time() + 30
+        while not received_conversations and time.time() < deadline:
+            time.sleep(0.1)
+
+        self.assertEqual(1, len(received_conversations))
+        self.assertEqual(3, len(received_conversations[0]))

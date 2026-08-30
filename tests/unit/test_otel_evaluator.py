@@ -175,8 +175,79 @@ class TestOtelEvaluator(OtelTestCase):
             ["test_record_id"],
             [
                 curr["record_attributes"][SpanAttributes.RECORD_ID]
-                for _, curr in mock_app.compute_feedbacks.call_args_list[0]
+                for _, curr in mock_app.compute_feedbacks
+                .call_args_list[0]
                 .kwargs["events"]
                 .iterrows()
             ],
         )
+
+    def test_conversation_job_waits_for_complete_batch(self) -> None:
+        mock_app = MagicMock()
+        mock_app.app_name = "Conversation App"
+        mock_app.app_version = "v1"
+        evaluator = Evaluator(mock_app)
+        evaluator._get_exact_batch_events = MagicMock(return_value=None)
+
+        evaluator.enqueue_conversation(
+            "conversation-1", ["record-1", "record-2"]
+        )
+        evaluator._compute_queued_conversations()
+
+        mock_app.compute_feedbacks.assert_not_called()
+        self.assertEqual(1, len(evaluator._conversation_jobs))
+
+    def test_conversation_job_computes_exact_batch_once(self) -> None:
+        mock_app = MagicMock()
+        mock_app.app_name = "Conversation App"
+        mock_app.app_version = "v1"
+        evaluator = Evaluator(mock_app)
+        events = pd.DataFrame({
+            "record_attributes": [{SpanAttributes.RECORD_ID: "record-2"}]
+        })
+        events = pd.concat([
+            pd.DataFrame({
+                "record_attributes": [{SpanAttributes.RECORD_ID: "record-1"}]
+            }),
+            events,
+        ])
+        evaluator._get_exact_batch_events = MagicMock(return_value=events)
+
+        evaluator.enqueue_conversation(
+            "conversation-1", ["record-1", "record-2"]
+        )
+        evaluator._compute_queued_conversations()
+        evaluator._compute_queued_conversations()
+
+        mock_app.compute_feedbacks.assert_called_once()
+        call = mock_app.compute_feedbacks.call_args.kwargs
+        self.assertEqual("conversation", call["metric_scope"])
+        self.assertEqual(
+            ["record-1", "record-2"],
+            call["events"]["record_attributes"]
+            .apply(lambda attributes: attributes[SpanAttributes.RECORD_ID])
+            .tolist(),
+        )
+        self.assertEqual([], evaluator._conversation_jobs)
+
+    def test_failed_conversation_job_remains_retryable(self) -> None:
+        mock_app = MagicMock()
+        mock_app.app_name = "Conversation App"
+        mock_app.app_version = "v1"
+        mock_app.compute_feedbacks.side_effect = [
+            RuntimeError("transient"),
+            None,
+        ]
+        evaluator = Evaluator(mock_app)
+        events = pd.DataFrame({
+            "record_attributes": [{SpanAttributes.RECORD_ID: "record-1"}]
+        })
+        evaluator._get_exact_batch_events = MagicMock(return_value=events)
+
+        evaluator.enqueue_conversation("conversation-1", ["record-1"])
+        evaluator._compute_queued_conversations()
+        self.assertEqual(1, len(evaluator._conversation_jobs))
+        evaluator._compute_queued_conversations()
+
+        self.assertEqual(2, mock_app.compute_feedbacks.call_count)
+        self.assertEqual([], evaluator._conversation_jobs)

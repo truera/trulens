@@ -18,10 +18,14 @@ import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
 import requests
-import torch
-from transformers import AutoModelForSequenceClassification
-from transformers import AutoModelForTokenClassification
-from transformers import AutoTokenizer
+
+# NOTE: torch and transformers are imported lazily, inside the HuggingfaceLocal
+# methods that need them. They are the only consumers, and importing torch at
+# module scope made every importer of this package pay for it -- including
+# `Endpoint.track_all_costs`, which imports `.endpoint` (and so runs this
+# package's `__init__`) on instrumented calls that never touch a local model.
+# torch's import also dlopens bundled CUDA libraries, which has segfaulted the
+# Python 3.13 CI workers mid-test.
 from trulens.core._utils.pycompat import Future  # import style exception
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import provider as core_provider
@@ -742,6 +746,9 @@ class HuggingfaceLocal(HuggingfaceBase):
         tokenizer_kwargs: Optional[Dict[str, Any]] = None,
         model_class: Optional[Any] = None,
     ) -> Tuple[Any, Any]:
+        from transformers import AutoModelForSequenceClassification
+        from transformers import AutoTokenizer
+
         if model_class is None:
             model_class = AutoModelForSequenceClassification
         if key not in self._cached_tokenizers:
@@ -756,6 +763,8 @@ class HuggingfaceLocal(HuggingfaceBase):
         return tokenizer, model
 
     def _language_scores_endpoint(self, text: str) -> Dict[str, float]:
+        import torch
+
         tokenizer, model = self._retrieve_tokenizer_and_model(
             HUGS_LANGUAGE_MODEL_PATH
         )
@@ -767,6 +776,8 @@ class HuggingfaceLocal(HuggingfaceBase):
         return {id2label[i]: float(probs[i]) for i in range(len(probs))}
 
     def _context_relevance_endpoint(self, input: str) -> float:
+        import torch
+
         tokenizer, model = self._retrieve_tokenizer_and_model(
             HUGS_CONTEXT_RELEVANCE_MODEL_PATH
         )
@@ -779,6 +790,8 @@ class HuggingfaceLocal(HuggingfaceBase):
         )
 
     def _positive_sentiment_endpoint(self, input: str) -> float:
+        import torch
+
         tokenizer, model = self._retrieve_tokenizer_and_model(
             HUGS_SENTIMENT_MODEL_PATH
         )
@@ -789,6 +802,8 @@ class HuggingfaceLocal(HuggingfaceBase):
         return self._score_for_label(probs, model.config.id2label, "LABEL_2")
 
     def _toxic_endpoint(self, input: str) -> float:
+        import torch
+
         tokenizer, model = self._retrieve_tokenizer_and_model(
             HUGS_TOXIC_MODEL_PATH
         )
@@ -799,6 +814,8 @@ class HuggingfaceLocal(HuggingfaceBase):
         return self._score_for_label(probs, model.config.id2label, "toxic")
 
     def _summarized_groundedness_endpoint(self, input: str) -> float:
+        import torch
+
         tokenizer, model = self._retrieve_tokenizer_and_model(
             HUGS_NLI_MODEL_PATH
         )
@@ -811,6 +828,8 @@ class HuggingfaceLocal(HuggingfaceBase):
     # TODEP
     @_tci
     def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
+        import torch
+
         tokenizer, model = self._retrieve_tokenizer_and_model(
             HUGS_DOCNLI_MODEL_PATH, tokenizer_kwargs={"use_fast": False}
         )
@@ -823,6 +842,9 @@ class HuggingfaceLocal(HuggingfaceBase):
         return prediction[0]
 
     def _pii_detection_endpoint(self, input: str) -> List[float]:
+        import torch
+        from transformers import AutoModelForTokenClassification
+
         tokenizer, model = self._retrieve_tokenizer_and_model(
             HUGS_PII_DETECTION_MODEL_PATH,
             model_class=AutoModelForTokenClassification,
@@ -843,6 +865,9 @@ class HuggingfaceLocal(HuggingfaceBase):
     def _pii_detection_with_cot_reasons_endpoint(
         self, input: str
     ) -> Tuple[List[float], Dict[str, str]]:
+        import torch
+        from transformers import AutoModelForTokenClassification
+
         tokenizer, model = self._retrieve_tokenizer_and_model(
             HUGS_PII_DETECTION_MODEL_PATH,
             model_class=AutoModelForTokenClassification,
@@ -875,6 +900,10 @@ class HuggingfaceLocal(HuggingfaceBase):
         return likelihood_scores, reasons
 
     def _hallucination_evaluator_endpoint(self, input: str) -> float:
+        import torch
+        from transformers import AutoModelForSequenceClassification
+        from transformers import AutoTokenizer
+
         # HHEM-2.1-Open requires custom model code. `trust_remote_code=True`
         # executes code downloaded from the model repository, so keep the
         # model key fixed to this reviewed Vectara model rather than accepting

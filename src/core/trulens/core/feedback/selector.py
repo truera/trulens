@@ -473,6 +473,7 @@ class Selector:
     # If `trace_level` is False, then this `Selector` describes a single span
     # determined by `function_name`, `span_name`, and `span_type`.
     trace_level: bool = False
+    conversation_level: bool = False
     function_name: Optional[str] = None
     span_name: Optional[str] = None
     span_type: Optional[str] = None
@@ -482,6 +483,7 @@ class Selector:
     span_attributes_processor: Optional[Callable[[Dict[str, Any]], Any]] = None
     span_attribute: Optional[str] = None
     function_attribute: Optional[str] = None
+    conversation_attribute: Optional[str] = None
 
     # If the value extracted from the span is None (i.e. from
     # `span_attributes_processor`, `span_attribute`, or `function_attribute`),
@@ -503,9 +505,18 @@ class Selector:
     # Ignored when `trace_level` is True.
     match_only_if_no_ancestor_matched: bool = False
 
+    # If set, this selector reads its value from a column of a tabular dataset
+    # (a pandas DataFrame or a list of dicts) rather than from spans in a trace.
+    # This is used for batch/offline evaluation where there is no live app or
+    # recording session (see `Selector.from_column` and
+    # `trulens.core.batch.BatchEvaluator`). When `dataset_column` is set, all of
+    # the span-related fields above are ignored.
+    dataset_column: Optional[str] = None
+
     def __init__(
         self,
         trace_level: bool = False,
+        conversation_level: bool = False,
         function_name: Optional[str] = None,
         span_name: Optional[str] = None,
         span_type: Optional[str] = None,
@@ -514,12 +525,42 @@ class Selector:
         ] = None,
         span_attribute: Optional[str] = None,
         function_attribute: Optional[str] = None,
+        conversation_attribute: Optional[str] = None,
         ignore_none_values: bool = False,
         collect_list: bool = True,
         match_only_if_no_ancestor_matched: bool = False,
+        dataset_column: Optional[str] = None,
     ):
-        if (
+        if trace_level and conversation_level:
+            raise ValueError(
+                "A selector cannot be both trace level and conversation level."
+            )
+        if conversation_level and conversation_attribute not in {
+            "records",
+            "input",
+            "output",
+        }:
+            raise ValueError(
+                "Conversation selectors require `conversation_attribute` to be "
+                "one of 'records', 'input', or 'output'."
+            )
+        if dataset_column is not None:
+            # A dataset (tabular) selector must not also specify span-based
+            # extraction fields since the two selection modes are mutually
+            # exclusive.
+            if any([
+                span_attributes_processor is not None,
+                span_attribute is not None,
+                function_attribute is not None,
+            ]):
+                raise ValueError(
+                    "`dataset_column` cannot be combined with "
+                    "`span_attributes_processor`, `span_attribute`, or "
+                    "`function_attribute`."
+                )
+        elif (
             not trace_level
+            and not conversation_level
             and sum([
                 span_attributes_processor is not None,
                 span_attribute is not None,
@@ -531,26 +572,73 @@ class Selector:
                 "Must specify exactly one of `span_attributes_processor`, `span_attribute`, or `function_attribute`!"
             )
         self.trace_level = trace_level
+        self.conversation_level = conversation_level
         self.function_name = function_name
         self.span_name = span_name
         self.span_type = span_type
         self.span_attributes_processor = span_attributes_processor
         self.span_attribute = span_attribute
         self.function_attribute = function_attribute
+        self.conversation_attribute = conversation_attribute
         self.ignore_none_values = ignore_none_values
         self.collect_list = collect_list
         self.match_only_if_no_ancestor_matched = (
             match_only_if_no_ancestor_matched
         )
+        self.dataset_column = dataset_column
+
+    @staticmethod
+    def from_column(
+        column_name: str,
+        *,
+        collect_list: bool = True,
+        ignore_none_values: bool = False,
+    ) -> Selector:
+        """Returns a `Selector` that reads its value from a dataset column.
+
+        This is used for batch/offline evaluation with
+        [BatchEvaluator][trulens.core.batch.BatchEvaluator], where metrics are
+        run over a pre-collected dataset (a pandas DataFrame or a list of dicts)
+        instead of over spans produced by a live app. Batch results are
+        returned in-memory only and are not persisted to the dashboard; for
+        dashboard-visible evaluation of pre-collected data, use
+        [Run][trulens.core.run.Run] with `mode=Mode.LOG_INGESTION`.
+
+        Args:
+            column_name: The name of the dataset column to read the value from.
+
+            collect_list: Only relevant when the column holds list values. If
+                True (default), the whole list is passed to the metric in a
+                single call. If False, the metric is called once per item in the
+                list and the results are aggregated.
+
+            ignore_none_values: If True, skip evaluation for rows where the
+                selected value is None (or missing).
+
+        Returns:
+            A `Selector` that selects from the given tabular column.
+        """
+        return Selector(
+            dataset_column=column_name,
+            collect_list=collect_list,
+            ignore_none_values=ignore_none_values,
+        )
+
+    @property
+    def is_dataset_selector(self) -> bool:
+        """Whether this selector reads from a tabular dataset column."""
+        return self.dataset_column is not None
 
     def describes_same_spans(self, other: Selector) -> bool:
         return (
             self.trace_level == other.trace_level
+            and self.conversation_level == other.conversation_level
             and self.function_name == other.function_name
             and self.span_name == other.span_name
             and self.span_type == other.span_type
             and self.match_only_if_no_ancestor_matched
             == other.match_only_if_no_ancestor_matched
+            and self.dataset_column == other.dataset_column
         )
 
     @staticmethod
@@ -602,12 +690,36 @@ class Selector:
                     ret.span_attribute = SpanAttributes.CALL.RETURN
                 else:
                     ret.span_attribute = f"{SpanAttributes.CALL.KWARGS}.{self.function_attribute}"
-            elif not self.trace_level:
+            elif not self.trace_level and not self.conversation_level:
                 raise ValueError(
                     "None of `span_attributes_processor`, `span_attribute`, or `function_attribute` are set!"
                 )
             ret.value = attributes.get(ret.span_attribute, None)
         return ret
+
+    @staticmethod
+    def select_conversation() -> Selector:
+        """Return a selector for ordered records in a conversation."""
+        return Selector(
+            conversation_level=True,
+            conversation_attribute="records",
+        )
+
+    @staticmethod
+    def select_conversation_input() -> Selector:
+        """Return a selector for ordered inputs in a conversation."""
+        return Selector(
+            conversation_level=True,
+            conversation_attribute="input",
+        )
+
+    @staticmethod
+    def select_conversation_output() -> Selector:
+        """Return a selector for ordered outputs in a conversation."""
+        return Selector(
+            conversation_level=True,
+            conversation_attribute="output",
+        )
 
     @staticmethod
     def select_record_input(ignore_none_values: bool = True) -> Selector:

@@ -39,18 +39,19 @@ Note: Since we will using a LLM provider to generate the access, pick your provi
 Returns:
 
 ```python
-{'Code implementation': [
-  'What are the steps to follow when implementing code based on the provided instructions?',
-  'What is the required format for each file when outputting the content, including all code?'
-  ],
- 'Short term memory limitations': [
-  'What is the capacity of short-term memory and how long does it last?',
-  'What are the two subtypes of long-term memory and what types of information do they store?'
-  ],
- 'Planning and task decomposition challenges': [
-  'What are the challenges faced by LLMs in adjusting plans when encountering unexpected errors during long-term planning?',
-  'How does Tree of Thoughts extend the Chain of Thought technique for task decomposition and what search processes can be used in this approach?'
-  ]
+{
+    "Code implementation": [
+        "What are the steps to follow when implementing code based on the provided instructions?",
+        "What is the required format for each file when outputting the content, including all code?",
+    ],
+    "Short term memory limitations": [
+        "What is the capacity of short-term memory and how long does it last?",
+        "What are the two subtypes of long-term memory and what types of information do they store?",
+    ],
+    "Planning and task decomposition challenges": [
+        "What are the challenges faced by LLMs in adjusting plans when encountering unexpected errors during long-term planning?",
+        "How does Tree of Thoughts extend the Chain of Thought technique for task decomposition and what search processes can be used in this approach?",
+    ],
 }
 ```
 
@@ -61,14 +62,12 @@ app to a particular type of question.
 
     ```python
     examples = [
-      "What is sensory memory?",
-      "How much information can be stored in short term memory?"
+        "What is sensory memory?",
+        "How much information can be stored in short term memory?",
     ]
 
     fewshot_test_set = test.generate_test_set(
-      test_breadth = 3,
-      test_depth = 2,
-      examples = examples
+        test_breadth=3, test_depth=2, examples=examples
     )
     fewshot_test_set
     ```
@@ -76,18 +75,19 @@ app to a particular type of question.
 Returns:
 
 ```python
-{'Code implementation': [
-  'What are the subcategories of sensory memory?',
-  'What is the capacity of short-term memory according to Miller (1956)?'
-  ],
- 'Short term memory limitations': [
-  'What is the duration of sensory memory?',
-  'What are the limitations of short-term memory in terms of context capacity?'
-  ],
- 'Planning and task decomposition challenges': [
-  'How long does sensory memory typically last?',
-  'What are the challenges in long-term planning and task decomposition?'
-  ]
+{
+    "Code implementation": [
+        "What are the subcategories of sensory memory?",
+        "What is the capacity of short-term memory according to Miller (1956)?",
+    ],
+    "Short term memory limitations": [
+        "What is the duration of sensory memory?",
+        "What are the limitations of short-term memory in terms of context capacity?",
+    ],
+    "Planning and task decomposition challenges": [
+        "How long does sensory memory typically last?",
+        "What are the challenges in long-term planning and task decomposition?",
+    ],
 }
 ```
 
@@ -100,7 +100,7 @@ categories.
     ```python
     with tru_recorder as recording:
         for category in test_set:
-            recording.record_metadata=dict(prompt_category=category)
+            recording.record_metadata = dict(prompt_category=category)
             test_prompts = test_set[category]
             for test_prompt in test_prompts:
                 llm_response = rag_chain.invoke(test_prompt)

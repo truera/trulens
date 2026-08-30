@@ -4,6 +4,7 @@ import logging
 import re
 import threading
 from typing import (
+    Any,
     ClassVar,
     Dict,
     List,
@@ -205,7 +206,7 @@ class LLMProvider(core_provider.Provider):
         min_score_val: int = 0,
         max_score_val: int = 10,
         temperature: float = 0.0,
-    ) -> float | tuple[float, dict]:
+    ) -> float:
         """
         Base method to generate a score normalized to 0 to 1, used for evaluation.
 
@@ -217,21 +218,14 @@ class LLMProvider(core_provider.Provider):
             temperature (float): The temperature for the LLM response.
 
         Returns:
-            float | tuple[float, dict]: The normalized score on a 0-1 scale.
-            When the LLM returns a structured JSON response containing a ``score``
-            key, returns a ``(score, reason_dict)`` tuple where ``reason_dict``
-            contains the raw parsed JSON under a ``"reason"`` key. When the
-            response is a plain string, returns a bare ``float``. Callers should
-            handle both forms, e.g.::
-
-                result = provider.generate_score(system_prompt="...")
-                score = result[0] if isinstance(result, tuple) else result
+            float: The normalized score on a 0-1 scale. If reasons are needed,
+            use :meth:`generate_score_and_reasons` instead.
         """
 
         assert self.endpoint is not None, "Endpoint is not set."
-        assert (
-            max_score_val > min_score_val
-        ), "Max score must be greater than min score."
+        assert max_score_val > min_score_val, (
+            "Max score must be greater than min score."
+        )
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -276,7 +270,7 @@ class LLMProvider(core_provider.Provider):
                     max_score_val - min_score_val
                 )
 
-            return normalized_score, {"reason": parsed_json}
+            return normalized_score
 
         if isinstance(parsed_json, list):
             # If a list is returned, average the scores where possible.
@@ -302,7 +296,7 @@ class LLMProvider(core_provider.Provider):
                 )
             else:
                 normalized_score = -1.0
-            return normalized_score, {"reason": parsed_json}
+            return normalized_score
 
         if isinstance(response, feedback_output_schemas.BaseFeedbackResponse):
             score = response.score
@@ -342,9 +336,9 @@ class LLMProvider(core_provider.Provider):
                 reason metadata dictionary.
         """
         assert self.endpoint is not None, "Endpoint is not set."
-        assert (
-            max_score_val > min_score_val
-        ), "Max score must be greater than min score."
+        assert max_score_val > min_score_val, (
+            "Max score must be greater than min score."
+        )
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -3609,10 +3603,6 @@ class LLMProvider(core_provider.Provider):
                     min_score_val=0,
                     max_score_val=1,
                 )
-                # generate_score returns (score, reason) when the judge
-                # responds with structured JSON; compare on the score alone.
-                if isinstance(score, tuple):
-                    score = score[0]
             except Exception:
                 score = 0  # assume not abstention if abstention scoring fails
             return score
@@ -3629,10 +3619,6 @@ class LLMProvider(core_provider.Provider):
                 min_score_val=0,
                 max_score_val=1,
             )
-            # generate_score returns (score, reason) when the judge
-            # responds with structured JSON; compare on the score alone.
-            if isinstance(score, tuple):
-                score = score[0]
             return score
 
         if filter_trivial_statements:
@@ -4408,5 +4394,415 @@ class LLMProvider(core_provider.Provider):
             user_prompt=user_prompt,
             min_score_val=min_score_val,
             max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def conversation_helpfulness(
+        self,
+        records: Union[List[Any], str],
+        temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
+    ) -> float:
+        """
+        Uses chat completion model. A function that completes a template to
+        evaluate helpfulness across a multi-turn conversation.
+
+        Example:
+            ```python
+            from trulens.core import Metric
+            feedback = Metric(
+                implementation=provider.conversation_helpfulness,
+                name="Conversation Helpfulness",
+                additional_instructions=additional_instructions,
+            ).on_conversation()
+            ```
+
+        Args:
+            records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+
+        Returns:
+            float: A value between 0.0 (not helpful) and 1.0 (helpful).
+        """
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=templates_conversation.ConversationHelpfulness.system_prompt,
+            additional_instructions=additional_instructions,
+        )
+        user_prompt = templates_conversation.ConversationHelpfulness.user_prompt_template.format(
+            transcript=transcript
+        )
+        return self.generate_score(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=0,
+            max_score_val=3,
+            temperature=temperature,
+        )
+
+    def conversation_helpfulness_with_cot_reasons(
+        self,
+        records: Union[List[Any], str],
+        temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
+    ) -> Tuple[float, Dict]:
+        """
+        Uses chat completion model. A function that completes a template to
+        evaluate helpfulness across a multi-turn conversation. Also uses chain
+        of thought methodology and emits the reasons.
+
+        Example:
+            ```python
+            from trulens.core import Metric
+            feedback = Metric(
+                implementation=provider.conversation_helpfulness_with_cot_reasons,
+                name="Conversation Helpfulness",
+                additional_instructions=additional_instructions,
+            ).on_conversation()
+            ```
+
+        Args:
+            records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (not helpful) and 1.0 (helpful) and a dictionary containing the reasons for the evaluation.
+        """
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=templates_conversation.ConversationHelpfulness.system_prompt,
+            additional_instructions=additional_instructions,
+        )
+        user_prompt = (
+            templates_conversation.ConversationHelpfulness.user_prompt_template.format(
+                transcript=transcript
+            )
+            + templates_base.COT_REASONS_TEMPLATE
+        )
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=0,
+            max_score_val=3,
+            temperature=temperature,
+        )
+
+    def topic_adherence(
+        self,
+        records: Union[List[Any], str],
+        reference_topics: List[str],
+        temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
+    ) -> float:
+        """
+        Uses chat completion model. A function that completes a template to
+        evaluate topic adherence across a multi-turn conversation.
+
+        Example:
+            ```python
+            from trulens.core import Metric
+            feedback = Metric(
+                implementation=provider.topic_adherence,
+                name="Topic Adherence",
+                additional_instructions=additional_instructions,
+            ).on_conversation()
+            ```
+
+        Args:
+            records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
+            reference_topics (List[str]): The topics the conversation is expected to adhere to.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+
+        Returns:
+            float: A value between 0.0 (off topic) and 1.0 (on topic).
+        """
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=templates_conversation.TopicAdherence.system_prompt_template.format(
+                reference_topics=", ".join(reference_topics)
+            ),
+            additional_instructions=additional_instructions,
+        )
+        return self.generate_score(
+            system_prompt=system_prompt,
+            user_prompt=f"Conversation Transcript:\n{transcript}",
+            min_score_val=0,
+            max_score_val=3,
+            temperature=temperature,
+        )
+
+    def topic_adherence_with_cot_reasons(
+        self,
+        records: Union[List[Any], str],
+        reference_topics: List[str],
+        temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
+    ) -> Tuple[float, Dict]:
+        """
+        Uses chat completion model. A function that completes a template to
+        evaluate topic adherence across a multi-turn conversation. Also uses
+        chain of thought methodology and emits the reasons.
+
+        Example:
+            ```python
+            from trulens.core import Metric
+            feedback = Metric(
+                implementation=provider.topic_adherence_with_cot_reasons,
+                name="Topic Adherence",
+                additional_instructions=additional_instructions,
+            ).on_conversation()
+            ```
+
+        Args:
+            records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
+            reference_topics (List[str]): The topics the conversation is expected to adhere to.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (off topic) and 1.0 (on topic) and a dictionary containing the reasons for the evaluation.
+        """
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=templates_conversation.TopicAdherence.system_prompt_template.format(
+                reference_topics=", ".join(reference_topics)
+            ),
+            additional_instructions=additional_instructions,
+        )
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=f"Conversation Transcript:\n{transcript}"
+            + templates_base.COT_REASONS_TEMPLATE,
+            min_score_val=0,
+            max_score_val=3,
+            temperature=temperature,
+        )
+
+    def agent_goal_accuracy(
+        self,
+        records: Union[List[Any], str],
+        reference_goal: Optional[str] = None,
+        temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
+    ) -> float:
+        """
+        Uses chat completion model. A function that completes a template to
+        evaluate whether an agent fulfilled the conversation goal.
+
+        Example:
+            ```python
+            from trulens.core import Metric
+            feedback = Metric(
+                implementation=provider.agent_goal_accuracy,
+                name="Agent Goal Accuracy",
+                additional_instructions=additional_instructions,
+            ).on_conversation()
+            ```
+
+        Args:
+            records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
+            reference_goal (Optional[str]): The goal the agent was expected to fulfill. Defaults to None, in which case the goal is inferred from the conversation.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+
+        Returns:
+            float: A value of 0.0 (goal not achieved) or 1.0 (goal achieved).
+        """
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=templates_conversation.AgentGoalAccuracy.system_prompt_template.format(
+                reference_goal=reference_goal
+                or "Infer the user's intended goal from the conversation."
+            ),
+            additional_instructions=additional_instructions,
+        )
+        return self.generate_score(
+            system_prompt=system_prompt,
+            user_prompt=f"Conversation Transcript:\n{transcript}",
+            min_score_val=0,
+            max_score_val=1,
+            temperature=temperature,
+        )
+
+    def agent_goal_accuracy_with_cot_reasons(
+        self,
+        records: Union[List[Any], str],
+        reference_goal: Optional[str] = None,
+        temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
+    ) -> Tuple[float, Dict]:
+        """
+        Uses chat completion model. A function that completes a template to
+        evaluate whether an agent fulfilled the conversation goal. Also uses
+        chain of thought methodology and emits the reasons.
+
+        Example:
+            ```python
+            from trulens.core import Metric
+            feedback = Metric(
+                implementation=provider.agent_goal_accuracy_with_cot_reasons,
+                name="Agent Goal Accuracy",
+                additional_instructions=additional_instructions,
+            ).on_conversation()
+            ```
+
+        Args:
+            records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
+            reference_goal (Optional[str]): The goal the agent was expected to fulfill. Defaults to None, in which case the goal is inferred from the conversation.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value of 0.0 (goal not achieved) or 1.0 (goal achieved) and a dictionary containing the reasons for the evaluation.
+        """
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=templates_conversation.AgentGoalAccuracy.system_prompt_template.format(
+                reference_goal=reference_goal
+                or "Infer the user's intended goal from the conversation."
+            ),
+            additional_instructions=additional_instructions,
+        )
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=f"Conversation Transcript:\n{transcript}"
+            + templates_base.COT_REASONS_TEMPLATE,
+            min_score_val=0,
+            max_score_val=1,
+            temperature=temperature,
+        )
+
+    def coherence_across_turns(
+        self,
+        records: Union[List[Any], str],
+        temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
+    ) -> float:
+        """
+        Uses chat completion model. A function that completes a template to
+        evaluate logical coherence across conversation turns.
+
+        Example:
+            ```python
+            from trulens.core import Metric
+            feedback = Metric(
+                implementation=provider.coherence_across_turns,
+                name="Coherence Across Turns",
+                additional_instructions=additional_instructions,
+            ).on_conversation()
+            ```
+
+        Args:
+            records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+
+        Returns:
+            float: A value between 0.0 (not coherent) and 1.0 (coherent).
+        """
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=templates_conversation.CoherenceAcrossTurns.system_prompt,
+            additional_instructions=additional_instructions,
+        )
+        return self.generate_score(
+            system_prompt=system_prompt,
+            user_prompt=f"Conversation Transcript:\n{transcript}",
+            min_score_val=0,
+            max_score_val=3,
+            temperature=temperature,
+        )
+
+    def coherence_across_turns_with_cot_reasons(
+        self,
+        records: Union[List[Any], str],
+        temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
+    ) -> Tuple[float, Dict]:
+        """
+        Uses chat completion model. A function that completes a template to
+        evaluate logical coherence across conversation turns. Also uses chain
+        of thought methodology and emits the reasons.
+
+        Example:
+            ```python
+            from trulens.core import Metric
+            feedback = Metric(
+                implementation=provider.coherence_across_turns_with_cot_reasons,
+                name="Coherence Across Turns",
+                additional_instructions=additional_instructions,
+            ).on_conversation()
+            ```
+
+        Args:
+            records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (not coherent) and 1.0 (coherent) and a dictionary containing the reasons for the evaluation.
+        """
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=templates_conversation.CoherenceAcrossTurns.system_prompt,
+            additional_instructions=additional_instructions,
+        )
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=f"Conversation Transcript:\n{transcript}"
+            + templates_base.COT_REASONS_TEMPLATE,
+            min_score_val=0,
+            max_score_val=3,
             temperature=temperature,
         )

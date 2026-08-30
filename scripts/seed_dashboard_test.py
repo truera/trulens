@@ -1,7 +1,7 @@
 """Seed script: populates a SQLite DB with 10k OTEL records for dashboard perf testing.
 
 Usage:
-    TRULENS_OTEL_TRACING=1 python scripts/seed_dashboard_test.py [--db test_perf.sqlite] [--records 10000]
+    python scripts/seed_dashboard_test.py [--db test_perf.sqlite] [--records 10000]
 """
 
 from __future__ import annotations
@@ -14,8 +14,6 @@ import os
 import random
 import time
 import uuid
-
-os.environ["TRULENS_OTEL_TRACING"] = "1"
 
 from trulens.core.database import sqlalchemy as db_sqlalchemy
 from trulens.core.schema import app as app_schema

@@ -6,19 +6,27 @@ TruLens provides a broad set of capabilities for evaluating and tracking applica
 
 <img src="../../assets/videos/trulens_quickstart_dashboard_video.gif" alt="TruLens Dashboard Demo" width="720" style="cursor: pointer;" onclick="this.requestFullscreen();">
 
-To view and examine application logs and feedback results, TruLens provides a built-in Streamlit dashboard. That app has two pages, the Leaderboard which displays aggregate feedback results and metadata for each application version, and the Evaluations page where you can more closely examine individual traces and feedback results. This dashboard is launched by [run_dashboard][trulens.dashboard.run_dashboard], and will run from a database url you specify with  [TruSession()][trulens.core.TruSession].
+To view and examine application logs and feedback results, TruLens provides a
+built-in Streamlit dashboard. The dashboard includes:
 
-!!! note
+- **Leaderboard** for aggregate evaluation results, metadata, and observed
+  online evaluation sample rates by app version.
+- **Trends** for evaluation metrics, latency, app cost, and evaluation cost
+  over time. See [Monitor application trends](trends.md).
+- **Records** for individual traces, evaluation details, and complete
+  conversations.
+- **Compare** for side-by-side app-version analysis.
 
-    If you are using Snowflake, do not launch the local Streamlit dashboard
-    with `run_dashboard`. Instead, use the AI Observability **Evaluations**
-    page in Snowsight.
+Launch the dashboard with
+[run_dashboard][trulens.dashboard.run_dashboard]. It reads from the database
+URL configured by [TruSession][trulens.core.TruSession].
 
 !!! example "Launch the TruLens dashboard"
 
     ```python
     from trulens.dashboard import run_dashboard
-    session = TruSession(database_url = ...) # or default.sqlite by default
+
+    session = TruSession(database_url=...)  # or default.sqlite by default
     run_dashboard(session)
     ```
 
@@ -28,6 +36,7 @@ By default, the dashboard will find and run on an unused port number. You can al
 
     ```python
     from trulens.dashboard import run_dashboard
+
     run_dashboard(port=8502)
     ```
 
@@ -47,14 +56,14 @@ Consider the below `app.py` which consists of a simple RAG application that is a
 !!! example "Simple Streamlit app with TruLens"
 
     ```python
-
     import streamlit as st
     from trulens.core import TruSession
 
-    from base import rag # a rag app with a query method
-    from base import tru_rag # a rag app wrapped by trulens
+    from base import rag  # a rag app with a query method
+    from base import tru_rag  # a rag app wrapped by trulens
 
     session = TruSession()
+
 
     def generate_and_log_response(input_text):
         with tru_rag as recording:
@@ -62,13 +71,13 @@ Consider the below `app.py` which consists of a simple RAG application that is a
         record = recording.get()
         return record, response
 
+
     with st.form("my_form"):
         text = st.text_area("Enter text:", "How do I launch a streamlit app?")
         submitted = st.form_submit_button("Submit")
         if submitted:
             record, response = generate_and_log_response(text)
             st.info(response)
-
     ```
 
 With the `record` in hand, we can easily add TruLens components to display the evaluation results of the provided record using [trulens_feedback][trulens.dashboard.streamlit.trulens_feedback]. This will display the _TruLens_ feedback result clickable pills as the feedback is available.

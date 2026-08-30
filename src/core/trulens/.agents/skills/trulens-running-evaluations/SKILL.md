@@ -98,13 +98,17 @@ run_dashboard(session)
 
 ```python
 # Version A
-tru_v1 = TruLlama(query_engine_v1, app_name="MyRAG", app_version="v1", feedbacks=feedbacks)
+tru_v1 = TruLlama(
+    query_engine_v1, app_name="MyRAG", app_version="v1", feedbacks=feedbacks
+)
 with tru_v1 as recording:
     for q in test_queries:
         query_engine_v1.query(q)
 
 # Version B
-tru_v2 = TruLlama(query_engine_v2, app_name="MyRAG", app_version="v2", feedbacks=feedbacks)
+tru_v2 = TruLlama(
+    query_engine_v2, app_name="MyRAG", app_version="v2", feedbacks=feedbacks
+)
 with tru_v2 as recording:
     for q in test_queries:
         query_engine_v2.query(q)

@@ -17,6 +17,8 @@ from typing import (
 
 import pandas as pd
 from trulens.core.schema import app as app_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import conversation as conversation_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -380,6 +382,77 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
     ) -> Optional[app_schema.AppDefinition]:
         """Update the metadata of an app."""
 
+    def get_conversations(
+        self, app_id: Optional[types_schema.AppID] = None
+    ) -> Dict[types_schema.ConversationID, conversation_schema.Conversation]:
+        """Get conversations reconstructed from recorded spans."""
+        app_ids = [app_id] if app_id is not None else None
+        records, _ = self.get_records_and_feedback(app_ids=app_ids)
+        if records.empty or "conversation_id" not in records.columns:
+            return {}
+
+        records = records[records["conversation_id"].notna()].copy()
+        if records.empty:
+            return {}
+        records = records.sort_values(["ts", "record_id"])
+
+        conversations = {}
+        for conversation_id, group in records.groupby(
+            "conversation_id", sort=False
+        ):
+            app_ids_in_group = group["app_id"].dropna().unique().tolist()
+            if len(app_ids_in_group) != 1:
+                raise ValueError(
+                    f"Conversation ID {conversation_id!r} belongs to multiple apps. "
+                    "Pass app_id to disambiguate it."
+                )
+            conversations[conversation_id] = conversation_schema.Conversation(
+                conversation_id=conversation_id,
+                app_id=app_ids_in_group[0],
+                record_ids=group["record_id"].tolist(),
+                ts=group.iloc[0]["ts"],
+            )
+        return conversations
+
+    def get_records_by_conversation(
+        self,
+        conversation_id: types_schema.ConversationID,
+        app_id: Optional[types_schema.AppID] = None,
+    ) -> List[record_schema.Record]:
+        """Get a conversation's records ordered chronologically."""
+        app_ids = [app_id] if app_id is not None else None
+        records, _ = self.get_records_and_feedback(app_ids=app_ids)
+        if records.empty or "conversation_id" not in records.columns:
+            return []
+
+        records = records[records["conversation_id"] == conversation_id]
+        if records.empty:
+            return []
+        app_ids_in_records = records["app_id"].dropna().unique().tolist()
+        if len(app_ids_in_records) != 1:
+            raise ValueError(
+                f"Conversation ID {conversation_id!r} belongs to multiple apps. "
+                "Pass app_id to disambiguate it."
+            )
+
+        records = records.sort_values(["ts", "record_id"])
+        return [
+            record_schema.Record(
+                record_id=row["record_id"],
+                calls=[],
+                app_id=row["app_id"],
+                conversation_id=row["conversation_id"],
+                cost=base_schema.Cost.model_validate(row["cost_json"]),
+                perf=base_schema.Perf.model_validate(row["perf_json"]),
+                ts=row["ts"],
+                tags=row["tags"],
+                meta=row["record_json"].get("meta"),
+                main_input=row["input"],
+                main_output=row["output"],
+            )
+            for _, row in records.iterrows()
+        ]
+
     @abc.abstractmethod
     def get_records_and_feedback(
         self,
@@ -389,6 +462,10 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         app_versions: Optional[List[types_schema.AppVersion]] = None,
         run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
+        matched_record_ids: Optional[List[types_schema.RecordID]] = None,
+        include_conversation_context: bool = False,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -438,6 +515,64 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         Returns:
             A tuple of (aggregated dataframe, feedback column names).
         """
+        raise NotImplementedError()
+
+    def get_feedback_score_trends(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        bucket: str = "day",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> pd.DataFrame:
+        """Get time-bucketed feedback score statistics.
+
+        Args:
+            app_name: App name to filter by.
+            app_versions: App versions to filter by.
+            bucket: Time bucket, either ``day`` or ``week``.
+            start_time: Inclusive event timestamp lower bound.
+            end_time: Exclusive event timestamp upper bound.
+
+        Returns:
+            Feedback score counts, means, and 95% confidence bounds grouped by
+            app version, metric, and time bucket.
+        """
+        raise NotImplementedError()
+
+    def get_app_metric_trends(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        bucket: str = "day",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> pd.DataFrame:
+        """Get time-bucketed application latency and cost statistics."""
+        raise NotImplementedError()
+
+    def get_eval_cost_trends(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        bucket: str = "day",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> pd.DataFrame:
+        """Get time-bucketed observed evaluation cost statistics."""
+        raise NotImplementedError()
+
+    def get_eval_drilldown_record_ids(
+        self,
+        app_name: types_schema.AppName,
+        app_versions: List[types_schema.AppVersion],
+        metric_kind: str,
+        metric_name: str,
+        start_time: datetime,
+        end_time: datetime,
+        currency: Optional[str] = None,
+    ) -> List[types_schema.RecordID]:
+        """Get record IDs for an evaluation-time chart bucket."""
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -801,8 +936,9 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                                 "explanation": record_attributes.get(
                                     SpanAttributes.EVAL.EXPLANATION
                                 ),
-                                "metadata": record_attributes.get(
-                                    SpanAttributes.EVAL.METADATA, {}
+                                "metadata": self._extract_namespaced_attributes(
+                                    record_attributes,
+                                    SpanAttributes.EVAL.METADATA,
                                 ),
                             },
                         }
@@ -827,6 +963,7 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             record_json = {
                 "record_id": record_id,
                 "app_id": record_data["app_id"],
+                "conversation_id": record_data.get("conversation_id"),
                 "input": record_data["input"],
                 "output": record_data["output"],
                 "tags": record_data["tags"],

@@ -21,8 +21,9 @@ from trulens.apps.app import TruApp
 
 session = TruSession()
 
-tru_app = TruApp(my_app, app_name="MyApp", app_version="v1",
-                 main_method=my_app.query)
+tru_app = TruApp(
+    my_app, app_name="MyApp", app_version="v1", main_method=my_app.query
+)
 
 with tru_app(conversation_id="conv-abc-123") as recording:
     response = my_app.query("What is TruLens?")
@@ -56,7 +57,6 @@ All three invocations will share `ai.observability.conversation_id = "session-42
 so you can retrieve all their records together:
 
 ```python
-import pandas as pd
 from trulens.core.session import TruSession
 
 session = TruSession()
@@ -86,8 +86,9 @@ with tru_app as recording:
 
 ## Next steps
 
-Once conversations are tagged, see [Conversation Evaluation](conversation_evaluation.md)
-for a complete guide on wiring per-turn metrics, aggregating scores by conversation,
-and exploring results in the dashboard.  The
-[Conversation Evaluation Quickstart](../../../examples/quickstart/conversation_evaluation.ipynb)
-notebook walks through this end-to-end.
+Once conversations are tagged, see
+[Conversation Evaluation](conversation_evaluation.md) for a complete guide to
+combining per-turn metrics with first-class conversation-level metrics and
+exploring both scopes in the dashboard. The
+[Conversation Evaluation Quickstart](../../getting_started/quickstarts/conversation_evaluation.ipynb)
+walks through this workflow end-to-end.

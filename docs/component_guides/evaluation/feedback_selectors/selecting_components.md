@@ -24,6 +24,7 @@ Let's walk through an example. Take this example where a method named `query` is
     from trulens.core.otel.instrument import instrument
     from trulens.otel.semconv.trace import SpanAttributes
 
+
     @instrument(
         attributes={
             SpanAttributes.RECORD_ROOT.INPUT: "query",
@@ -153,12 +154,17 @@ You can filter spans at the trace level by specifying a function name. This is u
     ```python
     from trulens.core import Metric, Selector
 
+
     # Example metric that counts the number of selected spans
     def count_spans(trace):
         # trace is a ProcessedContentNode representing the filtered trace
         def count_nodes(node):
-            return 1 + sum(count_nodes(child) for child in getattr(node, 'children', []))
+            return 1 + sum(
+                count_nodes(child) for child in getattr(node, "children", [])
+            )
+
         return count_nodes(trace)
+
 
     f_filtered_trace = Metric(
         implementation=count_spans,
