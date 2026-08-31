@@ -71,13 +71,29 @@
 /src/providers/cortex/                   @truera/trulens_maintainers
 
 # ---------------------------------------------------------------------------
-# Governance
+# Governance, CI and licensing
 # ---------------------------------------------------------------------------
-/CONTRIBUTOR_LADDER.md                  @truera/trulens_maintainers
-/GOVERNANCE.md                          @truera/trulens_maintainers
-/MAINTAINERS.md                         @truera/trulens_maintainers
-/.github/CODEOWNERS                     @truera/trulens_maintainers
-/.github/area-reviewers.yml             @truera/trulens_maintainers
-/.github/workflows/                     @truera/trulens_maintainers
-/.github/scripts/                       @truera/trulens_maintainers
-/DCO                                    @truera/trulens_maintainers
+# Deliberately owned by named individuals rather than @truera/trulens_maintainers.
+# Ownership of these paths is not the same kind of privilege as ownership of a
+# source directory:
+#
+#   - CODEOWNERS decides who owns everything else, so whoever can approve a change
+#     to it can grant themselves ownership of any other path.
+#   - A workflow or script can be edited to read secrets, or to approve pull
+#     requests.
+#   - area-reviewers.yml and MAINTAINERS.md decide who holds a role.
+#   - CLA.md is a legal document.
+#   - The pull request template carries the certification a contributor ticks.
+#
+# So these stay with a small set of Snowflake employees, and do not widen as the
+# contributor ladder adds Area Reviewers. Two people rather than one, so that a
+# holiday does not block a security fix to a workflow.
+/CONTRIBUTOR_LADDER.md                  @joshreini1 @sfc-gh-jreini @A5Wagyu32
+/GOVERNANCE.md                          @joshreini1 @sfc-gh-jreini @A5Wagyu32
+/MAINTAINERS.md                         @joshreini1 @sfc-gh-jreini @A5Wagyu32
+/CLA.md                                 @joshreini1 @sfc-gh-jreini @A5Wagyu32
+/.github/CODEOWNERS                     @joshreini1 @sfc-gh-jreini @A5Wagyu32
+/.github/area-reviewers.yml             @joshreini1 @sfc-gh-jreini @A5Wagyu32
+/.github/workflows/                     @joshreini1 @sfc-gh-jreini @A5Wagyu32
+/.github/scripts/                       @joshreini1 @sfc-gh-jreini @A5Wagyu32
+/docs/pull_request_template.md          @joshreini1 @sfc-gh-jreini @A5Wagyu32
