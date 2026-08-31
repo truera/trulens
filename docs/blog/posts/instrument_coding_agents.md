@@ -76,13 +76,11 @@ On a Snowflake destination, TruLens also manages [AI Observability](https://docs
 Hook traces are ordinary TruLens records, so they run through the same evaluation path as any other app — no live wrapper, no `TruApp`. Point a session at the same database the worker exports to, pull the events, and score them offline:
 
 ```python
-from pathlib import Path
-
 from trulens.core import Metric, Selector, TruSession
 from trulens.providers.openai import OpenAI
 
 session = TruSession(
-    database_url=f"sqlite:///{Path.home() / '.trulens' / 'client-hooks.sqlite'}"
+    database_url="postgresql+psycopg://trulens@localhost/traces"
 )
 provider = OpenAI(model_engine="gpt-4o")
 
@@ -111,7 +109,7 @@ session.compute_feedbacks_on_events(
 
 To get useful evals out of this, turn on all three content flags — `TRULENS_CAPTURE_CONTENT`, `TRULENS_CAPTURE_TOOL_PAYLOADS`, and `TRULENS_CAPTURE_DIFFS` — before the session runs. Each gates its own fields independently and all default to off, so `Tool Selection` and `Execution Efficiency` only see what they need — tool names, arguments, and results, not just timing — when the tool-payload flag is on. Content captured after the fact can't be reconstructed, so set these upfront on any session you intend to evaluate.
 
-Scores land in the same leaderboard as everything else in `client-hooks.sqlite`, so `(app_name, app_version)` — Cursor 3.x vs. Claude Code vs. OpenCode — is a comparison you get for free.
+Scores land in the same leaderboard as everything else in that database, so `(app_name, app_version)` — Cursor 3.x vs. Claude Code vs. OpenCode — is a comparison you get for free.
 
 ## Built for a Machine That Can Crash Mid-Session
 
