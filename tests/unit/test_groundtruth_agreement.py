@@ -662,18 +662,26 @@ class TestGroundTruthAgreement(TestCase):
 
     @pytest.mark.optional
     def test_empty_retrieved_chunks(self):
-        """Test behavior with empty retrieved chunks."""
-        query = "What is machine learning?"
-        test_cases = [
-            (self.agreement_with_chunks.precision_at_k, 0.0),
-            (self.agreement_with_chunks.recall_at_k, 0.0),
-            (self.agreement_with_chunks.mrr, 0.0),
-            (self.agreement_with_chunks.ir_hit_rate, 0.0),
-        ]
+        """Test behavior with empty retrieved chunks.
 
-        for metric_func, expected in test_cases:
-            result = metric_func(query, [])
-            self.assertEqual(result, expected)
+        Retrieving nothing does not make every metric zero. Precision divides
+        by the number of retrieved chunks, so with none retrieved it has no
+        denominator and is undefined. The other three still have one: this
+        query does have golden chunks and none of them were found, which is a
+        measured zero.
+        """
+        query = "What is machine learning?"
+
+        self.assertTrue(
+            np.isnan(self.agreement_with_chunks.precision_at_k(query, []))
+        )
+
+        for metric_func in (
+            self.agreement_with_chunks.recall_at_k,
+            self.agreement_with_chunks.mrr,
+            self.agreement_with_chunks.ir_hit_rate,
+        ):
+            self.assertEqual(metric_func(query, []), 0.0)
 
         try:
             result = self.agreement_with_chunks.ndcg_at_k(query, [])
