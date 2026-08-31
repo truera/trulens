@@ -56,9 +56,7 @@ class TestComputeMetricsMessage(unittest.TestCase):
         if Run is None:
             self.skipTest("Run not available.")
         self.run = _make_run()
-
-    def _patches(self):
-        completed = {
+        self.metadata = {
             "run_metadata": {
                 "metrics": {
                     "m1": {
@@ -70,30 +68,31 @@ class TestComputeMetricsMessage(unittest.TestCase):
                 }
             }
         }
-        return (
-            patch.object(Run, "describe", return_value=completed),
-            patch.object(
-                Run, "get_status", return_value="INVOCATION_COMPLETED"
-            ),
-            patch.object(
-                Run, "_can_start_new_metric_computation", return_value=True
-            ),
-        )
 
     def test_already_computed_metric_object_returns_message(self):
-        """A Metric object that is already computed yields the message, not a
-        TypeError from joining objects."""
+        """Metric object passed to compute_metrics yields message when already
+        computed (no TypeError)."""
         metric = _make_metric("my_metric")
-        p1, p2, p3 = self._patches()
-        with p1, p2, p3:
+        with patch.object(
+            Run, "describe", return_value=self.metadata
+        ), patch.object(
+            Run, "get_status", return_value="INVOCATION_COMPLETED"
+        ), patch.object(
+            Run, "_can_start_new_metric_computation", return_value=True
+        ):
             result = self.run.compute_metrics([metric])
         self.assertIsInstance(result, str)
         self.assertIn("already computed", result)
         self.assertIn("my_metric", result)
 
     def test_already_computed_metric_string_still_works(self):
-        p1, p2, p3 = self._patches()
-        with p1, p2, p3:
+        with patch.object(
+            Run, "describe", return_value=self.metadata
+        ), patch.object(
+            Run, "get_status", return_value="INVOCATION_COMPLETED"
+        ), patch.object(
+            Run, "_can_start_new_metric_computation", return_value=True
+        ):
             result = self.run.compute_metrics(["my_metric"])
         self.assertIsInstance(result, str)
         self.assertIn("my_metric", result)
