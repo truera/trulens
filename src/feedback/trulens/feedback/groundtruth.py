@@ -367,12 +367,18 @@ class GroundTruthAgreement(
             rel_scores = [0.0] * len(
                 retrieved_context_chunks
             )  # Initialize with 0 relevance for all
+            # Credit each golden chunk at most once: a retriever that returns
+            # the same relevant chunk more than once must not earn its
+            # relevance repeatedly, which would push DCG above the ideal DCG
+            # and yield NDCG > 1.
+            consumed_golden = set()
             for i, chunk in enumerate(retrieved_context_chunks[:k]):
-                if chunk in golden_chunks:
+                if chunk in golden_chunks and chunk not in consumed_golden:
                     index_in_golden = golden_chunks.index(chunk)
                     rel_scores[i] = golden_scores[
                         index_in_golden
                     ]  # Use the true relevance score
+                    consumed_golden.add(chunk)
 
             # Step 5: Compute NDCG@k directly from the standard formula.
             # DCG discounts each retrieved chunk's golden relevance by the
@@ -498,10 +504,11 @@ class GroundTruthAgreement(
                 # If no relevance scores, use the top-k retrieved chunks as they are
                 retrieved_top_k = retrieved_context_chunks[:k]
 
-            # Calculate recall at k with tie handling
-            relevant_retrieved = len([
-                chunk for chunk in retrieved_top_k if chunk in golden_chunks
-            ])
+            # Count unique golden chunks that were retrieved. Counting
+            # occurrences instead would let a retriever that returns the same
+            # relevant chunk more than once exceed the number of golden
+            # chunks, yielding recall > 1.
+            relevant_retrieved = len(golden_chunks & set(retrieved_top_k))
             return (
                 relevant_retrieved / len(golden_chunks)
                 if len(golden_chunks) > 0
