@@ -73,12 +73,14 @@ class TestComputeMetricsMessage(unittest.TestCase):
         """Metric object passed to compute_metrics yields message when already
         computed (no TypeError)."""
         metric = _make_metric("my_metric")
-        with patch.object(
-            Run, "describe", return_value=self.metadata
-        ), patch.object(
-            Run, "get_status", return_value="INVOCATION_COMPLETED"
-        ), patch.object(
-            Run, "_can_start_new_metric_computation", return_value=True
+        with (
+            patch.object(Run, "describe", return_value=self.metadata),
+            patch.object(
+                Run, "get_status", return_value="INVOCATION_COMPLETED"
+            ),
+            patch.object(
+                Run, "_can_start_new_metric_computation", return_value=True
+            ),
         ):
             result = self.run.compute_metrics([metric])
         self.assertIsInstance(result, str)
@@ -86,12 +88,14 @@ class TestComputeMetricsMessage(unittest.TestCase):
         self.assertIn("my_metric", result)
 
     def test_already_computed_metric_string_still_works(self):
-        with patch.object(
-            Run, "describe", return_value=self.metadata
-        ), patch.object(
-            Run, "get_status", return_value="INVOCATION_COMPLETED"
-        ), patch.object(
-            Run, "_can_start_new_metric_computation", return_value=True
+        with (
+            patch.object(Run, "describe", return_value=self.metadata),
+            patch.object(
+                Run, "get_status", return_value="INVOCATION_COMPLETED"
+            ),
+            patch.object(
+                Run, "_can_start_new_metric_computation", return_value=True
+            ),
         ):
             result = self.run.compute_metrics(["my_metric"])
         self.assertIsInstance(result, str)
