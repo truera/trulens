@@ -6,6 +6,8 @@ from trulens.providers.openai import provider as openai_provider
 
 logger = logging.getLogger(__name__)
 
+_DEFAULT_BASE_URL = "https://api.orcarouter.ai/v1"
+
 
 class OrcaRouter(openai_provider.OpenAI):
     """Out of the box feedback functions calling models through the
@@ -68,9 +70,6 @@ class OrcaRouter(openai_provider.OpenAI):
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "openai/gpt-4o-mini"
 
-    DEFAULT_BASE_URL: ClassVar[str] = "https://api.orcarouter.ai/v1"
-    """Default OrcaRouter OpenAI-compatible base URL."""
-
     def __init__(
         self,
         *args,
@@ -83,9 +82,7 @@ class OrcaRouter(openai_provider.OpenAI):
             model_engine = self.DEFAULT_MODEL_ENGINE
 
         if base_url is None:
-            base_url = os.environ.get(
-                "ORCAROUTER_BASE_URL", self.DEFAULT_BASE_URL
-            )
+            base_url = os.environ.get("ORCAROUTER_BASE_URL", _DEFAULT_BASE_URL)
 
         if api_key is None:
             api_key = os.environ.get("ORCAROUTER_API_KEY")
