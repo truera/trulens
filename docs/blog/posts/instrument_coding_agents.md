@@ -71,6 +71,48 @@ These are ordinary TruLens traces — the existing input/output and trace-level 
 
 On a Snowflake destination, TruLens also manages [AI Observability](https://docs.snowflake.com/en/user-guide/snowflake-cortex/ai-observability) run lifecycle: each conversation becomes a run, each turn an invocation, driven to `COMPLETED` automatically as spans land. OSS and OTLP destinations skip run management entirely — they just export spans.
 
+## Evaluate the Traces
+
+Hook traces are ordinary TruLens records, so they run through the same evaluation path as any other app — no live wrapper, no `TruApp`. Point a session at the same database the worker exports to, pull the events, and score them offline:
+
+```python
+from pathlib import Path
+
+from trulens.core import Metric, Selector, TruSession
+from trulens.providers.openai import OpenAI
+
+session = TruSession(
+    database_url=f"sqlite:///{Path.home() / '.trulens' / 'client-hooks.sqlite'}"
+)
+provider = OpenAI(model_engine="gpt-4o")
+
+f_tool_selection = Metric(
+    implementation=provider.tool_selection_with_cot_reasons,
+    name="Tool Selection",
+    selectors={"trace": Selector(trace_level=True)},
+)
+f_execution_efficiency = Metric(
+    implementation=provider.execution_efficiency_with_cot_reasons,
+    name="Execution Efficiency",
+    selectors={"trace": Selector(trace_level=True)},
+)
+f_session_coherence = Metric(
+    implementation=provider.coherence_across_turns_with_cot_reasons,
+    name="Session Coherence",
+).on_conversation()
+
+events = session.get_events(app_name="cursor", app_version=None)
+session.compute_feedbacks_on_events(
+    events, [f_tool_selection, f_execution_efficiency, f_session_coherence]
+)
+```
+
+`Tool Selection` and `Execution Efficiency` score a single turn against its full trace — did the agent pick the right tools, did it take an efficient path to the edit. `Session Coherence` runs `.on_conversation()` instead, scoring whether later turns in the same Cursor/Claude/OpenCode session contradict earlier instructions. `CONVERSATION_ID` is already set from the client's native session ID, so no extra wiring is needed to group turns into a conversation.
+
+One constraint carries over directly from the privacy model above: LLM-as-judge metrics need real content to score. If `TRULENS_CAPTURE_CONTENT` was off when the session ran, `RECORD_ROOT.INPUT`/`OUTPUT` are `[content not captured]` placeholders — turn content capture on before evaluating, not after the fact.
+
+Scores land in the same leaderboard as everything else in `client-hooks.sqlite`, so `(app_name, app_version)` — Cursor 3.x vs. Claude Code vs. OpenCode — is a comparison you get for free.
+
 ## Built for a Machine That Can Crash Mid-Session
 
 Hook invocations return immediately after writing to a locked, durable journal — the coding client is never blocked on export. A detached worker drains the journal, retries transient failures with backoff, and survives process restarts:
