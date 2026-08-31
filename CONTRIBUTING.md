@@ -126,40 +126,44 @@ Past community contributions include the SQLAlchemy connector and LiteLLM provid
 
 ---
 
-## Certifying Your Contribution
+## Signing the CLA
 
-The pull request template ends with two checkboxes. Tick both and you're done;
-they cover every commit in the pull request.
+On your first pull request a bot will ask you to sign the
+[Contributor License Agreement](CLA.md). It says that you wrote the change or have
+the right to submit it, and that the project may ship it under its licence.
+
+Signing is one comment on your pull request:
 
 ```
-- [x] I certify that I wrote these changes, or have the right to submit them under this project's license — the Developer Certificate of Origin
+I have read the CLA Document and I hereby sign the CLA
+```
+
+That is the whole process. There is no form, no account to create, and nothing to do
+outside GitHub. The bot records the signature and the check goes green, usually
+within a minute. You will not be asked again on later pull requests.
+
+If your employer owns the copyright in work you do, check that you are permitted to
+contribute it before signing.
+
+If the check stays red after you comment, comment `recheck` to run it again.
+
+## Certifying the Standards
+
+The pull request template also has a checkbox:
+
+```
 - [x] This change follows the TruLens standards for code style, imports, docstrings, and tests
 ```
 
-The first is the [Developer Certificate of Origin](DCO), the same certificate the
-Linux kernel and CNCF projects use. There is no agreement to sign, no form, and no
-account to create. The text is short and worth reading once.
-
-The second points at [Standards](docs/contributing/standards.md), also published at
+It points at [Standards](docs/contributing/standards.md), also published at
 <https://www.trulens.org/contributing/standards/>. Most of it is enforced by
 `make format` and `make lint`; the parts that aren't are the module-import
 conventions, the docstring format, and the guidance on
 [AI-assisted contributions](docs/contributing/standards.md#ai-assisted-contributions),
 which is worth reading before you open a pull request.
 
-A CI check looks for both lines and says which one is missing or unticked. It
-re-runs when you push, so the check reflects the commits currently in the pull
-request rather than the ones that were there when you ticked the boxes.
-
-Two notes:
-
-- Leave both lines in the description. If you delete the section the check cannot
-  find them and will ask you to add them back.
-- Rewording around them is fine. The check looks for a task-list item mentioning
-  the Developer Certificate of Origin, and one mentioning TruLens standards, not
-  for exact wording.
-
-No per-commit sign-off is needed.
+Leave the line in the description. Rewording around it is fine — the check looks for
+a task-list item mentioning TruLens standards, not for exact wording.
 
 ## Reference
 

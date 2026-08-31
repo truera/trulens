@@ -1,16 +1,14 @@
 """Check that a pull request carries the required certifications.
 
-The pull request template has a checkbox for each. Ticking them certifies, for
-every commit in the pull request:
+The pull request template has a checkbox for each. Ticking it certifies, for every
+commit in the pull request, that the change follows the project's
+[standards](https://www.trulens.org/contributing/standards/).
 
-- the [Developer Certificate of Origin](../../DCO) -- that you wrote the changes,
-  or have the right to submit them under this project's license;
-- that the change follows the project's
-  [standards](https://www.trulens.org/contributing/standards/).
+Licence provenance is handled separately, by the CLA workflow.
 
 The check re-runs whenever commits are pushed, so a passing status always
 corresponds to the pull request's current head rather than to whatever it looked
-like when the boxes were ticked.
+like when the box was ticked.
 
 Usage::
 
@@ -28,10 +26,6 @@ import sys
 # Matching on a phrase rather than exact text means the template can be reworded or
 # reordered without breaking the check.
 REQUIRED = {
-    "Developer Certificate of Origin": (
-        "- [x] I certify that I wrote these changes, or have the right to submit"
-        " them under this project's license (the Developer Certificate of Origin)"
-    ),
     "TruLens standards": (
         "- [x] This change follows the TruLens standards"
         " (https://www.trulens.org/contributing/standards/)"

@@ -1,8 +1,10 @@
 name: Certifications
 
-# Checks that the pull request description carries the certifications in the pull
-# request template: the Developer Certificate of Origin in /DCO, and that the change
-# follows https://www.trulens.org/contributing/standards/
+# Checks that the pull request description carries the certification in the pull
+# request template: that the change follows
+# https://www.trulens.org/contributing/standards/
+#
+# Licence provenance is handled separately, by the CLA workflow.
 #
 # Runs on `edited` so that ticking a box re-runs the check, and on `synchronize` so
 # that a passing status always corresponds to the current head commit rather than to
