@@ -26,7 +26,7 @@ Python class name. Instrumentation also places `service.name` and
 Most applications should not set raw `gen_ai.*` or `ai.observability.*`
 strings. Instead, declare the semantic span type and values with
 [`@instrument()`][trulens.core.otel.instrument.instrument] and
-[`SpanAttributes`][trulens.otel.semconv.trace.SpanAttributes]. TruLens emits
+[`SpanAttributes`](https://github.com/truera/trulens/blob/main/src/otel/semconv/trulens/otel/semconv/trace.py). TruLens emits
 the corresponding `ai.observability.*` attributes and, where an official
 OpenTelemetry convention exists, the applicable `gen_ai.*` attributes and
 events.

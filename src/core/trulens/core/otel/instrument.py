@@ -965,7 +965,7 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
 # === Trace Beautification Utilities ===
 
 
-def extract_input_content(messages) -> str:
+def extract_input_content(messages: Sequence[Any]) -> str:
     """Extract the text content from the input messages.
 
     Looks for the last HumanMessage's content, or falls back to the first
@@ -995,7 +995,7 @@ def extract_input_content(messages) -> str:
     return str(messages[0])
 
 
-def extract_output_content(ret) -> str:
+def extract_output_content(ret: Any) -> str:
     """Extract the text content from an LLM response.
 
     Args:
@@ -1011,7 +1011,7 @@ def extract_output_content(ret) -> str:
     return str(ret)
 
 
-def extract_tool_calls(ret) -> str | None:
+def extract_tool_calls(ret: Any) -> str | None:
     """Extract and format tool calls from an LLM response.
 
     Formats tool calls as: "tool_name(arg1=val1, arg2=val2), other_tool(...)"
