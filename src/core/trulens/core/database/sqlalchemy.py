@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime
 from datetime import timedelta
+from datetime import timezone
 import json
 import logging
 from sqlite3 import OperationalError
@@ -19,6 +20,7 @@ from typing import (
     Type,
     Union,
 )
+import uuid
 import warnings
 
 import numpy as np
@@ -44,6 +46,7 @@ from trulens.core.schema import base as base_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
+from trulens.core.schema import prompt as prompt_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.schema.event import Event
@@ -2188,6 +2191,370 @@ class SQLAlchemyDB(core_db.DB):
                 columns=["dataset_id", "name", "meta"],
             )
 
+    def insert_prompt(
+        self, prompt: prompt_schema.Prompt
+    ) -> types_schema.PromptID:
+        """See [DB.insert_prompt][trulens.core.database.base.DB.insert_prompt]."""
+
+        with self.session.begin() as session:
+            if (
+                _prompt := session
+                .query(self.orm.Prompt)
+                .filter_by(prompt_id=prompt.prompt_id)
+                .first()
+            ):
+                if _prompt.prompt_type != prompt.prompt_type.value:
+                    raise ValueError(
+                        f"Prompt {prompt.slug!r} already exists with type "
+                        f"{_prompt.prompt_type!r}. Prompt type is fixed after "
+                        "creation."
+                    )
+                _prompt.prompt_json = prompt.model_dump_json()
+            else:
+                _prompt = self.orm.Prompt.parse(
+                    prompt, redact_keys=self.redact_keys
+                )
+                session.merge(_prompt)
+
+            logger.info(
+                f"{text_utils.UNICODE_CHECK} added prompt {_prompt.prompt_id}"
+            )
+
+            return _prompt.prompt_id
+
+    def get_prompt(
+        self,
+        prompt_id: Optional[types_schema.PromptID] = None,
+        slug: Optional[str] = None,
+    ) -> Optional[prompt_schema.Prompt]:
+        """See [DB.get_prompt][trulens.core.database.base.DB.get_prompt]."""
+
+        if prompt_id is None and slug is None:
+            raise ValueError("Either `prompt_id` or `slug` must be given.")
+
+        with self.session.begin() as session:
+            query = session.query(self.orm.Prompt)
+            if prompt_id is not None:
+                query = query.filter_by(prompt_id=prompt_id)
+            else:
+                query = query.filter_by(slug=slug)
+
+            if (_prompt := query.first()) is None:
+                return None
+
+            return prompt_schema.Prompt.model_validate_json(_prompt.prompt_json)
+
+    def get_prompts(self) -> pd.DataFrame:
+        """See [DB.get_prompts][trulens.core.database.base.DB.get_prompts]."""
+
+        with self.session.begin() as session:
+            results = session.query(self.orm.Prompt).order_by(
+                self.orm.Prompt.slug
+            )
+            return _extract_prompts(results)
+
+    def _retry_on_conflict(self, operation, attempts: int = 5):
+        """Re-run `operation` when a concurrent writer wins the insert race.
+
+        Two processes moving the same label for the first time both see no row
+        and both insert. The loser gets an integrity error and, on the retry,
+        finds the row and takes the update path instead. This is what keeps one
+        current pointer per `(prompt_id, label)`.
+        """
+
+        for attempt in range(attempts):
+            try:
+                return operation()
+            except sa.exc.IntegrityError:
+                if attempt == attempts - 1:
+                    raise
+                logger.debug(
+                    "Prompt write lost an insert race, retrying (attempt %d).",
+                    attempt + 1,
+                )
+
+    def insert_prompt_version(
+        self,
+        version: prompt_schema.PromptVersion,
+        move_latest: bool = True,
+    ) -> types_schema.PromptVersionID:
+        """See [DB.insert_prompt_version][trulens.core.database.base.DB.insert_prompt_version]."""
+
+        return self._retry_on_conflict(
+            lambda: self._insert_prompt_version(version, move_latest)
+        )
+
+    def _insert_prompt_version(
+        self,
+        version: prompt_schema.PromptVersion,
+        move_latest: bool,
+    ) -> types_schema.PromptVersionID:
+        with self.session.begin() as session:
+            _prompt = (
+                session
+                .query(self.orm.Prompt)
+                .filter_by(prompt_id=version.prompt_id)
+                .first()
+            )
+            if _prompt is None:
+                raise ValueError(
+                    f"No prompt with id {version.prompt_id!r} exists."
+                )
+            if _prompt.prompt_type != version.prompt_type.value:
+                raise ValueError(
+                    f"Version type {version.prompt_type.value!r} does not match "
+                    f"prompt type {_prompt.prompt_type!r}."
+                )
+
+            existing = (
+                session
+                .query(self.orm.PromptVersion)
+                .filter_by(version_id=version.version_id)
+                .first()
+            )
+            if existing is None:
+                session.add(
+                    self.orm.PromptVersion.parse(
+                        version, redact_keys=self.redact_keys
+                    )
+                )
+                logger.info(
+                    f"{text_utils.UNICODE_CHECK} added prompt version "
+                    f"{version.version_id}"
+                )
+
+            if move_latest:
+                self._set_prompt_label(
+                    session,
+                    prompt_id=version.prompt_id,
+                    label=prompt_schema.LATEST_LABEL,
+                    version_id=version.version_id,
+                    moved_by=version.created_by,
+                )
+
+            return version.version_id
+
+    def get_prompt_version(
+        self, version_id: types_schema.PromptVersionID
+    ) -> Optional[prompt_schema.PromptVersion]:
+        """See [DB.get_prompt_version][trulens.core.database.base.DB.get_prompt_version]."""
+
+        with self.session.begin() as session:
+            _version = (
+                session
+                .query(self.orm.PromptVersion)
+                .filter_by(version_id=version_id)
+                .first()
+            )
+            if _version is None:
+                return None
+
+            return prompt_schema.PromptVersion.model_validate_json(
+                _version.prompt_version_json
+            )
+
+    def get_prompt_versions(
+        self, prompt_id: types_schema.PromptID
+    ) -> pd.DataFrame:
+        """See [DB.get_prompt_versions][trulens.core.database.base.DB.get_prompt_versions]."""
+
+        with self.session.begin() as session:
+            results = (
+                session
+                .query(self.orm.PromptVersion)
+                .filter_by(prompt_id=prompt_id)
+                .order_by(self.orm.PromptVersion.created_at)
+            )
+            return _extract_prompt_versions(results)
+
+    def _set_prompt_label(
+        self,
+        session,
+        prompt_id: types_schema.PromptID,
+        label: str,
+        version_id: types_schema.PromptVersionID,
+        moved_by: Optional[str] = None,
+    ) -> prompt_schema.PromptLabel:
+        """Move a label inside an open transaction."""
+
+        now = datetime.now(timezone.utc)
+
+        _label = (
+            session
+            .query(self.orm.PromptLabel)
+            .filter_by(prompt_id=prompt_id, label=label)
+            .with_for_update()
+            .first()
+        )
+        previous_version_id = _label.version_id if _label else None
+
+        if _label is None:
+            _label = self.orm.PromptLabel(
+                prompt_id=prompt_id,
+                label=label,
+                version_id=version_id,
+                updated_at=now.timestamp(),
+            )
+            session.add(_label)
+        else:
+            _label.version_id = version_id
+            _label.updated_at = now.timestamp()
+
+        history = prompt_schema.PromptLabelHistory(
+            history_id=str(uuid.uuid4()),
+            prompt_id=prompt_id,
+            label=label,
+            previous_version_id=previous_version_id,
+            new_version_id=version_id,
+            moved_by=moved_by,
+            timestamp=now,
+        )
+        session.add(
+            self.orm.PromptLabelHistory.parse(
+                history, redact_keys=self.redact_keys
+            )
+        )
+
+        return prompt_schema.PromptLabel(
+            prompt_id=prompt_id,
+            label=label,
+            version_id=version_id,
+            updated_at=now,
+        )
+
+    def set_prompt_label(
+        self,
+        prompt_id: types_schema.PromptID,
+        label: str,
+        version_id: types_schema.PromptVersionID,
+        moved_by: Optional[str] = None,
+    ) -> prompt_schema.PromptLabel:
+        """See [DB.set_prompt_label][trulens.core.database.base.DB.set_prompt_label]."""
+
+        return self._retry_on_conflict(
+            lambda: self._set_prompt_label_txn(
+                prompt_id, label, version_id, moved_by
+            )
+        )
+
+    def _set_prompt_label_txn(
+        self,
+        prompt_id: types_schema.PromptID,
+        label: str,
+        version_id: types_schema.PromptVersionID,
+        moved_by: Optional[str],
+    ) -> prompt_schema.PromptLabel:
+        with self.session.begin() as session:
+            _version = (
+                session
+                .query(self.orm.PromptVersion)
+                .filter_by(version_id=version_id, prompt_id=prompt_id)
+                .first()
+            )
+            if _version is None:
+                raise ValueError(
+                    f"Version {version_id!r} does not belong to prompt "
+                    f"{prompt_id!r}."
+                )
+
+            return self._set_prompt_label(
+                session,
+                prompt_id=prompt_id,
+                label=label,
+                version_id=version_id,
+                moved_by=moved_by,
+            )
+
+    def get_prompt_label(
+        self, prompt_id: types_schema.PromptID, label: str
+    ) -> Optional[prompt_schema.PromptLabel]:
+        """See [DB.get_prompt_label][trulens.core.database.base.DB.get_prompt_label]."""
+
+        with self.session.begin() as session:
+            _label = (
+                session
+                .query(self.orm.PromptLabel)
+                .filter_by(prompt_id=prompt_id, label=label)
+                .first()
+            )
+            if _label is None:
+                return None
+
+            return prompt_schema.PromptLabel(
+                prompt_id=_label.prompt_id,
+                label=_label.label,
+                version_id=_label.version_id,
+                updated_at=datetime.fromtimestamp(
+                    _label.updated_at, tz=timezone.utc
+                ),
+            )
+
+    def get_prompt_labels(
+        self, prompt_id: types_schema.PromptID
+    ) -> pd.DataFrame:
+        """See [DB.get_prompt_labels][trulens.core.database.base.DB.get_prompt_labels]."""
+
+        with self.session.begin() as session:
+            results = (
+                session
+                .query(self.orm.PromptLabel)
+                .filter_by(prompt_id=prompt_id)
+                .order_by(self.orm.PromptLabel.label)
+            )
+            return pd.DataFrame(
+                data=(
+                    (
+                        row.prompt_id,
+                        row.label,
+                        row.version_id,
+                        datetime.fromtimestamp(row.updated_at, tz=timezone.utc),
+                    )
+                    for row in results
+                ),
+                columns=["prompt_id", "label", "version_id", "updated_at"],
+            )
+
+    def get_prompt_label_history(
+        self,
+        prompt_id: types_schema.PromptID,
+        label: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """See [DB.get_prompt_label_history][trulens.core.database.base.DB.get_prompt_label_history]."""
+
+        with self.session.begin() as session:
+            query = session.query(self.orm.PromptLabelHistory).filter_by(
+                prompt_id=prompt_id
+            )
+            if label is not None:
+                query = query.filter_by(label=label)
+            results = query.order_by(
+                self.orm.PromptLabelHistory.timestamp.desc()
+            )
+
+            return pd.DataFrame(
+                data=(
+                    (
+                        row.history_id,
+                        row.prompt_id,
+                        row.label,
+                        row.previous_version_id,
+                        row.new_version_id,
+                        row.moved_by,
+                        datetime.fromtimestamp(row.timestamp, tz=timezone.utc),
+                    )
+                    for row in results
+                ),
+                columns=[
+                    "history_id",
+                    "prompt_id",
+                    "label",
+                    "previous_version_id",
+                    "new_version_id",
+                    "moved_by",
+                    "timestamp",
+                ],
+            )
+
     def insert_event(self, event: Event) -> types_schema.EventID:
         """See [DB.insert_event][trulens.core.database.base.DB.insert_event]."""
         return self.insert_events([event])[0]
@@ -2364,6 +2731,72 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
     return pd.DataFrame(
         data=(_extract(c) for c in cost_json),
         columns=["total_tokens", "total_cost", "cost_currency"],
+    )
+
+
+def _extract_prompts(
+    results: Iterable["db_orm.Prompt"],
+) -> pd.DataFrame:
+    def _extract(_result: "db_orm.Prompt"):
+        prompt_json = json.loads(_result.prompt_json)
+
+        return (
+            _result.prompt_id,
+            prompt_json["slug"],
+            prompt_json["name"],
+            prompt_json["prompt_type"],
+            prompt_json.get("description"),
+            prompt_json.get("tags", []),
+            prompt_json.get("created_at"),
+            prompt_json.get("updated_at"),
+        )
+
+    return pd.DataFrame(
+        data=(_extract(r) for r in results),
+        columns=[
+            "prompt_id",
+            "slug",
+            "name",
+            "prompt_type",
+            "description",
+            "tags",
+            "created_at",
+            "updated_at",
+        ],
+    )
+
+
+def _extract_prompt_versions(
+    results: Iterable["db_orm.PromptVersion"],
+) -> pd.DataFrame:
+    def _extract(_result: "db_orm.PromptVersion"):
+        version_json = json.loads(_result.prompt_version_json)
+
+        return (
+            _result.version_id,
+            _result.prompt_id,
+            version_json.get("parent_version_id"),
+            version_json["prompt_type"],
+            version_json.get("variables", []),
+            version_json.get("change_note"),
+            _result.content_hash,
+            version_json.get("created_at"),
+            version_json.get("created_by"),
+        )
+
+    return pd.DataFrame(
+        data=(_extract(r) for r in results),
+        columns=[
+            "version_id",
+            "prompt_id",
+            "parent_version_id",
+            "prompt_type",
+            "variables",
+            "change_note",
+            "content_hash",
+            "created_at",
+            "created_by",
+        ],
     )
 
 

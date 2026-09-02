@@ -23,6 +23,7 @@ from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
+from trulens.core.schema import prompt as prompt_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.schema.event import Event
@@ -657,6 +658,167 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
 
         Returns:
             A dataframe with the datasets.
+        """
+        raise NotImplementedError()
+
+    # Prompt management.
+    #
+    # These are not abstract so that a database implementation that has no
+    # prompt storage keeps working without change.
+
+    def insert_prompt(
+        self, prompt: prompt_schema.Prompt
+    ) -> types_schema.PromptID:
+        """Insert a prompt, or update the metadata of an existing one.
+
+        The prompt id is derived from the slug, so re-inserting the same slug
+        updates the name, description, and tags in place.
+
+        Args:
+            prompt: The prompt to insert.
+
+        Returns:
+            The id of the given prompt.
+
+        Raises:
+            ValueError: If a prompt with the same slug exists with a different
+                prompt type.
+        """
+        raise NotImplementedError()
+
+    def get_prompt(
+        self,
+        prompt_id: Optional[types_schema.PromptID] = None,
+        slug: Optional[str] = None,
+    ) -> Optional[prompt_schema.Prompt]:
+        """Get one prompt by id or by slug.
+
+        Args:
+            prompt_id: The id to look up.
+            slug: The slug to look up. Ignored when `prompt_id` is given.
+
+        Returns:
+            The prompt, or None when it does not exist.
+        """
+        raise NotImplementedError()
+
+    def get_prompts(self) -> pd.DataFrame:
+        """Get all prompts from the database.
+
+        Returns:
+            A dataframe with the prompts.
+        """
+        raise NotImplementedError()
+
+    def insert_prompt_version(
+        self,
+        version: prompt_schema.PromptVersion,
+        move_latest: bool = True,
+    ) -> types_schema.PromptVersionID:
+        """Insert an immutable prompt version.
+
+        Inserting a version that already exists is a no-op, which makes
+        creation idempotent.
+
+        Args:
+            version: The version to insert.
+            move_latest: Whether to move the `latest` label onto this version
+                in the same transaction.
+
+        Returns:
+            The id of the given version.
+        """
+        raise NotImplementedError()
+
+    def get_prompt_version(
+        self, version_id: types_schema.PromptVersionID
+    ) -> Optional[prompt_schema.PromptVersion]:
+        """Get one exact prompt version.
+
+        Args:
+            version_id: The version to look up.
+
+        Returns:
+            The version, or None when it does not exist.
+        """
+        raise NotImplementedError()
+
+    def get_prompt_versions(
+        self, prompt_id: types_schema.PromptID
+    ) -> pd.DataFrame:
+        """Get every version of a prompt, oldest first.
+
+        Args:
+            prompt_id: The prompt whose versions to list.
+
+        Returns:
+            A dataframe with the versions.
+        """
+        raise NotImplementedError()
+
+    def set_prompt_label(
+        self,
+        prompt_id: types_schema.PromptID,
+        label: str,
+        version_id: types_schema.PromptVersionID,
+        moved_by: Optional[str] = None,
+    ) -> prompt_schema.PromptLabel:
+        """Point a label at one exact version and record the movement.
+
+        Args:
+            prompt_id: The prompt whose label to move.
+            label: The label name.
+            version_id: The version to point at.
+            moved_by: Caller label written to the history entry.
+
+        Returns:
+            The resulting label pointer.
+
+        Raises:
+            ValueError: If the version does not belong to the prompt.
+        """
+        raise NotImplementedError()
+
+    def get_prompt_label(
+        self, prompt_id: types_schema.PromptID, label: str
+    ) -> Optional[prompt_schema.PromptLabel]:
+        """Get the current pointer for one label.
+
+        Args:
+            prompt_id: The prompt to look in.
+            label: The label name.
+
+        Returns:
+            The label pointer, or None when the label is unset.
+        """
+        raise NotImplementedError()
+
+    def get_prompt_labels(
+        self, prompt_id: types_schema.PromptID
+    ) -> pd.DataFrame:
+        """Get every label of a prompt.
+
+        Args:
+            prompt_id: The prompt whose labels to list.
+
+        Returns:
+            A dataframe with the labels.
+        """
+        raise NotImplementedError()
+
+    def get_prompt_label_history(
+        self,
+        prompt_id: types_schema.PromptID,
+        label: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """Get the append-only history of label movements, newest first.
+
+        Args:
+            prompt_id: The prompt whose history to read.
+            label: Restrict to one label when given.
+
+        Returns:
+            A dataframe with the history entries.
         """
         raise NotImplementedError()
 
