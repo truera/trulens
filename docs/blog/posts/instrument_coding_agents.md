@@ -14,7 +14,7 @@ TruLens can now capture traces from Cursor, Claude Code, and OpenCode by pluggin
 
 ## Why This Exists
 
-Cursor, Claude Code, and OpenCode don't expose a Python entry point you can wrap. They're installed binaries. But each one already fires structured lifecycle events on prompt submission, tool use, file edits, and stop. Claude Code and Cursor use JSON hook commands; OpenCode has a native plugin API. TruLens hooks into those existing event streams and assembles them into traces.
+Cursor, Claude Code, and OpenCode already fire structured lifecycle events on prompt submission, tool use, file edits, and stop. Claude Code and Cursor use JSON hook commands; OpenCode has a native plugin API. TruLens hooks into those event streams and assembles them into traces.
 
 ## Install a Client
 
