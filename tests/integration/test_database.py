@@ -25,6 +25,7 @@ from contextlib import contextmanager
 from pathlib import Path
 import shutil
 from tempfile import TemporaryDirectory
+import threading
 from typing import Any, Dict, Iterator, Literal, Union
 from unittest import TestCase
 
@@ -40,6 +41,7 @@ from trulens.core.database import utils as db_utils
 from trulens.core.feedback import provider as core_provider
 from trulens.core.metric import metric as core_metric
 from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import review as review_schema
 from trulens.core.schema import select as select_schema
 
 
@@ -278,6 +280,83 @@ class MockFeedback(core_provider.Provider):
         """Test feedback that does nothing except return length of input"""
 
         return float(len(text))
+
+
+class TestReviewQueueConcurrency(TestCase):
+    """Concurrent claiming against real shared databases.
+
+    The conditional update that hands out queue items has to hold on whatever
+    database is behind it, so the same race is run against each backend rather
+    than only SQLite.
+    """
+
+    def _claim_concurrently(self, db: sqlalchemy_db.SQLAlchemyDB, url: str):
+        queue = review_schema.ReviewQueue(name="concurrent")
+        db.insert_review_queue(review_queue=queue)
+        db.add_review_items(
+            queue.review_queue_id,
+            [
+                review_schema.ReviewTarget(
+                    target_id=f"record-{i}",
+                    selection=review_schema.SelectionSnapshot(
+                        selection_reason="test", priority=i / 20
+                    ),
+                )
+                for i in range(10)
+            ],
+        )
+
+        claimed = []
+        lock = threading.Lock()
+
+        def worker():
+            worker_db = sqlalchemy_db.SQLAlchemyDB.from_db_url(url)
+            while True:
+                item = worker_db.claim_next_review_item(queue.review_queue_id)
+                if item is None:
+                    return
+                with lock:
+                    claimed.append(item.target_id)
+
+        threads = [threading.Thread(target=worker) for _ in range(4)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=60)
+
+        self.assertEqual(len(claimed), 10)
+        self.assertEqual(
+            len(set(claimed)), 10, "an item was claimed more than once"
+        )
+
+    def test_concurrent_claims_sqlite_file(self) -> None:
+        """Two callers must never both claim one item on SQLite."""
+        with TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+            url = f"sqlite:///{Path(tmp) / 'concurrent.sqlite'}"
+            db = sqlalchemy_db.SQLAlchemyDB.from_db_url(url)
+            db.migrate_database()
+            self._claim_concurrently(db, url)
+
+    def test_concurrent_claims_postgres(self) -> None:
+        """Two callers must never both claim one item on PostgreSQL.
+
+        Skipped rather than failed when the test container is not up, so that
+        running this file without docker stays useful.
+        """
+        url = (
+            "postgresql+psycopg://pg-test-user:pg-test-pswd@localhost/"
+            "pg-test-db"
+        )
+        try:
+            probe = sqlalchemy_db.SQLAlchemyDB.from_db_url(url)
+            with probe.engine.connect():
+                pass
+        except Exception as e:
+            self.skipTest(f"PostgreSQL test database is not reachable: {e}")
+
+        with clean_db("postgres") as db:
+            db.migrate_database()
+            self._claim_concurrently(db, url)
 
 
 @contextmanager

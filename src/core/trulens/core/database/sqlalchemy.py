@@ -6,6 +6,7 @@ from datetime import timedelta
 import json
 import logging
 from sqlite3 import OperationalError
+import time
 from typing import (
     Any,
     ClassVar,
@@ -19,6 +20,7 @@ from typing import (
     Type,
     Union,
 )
+import uuid
 import warnings
 
 import numpy as np
@@ -45,6 +47,7 @@ from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
+from trulens.core.schema import review as review_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.schema.event import Event
 from trulens.core.utils import pyschema as pyschema_utils
@@ -2188,6 +2191,484 @@ class SQLAlchemyDB(core_db.DB):
                 columns=["dataset_id", "name", "meta"],
             )
 
+    # --- Human review -----------------------------------------------------
+
+    def insert_review_queue(
+        self, review_queue: review_schema.ReviewQueue
+    ) -> review_schema.ReviewQueueID:
+        """See [DB.insert_review_queue][trulens.core.database.base.DB.insert_review_queue]."""
+
+        with self.session.begin() as session:
+            if (
+                _queue := session.query(self.orm.ReviewQueue)
+                .filter_by(review_queue_id=review_queue.review_queue_id)
+                .first()
+            ):
+                _queue.name = review_queue.name
+                _queue.review_queue_json = review_queue.model_dump_json()
+                _queue.updated_at = review_queue.updated_at
+            else:
+                _queue = self.orm.ReviewQueue.parse(
+                    review_queue, redact_keys=self.redact_keys
+                )
+                session.merge(_queue)
+
+            logger.info(
+                f"{text_utils.UNICODE_CHECK} added review queue "
+                f"{_queue.review_queue_id}"
+            )
+            return _queue.review_queue_id
+
+    def get_review_queue(
+        self,
+        review_queue_id: Optional[review_schema.ReviewQueueID] = None,
+        name: Optional[str] = None,
+    ) -> Optional[review_schema.ReviewQueue]:
+        """See [DB.get_review_queue][trulens.core.database.base.DB.get_review_queue]."""
+
+        if review_queue_id is None and name is None:
+            raise ValueError("Either `review_queue_id` or `name` is required.")
+
+        with self.session.begin() as session:
+            query = session.query(self.orm.ReviewQueue)
+            if review_queue_id is not None:
+                query = query.filter_by(review_queue_id=review_queue_id)
+            else:
+                query = query.filter_by(name=name).order_by(
+                    self.orm.ReviewQueue.created_at.desc()
+                )
+
+            if _queue := query.first():
+                return review_schema.ReviewQueue.model_validate_json(
+                    _queue.review_queue_json
+                )
+            return None
+
+    def get_review_queues(self) -> pd.DataFrame:
+        """See [DB.get_review_queues][trulens.core.database.base.DB.get_review_queues]."""
+
+        with self.session.begin() as session:
+            rows = session.query(self.orm.ReviewQueue).order_by(
+                self.orm.ReviewQueue.created_at.desc()
+            )
+            queues = [
+                review_schema.ReviewQueue.model_validate_json(
+                    row.review_queue_json
+                )
+                for row in rows
+            ]
+
+        return pd.DataFrame(
+            data=[
+                (
+                    q.review_queue_id,
+                    q.name,
+                    q.description,
+                    q.instructions,
+                    q.order_by,
+                    q.stale_claim_seconds,
+                    q.created_at,
+                    q.updated_at,
+                )
+                for q in queues
+            ],
+            columns=[
+                "review_queue_id",
+                "name",
+                "description",
+                "instructions",
+                "order_by",
+                "stale_claim_seconds",
+                "created_at",
+                "updated_at",
+            ],
+        )
+
+    def add_review_items(
+        self,
+        review_queue_id: review_schema.ReviewQueueID,
+        targets: Sequence[review_schema.ReviewTarget],
+    ) -> List[review_schema.ReviewItem]:
+        """See [DB.add_review_items][trulens.core.database.base.DB.add_review_items]."""
+
+        items = [
+            review_schema.ReviewItem(
+                review_queue_id=review_queue_id,
+                target_id=target.target_id,
+                target_type=target.target_type,
+                priority=(
+                    target.selection.priority if target.selection else 0.0
+                ),
+                selection=target.selection,
+            )
+            for target in targets
+        ]
+
+        if not items:
+            return []
+
+        with self.session.begin() as session:
+            existing = {
+                row.review_item_id
+                for row in session.query(self.orm.ReviewItem).filter(
+                    self.orm.ReviewItem.review_item_id.in_([
+                        item.review_item_id for item in items
+                    ])
+                )
+            }
+
+            # Item ids are derived from queue and target, so re-adding a target
+            # is a no-op rather than a second copy of the same work.
+            fresh = []
+            seen = set()
+            for item in items:
+                if item.review_item_id in existing:
+                    continue
+                if item.review_item_id in seen:
+                    continue
+                seen.add(item.review_item_id)
+                fresh.append(item)
+
+            session.add_all([
+                self.orm.ReviewItem.parse(item, redact_keys=self.redact_keys)
+                for item in fresh
+            ])
+
+        return items
+
+    def get_review_items(
+        self,
+        review_queue_id: review_schema.ReviewQueueID,
+        state: Optional[review_schema.ReviewItemState] = None,
+    ) -> List[review_schema.ReviewItem]:
+        """See [DB.get_review_items][trulens.core.database.base.DB.get_review_items]."""
+
+        with self.session.begin() as session:
+            query = session.query(self.orm.ReviewItem).filter_by(
+                review_queue_id=review_queue_id
+            )
+            if state is not None:
+                query = query.filter_by(state=state.value)
+
+            return [
+                _review_item_of_orm(row)
+                for row in query.order_by(
+                    self.orm.ReviewItem.priority.desc(),
+                    self.orm.ReviewItem.created_at.asc(),
+                )
+            ]
+
+    def get_review_queue_progress(
+        self, review_queue_id: review_schema.ReviewQueueID
+    ) -> Dict[str, int]:
+        """See [DB.get_review_queue_progress][trulens.core.database.base.DB.get_review_queue_progress]."""
+
+        counts = {state.value: 0 for state in review_schema.ReviewItemState}
+
+        with self.session.begin() as session:
+            rows = (
+                session.query(
+                    self.orm.ReviewItem.state,
+                    sa.func.count(self.orm.ReviewItem.review_item_id),
+                )
+                .filter_by(review_queue_id=review_queue_id)
+                .group_by(self.orm.ReviewItem.state)
+            )
+            for state, count in rows:
+                counts[state] = count
+
+        counts["total"] = sum(
+            counts[state.value] for state in review_schema.ReviewItemState
+        )
+        return counts
+
+    def claim_next_review_item(
+        self,
+        review_queue_id: review_schema.ReviewQueueID,
+        reviewer: Optional[str] = None,
+        now: Optional[float] = None,
+    ) -> Optional[review_schema.ReviewItem]:
+        """See [DB.claim_next_review_item][trulens.core.database.base.DB.claim_next_review_item]."""
+
+        queue = self.get_review_queue(review_queue_id=review_queue_id)
+        if queue is None:
+            raise ValueError(f"No review queue {review_queue_id!r}.")
+
+        now = time.time() if now is None else now
+        stale_before = now - queue.stale_claim_seconds
+
+        # Retry only as often as there are competitors to lose to; each loss
+        # means some other caller successfully claimed the candidate.
+        for _ in range(_MAX_CLAIM_ATTEMPTS):
+            with self.session.begin() as session:
+                query = session.query(self.orm.ReviewItem).filter(
+                    self.orm.ReviewItem.review_queue_id == review_queue_id,
+                    sa.or_(
+                        self.orm.ReviewItem.state
+                        == review_schema.ReviewItemState.PENDING.value,
+                        sa.and_(
+                            self.orm.ReviewItem.state
+                            == review_schema.ReviewItemState.IN_REVIEW.value,
+                            sa.or_(
+                                self.orm.ReviewItem.claimed_at.is_(None),
+                                self.orm.ReviewItem.claimed_at <= stale_before,
+                            ),
+                        ),
+                    ),
+                )
+
+                if queue.order_by == "severity":
+                    query = query.order_by(
+                        self.orm.ReviewItem.priority.desc(),
+                        self.orm.ReviewItem.created_at.asc(),
+                    )
+                else:
+                    query = query.order_by(self.orm.ReviewItem.created_at.asc())
+
+                candidate = query.first()
+                if candidate is None:
+                    return None
+
+                candidate_id = candidate.review_item_id
+                previous_state = candidate.state
+                previous_claimed_at = candidate.claimed_at
+
+            token = str(uuid.uuid4())
+
+            with self.session.begin() as session:
+                # One conditional update: whoever changes the row first wins,
+                # and the loser sees rowcount 0 rather than a second claim.
+                condition = [
+                    self.orm.ReviewItem.review_item_id == candidate_id,
+                    self.orm.ReviewItem.state == previous_state,
+                ]
+                if previous_claimed_at is None:
+                    condition.append(self.orm.ReviewItem.claimed_at.is_(None))
+                else:
+                    condition.append(
+                        self.orm.ReviewItem.claimed_at == previous_claimed_at
+                    )
+
+                updated = session.execute(
+                    sa.update(self.orm.ReviewItem)
+                    .where(*condition)
+                    .values(
+                        state=review_schema.ReviewItemState.IN_REVIEW.value,
+                        claim_token=token,
+                        claimed_at=now,
+                        claimed_by=reviewer,
+                        updated_at=now,
+                    )
+                )
+
+                if updated.rowcount != 1:
+                    continue  # someone else took it; look for another.
+
+                row = (
+                    session.query(self.orm.ReviewItem)
+                    .filter_by(review_item_id=candidate_id)
+                    .first()
+                )
+                item = _review_item_of_orm(row)
+                row.review_item_json = item.model_dump_json()
+                return item
+
+        logger.warning(
+            "Gave up claiming an item from queue %s after %d attempts.",
+            review_queue_id,
+            _MAX_CLAIM_ATTEMPTS,
+        )
+        return None
+
+    def update_review_item_state(
+        self,
+        review_item_id: review_schema.ReviewItemID,
+        state: review_schema.ReviewItemState,
+        claim_token: Optional[str] = None,
+        current_review_id: Optional[review_schema.HumanReviewID] = None,
+        now: Optional[float] = None,
+    ) -> review_schema.ReviewItem:
+        """See [DB.update_review_item_state][trulens.core.database.base.DB.update_review_item_state]."""
+
+        now = time.time() if now is None else now
+
+        with self.session.begin() as session:
+            row = (
+                session.query(self.orm.ReviewItem)
+                .filter_by(review_item_id=review_item_id)
+                .first()
+            )
+            if row is None:
+                raise ValueError(f"No review item {review_item_id!r}.")
+
+            if (
+                claim_token is not None
+                and row.claim_token is not None
+                and row.claim_token != claim_token
+            ):
+                raise ValueError(
+                    f"Review item {review_item_id!r} is held by another claim."
+                )
+
+            row.state = state.value
+            row.updated_at = now
+
+            if current_review_id is not None:
+                row.current_review_id = current_review_id
+
+            if state is review_schema.ReviewItemState.PENDING:
+                # Releasing an item puts it back in circulation unclaimed.
+                row.claim_token = None
+                row.claimed_at = None
+                row.claimed_by = None
+
+            item = _review_item_of_orm(row)
+            row.review_item_json = item.model_dump_json()
+            return item
+
+    def insert_human_review(
+        self, human_review: review_schema.HumanReview
+    ) -> review_schema.HumanReviewID:
+        """See [DB.insert_human_review][trulens.core.database.base.DB.insert_human_review]."""
+
+        with self.session.begin() as session:
+            if (
+                session.query(self.orm.HumanReview)
+                .filter_by(human_review_id=human_review.human_review_id)
+                .first()
+            ):
+                # Ids are content-addressed, so an identical resubmission is
+                # the same review rather than a new point in history.
+                return human_review.human_review_id
+
+            session.add(
+                self.orm.HumanReview.parse(
+                    human_review, redact_keys=self.redact_keys
+                )
+            )
+            logger.info(
+                f"{text_utils.UNICODE_CHECK} added human review "
+                f"{human_review.human_review_id}"
+            )
+            return human_review.human_review_id
+
+    def get_latest_human_review(
+        self,
+        target_type: review_schema.ReviewTargetType,
+        target_id: str,
+        reviewer: Optional[str] = None,
+    ) -> Optional[review_schema.HumanReview]:
+        """See [DB.get_latest_human_review][trulens.core.database.base.DB.get_latest_human_review]."""
+
+        with self.session.begin() as session:
+            query = session.query(self.orm.HumanReview).filter_by(
+                target_type=target_type.value, target_id=target_id
+            )
+            if reviewer is not None:
+                query = query.filter_by(reviewer=reviewer)
+
+            rows = query.order_by(self.orm.HumanReview.ts.desc()).all()
+            if not rows:
+                return None
+
+            # The latest review of a chain is the one nothing supersedes.
+            superseded = {
+                row.supersedes_id for row in rows if row.supersedes_id
+            }
+            for row in rows:
+                if row.human_review_id not in superseded:
+                    return review_schema.HumanReview.model_validate_json(
+                        row.human_review_json
+                    )
+            return review_schema.HumanReview.model_validate_json(
+                rows[0].human_review_json
+            )
+
+    def get_human_reviews(
+        self,
+        review_queue_id: Optional[review_schema.ReviewQueueID] = None,
+        target_type: Optional[review_schema.ReviewTargetType] = None,
+        target_id: Optional[str] = None,
+        reviewer: Optional[str] = None,
+        include_superseded: bool = True,
+    ) -> pd.DataFrame:
+        """See [DB.get_human_reviews][trulens.core.database.base.DB.get_human_reviews]."""
+
+        with self.session.begin() as session:
+            query = session.query(self.orm.HumanReview)
+
+            if review_queue_id is not None:
+                query = query.filter_by(review_queue_id=review_queue_id)
+            if target_type is not None:
+                query = query.filter_by(target_type=target_type.value)
+            if target_id is not None:
+                query = query.filter_by(target_id=target_id)
+            if reviewer is not None:
+                query = query.filter_by(reviewer=reviewer)
+
+            rows = query.order_by(self.orm.HumanReview.ts.asc()).all()
+            reviews = [
+                review_schema.HumanReview.model_validate_json(
+                    row.human_review_json
+                )
+                for row in rows
+            ]
+
+        if not include_superseded:
+            superseded = {r.supersedes_id for r in reviews if r.supersedes_id}
+            reviews = [
+                r for r in reviews if r.human_review_id not in superseded
+            ]
+
+        return pd.DataFrame(
+            data=[
+                (
+                    r.human_review_id,
+                    r.target_type.value,
+                    r.target_id,
+                    r.verdict.value,
+                    r.score,
+                    r.failure_type.value if r.failure_type else None,
+                    r.corrected_output,
+                    r.notes,
+                    r.reviewer,
+                    r.supersedes_id,
+                    r.review_queue_id,
+                    r.ts,
+                )
+                for r in reviews
+            ],
+            columns=[
+                "human_review_id",
+                "target_type",
+                "target_id",
+                "verdict",
+                "score",
+                "failure_type",
+                "corrected_output",
+                "notes",
+                "reviewer",
+                "supersedes_id",
+                "review_queue_id",
+                "ts",
+            ],
+        )
+
+    def delete_review_queue(
+        self, review_queue_id: review_schema.ReviewQueueID
+    ) -> None:
+        """See [DB.delete_review_queue][trulens.core.database.base.DB.delete_review_queue]."""
+
+        with self.session.begin() as session:
+            # Only the queue and its items go: reviews and the source traces
+            # they point at are untouched.
+            session.query(self.orm.ReviewItem).filter_by(
+                review_queue_id=review_queue_id
+            ).delete()
+            session.query(self.orm.ReviewQueue).filter_by(
+                review_queue_id=review_queue_id
+            ).delete()
+
     def insert_event(self, event: Event) -> types_schema.EventID:
         """See [DB.insert_event][trulens.core.database.base.DB.insert_event]."""
         return self.insert_events([event])[0]
@@ -2364,6 +2845,40 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
     return pd.DataFrame(
         data=(_extract(c) for c in cost_json),
         columns=["total_tokens", "total_cost", "cost_currency"],
+    )
+
+
+_MAX_CLAIM_ATTEMPTS = 8
+"""How many times a claim retries after losing a race for a candidate item."""
+
+
+def _review_item_of_orm(row: "db_orm.ReviewItem") -> review_schema.ReviewItem:
+    """Rebuild a review item from its row.
+
+    The scalar columns are authoritative for anything that changes — state,
+    priority and the claim — because those are what a conditional update
+    writes. The JSON blob supplies the frozen selection snapshot.
+    """
+
+    stored = json.loads(row.review_item_json)
+    selection = stored.get("selection")
+
+    return review_schema.ReviewItem(
+        review_item_id=row.review_item_id,
+        review_queue_id=row.review_queue_id,
+        target_type=review_schema.ReviewTargetType(row.target_type),
+        target_id=row.target_id,
+        priority=row.priority,
+        state=review_schema.ReviewItemState(row.state),
+        claim_token=row.claim_token,
+        claimed_at=row.claimed_at,
+        claimed_by=row.claimed_by,
+        current_review_id=row.current_review_id,
+        selection=(
+            review_schema.SelectionSnapshot(**selection) if selection else None
+        ),
+        created_at=row.created_at,
+        updated_at=row.updated_at,
     )
 
 

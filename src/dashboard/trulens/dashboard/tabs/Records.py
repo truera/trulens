@@ -28,6 +28,7 @@ from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
 from trulens.dashboard.utils.records_utils import _render_feedback_call
 from trulens.dashboard.utils.records_utils import _render_feedback_pills
+from trulens.dashboard.utils.review_utils import render_add_to_queue
 from trulens.dashboard.utils.streamlit_compat import st_code
 from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux.styles import aggrid_css
@@ -803,6 +804,9 @@ def _render_grid_tab(
         "record_id"
     ]
     st.query_params["selected_record"] = selected_record["record_id"]
+    render_add_to_queue(
+        [selected_record["record_id"]], key=f"{page_name}.add_to_queue"
+    )
     _render_trace(selected_record, df, feedback_col_names, feedback_directions)
 
 

@@ -31,6 +31,7 @@ import pandas
 import pydantic
 from trulens.core import dataset as core_dataset
 from trulens.core import experimental as core_experimental
+from trulens.core import review as core_review
 from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database import connector as core_connector
@@ -43,6 +44,7 @@ from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
+from trulens.core.schema import review as review_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import imports as import_utils
@@ -67,6 +69,26 @@ with import_utils.OptionalImports(messages=optional_utils.REQUIREMENT_TQDM):
     from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
+
+
+def _coerce_review_enum(value, enum_cls, field: str):
+    """Accept either an enum member or its string value.
+
+    The review field set is closed, so an unknown value is a caller error and
+    is reported with the values that are allowed.
+    """
+
+    if value is None:
+        return None
+    if isinstance(value, enum_cls):
+        return value
+    try:
+        return enum_cls(value)
+    except ValueError:
+        allowed = ", ".join(member.value for member in enum_cls)
+        raise ValueError(
+            f"`{field}` must be one of: {allowed}. Got {value!r}."
+        ) from None
 
 
 class TruSession(
@@ -1238,6 +1260,415 @@ class TruSession(
             raise ValueError(
                 "Either `dataset_name` or `user_table_name` and `user_schema_mapping` must be provided."
             )
+
+    # --- Human review -----------------------------------------------------
+
+    def create_review_queue(
+        self,
+        name: str,
+        targets: Optional[Sequence[review_schema.ReviewTarget]] = None,
+        description: Optional[str] = None,
+        instructions: Optional[str] = None,
+        order_by: str = "severity",
+        stale_claim_seconds: float = 900.0,
+        meta: Optional[Dict[str, Any]] = None,
+    ) -> review_schema.ReviewQueue:
+        """Create a review queue and materialize targets into it.
+
+        Membership is fixed at creation: the queue holds the target ids it was
+        given and does not grow as new records arrive. Adding the same target
+        twice is a no-op.
+
+        Example:
+            ```python
+            queue = session.create_review_queue(
+                name="low-groundedness",
+                instructions="Review low-groundedness support responses.",
+                targets=ReviewTargets.from_records(
+                    records_df,
+                    where=ReviewTargets.low_score("Groundedness", below=0.5),
+                    order_by="severity",
+                    limit=100,
+                ),
+            )
+            ```
+
+        Args:
+            name: Name of the queue.
+            targets: Targets to queue, typically from
+                [ReviewTargets.from_records][trulens.core.review.ReviewTargets.from_records].
+            description: What the queue is for.
+            instructions: Guidance shown to reviewers.
+            order_by: `"severity"` to hand out the worst items first, or
+                `"created"` for queue order.
+            stale_claim_seconds: How long a claim is honored before another
+                caller may take the item.
+            meta: Metadata to associate with the queue.
+
+        Returns:
+            The created [ReviewQueue][trulens.core.schema.review.ReviewQueue].
+        """
+
+        queue = review_schema.ReviewQueue(
+            name=name,
+            description=description,
+            instructions=instructions,
+            order_by=order_by,
+            stale_claim_seconds=stale_claim_seconds,
+            meta=meta or {},
+        )
+        self.connector.db.insert_review_queue(review_queue=queue)
+
+        if targets:
+            self.add_review_targets(queue.review_queue_id, targets)
+
+        return queue
+
+    def add_review_targets(
+        self,
+        review_queue_id: review_schema.ReviewQueueID,
+        targets: Sequence[review_schema.ReviewTarget],
+    ) -> List[review_schema.ReviewItem]:
+        """Add targets to an existing queue.
+
+        Args:
+            review_queue_id: Queue to add to.
+            targets: Targets to queue.
+
+        Returns:
+            The items for every given target, new or already present.
+        """
+
+        return self.connector.db.add_review_items(
+            review_queue_id=review_queue_id,
+            targets=core_review.dedupe_targets(targets),
+        )
+
+    def get_review_queues(self) -> pandas.DataFrame:
+        """Get all review queues as a dataframe."""
+
+        return self.connector.db.get_review_queues()
+
+    def get_review_queue(
+        self,
+        review_queue_id: Optional[review_schema.ReviewQueueID] = None,
+        name: Optional[str] = None,
+    ) -> Optional[review_schema.ReviewQueue]:
+        """Look a review queue up by id or by name.
+
+        Args:
+            review_queue_id: Id of the queue.
+            name: Name of the queue.
+
+        Returns:
+            The queue, or `None` when there is no match.
+        """
+
+        return self.connector.db.get_review_queue(
+            review_queue_id=review_queue_id, name=name
+        )
+
+    def get_review_items(
+        self,
+        review_queue_id: review_schema.ReviewQueueID,
+        state: Optional[review_schema.ReviewItemState] = None,
+    ) -> List[review_schema.ReviewItem]:
+        """Get a queue's items, worst-first.
+
+        Args:
+            review_queue_id: Queue to read.
+            state: Only return items in this state.
+
+        Returns:
+            The matching items.
+        """
+
+        return self.connector.db.get_review_items(
+            review_queue_id=review_queue_id, state=state
+        )
+
+    def get_review_queue_progress(
+        self, review_queue_id: review_schema.ReviewQueueID
+    ) -> Dict[str, int]:
+        """Count a queue's items by state.
+
+        Args:
+            review_queue_id: Queue to count.
+
+        Returns:
+            A mapping of state name to count, plus `total`.
+        """
+
+        return self.connector.db.get_review_queue_progress(
+            review_queue_id=review_queue_id
+        )
+
+    def claim_next_review_item(
+        self,
+        review_queue_id: review_schema.ReviewQueueID,
+        reviewer: Optional[str] = None,
+    ) -> Optional[review_schema.ReviewItem]:
+        """Claim the next item to review.
+
+        Work is pulled, never pushed. The claim is a single conditional update,
+        so two callers cannot both claim the same item. A claim that has aged
+        past the queue's `stale_claim_seconds` is only recovered when someone
+        asks for work — there is no background reaper.
+
+        Args:
+            review_queue_id: Queue to pull from.
+            reviewer: Caller label to record against the claim. This is a
+                label, not an authenticated identity.
+
+        Returns:
+            The claimed [ReviewItem][trulens.core.schema.review.ReviewItem], or
+            `None` when the queue has nothing available.
+        """
+
+        return self.connector.db.claim_next_review_item(
+            review_queue_id=review_queue_id, reviewer=reviewer
+        )
+
+    def release_review_item(
+        self,
+        review_item: Union[
+            review_schema.ReviewItem, review_schema.ReviewItemID
+        ],
+        claim_token: Optional[str] = None,
+    ) -> review_schema.ReviewItem:
+        """Put a claimed item back in the queue, unclaimed.
+
+        Args:
+            review_item: The item, or its id.
+            claim_token: Token of the claim being released.
+
+        Returns:
+            The updated item.
+        """
+
+        return self._transition_review_item(
+            review_item,
+            review_schema.ReviewItemState.PENDING,
+            claim_token,
+        )
+
+    def skip_review_item(
+        self,
+        review_item: Union[
+            review_schema.ReviewItem, review_schema.ReviewItemID
+        ],
+        claim_token: Optional[str] = None,
+    ) -> review_schema.ReviewItem:
+        """Take an item out of circulation without reviewing it.
+
+        Args:
+            review_item: The item, or its id.
+            claim_token: Token of the claim being skipped.
+
+        Returns:
+            The updated item.
+        """
+
+        return self._transition_review_item(
+            review_item,
+            review_schema.ReviewItemState.SKIPPED,
+            claim_token,
+        )
+
+    def mark_review_item_unavailable(
+        self,
+        review_item: Union[
+            review_schema.ReviewItem, review_schema.ReviewItemID
+        ],
+        claim_token: Optional[str] = None,
+    ) -> review_schema.ReviewItem:
+        """Mark an item whose source trace can no longer be loaded.
+
+        The item stays visible in the queue rather than disappearing, so a
+        missing target is something a reviewer can see and account for.
+
+        Args:
+            review_item: The item, or its id.
+            claim_token: Token of the claim being resolved.
+
+        Returns:
+            The updated item.
+        """
+
+        return self._transition_review_item(
+            review_item,
+            review_schema.ReviewItemState.UNAVAILABLE,
+            claim_token,
+        )
+
+    def _transition_review_item(
+        self,
+        review_item: Union[
+            review_schema.ReviewItem, review_schema.ReviewItemID
+        ],
+        state: review_schema.ReviewItemState,
+        claim_token: Optional[str] = None,
+        current_review_id: Optional[review_schema.HumanReviewID] = None,
+    ) -> review_schema.ReviewItem:
+        """Move an item to `state`, accepting either an item or an id."""
+
+        if isinstance(review_item, review_schema.ReviewItem):
+            review_item_id = review_item.review_item_id
+            if claim_token is None:
+                claim_token = review_item.claim_token
+        else:
+            review_item_id = review_item
+
+        return self.connector.db.update_review_item_state(
+            review_item_id=review_item_id,
+            state=state,
+            claim_token=claim_token,
+            current_review_id=current_review_id,
+        )
+
+    def submit_human_review(
+        self,
+        target: Union[review_schema.ReviewTarget, str],
+        verdict: Union[review_schema.Verdict, str],
+        score: Optional[float] = None,
+        failure_type: Optional[Union[review_schema.FailureType, str]] = None,
+        corrected_output: Optional[str] = None,
+        notes: Optional[str] = None,
+        reviewer: Optional[str] = None,
+        review_item: Optional[
+            Union[review_schema.ReviewItem, review_schema.ReviewItemID]
+        ] = None,
+        review_queue_id: Optional[review_schema.ReviewQueueID] = None,
+    ) -> review_schema.HumanReview:
+        """Record a reviewer's decision about a target.
+
+        Reviews are never edited in place. Submitting again for the same target
+        and reviewer writes a new row that points at the one it replaces, so
+        the full history is preserved and different reviewer labels can review
+        the same target independently.
+
+        Queued and direct reviews use the same persistence model; passing
+        `review_item` additionally completes that queue item.
+
+        Example:
+            ```python
+            item = session.claim_next_review_item(queue.review_queue_id)
+            session.submit_human_review(
+                target=item.target,
+                verdict="fail",
+                score=0.25,
+                failure_type="retrieval",
+                corrected_output="Use only the retrieved support policy.",
+                notes="The answer relies on an unrelated policy page.",
+                reviewer="josh",
+            )
+            ```
+
+        Args:
+            target: What was reviewed. A
+                [ReviewTarget][trulens.core.schema.review.ReviewTarget], or a
+                record id.
+            verdict: `pass`, `fail`, or `needs_review`. Required.
+            score: Normalized quality score within `[0.0, 1.0]`.
+            failure_type: One of `retrieval`, `generation`, `tool`, `planning`,
+                `safety`, `other`.
+            corrected_output: Reviewer-provided expected output.
+            notes: Free-form rationale.
+            reviewer: Caller-supplied reviewer label.
+            review_item: Queue item to complete alongside the review.
+            review_queue_id: Queue to attribute the review to. Taken from
+                `review_item` when that is given.
+
+        Returns:
+            The persisted
+            [HumanReview][trulens.core.schema.review.HumanReview].
+
+        Raises:
+            ValueError: If `verdict`, `failure_type` or `score` is invalid.
+        """
+
+        if isinstance(target, review_schema.ReviewTarget):
+            target_type = target.target_type
+            target_id = target.target_id
+        else:
+            target_type = review_schema.ReviewTargetType.RECORD
+            target_id = target
+
+        verdict = _coerce_review_enum(verdict, review_schema.Verdict, "verdict")
+        failure_type = _coerce_review_enum(
+            failure_type, review_schema.FailureType, "failure_type"
+        )
+
+        if isinstance(review_item, review_schema.ReviewItem):
+            review_queue_id = review_queue_id or review_item.review_queue_id
+
+        # An edit supersedes this reviewer's current review of the target.
+        previous = self.connector.db.get_latest_human_review(
+            target_type=target_type, target_id=target_id, reviewer=reviewer
+        )
+
+        review = review_schema.HumanReview(
+            target_id=target_id,
+            target_type=target_type,
+            verdict=verdict,
+            score=score,
+            failure_type=failure_type,
+            corrected_output=corrected_output,
+            notes=notes,
+            reviewer=reviewer,
+            review_queue_id=review_queue_id,
+            supersedes_id=previous.human_review_id if previous else None,
+        )
+        self.connector.db.insert_human_review(human_review=review)
+
+        if review_item is not None:
+            self._transition_review_item(
+                review_item,
+                review_schema.ReviewItemState.COMPLETED,
+                current_review_id=review.human_review_id,
+            )
+
+        return review
+
+    def get_human_reviews(
+        self,
+        review_queue_id: Optional[review_schema.ReviewQueueID] = None,
+        target_id: Optional[str] = None,
+        reviewer: Optional[str] = None,
+        include_superseded: bool = True,
+    ) -> pandas.DataFrame:
+        """Get human reviews as a dataframe, ready for CSV or JSON export.
+
+        Args:
+            review_queue_id: Only reviews from this queue.
+            target_id: Only reviews of this target.
+            reviewer: Only reviews by this reviewer label.
+            include_superseded: Whether to include replaced reviews. Pass
+                `False` for just the current decision on each target.
+
+        Returns:
+            A dataframe with one row per review.
+        """
+
+        return self.connector.db.get_human_reviews(
+            review_queue_id=review_queue_id,
+            target_id=target_id,
+            reviewer=reviewer,
+            include_superseded=include_superseded,
+        )
+
+    def delete_review_queue(
+        self, review_queue_id: review_schema.ReviewQueueID
+    ) -> None:
+        """Delete a queue and its items.
+
+        Reviews and the source traces the queue pointed at are left alone.
+
+        Args:
+            review_queue_id: Queue to delete.
+        """
+
+        self.connector.db.delete_review_queue(review_queue_id=review_queue_id)
 
     def start_evaluator(
         self,
