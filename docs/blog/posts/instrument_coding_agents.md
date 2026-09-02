@@ -14,7 +14,7 @@ Coding agents are quickly becoming the most common way people interact with LLMs
 
 ## Why This Exists
 
-Cursor, Claude Code, and OpenCode already fire structured lifecycle events on prompt submission, tool use, file edits, and stop. Claude Code and Cursor use JSON hook commands; OpenCode has a native plugin API. TruLens hooks into those event streams and assembles them into traces — the same trace format and evaluation pipeline we use for any other agent, applied to coding agents.
+Cursor, Claude Code, and OpenCode already fire structured lifecycle events on prompt submission, tool use, file edits, and stop. Claude Code and Cursor use JSON hook commands; OpenCode has a native plugin API. TruLens hooks into those event streams and assembles them into traces using the same trace format and evaluation pipeline we use for any other agent.
 
 ## Install a Client
 
