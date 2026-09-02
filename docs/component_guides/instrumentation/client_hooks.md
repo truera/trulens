@@ -183,8 +183,6 @@ Agent span
 Existing input/output and trace-level selectors work without client-specific
 logic. Coding-agent-only metadata such as client name, native hook event, editor
 version, workspace, and diff is defined centrally in `trulens-otel-semconv`.
-See [Evaluating Coding-Agent Hook Traces](coding_agent_evals.md) for how
-post-hoc metrics would run on those records.
 
 Official OTEL GenAI conventions are used for model inference, structured
 messages, token usage, and tool execution. TruLens record/evaluation fields and

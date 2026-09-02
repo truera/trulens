@@ -11,6 +11,15 @@ nav = mkdocs_gen_files.Nav()
 root = Path(__file__).parent.parent
 src = root / "src"
 
+
+def _ancestors(directory: Path, stop: Path):
+    """Yield directories from *directory* up to (excluding) *stop*."""
+    d = directory
+    while d != stop and d != d.parent:
+        yield d
+        d = d.parent
+
+
 docs_reference_path = Path("reference")
 
 mod_symbol = '<code class="doc-symbol doc-symbol-nav doc-symbol-module"></code>'
@@ -165,10 +174,18 @@ for package in packages:
         ]:
             # Write core apps. Pass to skip the next condition.
             pass
-        elif not os.path.exists(path.parent / "__init__.py"):
+        elif not all(
+            os.path.exists(d / "__init__.py")
+            for d in _ancestors(path.parent, package_path)
+        ):
+            missing = next(
+                d / "__init__.py"
+                for d in _ancestors(path.parent, package_path)
+                if not os.path.exists(d / "__init__.py")
+            )
             print(
                 "Skipping due to missing __init__.py: ",
-                path.parent / "__init__.py",
+                missing,
             )
             continue
 
