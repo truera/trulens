@@ -82,6 +82,7 @@ class RunDao(RunDaoBase):
         label: Optional[str] = "",
         llm_judge_name: Optional[str] = "",
         mode: Optional[Mode] = Mode.APP_INVOCATION,
+        dataset_version_id: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Create a new RunMetadata entity in Snowflake.
@@ -99,6 +100,8 @@ class RunDao(RunDaoBase):
             label: A label for the run.
             llm_judge_name: The name of the LLM judge to use for the evaluation, when applicable.
             mode: The mode of operation (LOG_INGESTION or APP_INVOCATION).
+            dataset_version_id: The id of the immutable dataset version the
+                run is pinned to, when one was selected.
 
         Returns:
             The result of the Snowflake SQL execution - returning a success message but not the created entity.
@@ -138,6 +141,11 @@ class RunDao(RunDaoBase):
                 f"Invalid source type: {source_type}. Choose from {SourceType.__members__.values()}"
             )
         source_info_dict["source_type"] = source_type
+
+        if dataset_version_id:
+            # Only sent when a version is actually pinned, so the payload of
+            # an unversioned run is unchanged.
+            source_info_dict["dataset_version_id"] = dataset_version_id
 
         req_payload["source_info"] = source_info_dict
 

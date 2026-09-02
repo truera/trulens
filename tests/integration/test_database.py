@@ -39,6 +39,7 @@ from trulens.core.database import sqlalchemy as sqlalchemy_db
 from trulens.core.database import utils as db_utils
 from trulens.core.feedback import provider as core_provider
 from trulens.core.metric import metric as core_metric
+from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as select_schema
 
@@ -183,6 +184,21 @@ class TestDbV2Migration(TestCase):
         """Test database consistency after migration to mysql."""
         with clean_db("mysql") as db:
             _test_db_consistency(self, db)
+
+    def test_dataset_version_persistence_sqlite_file(self) -> None:
+        """Test dataset version persistence on sqlite."""
+        with clean_db("sqlite_file") as db:
+            _test_dataset_version_persistence(self, db)
+
+    def test_dataset_version_persistence_postgres(self) -> None:
+        """Test dataset version persistence on postgres."""
+        with clean_db("postgres") as db:
+            _test_dataset_version_persistence(self, db)
+
+    def test_dataset_version_persistence_mysql(self) -> None:
+        """Test dataset version persistence on mysql."""
+        with clean_db("mysql") as db:
+            _test_dataset_version_persistence(self, db)
 
     def test_future_db(self) -> None:
         """Check handling of database that is newer than the current
@@ -464,6 +480,88 @@ def _test_db_consistency(test: TestCase, db: sqlalchemy_db.SQLAlchemyDB):
             1,
             "Expected a feedback definition.",
         )
+
+
+def _test_dataset_version_persistence(
+    test: TestCase, db: sqlalchemy_db.SQLAlchemyDB
+):
+    """Dataset versions must round-trip identically on every backend.
+
+    Content-addressed ids are only useful if the same content produces the same
+    id after a write and a read, which is a property of the storage layer as
+    much as of the hashing.
+    """
+
+    db.migrate_database()  # ensure latest revision
+
+    dataset_id = db.insert_dataset(dataset_schema.Dataset(name="persisted"))
+
+    items = [
+        dataset_schema.DatasetVersionItem(
+            input="what is trulens?",
+            input_id="case-1",
+            expected_response="an evaluation library",
+            expected_contexts=[{"text": "docs"}],
+            meta={"topic": "product"},
+            splits=["regression"],
+        ),
+        dataset_schema.DatasetVersionItem(
+            input="how do i install it?",
+            expected_response="pip install trulens",
+        ),
+    ]
+    version = dataset_schema.DatasetVersion(
+        dataset_id=dataset_id,
+        items=items,
+        description="persistence contract",
+        source_meta={"dataset_name": "persisted"},
+        created_at=1.5,
+    )
+
+    dataset_version_id = db.insert_dataset_version(version)
+    test.assertEqual(dataset_version_id, version.dataset_version_id)
+
+    # Publishing identical content again is idempotent.
+    test.assertEqual(
+        db.insert_dataset_version(
+            dataset_schema.DatasetVersion(
+                dataset_id=dataset_id,
+                items=[
+                    dataset_schema.DatasetVersionItem(
+                        input=item.input,
+                        input_id=item.input_id,
+                        expected_response=item.expected_response,
+                        expected_contexts=item.expected_contexts,
+                        meta=item.meta,
+                        splits=item.splits,
+                    )
+                    for item in items
+                ],
+                source_meta={"dataset_name": "persisted"},
+                created_at=99.0,
+            )
+        ),
+        dataset_version_id,
+    )
+    test.assertEqual(len(db.get_dataset_versions(dataset_name="persisted")), 1)
+
+    loaded = db.get_dataset_version(dataset_version_id=dataset_version_id)
+    test.assertEqual(loaded.content_hash, version.content_hash)
+    test.assertEqual(loaded.item_count, 2)
+    test.assertEqual(loaded.version_index, 0)
+    test.assertEqual(loaded.description, "persistence contract")
+    test.assertEqual(loaded.created_at, 1.5)
+    test.assertEqual(
+        [item.item_id for item in loaded.items],
+        [item.item_id for item in items],
+    )
+    test.assertEqual(loaded.items[0].splits, ["regression"])
+    test.assertEqual(loaded.items[0].meta, {"topic": "product"})
+    test.assertEqual(loaded.items[0].expected_contexts, [{"text": "docs"}])
+    test.assertIsNone(loaded.items[1].input_id)
+
+    # The reloaded snapshot hashes to the id it was stored under.
+    test.assertEqual(loaded.compute_hash(), version.content_hash)
 
 
 def _populate_data(db: core_db.DB):

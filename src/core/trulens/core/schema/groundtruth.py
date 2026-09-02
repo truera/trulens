@@ -8,6 +8,7 @@ from typing import Dict, Hashable, Optional, Sequence
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import ValidationError
+from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import serial as serial_utils
@@ -116,6 +117,63 @@ class GroundTruth(serial_utils.SerialModel, Hashable):
 
     def __hash__(self):
         return hash(self.ground_truth_id)
+
+
+def dataset_version_item_of_ground_truth(
+    ground_truth: GroundTruth,
+    splits: Optional[Sequence[str]] = None,
+) -> dataset_schema.DatasetVersionItem:
+    """Convert a ground truth entry into a dataset version item.
+
+    `GroundTruth` remains supported as a compatibility input shape; this is the
+    mapping used to reconstruct version zero from rows written before
+    versioning existed.
+
+    Args:
+        ground_truth: The ground truth entry to convert.
+        splits: Names of the splits the resulting item belongs to.
+
+    Returns:
+        The equivalent
+        [DatasetVersionItem][trulens.core.schema.dataset.DatasetVersionItem].
+    """
+
+    return dataset_schema.DatasetVersionItem(
+        input=ground_truth.query,
+        input_id=ground_truth.query_id,
+        expected_response=ground_truth.expected_response,
+        expected_contexts=ground_truth.expected_chunks,
+        meta=ground_truth.meta,
+        splits=splits,
+    )
+
+
+def ground_truth_of_dataset_version_item(
+    item: dataset_schema.DatasetVersionItem,
+    dataset_id: types_schema.DatasetID,
+) -> GroundTruth:
+    """Convert a dataset version item back into a ground truth entry.
+
+    `GroundTruth` remains supported as a compatibility output shape, so code
+    that already consumes ground truths keeps working against versioned data.
+
+    Args:
+        item: The dataset version item to convert.
+        dataset_id: The dataset the resulting ground truth belongs to.
+
+    Returns:
+        The equivalent
+        [GroundTruth][trulens.core.schema.groundtruth.GroundTruth].
+    """
+
+    return GroundTruth(
+        dataset_id=dataset_id,
+        query=item.input or "",
+        query_id=item.input_id,
+        expected_response=item.expected_response,
+        expected_chunks=item.expected_contexts,
+        meta=item.meta,
+    )
 
 
 # HACK013: Need these if using __future__.annotations .

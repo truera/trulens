@@ -90,6 +90,23 @@ DatasetID: TypeAlias = str
 By default these are hashes of dataset content as json.
 """
 
+DatasetVersionID: TypeAlias = str
+"""Unique identifier for an immutable dataset version.
+
+These are content-addressed: the id is a hash of the ordered contents of the
+version, so publishing identical content twice yields the same id. See
+[DatasetVersion.dataset_version_id][trulens.core.schema.dataset.DatasetVersion.dataset_version_id].
+"""
+
+DatasetVersionItemID: TypeAlias = str
+"""Unique identifier for a single example within a dataset version.
+
+These are content-addressed from the normalized example content and the
+optional caller-supplied input id, so the same example carries the same id
+across versions. See
+[DatasetVersionItem.item_id][trulens.core.schema.dataset.DatasetVersionItem.item_id].
+"""
+
 EventID: TypeAlias = str
 """Unique identifier for a event.
 """
