@@ -4,19 +4,17 @@ categories:
 date: 2026-09-01
 ---
 
-# Instrument Coding Agents: Trace Cursor, Claude Code, and OpenCode with Zero Code Changes
+# Trace Cursor, Claude Code, and OpenCode with TruLens Client Hooks
 
-TruLens can now trace Cursor, Claude Code, and OpenCode sessions by attaching to each client's native lifecycle hooks — no app code, no wrapper, no SDK integration. Install a plugin, point it at a destination, and every prompt, tool call, file edit, shell command, MCP call, and subagent invocation becomes an OTEL trace using the same semantic conventions as any other TruLens app.
+TruLens can now capture traces from Cursor, Claude Code, and OpenCode by plugging into each client's native hook system. Install a plugin, set a destination, and prompts, tool calls, file edits, shell commands, and MCP calls show up as OTEL spans.
 
 <!-- more -->
 
 ---
 
-## The Problem
+## Why This Exists
 
-Coding agents aren't apps you instrument — they're binaries you install. There's no `chain.invoke()` to wrap, no import to monkeypatch. If you want to know what Cursor, Claude Code, or OpenCode actually did during a session — which tools ran, which files changed, whether a shell command failed, what the model returned — you're stuck reading raw JSONL transcripts or nothing at all.
-
-Each of these clients already emits lifecycle events: Claude Code and Cursor fire JSON hook commands on prompt submission, tool use, and stop; OpenCode exposes a native plugin API. TruLens now listens to those events directly.
+Cursor, Claude Code, and OpenCode don't expose a Python entry point you can wrap. They're installed binaries. But each one already fires structured lifecycle events on prompt submission, tool use, file edits, and stop. Claude Code and Cursor use JSON hook commands; OpenCode has a native plugin API. TruLens hooks into those existing event streams and assembles them into traces.
 
 ## Install a Client
 
@@ -26,9 +24,9 @@ trulens-client-hooks install cursor --dry-run
 trulens-client-hooks install cursor
 ```
 
-Same pattern for `trulens-apps-claude` and `trulens-apps-opencode`. The shared runtime lives in `trulens-core`; each client package is a thin plugin with only its native hook contract. OpenCode doesn't use JSON hooks, so its installer writes a managed plugin file that forwards native lifecycle events to `trulens-client-hooks ingest` instead.
+Same pattern for `trulens-apps-claude` and `trulens-apps-opencode`. Each client package is a thin plugin on top of the shared runtime in `trulens-core`. OpenCode uses a managed plugin file instead of JSON hooks; the installer handles that.
 
-Add `--project` to install into the current repo instead of the user's global config. The installer preserves any hooks you already have, writes a backup, and is idempotent.
+Add `--project` to scope installation to the current repo instead of the user's global config. Existing hooks are preserved.
 
 ## Point It at a Destination
 
@@ -67,13 +65,13 @@ Agent span
 
 ![A Cursor coding session traced by TruLens, showing the agent span with model, token usage, and a chain of Read/Grep tool calls](../assets/instrument_coding_agents/cursor_trace.jpeg)
 
-These are ordinary TruLens traces — the existing input/output and trace-level selectors work without any client-specific logic. Model inference, structured messages, token usage, and tool execution use official OTEL GenAI conventions; coding-agent-only concepts (client name, native hook event, editor version, workspace, diffs) live under `ai.observability.*` in `trulens-otel-semconv`.
+These traces use the same selectors and conventions as any other TruLens app. Model inference, token usage, and tool execution follow official OTEL GenAI conventions. Coding-agent-specific fields (client name, editor version, workspace, diffs) live under `ai.observability.*`.
 
-On a Snowflake destination, TruLens also manages [AI Observability](https://docs.snowflake.com/en/user-guide/snowflake-cortex/ai-observability) run lifecycle: each conversation becomes a run, each turn an invocation, driven to `COMPLETED` automatically as spans land. OSS and OTLP destinations skip run management entirely — they just export spans.
+On Snowflake, TruLens also manages [AI Observability](https://docs.snowflake.com/en/user-guide/snowflake-cortex/ai-observability) run lifecycle: each conversation becomes a run, each turn an invocation. OSS and OTLP destinations export spans only.
 
 ## Evaluate the Traces
 
-Hook traces are ordinary TruLens records, so they run through the same evaluation path as any other app — no live wrapper, no `TruApp`. Point a session at the same database the worker exports to, pull the events, and score them offline:
+Since hook traces are standard TruLens records, you can evaluate them the same way you would any other app. Point a session at the database the worker exports to and score offline:
 
 ```python
 from trulens.core import Metric, Selector, TruSession
@@ -105,15 +103,15 @@ session.compute_feedbacks_on_events(
 )
 ```
 
-`Tool Selection` and `Execution Efficiency` score a single turn against its full trace — did the agent pick the right tools, did it take an efficient path to the edit. `Session Coherence` runs `.on_conversation()` instead, scoring whether later turns in the same Cursor/Claude/OpenCode session contradict earlier instructions. `CONVERSATION_ID` is already set from the client's native session ID, so no extra wiring is needed to group turns into a conversation.
+`Tool Selection` and `Execution Efficiency` score each turn against its full trace. `Session Coherence` uses `.on_conversation()` to score multi-turn consistency across a coding session. `CONVERSATION_ID` is already set from the native session ID, so turns group into conversations automatically.
 
 To get useful evals out of this, turn on all three content flags — `TRULENS_CAPTURE_CONTENT`, `TRULENS_CAPTURE_TOOL_PAYLOADS`, and `TRULENS_CAPTURE_DIFFS` — before the session runs. Each gates its own fields independently and all default to off, so `Tool Selection` and `Execution Efficiency` only see what they need — tool names, arguments, and results, not just timing — when the tool-payload flag is on. Content captured after the fact can't be reconstructed, so set these upfront on any session you intend to evaluate.
 
-Scores land in the same leaderboard as everything else in that database, so `(app_name, app_version)` — Cursor 3.x vs. Claude Code vs. OpenCode — is a comparison you get for free.
+Scores land in the same leaderboard, so comparing Cursor vs. Claude Code vs. OpenCode by `(app_name, app_version)` works out of the box.
 
-## Built for a Machine That Can Crash Mid-Session
+## Crash Recovery
 
-Hook invocations return immediately after writing to a locked, durable journal — the coding client is never blocked on export. A detached worker drains the journal, retries transient failures with backoff, and survives process restarts:
+Hook invocations write to a locked local journal and return immediately. A detached worker exports completed turns in the background, retrying transient failures with backoff:
 
 ```bash
 trulens-client-hooks status cursor
@@ -121,9 +119,7 @@ trulens-client-hooks validate
 trulens-client-hooks flush   # synchronous recovery after a crash
 ```
 
-Retried exports are idempotent: re-exporting a journalled turn reuses the same record ID, input ID, trace ID, and (on Snowflake) run name rather than creating a duplicate.
-
-Runtime hooks fail open — telemetry errors go to stderr and never block the coding client itself.
+Retried exports reuse the same record ID, input ID, and trace ID, so duplicates aren't created. Hooks fail open: telemetry errors go to stderr and never block the coding client.
 
 ## Get Started
 
