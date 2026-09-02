@@ -410,7 +410,7 @@ class TruApp(core_app.App):
             # Check whether the path/location of the method is in json serialization and
             # if not, add a placeholder to app_extra_json.
             try:
-                next(full_path(json))
+                next(full_path.get(json))
 
                 print(
                     f"{text_utils.UNICODE_CHECK} Added method {m.__name__} under component at path {full_path}"
