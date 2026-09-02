@@ -83,7 +83,7 @@ plugins:
           import:
             # These allow for links to types defined by various packages.
             - https://docs.python.org/3/objects.inv
-            - https://docs.scipy.org/doc/numpy/objects.inv
+            - https://numpy.org/doc/stable/objects.inv
             - http://pandas.pydata.org/pandas-docs/stable/objects.inv
             - https://docs.pydantic.dev/latest/objects.inv
             - https://typing-extensions.readthedocs.io/en/latest/objects.inv
