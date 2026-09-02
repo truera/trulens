@@ -753,7 +753,7 @@ class OpenAI(llm_provider.LLMProvider):
         return float(openai_response.category_scores.harassment)
 
     def moderation_harassment_threatening(self, text: str) -> float:
-        """A function that checks if text is about graphic violence.
+        """A function that checks if text is about harassment/threatening.
 
         Example:
             ```python
@@ -779,7 +779,7 @@ class OpenAI(llm_provider.LLMProvider):
         """
         openai_response = self._moderation(text)
 
-        return float(openai_response.category_scores.harassment)
+        return float(openai_response.category_scores.harassment_threatening)
 
 
 class AzureOpenAI(OpenAI):
