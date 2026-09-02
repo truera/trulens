@@ -38,15 +38,21 @@ trulens-dashboard = { version = "^2.0.0", extras = [
   "full",
 ] }
 trulens-otel-semconv = { version = "^2.0.0" }
+opentelemetry-exporter-otlp-proto-grpc = { version = ">=1.23.0", optional = true }
 # Remove after deprecation period:
 trulens_eval = { version = "^2.0.0" }
+
+[tool.poetry.extras]
+otlp = [
+  "opentelemetry-exporter-otlp-proto-grpc",
+]
 
 [tool.poetry.group.benchmark.dependencies]
 trulens-benchmark = { path = "src/benchmark", develop = true }
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.5"
-ruff = ">=0.5"
+ruff = "0.16.3"
 mypy = "^1.11"
 build = "^1.2"
 twine = "^6.0"
@@ -74,6 +80,9 @@ mkdocs-literate-nav = ">=0.6"
 mkdocs-section-index = ">=0.3"
 
 [tool.poetry.group.apps.dependencies]
+trulens-apps-claude = { path = "src/apps/claude", develop = true }
+trulens-apps-cursor = { path = "src/apps/cursor", develop = true }
+trulens-apps-opencode = { path = "src/apps/opencode", develop = true }
 trulens-apps-langchain = { path = "src/apps/langchain", develop = true }
 trulens-apps-langgraph = { path = "src/apps/langgraph", develop = true }
 trulens-apps-llamaindex = { path = "src/apps/llamaindex", develop = true }
@@ -87,6 +96,7 @@ trulens-providers-langchain = { path = "src/providers/langchain", develop = true
 trulens-providers-cortex = { path = "src/providers/cortex", develop = true, python = "<3.14" }
 trulens-providers-huggingface = { path = "src/providers/huggingface", develop = true }
 trulens-providers-openai = { path = "src/providers/openai", develop = true }
+trulens-providers-ollama = { path = "src/providers/ollama", develop = true }
 trulens-providers-litellm = { path = "src/providers/litellm", develop = true }
 trulens-providers-google = { path = "src/providers/google", develop = true, python = ">3.9" }
 trulens-providers-anthropic = { path = "src/providers/anthropic", develop = true }
@@ -125,6 +135,16 @@ preview = true
 
 [tool.ruff.lint]
 preview = true
+# 0.16 ships a far larger default selection than the 0.5.x this repository was
+# formatted under: 413 rules against 60 with no configuration at all. Nothing
+# here ever chose that surface, so state the old default explicitly rather than
+# inherit a new one on a version bump. Adopting more is a separate decision.
+select = [
+  "E4",
+  "E7",
+  "E9",
+  "F",
+]
 ignore = [
   "E731",
 ]

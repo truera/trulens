@@ -25,13 +25,16 @@ def download_and_unzip(url: str, out_dir: str, chunk_size: int = 1024) -> str:
         """
         r = requests.get(url, stream=True)
         total = int(r.headers.get("Content-Length", 0))
-        with open(save_path, "wb") as fd, tqdm(
-            desc=save_path,
-            total=total,
-            unit="iB",
-            unit_scale=True,
-            unit_divisor=chunk_size,
-        ) as bar:
+        with (
+            open(save_path, "wb") as fd,
+            tqdm(
+                desc=save_path,
+                total=total,
+                unit="iB",
+                unit_scale=True,
+                unit_divisor=chunk_size,
+            ) as bar,
+        ):
             for data in r.iter_content(chunk_size=chunk_size):
                 size = fd.write(data)
                 bar.update(size)

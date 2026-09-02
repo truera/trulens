@@ -43,7 +43,8 @@ class _TestApp:
                 )
             if "openai" == llm_backend:
                 ret.append(
-                    self._openai_client.chat.completions.create(
+                    self._openai_client.chat.completions
+                    .create(
                         model="gpt-3.5-turbo-0125",
                         temperature=0,
                         messages=[
@@ -58,7 +59,8 @@ class _TestApp:
                 )
             if "litellm" == llm_backend:
                 ret.append(
-                    litellm.completion(
+                    litellm
+                    .completion(
                         model="gemini/gemini-2.0-flash-exp",
                         temperature=0,
                         messages=[

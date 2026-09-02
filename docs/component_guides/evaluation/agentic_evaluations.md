@@ -212,13 +212,41 @@ session = TruSession()
 provider = OpenAI()
 
 feedbacks = [
-    Metric(provider.logical_consistency_with_cot_reasons, name="Logical Consistency", selectors={"trace": Selector(trace_level=True)}),
-    Metric(provider.execution_efficiency_with_cot_reasons, name="Execution Efficiency", selectors={"trace": Selector(trace_level=True)}),
-    Metric(provider.plan_adherence_with_cot_reasons, name="Plan Adherence", selectors={"trace": Selector(trace_level=True)}),
-    Metric(provider.plan_quality_with_cot_reasons, name="Plan Quality", selectors={"trace": Selector(trace_level=True)}),
-    Metric(provider.tool_selection_with_cot_reasons, name="Tool Selection", selectors={"trace": Selector(trace_level=True)}),
-    Metric(provider.tool_calling_with_cot_reasons, name="Tool Calling", selectors={"trace": Selector(trace_level=True)}),
-    Metric(provider.tool_quality_with_cot_reasons, name="Tool Quality", selectors={"trace": Selector(trace_level=True)}),
+    Metric(
+        provider.logical_consistency_with_cot_reasons,
+        name="Logical Consistency",
+        selectors={"trace": Selector(trace_level=True)},
+    ),
+    Metric(
+        provider.execution_efficiency_with_cot_reasons,
+        name="Execution Efficiency",
+        selectors={"trace": Selector(trace_level=True)},
+    ),
+    Metric(
+        provider.plan_adherence_with_cot_reasons,
+        name="Plan Adherence",
+        selectors={"trace": Selector(trace_level=True)},
+    ),
+    Metric(
+        provider.plan_quality_with_cot_reasons,
+        name="Plan Quality",
+        selectors={"trace": Selector(trace_level=True)},
+    ),
+    Metric(
+        provider.tool_selection_with_cot_reasons,
+        name="Tool Selection",
+        selectors={"trace": Selector(trace_level=True)},
+    ),
+    Metric(
+        provider.tool_calling_with_cot_reasons,
+        name="Tool Calling",
+        selectors={"trace": Selector(trace_level=True)},
+    ),
+    Metric(
+        provider.tool_quality_with_cot_reasons,
+        name="Tool Quality",
+        selectors={"trace": Selector(trace_level=True)},
+    ),
 ]
 ```
 

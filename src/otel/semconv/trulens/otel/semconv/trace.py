@@ -29,6 +29,10 @@ class GenAIAttributes:
     interoperability with the official OpenTelemetry Generative AI
     semantic conventions.
 
+    Only constants present in the linked OpenTelemetry GenAI specification
+    belong in this class. TruLens-specific concepts belong under
+    :class:`SpanAttributes` instead.
+
     See: https://opentelemetry.io/docs/specs/semconv/gen-ai/
     """
 
@@ -47,6 +51,12 @@ class GenAIAttributes:
         TEMPERATURE = GEN_AI_SCOPE + ".request.temperature"
         """Sampling temperature requested."""
 
+    class RESPONSE:
+        """Attributes describing the GenAI response."""
+
+        MODEL = GEN_AI_SCOPE + ".response.model"
+        """Model name that produced the response."""
+
     class USAGE:
         """Token usage reported by the GenAI provider."""
 
@@ -55,6 +65,12 @@ class GenAIAttributes:
 
         OUTPUT_TOKENS = GEN_AI_SCOPE + ".usage.output_tokens"
         """Number of completion/output tokens generated."""
+
+    class PROVIDER:
+        """Current attribute identifying the GenAI provider."""
+
+        NAME = GEN_AI_SCOPE + ".provider.name"
+        """Name of the GenAI provider (e.g. ``openai``)."""
 
     class SYSTEM:
         """Attributes identifying the GenAI provider/system.
@@ -71,7 +87,7 @@ class GenAIAttributes:
         """Name of the GenAI provider (e.g. ``openai``, ``anthropic``)."""
 
     class RETRIEVAL:
-        """Attributes for a retrieval operation."""
+        """Legacy TruLens aliases; not official OTEL GenAI attributes."""
 
         QUERY_TEXT = GEN_AI_SCOPE + ".retrieval.query.text"
         """Query text used for retrieval."""
@@ -85,6 +101,9 @@ class GenAIAttributes:
         NAME = GEN_AI_SCOPE + ".tool.name"
         """Name of the tool being called."""
 
+        CALL_ID = GEN_AI_SCOPE + ".tool.call.id"
+        """Provider-assigned identifier for the tool call."""
+
         CALL_ARGUMENTS = GEN_AI_SCOPE + ".tool.call.arguments"
         """Arguments passed to the tool (JSON-serialised)."""
 
@@ -96,6 +115,10 @@ class GenAIEvents:
     """OTEL GenAI semantic convention event names and event attribute keys.
 
     See: https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-events/
+
+    ``CLIENT_INFERENCE_OPERATION_DETAILS`` and its input/output message
+    attributes are official OTEL GenAI conventions. Retrieval event constants
+    below are legacy TruLens aliases and must not be used for new telemetry.
     """
 
     CLIENT_INFERENCE_OPERATION_DETAILS = (
@@ -138,6 +161,12 @@ class GenAIEvents:
 
 
 class ResourceAttributes:
+    """TruLens application-routing attributes carried on every app span.
+
+    Despite the historical class name, these are ``ai.observability.*``
+    extensions rather than standard OpenTelemetry resource attributes.
+    """
+
     APP_ID = BASE_SCOPE + ".app_id"
     """ID of the app that the span belongs to."""
 
@@ -146,6 +175,23 @@ class ResourceAttributes:
 
     APP_VERSION = BASE_SCOPE + ".app_version"
     """Name of the version that the span belongs to."""
+
+
+class ServerAttributes:
+    """Standard OpenTelemetry server attributes."""
+
+    ADDRESS = "server.address"
+    """Server network address."""
+
+    PORT = "server.port"
+    """Server network port."""
+
+
+class ErrorAttributes:
+    """Standard OpenTelemetry error attributes."""
+
+    TYPE = "error.type"
+    """Error type or class name."""
 
 
 class SpanAttributes:
@@ -445,6 +491,34 @@ class SpanAttributes:
         CHUNKS_RECEIVED = base + ".chunks_received"
         """Number of chunks received over the stream."""
 
+    class PROMPT:
+        """Lineage back to a managed prompt version.
+
+        These identify which stored prompt produced a generation. They are
+        identifiers and hashes only, so lineage works whether or not GenAI
+        content capture is on, and no prompt body is copied into the span.
+        """
+
+        base = BASE_SCOPE + ".prompt"
+
+        ID = base + ".id"
+        """Stable id of the prompt."""
+
+        SLUG = base + ".slug"
+        """Stable slug of the prompt."""
+
+        VERSION_ID = base + ".version_id"
+        """Id of the exact version that was used."""
+
+        LABEL = base + ".label"
+        """Label that was requested, when the version came from one.
+
+        Absent when the caller asked for an exact version.
+        """
+
+        RENDERED_CONTENT_HASH = base + ".rendered_content_hash"
+        """Hash of the rendered content, not the content itself."""
+
     class GRAPH_TASK:
         """A graph task function execution."""
 
@@ -535,7 +609,7 @@ class SpanAttributes:
         """Output scores after reranking."""
 
     class MCP:
-        """Attributes relevant for Model Context Protocol (MCP) tool calls."""
+        """TruLens MCP extensions used where OTEL has no MCP convention."""
 
         base = BASE_SCOPE + ".mcp"
 
@@ -562,6 +636,26 @@ class SpanAttributes:
 
         EXECUTION_TIME_MS = base + ".execution_time_ms"
         """Time taken to execute the MCP tool call in milliseconds."""
+
+    class CODING_AGENT:
+        """TruLens extensions for coding-agent client instrumentation."""
+
+        base = BASE_SCOPE + ".coding_agent"
+
+        CLIENT = base + ".client"
+        """Coding-agent client name, such as Cursor or Claude Code."""
+
+        NATIVE_EVENT = base + ".native_event"
+        """Native lifecycle event emitted by the coding-agent client."""
+
+        DIFF = base + ".diff"
+        """Source diff or old/new edit pairs captured from an edit event."""
+
+        EDITOR_VERSION = base + ".editor_version"
+        """Version of the coding-agent editor or CLI when available."""
+
+        WORKSPACE = base + ".workspace"
+        """Workspace path or identifier when path capture is enabled."""
 
     class GUARDRAIL:
         """Attributes relevant for guardrail check spans."""
