@@ -6,7 +6,7 @@ date: 2026-09-01
 
 # Trace Cursor, Claude Code, and OpenCode with TruLens Client Hooks
 
-TruLens can now capture traces from Cursor, Claude Code, and OpenCode by plugging into each client's native hook system. Install a plugin, set a destination, and prompts, tool calls, file edits, shell commands, and MCP calls show up as OTEL spans.
+Coding agents are quickly becoming the most common way people interact with LLMs. TruLens has spent years building evaluation and observability for agents — now we're bringing that to coding agents. This release ships client hooks for Cursor, Claude Code, and OpenCode, with more clients planned. Install a plugin, set a destination, and prompts, tool calls, file edits, shell commands, and MCP calls show up as OTEL spans.
 
 <!-- more -->
 
@@ -14,7 +14,7 @@ TruLens can now capture traces from Cursor, Claude Code, and OpenCode by pluggin
 
 ## Why This Exists
 
-Cursor, Claude Code, and OpenCode already fire structured lifecycle events on prompt submission, tool use, file edits, and stop. Claude Code and Cursor use JSON hook commands; OpenCode has a native plugin API. TruLens hooks into those event streams and assembles them into traces.
+Cursor, Claude Code, and OpenCode already fire structured lifecycle events on prompt submission, tool use, file edits, and stop. Claude Code and Cursor use JSON hook commands; OpenCode has a native plugin API. TruLens hooks into those event streams and assembles them into traces — the same trace format and evaluation pipeline we use for any other agent, applied to coding agents.
 
 ## Install a Client
 
