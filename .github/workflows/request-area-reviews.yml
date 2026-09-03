@@ -1,0 +1,49 @@
+name: Request area reviews
+
+# Routes advisory review requests to the reviewers listed in
+# .github/area-reviewers.yml, based on which paths a pull request changes.
+#
+# CODEOWNERS already does this for Area Reviewers and Maintainers, but GitHub
+# ignores CODEOWNERS entries for accounts without write access — so Area Triagers
+# never get routed anything. This workflow covers that gap.
+#
+# Uses pull_request_target so that pull requests from forks get routed too:
+# pull_request grants a read-only token on fork PRs, which cannot request
+# reviewers. The checkout below takes the base branch, never the pull request's
+# head, so no untrusted code from the fork is executed.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  request-reviews:
+    # Draft pull requests are skipped: routing fires on ready_for_review.
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      # No `ref:` — this checks out the base branch, not the PR head. Do not
+      # change this to check out the pull request's code.
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install --disable-pip-version-check pyyaml
+
+      - name: Request reviews from area reviewers
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: python .github/scripts/request_area_reviews.py

@@ -1,0 +1,41 @@
+name: Certifications
+
+# Checks that the pull request description carries the certification in the pull
+# request template: that the change follows
+# https://www.trulens.org/contributing/standards/
+#
+# Licence provenance is handled separately, by the CLA workflow.
+#
+# Runs on `edited` so that ticking a box re-runs the check, and on `synchronize` so
+# that a passing status always corresponds to the current head commit rather than to
+# whatever the pull request contained when the boxes were ticked.
+#
+# Uses `pull_request` rather than `pull_request_target`: this reads the description
+# from the event payload and needs no token, so the read-only token given to fork
+# pull requests is enough. No pull request code is executed.
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  certifications:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check the certifications
+        env:
+          # Via the environment, not interpolated into the run script, so that a
+          # description containing shell metacharacters cannot affect the command.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: python .github/scripts/check_certifications.py --body "$PR_BODY"
