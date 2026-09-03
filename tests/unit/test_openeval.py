@@ -394,4 +394,9 @@ def test_run_get_records_reserved_columns_contract():
     # silently drift apart from each other, only from the real Run.get_records().
     from trulens.connectors.openeval import _RECORD_OVERVIEW_COLUMNS
 
-    assert _RECORD_OVERVIEW_COLUMNS == {"record_id", "input", "output", "latency"}
+    assert _RECORD_OVERVIEW_COLUMNS == {
+        "record_id",
+        "input",
+        "output",
+        "latency",
+    }
