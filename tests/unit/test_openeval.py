@@ -340,3 +340,58 @@ def test_end_to_end_suite_to_run_to_resultset_round_trip():
 
     suite_ids = {tc["id"] for tc in suite["test_cases"]}
     assert all(r["test_case_id"] in suite_ids for r in result_set["results"])
+
+
+# ---------------------------------------------------------------------------
+# Contract-drift guard: Run.get_records() itself requires a live
+# RunDaoBase/TruSession/app to call (see module docstring), so this can't
+# invoke it directly -- instead it introspects Run.get_records()'s actual
+# source via `inspect`, per Josh Reini's review suggestion on PR #2757
+# (https://github.com/truera/trulens/pull/2757#pullrequestreview-5090097037),
+# so a change to TruLens's reserved-column contract breaks this test at CI
+# time instead of silently producing wrong-shaped output in production.
+# ---------------------------------------------------------------------------
+
+
+def test_run_get_records_reserved_columns_contract():
+    """Guard against Run.get_records() changing its reserved-column set out
+    from under to_openeval()'s _RECORD_OVERVIEW_COLUMNS.
+
+    Run.get_records() (trulens.core.run.Run.get_records) builds its return
+    value as
+    ``record_overview_col_names = ["record_id", "input", "output", "latency"]
+    + metrics_columns`` -- every column other than those four literals is
+    treated as a feedback score. to_openeval()'s default `metric_columns`
+    detection (`_RECORD_OVERVIEW_COLUMNS` in
+    trulens/connectors/openeval/__init__.py) hard-codes the same four names.
+
+    This reads Run.get_records()'s actual source (not a copy of it) and
+    asserts each of those four literals is still present, so if a future
+    TruLens release adds, renames, or removes a reserved column, this test
+    fails loudly instead of to_openeval() silently misclassifying a
+    genuine record-overview column as a feedback score (or vice versa).
+    """
+    import inspect
+
+    from trulens.core.run import Run
+
+    source = inspect.getsource(Run.get_records)
+
+    for reserved_col in ("record_id", "input", "output", "latency"):
+        assert f'"{reserved_col}"' in source, (
+            f"trulens.core.run.Run.get_records() no longer appears to "
+            f"reference the reserved column {reserved_col!r} in its "
+            f"record_overview_col_names construction. "
+            f"trulens.connectors.openeval.to_openeval()'s "
+            f"_RECORD_OVERVIEW_COLUMNS set assumes this column is always "
+            f"present and never a feedback score -- update it in "
+            f"trulens/connectors/openeval/__init__.py to match the new "
+            f"contract before this adapter is used against the new "
+            f"TruLens version."
+        )
+
+    # Cross-check against this module's own assumption so the two can never
+    # silently drift apart from each other, only from the real Run.get_records().
+    from trulens.connectors.openeval import _RECORD_OVERVIEW_COLUMNS
+
+    assert _RECORD_OVERVIEW_COLUMNS == {"record_id", "input", "output", "latency"}

@@ -47,14 +47,7 @@ from datetime import datetime
 from datetime import timezone
 from typing import Any, Dict, List, Optional, Tuple
 
-try:
-    import pandas as pd
-except (
-    ImportError
-) as e:  # pragma: no cover - trulens-core already depends on pandas
-    raise ImportError(
-        "trulens-connectors-openeval requires pandas, which trulens-core already depends on."
-    ) from e
+import pandas as pd
 
 try:
     from openeval.version import OPENEVAL_VERSION
