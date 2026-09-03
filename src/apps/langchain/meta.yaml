@@ -1,6 +1,6 @@
 {% set name = "trulens-apps-langchain" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.13.1" %}
+{% set version = "2.14.0" %}
 
 package:
   name: {{ name|lower }}

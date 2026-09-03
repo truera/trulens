@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-apps-cursor"
-version = "2.13.1"
+version = "2.14.0"
 description = "Cursor hook instrumentation plugin for TruLens."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
