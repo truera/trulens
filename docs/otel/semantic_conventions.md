@@ -265,6 +265,46 @@ attributes used by selectors and evaluations. `gen_ai.input.messages` and
 collectors. They carry the same captured content but have different semantic
 scope and structure.
 
+### Selecting span event attributes
+
+Span events are persisted alongside their span, so event attributes can be
+evaluated directly. Because they live in a separate container from span
+attributes, they need their own selector field rather than `span_attribute`:
+
+```python
+from trulens.core import Metric, Selector
+from trulens.otel.semconv.trace import GenAIEvents, SpanAttributes
+
+metric = Metric(
+    implementation=my_metric,
+    name="Prompt Check",
+    selectors={
+        "messages": Selector(
+            span_type=SpanAttributes.SpanType.GENERATION,
+            span_event_attribute=GenAIEvents.EventAttributes.INPUT_MESSAGES,
+            # Optional; when omitted, every event on the span is searched.
+            span_event_name=GenAIEvents.CLIENT_INFERENCE_OPERATION_DETAILS,
+        ),
+    },
+)
+```
+
+`span_event_attribute` is one of the mutually exclusive extraction modes, so it
+cannot be combined with `span_attribute`, `function_attribute`,
+`span_attributes_processor`, or `dataset_column`. When several events on a span
+carry the attribute, the values arrive as a list and `collect_list` applies as it
+does for any list-valued selection.
+
+The field is named `span_event_attribute` rather than `event_attribute` because
+`Trace.events` already refers to the spans of a trace.
+
+Two caveats. Event attributes are only present when content capture is opted in,
+so a selector reading them scores nothing by default. And span events are
+currently persisted for the local database and OTLP destinations only: the
+Snowflake AI observability event table exposes a fixed column set and does not
+surface span events through `GET_AI_OBSERVABILITY_EVENTS`, so this selector finds
+nothing against a Snowflake-backed session until that backend support lands.
+
 Separately, `gen_ai.tool.name` identifies the logical tool that ran, such as
 `Read`, `Bash`, or `ApplyPatch`. `ai.observability.coding_agent.native_event`
 preserves the coding client's lifecycle hook name. A completed tool span pairs

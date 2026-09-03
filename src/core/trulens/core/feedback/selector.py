@@ -485,9 +485,22 @@ class Selector:
     function_attribute: Optional[str] = None
     conversation_attribute: Optional[str] = None
 
+    # Reads an attribute from the span's OTEL *events* rather than from the
+    # span's attributes. Span events carry GenAI message content such as
+    # `gen_ai.input.messages` and `gen_ai.output.messages`, which are emitted as
+    # events (not attributes) and only when content capture is opted in.
+    # Named `span_event_*` rather than `event_*` because `Trace.events` already
+    # refers to the spans of a trace.
+    span_event_attribute: Optional[str] = None
+
+    # Optionally restrict `span_event_attribute` to events with this name, e.g.
+    # `gen_ai.client.inference.operation.details`. When None, every event on the
+    # span is searched.
+    span_event_name: Optional[str] = None
+
     # If the value extracted from the span is None (i.e. from
-    # `span_attributes_processor`, `span_attribute`, or `function_attribute`),
-    # then whether to ignore it or not.
+    # `span_attributes_processor`, `span_attribute`, `function_attribute`, or
+    # `span_event_attribute`), then whether to ignore it or not.
     ignore_none_values: bool = False
 
     # If this selector describes a list, which of the following two should we
@@ -526,6 +539,8 @@ class Selector:
         span_attribute: Optional[str] = None,
         function_attribute: Optional[str] = None,
         conversation_attribute: Optional[str] = None,
+        span_event_attribute: Optional[str] = None,
+        span_event_name: Optional[str] = None,
         ignore_none_values: bool = False,
         collect_list: bool = True,
         match_only_if_no_ancestor_matched: bool = False,
@@ -552,11 +567,12 @@ class Selector:
                 span_attributes_processor is not None,
                 span_attribute is not None,
                 function_attribute is not None,
+                span_event_attribute is not None,
             ]):
                 raise ValueError(
                     "`dataset_column` cannot be combined with "
-                    "`span_attributes_processor`, `span_attribute`, or "
-                    "`function_attribute`."
+                    "`span_attributes_processor`, `span_attribute`, "
+                    "`function_attribute`, or `span_event_attribute`."
                 )
         elif (
             not trace_level
@@ -565,11 +581,17 @@ class Selector:
                 span_attributes_processor is not None,
                 span_attribute is not None,
                 function_attribute is not None,
+                span_event_attribute is not None,
             ])
             != 1
         ):
             raise ValueError(
-                "Must specify exactly one of `span_attributes_processor`, `span_attribute`, or `function_attribute`!"
+                "Must specify exactly one of `span_attributes_processor`, `span_attribute`, `function_attribute`, or `span_event_attribute`!"
+            )
+        if span_event_name is not None and span_event_attribute is None:
+            raise ValueError(
+                "`span_event_name` only filters `span_event_attribute`, which "
+                "is not set."
             )
         self.trace_level = trace_level
         self.conversation_level = conversation_level
@@ -580,6 +602,8 @@ class Selector:
         self.span_attribute = span_attribute
         self.function_attribute = function_attribute
         self.conversation_attribute = conversation_attribute
+        self.span_event_attribute = span_event_attribute
+        self.span_event_name = span_event_name
         self.ignore_none_values = ignore_none_values
         self.collect_list = collect_list
         self.match_only_if_no_ancestor_matched = (
@@ -674,14 +698,59 @@ class Selector:
             )
         return ret
 
+    def _extract_from_span_events(
+        self, span_events: Optional[List[Dict[str, Any]]]
+    ) -> Any:
+        """Read `span_event_attribute` from a span's OTEL events.
+
+        Args:
+            span_events: The span's serialised events, as stored under
+                `record["events"]`.
+
+        Returns:
+            The single matching value, a list when several events match, or
+            None when nothing matches.
+        """
+        values = []
+        for event in span_events or ():
+            if not isinstance(event, dict):
+                continue
+            if (
+                self.span_event_name is not None
+                and event.get("name") != self.span_event_name
+            ):
+                continue
+            event_attributes = event.get("attributes") or {}
+            if self.span_event_attribute in event_attributes:
+                values.append(event_attributes[self.span_event_attribute])
+        if not values:
+            return None
+        # A single match is returned bare so feedback functions receive a scalar
+        # rather than a one-element list; several matches behave like any other
+        # list-valued selection and honour `collect_list`.
+        return values[0] if len(values) == 1 else values
+
     def process_span(
-        self, span_id: str, attributes: Dict[str, Any]
+        self,
+        span_id: str,
+        attributes: Dict[str, Any],
+        span_events: Optional[List[Dict[str, Any]]] = None,
     ) -> FeedbackFunctionInput:
         ret = FeedbackFunctionInput(
             span_id=span_id, collect_list=self.collect_list
         )
         if self.span_attributes_processor is not None:
             ret.value = self.span_attributes_processor(attributes)
+        elif self.span_event_attribute is not None:
+            # Record where the value came from so evaluation provenance and the
+            # already-computed check can distinguish it from a span attribute of
+            # the same name.
+            ret.span_attribute = (
+                f"{self.span_event_name}/{self.span_event_attribute}"
+                if self.span_event_name is not None
+                else f"event/{self.span_event_attribute}"
+            )
+            ret.value = self._extract_from_span_events(span_events)
         else:
             if self.span_attribute is not None:
                 ret.span_attribute = self.span_attribute
@@ -692,7 +761,7 @@ class Selector:
                     ret.span_attribute = f"{SpanAttributes.CALL.KWARGS}.{self.function_attribute}"
             elif not self.trace_level and not self.conversation_level:
                 raise ValueError(
-                    "None of `span_attributes_processor`, `span_attribute`, or `function_attribute` are set!"
+                    "None of `span_attributes_processor`, `span_attribute`, `function_attribute`, or `span_event_attribute` are set!"
                 )
             ret.value = attributes.get(ret.span_attribute, None)
         return ret
