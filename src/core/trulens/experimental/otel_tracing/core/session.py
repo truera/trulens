@@ -289,6 +289,12 @@ class _TruSession(core_session.TruSession):
 
     @staticmethod
     def _track_costs():
+        from trulens.experimental.otel_tracing.core.auto_instrument import (
+            auto_instrument_all_llms,
+        )
+
+        auto_instrument_all_llms()
+
         if _can_import("trulens.providers.cortex.endpoint"):
             from trulens.providers.cortex.endpoint import (
                 register_otel_cost_tracking,

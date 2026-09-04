@@ -366,6 +366,19 @@ class TruSession(
 
             _TruSession._start_track_costs_background()
 
+    def auto_instrument_llm(self) -> None:
+        """Auto-instrument any LLM call across detected SDK clients (OpenAI, Anthropic, Google GenAI, Bedrock, LiteLLM).
+
+        Hooks completion methods at the client/completion layer and emits
+        SpanType.GENERATION spans with gen_ai.* attributes, cost, and span events
+        without requiring a framework wrapper or manual @instrument decorators.
+        """
+        from trulens.experimental.otel_tracing.core.auto_instrument import (
+            auto_instrument_all_llms,
+        )
+
+        auto_instrument_all_llms()
+
     # -- Sampling / online-eval configuration --------------------------------
 
     @property
