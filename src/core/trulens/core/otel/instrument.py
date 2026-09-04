@@ -419,7 +419,7 @@ def _finalize_span(
             only_set_user_defined_attributes=only_set_user_defined_attributes,
         )
     except Exception as e:
-        logger.error(f"Error finalizing span during cancellation. {e}")
+        logger.error(f"Error setting attributes: {e}")
         attributes_exception = e
     for span_end_callback in span_end_callbacks:
         span_end_callback(span)

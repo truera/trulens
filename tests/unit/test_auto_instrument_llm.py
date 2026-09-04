@@ -44,17 +44,33 @@ class TestAutoInstrumentLLM(TestCase):
         auto_instrument_all_llms()
         self.assertTrue(is_auto_instrumentation_enabled())
 
-    @patch(
-        "trulens.experimental.otel_tracing.core.auto_instrument._can_import",
-        return_value=True,
-    )
     @patch("trulens.core.otel.instrument.instrument_method")
-    def test_instrument_openai(
-        self, mock_instrument_method: MagicMock, mock_can_import: MagicMock
-    ) -> None:
+    def test_instrument_openai(self, mock_instrument_method: MagicMock) -> None:
         """Verify OpenAI auto-instrumentation hooks completions.create with GENERATION span."""
-        instrument_openai()
-        if mock_instrument_method.called:
+        mock_chat = MagicMock()
+        mock_chat.Completions = type(
+            "Completions", (), {"create": lambda: None}
+        )
+        mock_chat.AsyncCompletions = type(
+            "AsyncCompletions", (), {"create": lambda: None}
+        )
+
+        with (
+            patch(
+                "trulens.experimental.otel_tracing.core.auto_instrument._can_import",
+                return_value=True,
+            ),
+            patch.dict(
+                "sys.modules",
+                {
+                    "openai": MagicMock(),
+                    "openai.resources": MagicMock(),
+                    "openai.resources.chat": mock_chat,
+                },
+            ),
+        ):
+            instrument_openai()
+            mock_instrument_method.assert_called()
             for call in mock_instrument_method.call_args_list:
                 self.assertEqual(
                     call.kwargs.get("span_type"),
@@ -93,17 +109,33 @@ class TestAutoInstrumentLLM(TestCase):
                     SpanAttributes.SpanType.GENERATION,
                 )
 
-    @patch(
-        "trulens.experimental.otel_tracing.core.auto_instrument._can_import",
-        return_value=True,
-    )
     @patch("trulens.core.otel.instrument.instrument_method")
-    def test_instrument_google(
-        self, mock_instrument_method: MagicMock, mock_can_import: MagicMock
-    ) -> None:
+    def test_instrument_google(self, mock_instrument_method: MagicMock) -> None:
         """Verify Google GenAI auto-instrumentation hooks generate_content with GENERATION span."""
-        instrument_google()
-        if mock_instrument_method.called:
+        mock_models = MagicMock()
+        mock_models.Models = type(
+            "Models", (), {"generate_content": lambda: None}
+        )
+        mock_models.AsyncModels = type(
+            "AsyncModels", (), {"generate_content": lambda: None}
+        )
+
+        with (
+            patch(
+                "trulens.experimental.otel_tracing.core.auto_instrument._can_import",
+                return_value=True,
+            ),
+            patch.dict(
+                "sys.modules",
+                {
+                    "google": MagicMock(),
+                    "google.genai": MagicMock(),
+                    "google.genai.models": mock_models,
+                },
+            ),
+        ):
+            instrument_google()
+            mock_instrument_method.assert_called()
             for call in mock_instrument_method.call_args_list:
                 self.assertEqual(
                     call.kwargs.get("span_type"),
@@ -141,17 +173,28 @@ class TestAutoInstrumentLLM(TestCase):
                     SpanAttributes.SpanType.GENERATION,
                 )
 
-    @patch(
-        "trulens.experimental.otel_tracing.core.auto_instrument._can_import",
-        return_value=True,
-    )
     @patch("trulens.core.otel.instrument.instrument_method")
     def test_instrument_litellm(
-        self, mock_instrument_method: MagicMock, mock_can_import: MagicMock
+        self, mock_instrument_method: MagicMock
     ) -> None:
         """Verify LiteLLM auto-instrumentation hooks completion with GENERATION span."""
-        instrument_litellm()
-        if mock_instrument_method.called:
+        mock_litellm = MagicMock()
+        mock_litellm.completion = lambda: None
+
+        with (
+            patch(
+                "trulens.experimental.otel_tracing.core.auto_instrument._can_import",
+                return_value=True,
+            ),
+            patch.dict(
+                "sys.modules",
+                {
+                    "litellm": mock_litellm,
+                },
+            ),
+        ):
+            instrument_litellm()
+            mock_instrument_method.assert_called()
             for call in mock_instrument_method.call_args_list:
                 self.assertEqual(
                     call.kwargs.get("span_type"),
