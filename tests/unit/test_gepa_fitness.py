@@ -117,9 +117,11 @@ class TestTruGEPA(TestCase):
         self.assertIsNotNone(fitness._recorder)
 
     def test_add_record_called_on_every_evaluation_when_logging_enabled(self):
-        with patch("trulens.apps.virtual.TruVirtual") as MockTV, patch(
-            "trulens.apps.virtual.VirtualRecord"
-        ), patch("trulens.core.Select"):
+        with (
+            patch("trulens.apps.virtual.TruVirtual") as MockTV,
+            patch("trulens.apps.virtual.VirtualRecord"),
+            patch("trulens.core.Select"),
+        ):
             mock_recorder = MockTV.return_value
             fitness = TruGEPA(_fixed_score, app_name="opt", app_version="v1")
             fitness("a")
@@ -134,9 +136,11 @@ class TestTruGEPA(TestCase):
         MockTV.assert_not_called()
 
     def test_logging_failure_does_not_raise(self):
-        with patch("trulens.apps.virtual.TruVirtual"), patch(
-            "trulens.apps.virtual.VirtualRecord"
-        ), patch("trulens.core.Select") as MockSelect:
+        with (
+            patch("trulens.apps.virtual.TruVirtual"),
+            patch("trulens.apps.virtual.VirtualRecord"),
+            patch("trulens.core.Select") as MockSelect,
+        ):
             MockSelect.RecordCalls.fitness_fn.evaluate = MagicMock()
             fitness = TruGEPA(_fixed_score, app_name="opt", app_version="v1")
             fitness._recorder.add_record.side_effect = RuntimeError("db error")

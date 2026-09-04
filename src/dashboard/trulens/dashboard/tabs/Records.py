@@ -6,6 +6,7 @@ import pandas as pd
 import streamlit as st
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.dashboard.components.record_viewer import record_viewer
+from trulens.dashboard.components.record_viewer_otel import OtelSpan
 from trulens.dashboard.components.record_viewer_otel import record_viewer_otel
 from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
@@ -33,6 +34,7 @@ from trulens.dashboard.ux.styles import aggrid_css
 from trulens.dashboard.ux.styles import cell_rules
 from trulens.dashboard.ux.styles import default_direction
 from trulens.dashboard.ux.styles import radio_button_css
+from trulens.otel.semconv.trace import SpanAttributes
 
 
 def init_page_state():
@@ -166,15 +168,56 @@ def _escape_problematic_markdown(text: str) -> str:
     return escaped
 
 
+def _first_token_latency_ms(
+    event_spans: Optional[Sequence[OtelSpan]],
+) -> Optional[float]:
+    """Time-to-first-token of the earliest streamed generation in a record.
+
+    A record may contain several streamed generations, but what a user waits on
+    before seeing anything is the first one to start, so that is the one worth
+    putting next to latency. Returns None when nothing in the record streamed.
+    """
+    if not event_spans:
+        return None
+
+    streamed = [
+        span
+        for span in event_spans
+        if SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS
+        in (span.get("record_attributes") or {})
+    ]
+    if not streamed:
+        return None
+
+    earliest = min(streamed, key=lambda span: span.get("start_timestamp") or 0)
+
+    return earliest["record_attributes"][
+        SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS
+    ]
+
+
 def _render_record_metrics(
-    records_df: pd.DataFrame, selected_row: pd.Series
+    records_df: pd.DataFrame,
+    selected_row: pd.Series,
+    event_spans: Optional[Sequence[OtelSpan]] = None,
 ) -> None:
     """Render record level metrics (e.g. total tokens, cost, latency) compared
     to the average when appropriate."""
 
     app_specific_df = records_df[records_df["app_id"] == selected_row["app_id"]]
 
-    token_col, cost_col, latency_col, _ = st_columns([1, 1, 1, 3])
+    time_to_first_token_ms = _first_token_latency_ms(event_spans)
+    if time_to_first_token_ms is None:
+        token_col, cost_col, latency_col, _ = st_columns([1, 1, 1, 3])
+        ttft_col = None
+    else:
+        token_col, cost_col, latency_col, ttft_col, _ = st_columns([
+            1,
+            1,
+            1,
+            1,
+            2,
+        ])
 
     num_tokens = selected_row["total_tokens"]
     with token_col.container(height=128, border=True):
@@ -217,6 +260,18 @@ def _render_record_metrics(
             if delta_latency != 0
             else "Latency of the app execution.",
         )
+
+    if ttft_col is not None:
+        with ttft_col.container(height=128, border=True):
+            st.metric(
+                label="Time to first token (s)",
+                value=f"{time_to_first_token_ms / 1000:.3g}s",
+                help=(
+                    "How long the first streamed generation took to produce its"
+                    " first chunk. The rest of the latency above is time spent"
+                    " streaming the remainder of the response."
+                ),
+            )
 
 
 def _render_record_detail(
@@ -264,7 +319,15 @@ def _render_record_detail(
         else:
             st_code(json.dumps(output_value, indent=2), wrap_lines=True)
 
-    _render_record_metrics(records_df, selected_row)
+    # Fetched before the metrics row so that time-to-first-token can be shown
+    # alongside latency, and reused for the trace viewer further down.
+    event_spans: List[OtelSpan] = []
+    if not is_sis_compatibility_enabled() and is_otel_tracing_enabled():
+        event_spans = _get_event_otel_spans(
+            selected_row["record_id"], selected_row["app_name"]
+        )
+
+    _render_record_metrics(records_df, selected_row, event_spans)
 
     online_eval_status = selected_row.get("online_eval_status")
     if online_eval_status:
@@ -306,9 +369,6 @@ def _render_record_detail(
     elif is_otel_tracing_enabled():
         with trace_details:
             st.subheader("Trace Details")
-            event_spans = _get_event_otel_spans(
-                selected_row["record_id"], selected_row["app_name"]
-            )
             if event_spans:
                 record_viewer_otel(
                     spans=event_spans,
@@ -796,6 +856,7 @@ def _build_thread_summary(
         df["is_match"] = True
 
     rows = []
+    conversation_cols, _ = _partition_feedback_scopes(df, feedback_col_names)
     for thread_key, group in df.groupby("_thread_key", dropna=False):
         group_sorted = group.sort_values("ts")
         first = group_sorted.iloc[0]
@@ -838,7 +899,18 @@ def _build_thread_summary(
                     worst_index, "record_id"
                 ]
         for fcol in feedback_col_names:
-            if fcol in ranking_group.columns:
+            if fcol not in ranking_group.columns:
+                continue
+            if fcol in conversation_cols:
+                # Conversation-scoped metrics describe the whole thread, not a
+                # single turn, so averaging across the thread's records is wrong
+                # (e.g. records of [1.0, 0.0] would surface as 0.5 here while the
+                # conversation-metrics detail view shows 0.0). Use the latest
+                # recorded value, matching _conversation_metric_row.
+                conv_values = group_sorted[fcol].dropna()
+                if not conv_values.empty:
+                    row[fcol] = conv_values.iloc[-1]
+            else:
                 row[fcol] = ranking_group[fcol].mean(skipna=True)
         rows.append(row)
 
@@ -859,6 +931,7 @@ def _build_thread_grid_options(
     df: pd.DataFrame,
     feedback_col_names: Sequence[str],
     feedback_directions: Dict[str, bool],
+    conversation_cols: Optional[Sequence[str]] = None,
 ):
     from st_aggrid.grid_options_builder import GridOptionsBuilder
 
@@ -956,6 +1029,7 @@ def _build_thread_grid_options(
         filter="agDateColumnFilter",
     )
 
+    conversation_cols = set(conversation_cols or ())
     for fcol in feedback_col_names:
         if fcol not in df.columns:
             continue
@@ -964,9 +1038,12 @@ def _build_thread_grid_options(
             if feedback_directions.get(fcol, default_direction)
             else "LOWER_IS_BETTER"
         )
+        # Conversation-scoped metrics are shown as the latest value per thread,
+        # not an average, so they must not carry an "(avg)" header.
+        suffix = "(latest)" if fcol in conversation_cols else "(avg)"
         gb.configure_column(
             fcol,
-            header_name=f"{fcol} (avg)",
+            header_name=f"{fcol} {suffix}",
             cellClassRules=cell_rules[feedback_direction],
             hide=False,
         )
@@ -986,6 +1063,7 @@ def _render_thread_grid(
     df: pd.DataFrame,
     feedback_col_names: Sequence[str],
     feedback_directions: Dict[str, bool],
+    conversation_cols: Optional[Sequence[str]] = None,
 ):
     if not is_sis_compatibility_enabled():
         try:
@@ -999,6 +1077,7 @@ def _render_thread_grid(
                     df=df,
                     feedback_col_names=feedback_col_names,
                     feedback_directions=feedback_directions,
+                    conversation_cols=conversation_cols,
                 ),
                 update_on=["selectionChanged"],
                 custom_css={**aggrid_css, **radio_button_css},
@@ -1343,10 +1422,15 @@ def _render_thread_view(
         st.info("No threads to display.", icon="ℹ️")
         return
 
+    # Conversation-scoped columns show the latest value, not an average (see
+    # _build_thread_summary), so they must not be labelled "(avg)".
+    conversation_cols, _ = _partition_feedback_scopes(df, feedback_col_names)
+
     selected = _render_thread_grid(
         thread_summary,
         feedback_col_names=feedback_col_names,
         feedback_directions=feedback_directions,
+        conversation_cols=conversation_cols,
     )
 
     valid_keys = set(thread_summary["thread_key"].tolist())

@@ -8,6 +8,8 @@ import warnings
 from trulens.core import Metric
 from trulens.feedback import llm_provider
 from trulens.feedback.templates import agent as templates_agent
+from trulens.feedback.templates import base as templates_base
+from trulens.feedback.templates import conversation as templates_conversation
 from trulens.feedback.templates import quality as templates_quality
 
 
@@ -19,6 +21,7 @@ class MockLLMProvider(llm_provider.LLMProvider):
     # Declare test tracking fields as optional Pydantic fields
     last_system_prompt: Optional[str] = None
     last_user_prompt: Optional[str] = None
+    last_temperature: Optional[float] = None
 
     def __init__(self, **kwargs):
         # Initialize with minimal required fields
@@ -59,6 +62,7 @@ class MockLLMProvider(llm_provider.LLMProvider):
         """Mock generate_score that captures prompts."""
         self.last_system_prompt = system_prompt
         self.last_user_prompt = user_prompt
+        self.last_temperature = temperature
         return 0.67  # Normalized 2/3
 
     def generate_score_and_reasons(
@@ -72,6 +76,7 @@ class MockLLMProvider(llm_provider.LLMProvider):
         """Mock generate_score_and_reasons that captures prompts."""
         self.last_system_prompt = system_prompt
         self.last_user_prompt = user_prompt
+        self.last_temperature = temperature
         return 0.67, {"reason": "Test reason"}
 
 
@@ -341,6 +346,264 @@ class TestFeedbackAdditionalInstructions(TestCase):
             additional_instructions,
             self.provider.last_system_prompt,
         )
+
+
+class TestConversationAdditionalInstructions(TestCase):
+    """Test that conversation-level metrics accept additional_instructions."""
+
+    def setUp(self):
+        self.provider = MockLLMProvider()
+        self.records = [
+            {"input": "What is 2+2?", "output": "Four."},
+            {"input": "Why?", "output": "Two pairs total four items."},
+        ]
+
+    def test_positional_nonzero_temperature_does_not_raise(self):
+        """Existing callers passed temperature positionally after records."""
+        result = self.provider.conversation_helpfulness(self.records, 0.7)
+
+        self.assertIsInstance(result, float)
+        self.assertEqual(self.provider.last_temperature, 0.7)
+        self.assertNotIn("0.7", self.provider.last_system_prompt or "")
+
+    def test_coherence_across_turns_default_no_additional_instructions(self):
+        """Test coherence across turns without additional instructions."""
+        result = self.provider.coherence_across_turns(records=self.records)
+
+        # Check that result is valid
+        self.assertIsInstance(result, float)
+
+        # Check that the default system prompt is left untouched
+        self.assertEqual(
+            templates_conversation.CoherenceAcrossTurns.system_prompt,
+            self.provider.last_system_prompt,
+        )
+
+    def test_coherence_across_turns_with_additional_instructions(self):
+        """Test coherence across turns with additional instructions."""
+        additional_instructions = (
+            "Assistant turns are structured SQL result rows, not prose."
+        )
+
+        result = self.provider.coherence_across_turns(
+            records=self.records,
+            additional_instructions=additional_instructions,
+        )
+
+        # Check that result is valid
+        self.assertIsInstance(result, float)
+
+        # Check that additional instructions are in the prompt
+        self.assertIsNotNone(self.provider.last_system_prompt)
+        self.assertIn(
+            additional_instructions,
+            self.provider.last_system_prompt,
+        )
+        self.assertIn(
+            templates_conversation.CoherenceAcrossTurns.system_prompt,
+            self.provider.last_system_prompt,
+        )
+
+    def test_conversation_helpfulness_with_additional_instructions(self):
+        """Test conversation helpfulness with additional instructions."""
+        additional_instructions = "Terse answers are acceptable here."
+
+        result = self.provider.conversation_helpfulness(
+            records=self.records,
+            additional_instructions=additional_instructions,
+        )
+
+        # Check that result is valid
+        self.assertIsInstance(result, float)
+
+        # Check that additional instructions are in the prompt
+        self.assertIsNotNone(self.provider.last_system_prompt)
+        self.assertIn(
+            additional_instructions,
+            self.provider.last_system_prompt,
+        )
+
+    def test_topic_adherence_with_additional_instructions(self):
+        """Test topic adherence with additional instructions."""
+        additional_instructions = "Arithmetic follow-ups count as on topic."
+
+        result = self.provider.topic_adherence(
+            records=self.records,
+            reference_topics=["arithmetic"],
+            additional_instructions=additional_instructions,
+        )
+
+        # Check that result is valid
+        self.assertIsInstance(result, float)
+
+        # Check that both the reference topics and the additional instructions
+        # are in the prompt
+        self.assertIsNotNone(self.provider.last_system_prompt)
+        self.assertIn("arithmetic", self.provider.last_system_prompt)
+        self.assertIn(
+            additional_instructions,
+            self.provider.last_system_prompt,
+        )
+
+    def test_agent_goal_accuracy_with_additional_instructions(self):
+        """Test agent goal accuracy with additional instructions."""
+        additional_instructions = "A partial answer does not achieve the goal."
+
+        result = self.provider.agent_goal_accuracy(
+            records=self.records,
+            reference_goal="Explain why 2+2 is four.",
+            additional_instructions=additional_instructions,
+        )
+
+        # Check that result is valid
+        self.assertIsInstance(result, float)
+
+        # Check that both the reference goal and the additional instructions
+        # are in the prompt
+        self.assertIsNotNone(self.provider.last_system_prompt)
+        self.assertIn(
+            "Explain why 2+2 is four.", self.provider.last_system_prompt
+        )
+        self.assertIn(
+            additional_instructions,
+            self.provider.last_system_prompt,
+        )
+
+    def test_conversation_metric_through_metric_class(self):
+        """Test that Metric passes additional_instructions to a conversation metric."""
+        additional_instructions = "UNIQUE_CONVERSATION_INSTRUCTIONS_E2E_TEST"
+
+        feedback = Metric(
+            implementation=self.provider.coherence_across_turns,
+            name="Coherence Across Turns",
+            additional_instructions=additional_instructions,
+        )
+
+        result = feedback(records=self.records)
+
+        # Verify result is valid
+        self.assertIsInstance(result, float)
+
+        # Verify additional_instructions reached the provider's prompt
+        self.assertIsNotNone(self.provider.last_system_prompt)
+        self.assertIn(additional_instructions, self.provider.last_system_prompt)
+
+
+class TestConversationCotReasons(TestCase):
+    """Test the chain of thought variants of conversation-level metrics."""
+
+    def setUp(self):
+        self.provider = MockLLMProvider()
+        self.records = [
+            {"input": "What is 2+2?", "output": "Four."},
+            {"input": "Why?", "output": "Two pairs total four items."},
+        ]
+
+    def _assert_cot_result(self, result):
+        self.assertIsInstance(result, tuple)
+        self.assertIsInstance(result[0], float)
+        self.assertIsInstance(result[1], dict)
+
+    def test_coherence_across_turns_with_cot_reasons(self):
+        """Test that coherence across turns emits reasons and the transcript."""
+        additional_instructions = "Structured rows are coherent by convention."
+
+        result = self.provider.coherence_across_turns_with_cot_reasons(
+            records=self.records,
+            additional_instructions=additional_instructions,
+        )
+
+        self._assert_cot_result(result)
+
+        # Check that the reasons template and the transcript are in the user prompt
+        self.assertIsNotNone(self.provider.last_user_prompt)
+        self.assertIn(
+            templates_base.COT_REASONS_TEMPLATE,
+            self.provider.last_user_prompt,
+        )
+        self.assertIn(
+            "Turn 1 User: What is 2+2?", self.provider.last_user_prompt
+        )
+
+        # Check that additional instructions are in the system prompt
+        self.assertIn(
+            additional_instructions,
+            self.provider.last_system_prompt,
+        )
+
+    def test_conversation_helpfulness_with_cot_reasons(self):
+        """Test that conversation helpfulness emits reasons."""
+        additional_instructions = "Terse answers are acceptable here."
+
+        result = self.provider.conversation_helpfulness_with_cot_reasons(
+            records=self.records,
+            additional_instructions=additional_instructions,
+        )
+
+        self._assert_cot_result(result)
+        self.assertIn(
+            templates_base.COT_REASONS_TEMPLATE,
+            self.provider.last_user_prompt,
+        )
+        self.assertIn(
+            additional_instructions,
+            self.provider.last_system_prompt,
+        )
+
+    def test_topic_adherence_with_cot_reasons(self):
+        """Test that topic adherence emits reasons."""
+        additional_instructions = "Arithmetic follow-ups count as on topic."
+
+        result = self.provider.topic_adherence_with_cot_reasons(
+            records=self.records,
+            reference_topics=["arithmetic"],
+            additional_instructions=additional_instructions,
+        )
+
+        self._assert_cot_result(result)
+        self.assertIn(
+            templates_base.COT_REASONS_TEMPLATE,
+            self.provider.last_user_prompt,
+        )
+        self.assertIn("arithmetic", self.provider.last_system_prompt)
+        self.assertIn(
+            additional_instructions,
+            self.provider.last_system_prompt,
+        )
+
+    def test_agent_goal_accuracy_with_cot_reasons(self):
+        """Test that agent goal accuracy emits reasons."""
+        additional_instructions = "A partial answer does not achieve the goal."
+
+        result = self.provider.agent_goal_accuracy_with_cot_reasons(
+            records=self.records,
+            reference_goal="Explain why 2+2 is four.",
+            additional_instructions=additional_instructions,
+        )
+
+        self._assert_cot_result(result)
+        self.assertIn(
+            templates_base.COT_REASONS_TEMPLATE,
+            self.provider.last_user_prompt,
+        )
+        self.assertIn(
+            "Explain why 2+2 is four.", self.provider.last_system_prompt
+        )
+        self.assertIn(
+            additional_instructions,
+            self.provider.last_system_prompt,
+        )
+
+    def test_cot_variants_accept_a_transcript_string(self):
+        """Test that the chain of thought variants accept a plain transcript."""
+        transcript = "Turn 1 User: Hello\nTurn 1 Assistant: Hi"
+
+        result = self.provider.coherence_across_turns_with_cot_reasons(
+            records=transcript
+        )
+
+        self._assert_cot_result(result)
+        self.assertIn(transcript, self.provider.last_user_prompt)
 
 
 class TestFeedbackIntegrationWithFeedbackClass(TestCase):

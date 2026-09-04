@@ -1,9 +1,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Iterable
-from collections.abc import Mapping
-from collections.abc import Sequence
 from concurrent import futures
 from datetime import datetime
 import inspect
@@ -12,17 +9,29 @@ import logging
 from multiprocessing import Process
 import threading
 from threading import Thread
+from time import monotonic
 from time import sleep
 from time import time
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
 )
 import warnings
 
 import pandas
 import pydantic
+from trulens.core import dataset as core_dataset
 from trulens.core import experimental as core_experimental
+from trulens.core import prompt as core_prompt
 from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database import connector as core_connector
@@ -34,6 +43,7 @@ from trulens.core.schema import conversation as conversation_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
+from trulens.core.schema import prompt as prompt_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import deprecation as deprecation_utils
@@ -47,6 +57,8 @@ from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 if TYPE_CHECKING:
+    from opentelemetry.sdk.metrics import MeterProvider
+    from opentelemetry.sdk.metrics.export import MetricExporter
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SpanExporter
     from trulens.core import app as base_app
@@ -103,6 +115,14 @@ class TruSession(
 
         experimental_feature_flags: Experimental feature flags.
 
+        otel_exporter: OpenTelemetry exporter to use. Set to ``"otlp"`` to
+            export TruLens traces and GenAI metrics using OTLP. If omitted,
+            the existing TruLens/Snowflake exporter remains the default.
+
+        otlp_endpoint: Optional OTLP gRPC endpoint. This is only valid with
+            ``otel_exporter="otlp"``. If omitted, the standard OpenTelemetry
+            environment variables are used.
+
         **kwargs: All other arguments are used to initialize
             [DefaultDBConnector][trulens.core.database.connector.default.DefaultDBConnector].
             Mutually exclusive with `connector`.
@@ -137,44 +157,57 @@ class TruSession(
     GROUND_TRUTHS_BATCH_SIZE: int = 100
     """Time to wait before inserting a batch of ground truths into the database."""
 
-    _evaluator_stop: threading.Event | None = pydantic.PrivateAttr(None)
+    _evaluator_stop: Optional[threading.Event] = pydantic.PrivateAttr(None)
     """Event for stopping the deferred evaluator which runs in another thread."""
 
-    _evaluator_proc: Process | Thread | None = pydantic.PrivateAttr(None)
+    _evaluator_proc: Optional[Union[Process, Thread]] = pydantic.PrivateAttr(
+        None
+    )
 
-    _dashboard_urls: str | None = pydantic.PrivateAttr(None)
+    _dashboard_urls: Optional[str] = pydantic.PrivateAttr(None)
 
-    _dashboard_proc: Process | None = pydantic.PrivateAttr(None)
+    _dashboard_proc: Optional[Process] = pydantic.PrivateAttr(None)
 
-    _tunnel_listener_stdout: Thread | None = pydantic.PrivateAttr(None)
+    _tunnel_listener_stdout: Optional[Thread] = pydantic.PrivateAttr(None)
 
-    _tunnel_listener_stderr: Thread | None = pydantic.PrivateAttr(None)
+    _tunnel_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
 
-    _dashboard_listener_stdout: Thread | None = pydantic.PrivateAttr(None)
+    _dashboard_listener_stdout: Optional[Thread] = pydantic.PrivateAttr(None)
 
-    _dashboard_listener_stderr: Thread | None = pydantic.PrivateAttr(None)
+    _dashboard_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
 
-    _sampling_controller: Any | None = pydantic.PrivateAttr(None)
+    _prompt_label_cache: Optional[Any] = pydantic.PrivateAttr(None)
+    """Process-local TTL cache of prompt label to exact version."""
+
+    _sampling_controller: Optional[Any] = pydantic.PrivateAttr(None)
     """Active :class:`SamplingController`, set via :meth:`configure_online_eval`."""
 
-    connector: core_connector.DBConnector | None = pydantic.Field(
+    connector: Optional[core_connector.DBConnector] = pydantic.Field(
         None, exclude=True
     )
     """Database Connector to use. If not provided, a default is created and
     used."""
 
-    _experimental_otel_exporter: SpanExporter | None = pydantic.PrivateAttr(
+    _experimental_otel_exporter: Optional[SpanExporter] = pydantic.PrivateAttr(
         None
     )
 
-    _experimental_tracer_provider: TracerProvider | None = pydantic.PrivateAttr(
-        None
+    _experimental_tracer_provider: Optional[TracerProvider] = (
+        pydantic.PrivateAttr(None)
+    )
+
+    _experimental_otel_metric_exporter: Optional[MetricExporter] = (
+        pydantic.PrivateAttr(None)
+    )
+
+    _experimental_meter_provider: Optional[MeterProvider] = (
+        pydantic.PrivateAttr(None)
     )
 
     @property
     def experimental_otel_exporter(
         self,
-    ) -> SpanExporter | None:
+    ) -> Optional[SpanExporter]:
         """EXPERIMENTAL(otel_tracing): OpenTelemetry SpanExporter to send spans
         to.
 
@@ -189,11 +222,12 @@ class TruSession(
         Force flush the OpenTelemetry exporters.
 
         Args:
-            timeout_millis: The maximum amount of time to wait for spans to be
-                processed.
+            timeout_millis: The maximum amount of time to wait for spans and
+                metrics to be processed.
 
         Returns:
-            False if the timeout is exceeded, feature is not enabled, or the provider doesn't exist, True otherwise.
+            False if the timeout is exceeded, feature is not enabled, or the
+            provider doesn't exist, True otherwise.
         """
 
         if (
@@ -204,7 +238,20 @@ class TruSession(
         ):
             return False
 
-        return self._experimental_tracer_provider.force_flush(timeout_millis)
+        flush_deadline = monotonic() + timeout_millis / 1000
+        traces_flushed = self._experimental_tracer_provider.force_flush(
+            timeout_millis
+        )
+        if self._experimental_meter_provider is None:
+            return traces_flushed
+
+        remaining_timeout_millis = max(
+            0, int((flush_deadline - monotonic()) * 1000)
+        )
+        metrics_flushed = self._experimental_meter_provider.force_flush(
+            remaining_timeout_millis
+        )
+        return traces_flushed and metrics_flushed
 
     def __str__(self) -> str:
         return f"TruSession({self.connector})"
@@ -218,11 +265,17 @@ class TruSession(
 
     def __init__(
         self,
-        connector: core_connector.DBConnector | None = None,
-        experimental_feature_flags: Mapping[core_experimental.Feature, bool]
-        | list[core_experimental.Feature]
-        | None = None,
-        _experimental_otel_exporter: SpanExporter | None = None,
+        connector: Optional[core_connector.DBConnector] = None,
+        experimental_feature_flags: Optional[
+            Union[
+                Mapping[core_experimental.Feature, bool],
+                List[core_experimental.Feature],
+            ]
+        ] = None,
+        otel_exporter: Optional[str] = None,
+        otlp_endpoint: Optional[str] = None,
+        _experimental_otel_exporter: Optional[SpanExporter] = None,
+        _experimental_otel_metric_exporter: Optional[MetricExporter] = None,
         **kwargs: Any,
     ):
         if python_utils.safe_hasattr(self, "connector"):
@@ -263,14 +316,37 @@ class TruSession(
         # for WithExperimentalSettings mixin
         self.experimental_set_features(experimental_feature_flags)
 
-        if (
-            _experimental_otel_exporter is not None
-            and not self.experimental_feature(
+        if otel_exporter is not None:
+            if not isinstance(otel_exporter, str):
+                raise ValueError("`otel_exporter` must be a string.")
+            otel_exporter = otel_exporter.lower()
+            if otel_exporter != "otlp":
+                raise ValueError('`otel_exporter` must be `None` or "otlp".')
+            if _experimental_otel_exporter is not None:
+                raise ValueError(
+                    'Cannot combine `otel_exporter="otlp"` with '
+                    "`_experimental_otel_exporter`."
+                )
+            if _experimental_otel_metric_exporter is not None:
+                raise ValueError(
+                    'Cannot combine `otel_exporter="otlp"` with '
+                    "`_experimental_otel_metric_exporter`."
+                )
+            self.experimental_enable_feature(
                 core_experimental.Feature.OTEL_TRACING
             )
+        elif otlp_endpoint is not None:
+            raise ValueError('`otlp_endpoint` requires `otel_exporter="otlp"`.')
+
+        if (
+            _experimental_otel_exporter is not None
+            or _experimental_otel_metric_exporter is not None
+        ) and not self.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
         ):
             raise ValueError(
-                "Cannot supply `_experimental_otel_exporter` without enabling OTEL tracing!"
+                "Cannot supply an experimental OTel exporter without enabling "
+                "OTEL tracing!"
             )
         if self.experimental_feature(core_experimental.Feature.OTEL_TRACING):
             otel_tracing_feature._FeatureSetup.assert_optionals_installed()
@@ -280,7 +356,12 @@ class TruSession(
             )
 
             _TruSession._set_up_otel_exporter(
-                self, connector, _experimental_otel_exporter
+                self,
+                connector,
+                _experimental_otel_exporter,
+                exporter_name=otel_exporter,
+                otlp_endpoint=otlp_endpoint,
+                metric_exporter=_experimental_otel_metric_exporter,
             )
 
             _TruSession._start_track_costs_background()
@@ -317,10 +398,10 @@ class TruSession(
 
     def configure_online_eval(
         self,
-        sample_rate: float | dict[str, float] = 1.0,
-        throttle: int | None = None,
-        cost_budget: float | None = None,
-        feedbacks: Sequence[core_metric.Metric] | None = None,
+        sample_rate: Union[float, Dict[str, float]] = 1.0,
+        throttle: Optional[int] = None,
+        cost_budget: Optional[float] = None,
+        feedbacks: Optional[Sequence[core_metric.Metric]] = None,
     ) -> None:
         """Configure sampling for automatic post-ingest evaluation.
 
@@ -358,7 +439,7 @@ class TruSession(
 
     def _warn_cost_tracking(
         self,
-        feedbacks: Sequence[core_metric.Metric] | None,
+        feedbacks: Optional[Sequence[core_metric.Metric]],
     ) -> None:
         """Emit warnings for metrics whose providers cannot report costs."""
         if feedbacks is None or len(feedbacks) == 0:
@@ -390,7 +471,7 @@ class TruSession(
                     type(provider).__name__,
                 )
 
-    def App(self, *args, app: Any | None = None, **kwargs) -> base_app.App:
+    def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
         which app type they refer to.
 
@@ -639,8 +720,9 @@ class TruSession(
         See [DB.reset_database][trulens.core.database.base.DB.reset_database].
         """
         self.connector.reset_database()
+        self.prompt_label_cache.invalidate()
 
-    def migrate_database(self, **kwargs: dict[str, Any]):
+    def migrate_database(self, **kwargs: Dict[str, Any]):
         """Migrates the database.
 
         This should be run whenever there are breaking changes in a database
@@ -657,7 +739,7 @@ class TruSession(
         self.connector.migrate_database(**kwargs)
 
     def add_record(
-        self, record: record_schema.Record | None = None, **kwargs: dict
+        self, record: Optional[record_schema.Record] = None, **kwargs: dict
     ) -> types_schema.RecordID:
         """Add a record to the database.
 
@@ -688,12 +770,12 @@ class TruSession(
         self,
         record: record_schema.Record,
         feedback_functions: Sequence[core_metric.Metric],
-        app: app_schema.AppDefinition | None = None,
+        app: Optional[app_schema.AppDefinition] = None,
         wait: bool = True,
-    ) -> (
-        Iterable[feedback_schema.FeedbackResult]
-        | Iterable[Future[feedback_schema.FeedbackResult]]
-    ):
+    ) -> Union[
+        Iterable[feedback_schema.FeedbackResult],
+        Iterable[Future[feedback_schema.FeedbackResult]],
+    ]:
         """Run a collection of feedback functions and report their result.
 
         Args:
@@ -743,7 +825,7 @@ class TruSession(
         if not isinstance(wait, bool):
             raise ValueError("`wait` must be a bool.")
 
-        future_feedback_map: dict[
+        future_feedback_map: Dict[
             Future[feedback_schema.FeedbackResult], core_feedback.Feedback
         ] = {
             p[1]: p[0]
@@ -798,9 +880,12 @@ class TruSession(
 
     def add_feedback(
         self,
-        feedback_result_or_future: feedback_schema.FeedbackResult
-        | Future[feedback_schema.FeedbackResult]
-        | None = None,
+        feedback_result_or_future: Optional[
+            Union[
+                feedback_schema.FeedbackResult,
+                Future[feedback_schema.FeedbackResult],
+            ]
+        ] = None,
         **kwargs: dict,
     ) -> types_schema.FeedbackResultID:
         """Add a single feedback result or future to the database and return its unique id.
@@ -831,10 +916,12 @@ class TruSession(
     def add_feedbacks(
         self,
         feedback_results: Iterable[
-            feedback_schema.FeedbackResult
-            | Future[feedback_schema.FeedbackResult]
+            Union[
+                feedback_schema.FeedbackResult,
+                Future[feedback_schema.FeedbackResult],
+            ]
         ],
-    ) -> list[types_schema.FeedbackResultID]:
+    ) -> List[types_schema.FeedbackResultID]:
         """Add multiple feedback results to the database and return their unique ids.
 
         Args:
@@ -851,7 +938,7 @@ class TruSession(
 
     def get_app(
         self, app_id: types_schema.AppID
-    ) -> serial_utils.JSONized[app_schema.AppDefinition] | None:
+    ) -> Optional[serial_utils.JSONized[app_schema.AppDefinition]]:
         """Look up an app from the database.
 
         This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with `model_validate`:
@@ -876,7 +963,7 @@ class TruSession(
 
         return self.connector.get_app(app_id)
 
-    def get_apps(self) -> list[serial_utils.JSONized[app_schema.AppDefinition]]:
+    def get_apps(self) -> List[serial_utils.JSONized[app_schema.AppDefinition]]:
         """Look up all apps from the database.
 
         Returns:
@@ -889,16 +976,16 @@ class TruSession(
         return self.connector.get_apps()
 
     def get_conversations(
-        self, app_id: types_schema.AppID | None = None
-    ) -> dict[types_schema.ConversationID, conversation_schema.Conversation]:
+        self, app_id: Optional[types_schema.AppID] = None
+    ) -> Dict[types_schema.ConversationID, conversation_schema.Conversation]:
         """Get conversations reconstructed from recorded spans."""
         return self.connector.get_conversations(app_id=app_id)
 
     def get_records_by_conversation(
         self,
         conversation_id: types_schema.ConversationID,
-        app_id: types_schema.AppID | None = None,
-    ) -> list[record_schema.Record]:
+        app_id: Optional[types_schema.AppID] = None,
+    ) -> List[record_schema.Record]:
         """Get a conversation's records ordered chronologically."""
         return self.connector.get_records_by_conversation(
             conversation_id=conversation_id, app_id=app_id
@@ -906,15 +993,15 @@ class TruSession(
 
     def get_records_and_feedback(
         self,
-        app_ids: list[types_schema.AppID] | None = None,
-        app_name: types_schema.AppName | None = None,
-        app_version: types_schema.AppVersion | None = None,
-        app_versions: list[types_schema.AppVersion] | None = None,
-        run_name: types_schema.RunName | None = None,
-        record_ids: list[types_schema.RecordID] | None = None,
-        offset: int | None = None,
-        limit: int | None = None,
-    ) -> tuple[pandas.DataFrame, list[str]]:
+        app_ids: Optional[List[types_schema.AppID]] = None,
+        app_name: Optional[types_schema.AppName] = None,
+        app_version: Optional[types_schema.AppVersion] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        run_name: Optional[types_schema.RunName] = None,
+        record_ids: Optional[List[types_schema.RecordID]] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Tuple[pandas.DataFrame, List[str]]:
         """Get records, their feedback results, and feedback names.
 
         Args:
@@ -955,12 +1042,12 @@ class TruSession(
 
     def get_leaderboard(
         self,
-        app_ids: list[types_schema.AppID] | None = None,
-        group_by_metadata_key: str | None = None,
-        limit: int | None = None,
-        offset: int | None = None,
+        app_ids: Optional[List[types_schema.AppID]] = None,
+        group_by_metadata_key: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
         format: str = "dataframe",
-    ) -> pandas.DataFrame | str | list[dict[str, Any]]:
+    ) -> Union[pandas.DataFrame, str, List[Dict[str, Any]]]:
         """Get a leaderboard for the given apps.
 
         Args:
@@ -1005,7 +1092,7 @@ class TruSession(
         self,
         dataset_name: str,
         ground_truth_df: pandas.DataFrame,
-        dataset_metadata: dict[str, Any] | None = None,
+        dataset_metadata: Optional[Dict[str, Any]] = None,
     ):
         """Create a new dataset, if not existing, and add ground truth data to it. If
         the dataset with the same name already exists, the ground truth data will be added to it.
@@ -1044,12 +1131,113 @@ class TruSession(
         if buffer:
             self.connector.db.batch_insert_ground_truth(buffer)
 
+    def curate_records_to_dataset(
+        self,
+        dataset_name: str,
+        records: pandas.DataFrame,
+        mapping: core_dataset.TraceDatasetMapping | None = None,
+        expected_response_fn: Callable[[pandas.Series], str | None]
+        | None = None,
+        dataset_metadata: dict[str, Any] | None = None,
+        on_error: str = core_dataset.ON_ERROR_RAISE,
+        batch_size: int = core_dataset.DEFAULT_BATCH_SIZE,
+        include_provenance: bool = True,
+    ) -> core_dataset.CurationResult:
+        """Curate recorded traces into a persisted evaluation dataset.
+
+        Turns a records dataframe into
+        [GroundTruth][trulens.core.schema.groundtruth.GroundTruth] rows: it
+        validates the mapping against the dataframe, resolves recorded inputs
+        and outputs into stable text, normalizes expected contexts, preserves
+        provenance in metadata, and writes in bounded batches. Ground truth
+        ids are content-addressed, so curating the same rows twice does not
+        create duplicate rows.
+
+        Accepted inputs:
+
+        - a dataframe from
+          [get_records_and_feedback][trulens.core.session.TruSession.get_records_and_feedback];
+        - a dataframe carrying a `record_id` column but not the record
+          content, which is resolved through the session before mapping;
+        - a review export (CSV, JSON, ...) that the caller has loaded into a
+          dataframe.
+
+        Example:
+            ```python
+            result = session.curate_records_to_dataset(
+                dataset_name="production-failures",
+                records=records_df,
+                mapping=TraceDatasetMapping(
+                    query="input",
+                    expected_response="corrected_output",
+                    metadata={"groundedness": "Groundedness"},
+                ),
+                on_error="collect",
+            )
+            ```
+
+        Args:
+            dataset_name: Name of the dataset to write to. It is created if it
+                does not exist.
+            records: The rows to curate.
+            mapping: Which dataframe columns supply which ground truth fields.
+                Values are column names, never expressions. Defaults to
+                `TraceDatasetMapping()`, which reads `input` and `record_id`.
+            expected_response_fn: Synchronous callback returning the expected
+                response for a row. Only consulted when the mapped
+                `expected_response` column is absent or empty for that row —
+                a mapped correction always wins. TruLens never calls an LLM on
+                your behalf here.
+            dataset_metadata: Metadata for the dataset itself.
+            on_error: `"raise"` to fail on the first unusable row, or
+                `"collect"` to skip it and report it in the result. Malformed
+                rows are never written in either mode.
+            batch_size: Ground truths written per database round trip. Peak
+                memory is one batch beyond the input dataframe.
+            include_provenance: Whether to copy the source record id and app
+                name/version into each ground truth's metadata. A ground truth
+                id covers its metadata, so leaving this on means two records
+                with identical content but different provenance stay distinct;
+                turn it off to deduplicate purely on example content.
+
+        Returns:
+            A [CurationResult][trulens.core.dataset.CurationResult] with the
+            accepted, duplicate and rejected counts, the ids written, and one
+            error row per rejection.
+
+        Raises:
+            ValueError: If `on_error` or `batch_size` is invalid, or a mapped
+                column is missing from `records`. Column validation happens
+                before anything is written.
+            core_dataset.CurationRowError: In `"raise"` mode, on the first
+                unusable row. Batches written before that point stay written;
+                because ids are content-addressed, re-running after fixing the
+                data is safe.
+        """
+
+        def _resolve(record_ids: List[str]) -> pandas.DataFrame:
+            resolved, _ = self.get_records_and_feedback(record_ids=record_ids)
+            return resolved
+
+        return core_dataset.curate_records_to_dataset(
+            dataset_name=dataset_name,
+            records=records,
+            db=self.connector.db,
+            mapping=mapping,
+            expected_response_fn=expected_response_fn,
+            dataset_metadata=dataset_metadata,
+            on_error=on_error,
+            batch_size=batch_size,
+            include_provenance=include_provenance,
+            record_resolver=_resolve,
+        )
+
     def get_ground_truth(
         self,
-        dataset_name: str | None = None,
-        user_table_name: str | None = None,
-        user_schema_mapping: dict[str, str] | None = None,
-        user_schema_name: str | None = None,
+        dataset_name: Optional[str] = None,
+        user_table_name: Optional[str] = None,
+        user_schema_mapping: Optional[Dict[str, str]] = None,
+        user_schema_name: Optional[str] = None,
     ) -> pandas.DataFrame:
         """Get ground truth data from the dataset. If `user_table_name` and `user_schema_mapping` are provided,
         load a virtual dataset from the user's table using the schema mapping. If `dataset_name` is provided,
@@ -1070,14 +1258,231 @@ class TruSession(
                 "Either `dataset_name` or `user_table_name` and `user_schema_mapping` must be provided."
             )
 
+    @property
+    def prompt_label_cache(self) -> core_prompt.LabelCache:
+        """Process-local time-to-live cache of prompt label to exact version.
+
+        Disabled by default. Set `session.prompt_label_cache.ttl` to a positive
+        number of seconds to reduce label reads. Correctness never depends on
+        it: exact-version lookups bypass it entirely and every write
+        invalidates the label it touched.
+        """
+
+        if self._prompt_label_cache is None:
+            self._prompt_label_cache = core_prompt.LabelCache()
+        return self._prompt_label_cache
+
+    def create_prompt(
+        self,
+        slug: str,
+        name: Optional[str] = None,
+        prompt_type: Union[
+            prompt_schema.PromptType, str
+        ] = prompt_schema.PromptType.TEXT,
+        description: Optional[str] = None,
+        tags: Optional[Sequence[str]] = None,
+    ) -> prompt_schema.Prompt:
+        """Create a prompt, or update the metadata of an existing slug.
+
+        Args:
+            slug: Stable key such as `support-assistant`.
+            name: Display name. Defaults to the slug.
+            prompt_type: `text` or `chat`. Fixed after creation.
+            description: Free-text description.
+            tags: Tags for grouping prompts.
+
+        Returns:
+            The stored [Prompt][trulens.core.schema.prompt.Prompt].
+        """
+
+        return core_prompt.create_prompt(
+            self.connector.db,
+            slug=slug,
+            name=name,
+            prompt_type=prompt_type,
+            description=description,
+            tags=tags,
+        )
+
+    def create_prompt_version(
+        self,
+        prompt: Union[prompt_schema.Prompt, types_schema.PromptID, str],
+        text: Optional[str] = None,
+        messages: Optional[Sequence[Dict[str, Any]]] = None,
+        variables: Optional[Sequence[str]] = None,
+        model_defaults: Optional[Dict[str, Any]] = None,
+        response_format: Optional[Dict[str, Any]] = None,
+        change_note: Optional[str] = None,
+        parent_version_id: Optional[types_schema.PromptVersionID] = None,
+        created_by: Optional[str] = None,
+    ) -> prompt_schema.PromptVersion:
+        """Create an immutable prompt version and move `latest` onto it.
+
+        Creating the same content twice returns the same version.
+
+        Args:
+            prompt: A prompt, prompt id, or slug.
+            text: Template string for a text prompt.
+            messages: Ordered messages for a chat prompt.
+            variables: Declared variable names. Inferred from the content when
+                omitted.
+            model_defaults: Provider-neutral model settings. Never credentials.
+            response_format: Response-format metadata for provider adapters.
+            change_note: Why the version was created.
+            parent_version_id: The version this one derives from. Defaults to
+                whatever `latest` currently points at.
+            created_by: Who created the version.
+
+        Returns:
+            The stored
+            [PromptVersion][trulens.core.schema.prompt.PromptVersion].
+        """
+
+        return core_prompt.create_prompt_version(
+            self.connector.db,
+            prompt=prompt,
+            text=text,
+            messages=messages,
+            variables=variables,
+            model_defaults=model_defaults,
+            response_format=response_format,
+            change_note=change_note,
+            parent_version_id=parent_version_id,
+            created_by=created_by,
+            cache=self.prompt_label_cache,
+        )
+
+    def set_prompt_label(
+        self,
+        prompt: Union[prompt_schema.Prompt, types_schema.PromptID, str],
+        label: str,
+        version: Union[
+            prompt_schema.PromptVersion, types_schema.PromptVersionID
+        ],
+        moved_by: Optional[str] = None,
+    ) -> prompt_schema.PromptLabel:
+        """Point a label at one exact version and record the movement.
+
+        Rolling back is the same call with an older version. Application code
+        that looks the label up needs no change.
+
+        Args:
+            prompt: A prompt, prompt id, or slug.
+            label: The label name, for example `production`.
+            version: The version or version id to point at.
+            moved_by: Caller label written to the history entry.
+
+        Returns:
+            The resulting
+            [PromptLabel][trulens.core.schema.prompt.PromptLabel].
+        """
+
+        return core_prompt.set_prompt_label(
+            self.connector.db,
+            prompt=prompt,
+            label=label,
+            version=version,
+            moved_by=moved_by,
+            cache=self.prompt_label_cache,
+        )
+
+    def get_prompt(
+        self,
+        prompt: Union[prompt_schema.Prompt, types_schema.PromptID, str],
+        label: Optional[str] = None,
+        version_id: Optional[types_schema.PromptVersionID] = None,
+        use_cache: bool = True,
+    ) -> prompt_schema.ResolvedPrompt:
+        """Resolve a prompt to one exact version.
+
+        Args:
+            prompt: A prompt, prompt id, or slug.
+            label: Label to resolve. Defaults to `latest` when no `version_id`
+                is given.
+            version_id: Exact version to load. Wins over `label`.
+            use_cache: Set false to bypass the label cache for this call.
+
+        Returns:
+            A [ResolvedPrompt][trulens.core.schema.prompt.ResolvedPrompt],
+            which renders locally without calling a model.
+        """
+
+        return core_prompt.resolve_prompt(
+            self.connector.db,
+            prompt=prompt,
+            label=label,
+            version_id=version_id,
+            cache=self.prompt_label_cache,
+            use_cache=use_cache,
+        )
+
+    def get_prompts(self) -> pandas.DataFrame:
+        """Get every prompt in the database.
+
+        Returns:
+            A dataframe with one row per prompt.
+        """
+
+        return self.connector.db.get_prompts()
+
+    def get_prompt_versions(
+        self, prompt: Union[prompt_schema.Prompt, types_schema.PromptID, str]
+    ) -> pandas.DataFrame:
+        """Get every version of a prompt, oldest first.
+
+        Args:
+            prompt: A prompt, prompt id, or slug.
+
+        Returns:
+            A dataframe with one row per version.
+        """
+
+        resolved = core_prompt.as_prompt(self.connector.db, prompt)
+        return self.connector.db.get_prompt_versions(resolved.prompt_id)
+
+    def get_prompt_labels(
+        self, prompt: Union[prompt_schema.Prompt, types_schema.PromptID, str]
+    ) -> pandas.DataFrame:
+        """Get every label of a prompt and the version it points at.
+
+        Args:
+            prompt: A prompt, prompt id, or slug.
+
+        Returns:
+            A dataframe with one row per label.
+        """
+
+        resolved = core_prompt.as_prompt(self.connector.db, prompt)
+        return self.connector.db.get_prompt_labels(resolved.prompt_id)
+
+    def get_prompt_label_history(
+        self,
+        prompt: Union[prompt_schema.Prompt, types_schema.PromptID, str],
+        label: Optional[str] = None,
+    ) -> pandas.DataFrame:
+        """Get the append-only history of label movements, newest first.
+
+        Args:
+            prompt: A prompt, prompt id, or slug.
+            label: Restrict to one label when given.
+
+        Returns:
+            A dataframe with one row per movement.
+        """
+
+        resolved = core_prompt.as_prompt(self.connector.db, prompt)
+        return self.connector.db.get_prompt_label_history(
+            resolved.prompt_id, label=label
+        )
+
     def start_evaluator(
         self,
         restart: bool = False,
         fork: bool = False,
         disable_tqdm: bool = False,
-        run_location: feedback_schema.FeedbackRunLocation | None = None,
+        run_location: Optional[feedback_schema.FeedbackRunLocation] = None,
         return_when_done: bool = False,
-    ) -> Process | Thread | None:
+    ) -> Optional[Union[Process, Thread]]:
         """
         Start a deferred feedback function evaluation thread or process.
 
@@ -1113,9 +1518,9 @@ class TruSession(
             )
 
         assert not fork, "Fork mode not yet implemented."
-        assert (
-            (not fork) or (not return_when_done)
-        ), "fork=True implies running asynchronously but return_when_done=True does not!"
+        assert (not fork) or (not return_when_done), (
+            "fork=True implies running asynchronously but return_when_done=True does not!"
+        )
 
         if self._evaluator_proc is not None:
             if restart:
@@ -1194,15 +1599,15 @@ class TruSession(
 
             runs_stats = defaultdict(int)
 
-            futures_map: dict[
+            futures_map: Dict[
                 Future[feedback_schema.FeedbackResult], pandas.Series
             ] = dict()
 
             while fork or not self._evaluator_stop.is_set():
                 if len(futures_map) < self.DEFERRED_NUM_RUNS:
                     # Get some new evals to run if some already completed by now.
-                    new_futures: list[
-                        tuple[
+                    new_futures: List[
+                        Tuple[
                             pandas.Series,
                             Future[feedback_schema.FeedbackResult],
                         ]
@@ -1350,7 +1755,7 @@ class TruSession(
 
     def wait_for_records(
         self,
-        record_ids: list[str],
+        record_ids: List[str],
         timeout: float = 10,
         poll_interval: float = 0.5,
     ) -> None:
@@ -1370,7 +1775,7 @@ class TruSession(
 
     def _wait_for_records_otel(
         self,
-        record_ids: list[str],
+        record_ids: List[str],
         timeout: float,
         poll_interval: float,
     ) -> None:
@@ -1418,7 +1823,7 @@ class TruSession(
 
     def _wait_for_records_legacy(
         self,
-        record_ids: list[str],
+        record_ids: List[str],
         timeout: float,
         poll_interval: float,
     ) -> None:
@@ -1440,8 +1845,8 @@ class TruSession(
 
     def wait_for_feedback_results(
         self,
-        record_ids: list[str],
-        feedback_names: list[str],
+        record_ids: List[str],
+        feedback_names: List[str],
         timeout: float = 60,
         poll_interval: float = 0.5,
     ) -> None:
@@ -1522,7 +1927,7 @@ class TruSession(
         self,
         record: Record,
         feedback_name: str,
-        feedback_result: float,
+        feedback_result: Union[float, int],
         higher_is_better: bool,
     ) -> None:
         """
@@ -1578,7 +1983,7 @@ class TruSession(
     def compute_feedbacks_on_events(
         self,
         events: pandas.DataFrame,
-        feedbacks: list[core_metric.Metric],
+        feedbacks: List[core_metric.Metric],
         raise_error_on_no_feedbacks_computed: bool = False,
     ) -> None:
         """Compute feedbacks/metrics on events.
@@ -1613,10 +2018,10 @@ class TruSession(
 
     def get_events(
         self,
-        app_name: str | None,
-        app_version: str | None,
-        record_ids: list[str] | None = None,
-        start_time: datetime | None = None,
+        app_name: Optional[str],
+        app_version: Optional[str],
+        record_ids: Optional[List[str]] = None,
+        start_time: Optional[datetime] = None,
     ) -> pandas.DataFrame:
         """
         Get events/spans from the database in OTel mode.

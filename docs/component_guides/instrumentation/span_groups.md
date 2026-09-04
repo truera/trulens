@@ -18,6 +18,7 @@ block:
 from trulens.core.otel.instrument import instrument, span_group
 from trulens.otel.semconv.trace import SpanAttributes
 
+
 @instrument(
     span_type=SpanAttributes.SpanType.RETRIEVAL,
     attributes={
@@ -28,6 +29,7 @@ from trulens.otel.semconv.trace import SpanAttributes
 def retrieve(query):
     # your retrieval logic
     ...
+
 
 with span_group("hop1"):
     ctx1 = retrieve("query 1")
@@ -53,7 +55,7 @@ Nesting `span_group()` calls merges the labels:
 ```python
 with span_group("hop1"):
     with span_group("retry"):
-        retrieve("q")    # SPAN_GROUPS = ["hop1", "retry"]
+        retrieve("q")  # SPAN_GROUPS = ["hop1", "retry"]
 ```
 
 ## How it works

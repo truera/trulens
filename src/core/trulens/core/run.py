@@ -683,6 +683,15 @@ class Run(BaseModel):
                 )
                 return RunStatus.UNKNOWN
 
+        # An invocation exists but carries no completion status yet, which means
+        # ingestion has been requested and has not reported back. Returning None
+        # here would make the status unresolvable for callers and renderers.
+        logger.warning(
+            f"No completion status set for invocation {latest_invocation.id}; "
+            "treating the invocation as in progress."
+        )
+        return RunStatus.INVOCATION_IN_PROGRESS
+
     def _metrics_computation_started(self, run: Run) -> bool:
         return (
             run.run_metadata.metrics is not None
@@ -1348,7 +1357,7 @@ class Run(BaseModel):
         if computed_metrics:
             return (
                 f"Cannot compute metrics because the following metric(s) are already computed or in progress: "
-                f"{', '.join(computed_metrics)}. If you want to recompute, please cancel the run and start a new one."
+                f"{', '.join(m if isinstance(m, str) else m.name for m in computed_metrics)}. If you want to recompute, please cancel the run and start a new one."
             )
 
         # Separate client-side and server-side metrics

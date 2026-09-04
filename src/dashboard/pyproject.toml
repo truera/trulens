@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-dashboard"
-version = "2.13.0"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -45,6 +45,9 @@ streamlit-aggrid = { version = ">=1.0.5,<1.1.8", optional = true }
 full = [
   "streamlit-aggrid",
 ]
+
+[tool.poetry.scripts]
+trulens-dashboard = "trulens.dashboard.cli:main"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../core" }

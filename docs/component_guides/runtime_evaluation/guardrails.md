@@ -25,11 +25,14 @@ Simply adding the `block_output` decorator with a feedback function and threshol
 
     feedback = Metric(implementation=provider.criminality, higher_is_better=False)
 
+
     class safe_output_chat_app:
         @instrument()
-        @block_output(feedback=feedback,
-            threshold = 0.9,
-            return_value="I couldn't find an answer to your question.")
+        @block_output(
+            feedback=feedback,
+            threshold=0.9,
+            return_value="I couldn't find an answer to your question.",
+        )
         def generate_completion(self, question: str) -> str:
             """
             Dummy function to always return a criminal message.
@@ -52,18 +55,22 @@ This mechanism for guardrails is supported via the `block_input` guardrail. If t
 
     feedback = Metric(implementation=provider.criminality, higher_is_better=False)
 
+
     class safe_input_chat_app:
         @instrument()
-        @block_input(feedback=feedback,
+        @block_input(
+            feedback=feedback,
             threshold=0.9,
             keyword_for_prompt="question",
-            return_value="I couldn't find an answer to your question.")
+            return_value="I couldn't find an answer to your question.",
+        )
         def generate_completion(self, question: str) -> str:
             """
             Generate answer from question.
             """
             completion = (
-                oai_client.chat.completions.create(
+                oai_client.chat.completions
+                .create(
                     model="gpt-4o-mini",
                     temperature=0,
                     messages=[
@@ -119,14 +126,14 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
         feedback = Metric(implementation=provider.context_relevance)
 
         filtered_retriever = WithFeedbackFilterDocuments.of_retriever(
-            retriever=retriever,
-            feedback=feedback,
-            threshold=0.5
+            retriever=retriever, feedback=feedback, threshold=0.5
         )
 
         rag_chain = (
-            {"context": filtered_retriever
-            | format_docs, "question": RunnablePassthrough()}
+            {
+                "context": filtered_retriever | format_docs,
+                "question": RunnablePassthrough(),
+            }
             | prompt
             | llm
             | StrOutputParser()
@@ -140,9 +147,9 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
 
         feedback = Metric(implementation=provider.context_relevance)
 
-        filtered_query_engine = WithFeedbackFilterNodes(query_engine,
-            feedback=feedback,
-            threshold=0.5)
+        filtered_query_engine = WithFeedbackFilterNodes(
+            query_engine, feedback=feedback, threshold=0.5
+        )
         ```
 
 !!! warning

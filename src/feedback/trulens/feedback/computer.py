@@ -461,11 +461,12 @@ def _dfs_collect_trace_level_inputs_from_events(
     record_id = record_attributes[SpanAttributes.RECORD_ID]
     span_id = curr_event["trace"]["span_id"]
     span_name = curr_event["record"]["name"]
+    span_events = curr_event["record"].get("events")
     # Check if row satisfies selector conditions.
     curr_processed_content_node = None
     if sole_selector.matches_span(span_name, record_attributes):
         processed_content = sole_selector.process_span(
-            span_id, record_attributes
+            span_id, record_attributes, span_events
         ).value
         if (
             processed_content is not None
@@ -516,6 +517,7 @@ def _dfs_collect_inputs_from_events(
     selector = kwarg_to_selector[kwarg_group[0]]
     span_id = curr_event["trace"]["span_id"]
     span_name = curr_event["record"]["name"]
+    span_events = curr_event["record"].get("events")
     # Handle span groups.
     span_groups = record_attributes.get(SpanAttributes.SPAN_GROUPS, [None])
     if isinstance(span_groups, str):
@@ -530,7 +532,7 @@ def _dfs_collect_inputs_from_events(
         kwarg_group_inputs = {}
         for kwarg in kwarg_group:
             val = kwarg_to_selector[kwarg].process_span(
-                span_id, record_attributes
+                span_id, record_attributes, span_events
             )
             kwarg_group_inputs[kwarg] = val
             if (
@@ -706,8 +708,10 @@ def _remove_already_computed_feedbacks(
         return flattened_inputs
     eval_root_attributes = attributes[
         attributes.apply(
-            lambda curr: curr.get(SpanAttributes.SPAN_TYPE)
-            == SpanAttributes.SpanType.EVAL_ROOT
+            lambda curr: (
+                curr.get(SpanAttributes.SPAN_TYPE)
+                == SpanAttributes.SpanType.EVAL_ROOT
+            )
         )
     ]
     record_id_to_eval_root_attributes = eval_root_attributes.groupby(
@@ -1039,7 +1043,8 @@ def _call_feedback_function_under_eval_span(
         The score returned by the feedback function.
     """
     with (
-        trace.get_tracer_provider()
+        trace
+        .get_tracer_provider()
         .get_tracer(TRULENS_SERVICE_NAME)
         .start_as_current_span(f"eval-{eval_child_idx}")
     ) as eval_span:

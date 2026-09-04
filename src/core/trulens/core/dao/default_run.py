@@ -75,7 +75,8 @@ class DefaultRunDao(RunDaoBase):
 
         with self._db.session.begin() as session:
             existing = (
-                session.query(orm.Run)
+                session
+                .query(orm.Run)
                 .filter(orm.Run.run_name == run_name)
                 .first()
             )
@@ -113,7 +114,8 @@ class DefaultRunDao(RunDaoBase):
         orm = self._db.orm
         with self._db.session.begin() as session:
             row = (
-                session.query(orm.Run)
+                session
+                .query(orm.Run)
                 .filter(
                     orm.Run.run_name == run_name,
                     orm.Run.object_name == object_name,
@@ -133,7 +135,8 @@ class DefaultRunDao(RunDaoBase):
         orm = self._db.orm
         with self._db.session.begin() as session:
             rows = (
-                session.query(orm.Run)
+                session
+                .query(orm.Run)
                 .filter(orm.Run.object_name == object_name)
                 .all()
             )
@@ -192,7 +195,8 @@ class DefaultRunDao(RunDaoBase):
         orm = self._db.orm
         with self._db.session.begin() as session:
             row = (
-                session.query(orm.Run)
+                session
+                .query(orm.Run)
                 .filter(
                     orm.Run.run_name == run_name,
                     orm.Run.object_name == object_name,

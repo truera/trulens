@@ -12,7 +12,9 @@ At the most basic level, metric implementations are simple callables that can be
     from trulens.providers.openai import OpenAI
 
     provider = OpenAI()
-    score = provider.relevance("What is the capital of France?", "The capital of France is Paris.")
+    score = provider.relevance(
+        "What is the capital of France?", "The capital of France is Paris."
+    )
     print(score)  # Returns a float between 0 and 1
     ```
 
@@ -30,18 +32,12 @@ import pandas as pd
 
 # Your existing data - could come from CSV, database, etc.
 df = pd.DataFrame({
-    'question': [
-        'Where is Germany?',
-        'What is the capital of France?'
+    "question": ["Where is Germany?", "What is the capital of France?"],
+    "context": [
+        "Germany is a country located in Europe.",
+        "France is a country in Europe and its capital is Paris.",
     ],
-    'context': [
-        'Germany is a country located in Europe.',
-        'France is a country in Europe and its capital is Paris.'
-    ],
-    'answer': [
-        'Germany is in Europe',
-        'The capital of France is Paris'
-    ],
+    "answer": ["Germany is in Europe", "The capital of France is Paris"],
 })
 ```
 
@@ -136,9 +132,9 @@ tru_replay = TruApp(
 with tru_replay:
     for _, row in df.iterrows():
         replay.query(
-            question=row['question'],
-            context=[row['context']],  # Wrap in list if single context
-            answer=row['answer']
+            question=row["question"],
+            context=[row["context"]],  # Wrap in list if single context
+            answer=row["answer"],
         )
 ```
 
@@ -150,6 +146,7 @@ session.get_leaderboard()
 
 # Or launch the dashboard
 from trulens.dashboard import run_dashboard
+
 run_dashboard(session)
 ```
 
@@ -159,17 +156,17 @@ If your data has multiple contexts per question, you can pass them as a list:
 
 ```python
 df = pd.DataFrame({
-    'question': ['What is coffee culture?'],
-    'contexts': [['Coffee has three waves...', 'Seattle is the birthplace...']],
-    'answer': ['Coffee culture evolved through three waves...'],
+    "question": ["What is coffee culture?"],
+    "contexts": [["Coffee has three waves...", "Seattle is the birthplace..."]],
+    "answer": ["Coffee culture evolved through three waves..."],
 })
 
 with tru_replay:
     for _, row in df.iterrows():
         replay.query(
-            question=row['question'],
-            context=row['contexts'],  # Already a list
-            answer=row['answer']
+            question=row["question"],
+            context=row["contexts"],  # Already a list
+            answer=row["answer"],
         )
 ```
 
@@ -194,7 +191,13 @@ class DataReplayWithGroundTruth:
             SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT: "expected_answer",
         }
     )
-    def query(self, question: str, context: list, answer: str, expected_answer: str = None) -> str:
+    def query(
+        self,
+        question: str,
+        context: list,
+        answer: str,
+        expected_answer: str = None,
+    ) -> str:
         self.retrieve(query=question, contexts=context)
         return answer
 ```

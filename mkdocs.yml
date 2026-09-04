@@ -83,7 +83,7 @@ plugins:
           import:
             # These allow for links to types defined by various packages.
             - https://docs.python.org/3/objects.inv
-            - https://docs.scipy.org/doc/numpy/objects.inv
+            - https://numpy.org/doc/stable/objects.inv
             - http://pandas.pydata.org/pandas-docs/stable/objects.inv
             - https://docs.pydantic.dev/latest/objects.inv
             - https://typing-extensions.readthedocs.io/en/latest/objects.inv
@@ -104,6 +104,7 @@ plugins:
             - src/providers/huggingface
             - src/providers/langchain
             - src/providers/litellm
+            - src/providers/ollama
             - src/providers/openai
             - src/connectors/snowflake
             - src/trulens_eval # to remove after deprecation
@@ -264,6 +265,7 @@ nav:
         - component_guides/instrumentation/langchain.md
         - component_guides/instrumentation/langgraph.md
         - component_guides/instrumentation/llama_index.md
+        - Client Hooks: component_guides/instrumentation/client_hooks.md
         - MCP: component_guides/instrumentation/mcp.md
         - Span Groups: component_guides/instrumentation/span_groups.md
         - Conversation ID: component_guides/instrumentation/conversation_id.md

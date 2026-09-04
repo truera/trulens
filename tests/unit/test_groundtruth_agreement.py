@@ -440,6 +440,45 @@ class TestGroundTruthAgreement(TestCase):
         self.assertTrue(np.isnan(result))
 
     @pytest.mark.optional
+    def test_ndcg_at_k_fewer_golden_chunks_than_retrieved(self):
+        """Test NDCG@k when the golden set annotates fewer chunks than retrieved.
+
+        The golden set annotates 2 chunks while 5 are retrieved. This used
+        to raise a shape-mismatch ValueError from sklearn's ndcg_score
+        because the ideal-relevance vector was truncated to the golden
+        count while the retrieved vector was truncated to k.
+        """
+        result = self.agreement_with_chunks.ndcg_at_k(
+            "What is machine learning?",
+            [
+                "Machine learning is a subset of AI",
+                "Some irrelevant text",
+                "More irrelevant text",
+                "Even more irrelevant text",
+                "Yet another irrelevant text",
+            ],
+        )
+        # DCG = 1.0 (only the first retrieved chunk is relevant)
+        # IDCG = 1.0 + 0.8/log2(3) = 1.50473
+        expected = 1.0 / (1.0 + 0.8 / np.log2(3))
+        self.assertAlmostEqual(result, expected, places=10)
+
+    @pytest.mark.optional
+    def test_ndcg_at_k_imperfect_ranking(self):
+        """Test NDCG@k with an imperfect ranking (relevant chunk not first)."""
+        result = self.agreement_with_chunks.ndcg_at_k(
+            "What is machine learning?",
+            [
+                "It uses algorithms to learn patterns",
+                "Machine learning is a subset of AI",
+            ],
+        )
+        # DCG = 0.8/log2(2) + 1.0/log2(3) = 1.43093
+        # IDCG = 1.0/log2(2) + 0.8/log2(3) = 1.50473
+        expected = (0.8 + 1.0 / np.log2(3)) / (1.0 + 0.8 / np.log2(3))
+        self.assertAlmostEqual(result, expected, places=10)
+
+    @pytest.mark.optional
     def test_precision_at_k_perfect_precision(self):
         """Test precision@k with perfect precision."""
         self._test_ir_metric(
@@ -623,18 +662,26 @@ class TestGroundTruthAgreement(TestCase):
 
     @pytest.mark.optional
     def test_empty_retrieved_chunks(self):
-        """Test behavior with empty retrieved chunks."""
-        query = "What is machine learning?"
-        test_cases = [
-            (self.agreement_with_chunks.precision_at_k, 0.0),
-            (self.agreement_with_chunks.recall_at_k, 0.0),
-            (self.agreement_with_chunks.mrr, 0.0),
-            (self.agreement_with_chunks.ir_hit_rate, 0.0),
-        ]
+        """Test behavior with empty retrieved chunks.
 
-        for metric_func, expected in test_cases:
-            result = metric_func(query, [])
-            self.assertEqual(result, expected)
+        Retrieving nothing does not make every metric zero. Precision divides
+        by the number of retrieved chunks, so with none retrieved it has no
+        denominator and is undefined. The other three still have one: this
+        query does have golden chunks and none of them were found, which is a
+        measured zero.
+        """
+        query = "What is machine learning?"
+
+        self.assertTrue(
+            np.isnan(self.agreement_with_chunks.precision_at_k(query, []))
+        )
+
+        for metric_func in (
+            self.agreement_with_chunks.recall_at_k,
+            self.agreement_with_chunks.mrr,
+            self.agreement_with_chunks.ir_hit_rate,
+        ):
+            self.assertEqual(metric_func(query, []), 0.0)
 
         try:
             result = self.agreement_with_chunks.ndcg_at_k(query, [])

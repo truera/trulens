@@ -64,14 +64,12 @@ To see the core re-architecture changes in action, we've included some usage exa
         ```python
         from trulens.apps.app import instrument
 
-        class CustomApp:
 
+        class CustomApp:
             def __init__(self):
                 self.retriever = CustomRetriever()
                 self.llm = CustomLLM()
-                self.template = CustomTemplate(
-                    "The answer to {question} is {answer}"
-                )
+                self.template = CustomTemplate("The answer to {question} is {answer}")
 
             @instrument()
             def retrieve_chunks(self, data):
@@ -84,6 +82,7 @@ To see the core re-architecture changes in action, we've included some usage exa
                 output = self.template.fill(question=input, answer=answer)
 
                 return output
+
 
         ca = CustomApp()
         ```
@@ -115,10 +114,7 @@ To see the core re-architecture changes in action, we've included some usage exa
         from trulens.apps.langchain import TruChain
 
         # Wrap application
-        tru_recorder = TruChain(
-            chain,
-            app_id='Chain1_ChatApplication'
-        )
+        tru_recorder = TruChain(chain, app_id="Chain1_ChatApplication")
 
         # Record application runs
         with tru_recorder as recording:
@@ -141,8 +137,7 @@ To see the core re-architecture changes in action, we've included some usage exa
         from trulens.apps.llamaindex import TruLlama
         from trulens.core import Feedback
 
-        tru_recorder = TruLlama(query_engine,
-            app_id='LlamaIndex_App1')
+        tru_recorder = TruLlama(query_engine, app_id="LlamaIndex_App1")
 
         with tru_recorder as recording:
             query_engine.query("What is LlamaIndex?")
@@ -248,7 +243,9 @@ You can see how to start a TruLens session logging to a postgres database below:
     from trulens.core import TruSession
     from trulens.core.database.connector import DefaultDBConnector
 
-    connector = DefaultDBConnector(database_url="postgresql+psycopg://trulensuser:password@localhost/trulens")
+    connector = DefaultDBConnector(
+        database_url="postgresql+psycopg://trulensuser:password@localhost/trulens"
+    )
     session = TruSession(connector=connector)
     ```
 
@@ -299,8 +296,14 @@ Along with the high level changes in TruLens v1, ground truth can now be persist
             "expected_response": ["greeting", "Joe Biden", "Artificial Intelligence"],
             "expected_chunks": [
                 "Windows 11 is a client operating system",
-                ["Joe Biden is the president of the United States", "Javier Milei is the president of Argentina"],
-                ["AI is the simulation of human intelligence processes by machines", "AI stands for Artificial Intelligence"],
+                [
+                    "Joe Biden is the president of the United States",
+                    "Javier Milei is the president of Argentina",
+                ],
+                [
+                    "AI is the simulation of human intelligence processes by machines",
+                    "AI stands for Artificial Intelligence",
+                ],
             ],
         }
 
