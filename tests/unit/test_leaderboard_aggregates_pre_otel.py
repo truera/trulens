@@ -47,3 +47,4 @@ class TestLeaderboardAggregatesPreOtel(TruTestCase):
         self.assertEqual(row["Records"], 1)
         self.assertEqual(row["Total Tokens"], 0.0)
         self.assertEqual(row["Total Cost (USD)"], 0.0)
+        self.assertGreaterEqual(row["Average Latency (s)"], 0.0)

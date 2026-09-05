@@ -213,19 +213,6 @@ class SQLAlchemyDB(core_db.DB):
         # SQLite and MySQL use json_extract with JSONPath syntax.
         return sa.func.json_extract(column_obj, f'$."{path}"')
 
-    def _json_path_expr_from_text(self, column_obj: Any, path: str) -> Any:
-        """Like [_json_path_expr][], but for a ``Text`` column holding a
-        JSON-encoded string (e.g. the pre-OTEL ORM's ``*_json`` columns)
-        rather than a genuine JSON-typed column.
-
-        Postgres' ``json_extract_path_text`` requires a ``json`` argument, so
-        the text is cast first; other dialects' JSON functions accept a
-        JSON-encoded string directly.
-        """
-        if self.engine.dialect.name == "postgresql":
-            column_obj = sa.cast(column_obj, sa.JSON)
-        return self._json_path_expr(column_obj, path)
-
     def _time_bucket_expr(self, bucket: str) -> Any:
         """Return a portable day or week bucket expression."""
         if bucket not in ("day", "week"):
@@ -1737,28 +1724,9 @@ class SQLAlchemyDB(core_db.DB):
                 self.orm.AppDefinition.app_name.label("app_name"),
                 self.orm.AppDefinition.app_version.label("app_version"),
                 self.orm.AppDefinition.app_id.label("app_id"),
-                sa.func.count(sa.distinct(self.orm.Record.record_id)).label(
-                    "Records"
-                ),
-                sa.func.avg(
-                    sa.cast(
-                        self._json_path_expr_from_text(
-                            self.orm.Record.cost_json, "n_tokens"
-                        ),
-                        sa.Float,
-                    )
-                ).label("Total Tokens"),
-                sa.func.avg(self.orm.Record.latency).label(
-                    "Average Latency (s)"
-                ),
-                sa.func.sum(
-                    sa.cast(
-                        self._json_path_expr_from_text(
-                            self.orm.Record.cost_json, "cost"
-                        ),
-                        sa.Float,
-                    )
-                ).label("Total Cost (USD)"),
+                self.orm.Record.record_id.label("record_id"),
+                self.orm.Record.cost_json.label("cost_json"),
+                self.orm.Record.perf_json.label("perf_json"),
             ).join(self.orm.Record.app)
             if app_name:
                 record_stmt = record_stmt.where(
@@ -1768,12 +1736,7 @@ class SQLAlchemyDB(core_db.DB):
                 record_stmt = record_stmt.where(
                     self.orm.AppDefinition.app_version.in_(app_versions)
                 )
-            record_stmt = record_stmt.group_by(
-                self.orm.AppDefinition.app_name,
-                self.orm.AppDefinition.app_version,
-                self.orm.AppDefinition.app_id,
-            )
-            base_rows = session.execute(record_stmt).all()
+            record_rows = session.execute(record_stmt).all()
 
             fb_stmt = (
                 sa
@@ -1809,20 +1772,38 @@ class SQLAlchemyDB(core_db.DB):
             )
             fb_rows = session.execute(fb_stmt).all()
 
-        base_df = pd.DataFrame(
-            base_rows,
+        records_df = pd.DataFrame(
+            record_rows,
             columns=[
                 "app_name",
                 "app_version",
                 "app_id",
-                "Records",
-                "Total Tokens",
-                "Average Latency (s)",
-                "Total Cost (USD)",
+                "record_id",
+                "cost_json",
+                "perf_json",
             ],
         )
-        if base_df.empty:
-            return base_df, []
+        if records_df.empty:
+            return (
+                records_df.drop(
+                    columns=["record_id", "cost_json", "perf_json"]
+                ),
+                [],
+            )
+
+        records_df["latency"] = _extract_latency(records_df["perf_json"])
+        records_df = pd.concat(
+            [records_df, _extract_tokens_and_cost(records_df["cost_json"])],
+            axis=1,
+        )
+        base_df = records_df.groupby(
+            ["app_name", "app_version", "app_id"], as_index=False
+        ).agg(**{
+            "Records": ("record_id", "nunique"),
+            "Total Tokens": ("total_tokens", "mean"),
+            "Average Latency (s)": ("latency", "mean"),
+            "Total Cost (USD)": ("total_cost", "sum"),
+        })
 
         base_df["Total Cost (Snowflake Credits)"] = 0.0
         base_df["tags"] = ""
