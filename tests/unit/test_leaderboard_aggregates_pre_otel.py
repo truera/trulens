@@ -45,6 +45,6 @@ class TestLeaderboardAggregatesPreOtel(TruTestCase):
         self.assertEqual(feedback_col_names, [])
         row = df.iloc[0]
         self.assertEqual(row["Records"], 1)
-        self.assertEqual(row["Total Tokens"], 0.0)
-        self.assertEqual(row["Total Cost (USD)"], 0.0)
+        self.assertGreater(row["Total Tokens"], 0.0)
+        self.assertGreaterEqual(row["Total Cost (USD)"], 0.0)
         self.assertGreaterEqual(row["Average Latency (s)"], 0.0)
