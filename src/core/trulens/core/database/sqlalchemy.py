@@ -1225,10 +1225,28 @@ class SQLAlchemyDB(core_db.DB):
                     "Latest Record Timestamp"
                 ),
                 latency_expr.label("Average Latency (s)"),
-                sa.func.sum(sa.cast(cost_col, sa.Float)).label("total_cost"),
-                sa.func.coalesce(
-                    sa.func.max(currency_col), sa.literal("USD")
-                ).label("cost_currency"),
+                # Sum cost per currency rather than summing every record's cost
+                # into one number and labelling it with whichever currency
+                # sorts last. Mixing currencies in a single total is wrong and
+                # is what Cost.__add__ refuses to do.
+                sa.func.sum(
+                    sa.case(
+                        (
+                            currency_col == sa.literal("USD"),
+                            sa.cast(cost_col, sa.Float),
+                        ),
+                        else_=0.0,
+                    )
+                ).label("Total Cost (USD)"),
+                sa.func.sum(
+                    sa.case(
+                        (
+                            currency_col == sa.literal("Snowflake credits"),
+                            sa.cast(cost_col, sa.Float),
+                        ),
+                        else_=0.0,
+                    )
+                ).label("Total Cost (Snowflake Credits)"),
                 sa.func.sum(
                     sa.cast(
                         sa.func.coalesce(tokens_col, sa.literal("0")),
@@ -1323,32 +1341,14 @@ class SQLAlchemyDB(core_db.DB):
                 "Recent Records",
                 "Latest Record Timestamp",
                 "Average Latency (s)",
-                "total_cost",
-                "cost_currency",
+                "Total Cost (USD)",
+                "Total Cost (Snowflake Credits)",
                 "Total Tokens",
             ],
         )
 
         if base_df.empty:
             return base_df, []
-
-        base_df["Total Cost (USD)"] = base_df.apply(
-            lambda r: (
-                float(r["total_cost"] or 0)
-                if r["cost_currency"] == "USD"
-                else 0.0
-            ),
-            axis=1,
-        )
-        base_df["Total Cost (Snowflake Credits)"] = base_df.apply(
-            lambda r: (
-                float(r["total_cost"] or 0)
-                if r["cost_currency"] == "Snowflake credits"
-                else 0.0
-            ),
-            axis=1,
-        )
-        base_df.drop(columns=["total_cost", "cost_currency"], inplace=True)
 
         feedback_col_names = []
         if eval_rows:
