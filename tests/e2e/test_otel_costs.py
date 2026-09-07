@@ -44,7 +44,8 @@ class _TestOpenAIApp:
 
     def respond_to_query(self, query: str) -> str:
         return (
-            self._openai_client.chat.completions.create(
+            self._openai_client.chat.completions
+            .create(
                 model="gpt-3.5-turbo-0125",
                 temperature=0,
                 messages=[
@@ -65,7 +66,8 @@ class _TestLiteLLMApp:
 
     def respond_to_query(self, query: str) -> str:
         completion = (
-            litellm.completion(
+            litellm
+            .completion(
                 model=self._model,
                 temperature=0,
                 messages=[

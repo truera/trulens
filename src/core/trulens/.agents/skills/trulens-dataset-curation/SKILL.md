@@ -62,9 +62,18 @@ data = {
         "The RAG triad consists of context relevance, groundedness, and answer relevance.",
     ],
     "expected_chunks": [
-        ["TruLens is an open source library for evaluating and tracing AI agents, including RAG systems."],
-        ["from trulens.apps.langchain import TruChain", "tru_recorder = TruChain(chain, app_name='MyApp')"],
-        ["Context relevance evaluates retrieved chunks", "Groundedness checks if response is supported by context", "Answer relevance measures if the response answers the question"],
+        [
+            "TruLens is an open source library for evaluating and tracing AI agents, including RAG systems."
+        ],
+        [
+            "from trulens.apps.langchain import TruChain",
+            "tru_recorder = TruChain(chain, app_name='MyApp')",
+        ],
+        [
+            "Context relevance evaluates retrieved chunks",
+            "Groundedness checks if response is supported by context",
+            "Answer relevance measures if the response answers the question",
+        ],
     ],
 }
 
@@ -100,8 +109,7 @@ from trulens.providers.openai import OpenAI
 provider = OpenAI()
 
 ground_truth_agreement = GroundTruthAgreement(
-    ground_truth_df,
-    provider=provider
+    ground_truth_df, provider=provider
 )
 
 f_groundtruth = Metric(
@@ -124,7 +132,11 @@ If you have existing logs, convert them to the ground truth format:
 # From a list of dictionaries
 logs = [
     {"input": "What is X?", "output": "X is...", "retrieved": ["doc1", "doc2"]},
-    {"input": "How does Y work?", "output": "Y works by...", "retrieved": ["doc3"]},
+    {
+        "input": "How does Y work?",
+        "output": "Y works by...",
+        "retrieved": ["doc3"],
+    },
 ]
 
 ground_truth_df = pd.DataFrame({
@@ -156,9 +168,11 @@ for row in ground_truth_df.itertuples():
         calls={
             retriever_component.get_context: dict(
                 args=[row.query],
-                rets=row.expected_chunks if isinstance(row.expected_chunks, list) else [row.expected_chunks]
+                rets=row.expected_chunks
+                if isinstance(row.expected_chunks, list)
+                else [row.expected_chunks],
             )
-        }
+        },
     )
     records.append(rec)
 
@@ -166,7 +180,7 @@ for row in ground_truth_df.itertuples():
 virtual_recorder = TruVirtual(
     app_name="ingested_data",
     app=virtual_app,
-    feedbacks=[f_context_relevance, f_groundedness]
+    feedbacks=[f_context_relevance, f_groundedness],
 )
 
 for record in records:

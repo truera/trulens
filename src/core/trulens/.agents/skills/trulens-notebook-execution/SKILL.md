@@ -64,19 +64,19 @@ Before executing, read the notebook JSON to build a map of:
 ```python
 import json
 
-with open('notebook.ipynb') as f:
+with open("notebook.ipynb") as f:
     nb = json.load(f)
 
 sections = []
 current_section = "Setup"
 
-for i, cell in enumerate(nb['cells']):
-    if cell['cell_type'] == 'markdown':
-        source = ''.join(cell['source'])
+for i, cell in enumerate(nb["cells"]):
+    if cell["cell_type"] == "markdown":
+        source = "".join(cell["source"])
         # Extract header
-        for line in source.split('\n'):
-            if line.startswith('## '):
-                current_section = line.replace('## ', '').strip()
+        for line in source.split("\n"):
+            if line.startswith("## "):
+                current_section = line.replace("## ", "").strip()
     sections.append((i, current_section))
 ```
 
@@ -278,15 +278,15 @@ If you see `Additional properties are not allowed ('id' was unexpected)`:
 ```python
 import json
 
-with open('notebook.ipynb', 'r') as f:
+with open("notebook.ipynb", "r") as f:
     nb = json.load(f)
 
 # Remove 'id' fields from cells (not valid in nbformat 4)
-for cell in nb['cells']:
-    if 'id' in cell:
-        del cell['id']
+for cell in nb["cells"]:
+    if "id" in cell:
+        del cell["id"]
 
-with open('notebook.ipynb', 'w') as f:
+with open("notebook.ipynb", "w") as f:
     json.dump(nb, f, indent=1)
 ```
 

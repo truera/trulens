@@ -60,6 +60,7 @@ from trulens.providers.openai import OpenAI
 
 # --- App definition ---
 
+
 class WeatherMCPClient:
     """Simulates an MCP client that calls a weather tool."""
 
@@ -70,7 +71,10 @@ class WeatherMCPClient:
                 "type": "object",
                 "properties": {
                     "city": {"type": "string"},
-                    "units": {"type": "string", "enum": ["celsius", "fahrenheit"]},
+                    "units": {
+                        "type": "string",
+                        "enum": ["celsius", "fahrenheit"],
+                    },
                 },
                 "required": ["city"],
             },
@@ -118,7 +122,9 @@ class WeatherMCPClient:
     )
     def answer(self, query: str) -> str:
         """Answer a user query by calling MCP tools."""
-        result = self.call_tool("get_weather", {"city": "San Francisco", "units": "celsius"})
+        result = self.call_tool(
+            "get_weather", {"city": "San Francisco", "units": "celsius"}
+        )
         data = json.loads(result)
         return (
             f"The weather in {data['city']} is {data['temperature']}°C "
@@ -175,6 +181,7 @@ If your MCP client reports latency separately, you can capture it using a lambda
 ```python
 import time
 
+
 class TimedMCPClient:
     @instrument(
         span_type=SpanAttributes.SpanType.MCP,
@@ -188,8 +195,7 @@ class TimedMCPClient:
             ),
         },
     )
-    def call_tool(self, tool_name: str, arguments: dict):
-        ...
+    def call_tool(self, tool_name: str, arguments: dict): ...
 ```
 
 ## Evaluating MCP tool calls

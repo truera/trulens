@@ -93,3 +93,17 @@ By default these are hashes of dataset content as json.
 EventID: TypeAlias = str
 """Unique identifier for a event.
 """
+
+PromptID: TypeAlias = str
+"""Unique identifier for a prompt.
+
+By default these are hashes of the prompt slug so that the identifier stays
+stable while the name, description, or tags change.
+"""
+
+PromptVersionID: TypeAlias = str
+"""Unique identifier for a prompt version.
+
+By default these are hashes of the canonical version content as json, so
+creating the same version twice yields the same identifier.
+"""

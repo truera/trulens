@@ -253,8 +253,10 @@ class TestOtelRecordingContexts(OtelTestCase):
         events = self._get_events()
         eval_roots = events[
             events["record_attributes"].apply(
-                lambda attributes: attributes.get(SpanAttributes.SPAN_TYPE)
-                == SpanAttributes.SpanType.EVAL_ROOT
+                lambda attributes: (
+                    attributes.get(SpanAttributes.SPAN_TYPE)
+                    == SpanAttributes.SpanType.EVAL_ROOT
+                )
             )
         ]
         self.assertEqual(len(eval_roots), 2)

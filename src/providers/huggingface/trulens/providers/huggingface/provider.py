@@ -18,9 +18,14 @@ import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
 import requests
-import torch
-from transformers import AutoModelForSequenceClassification
-from transformers import AutoTokenizer
+
+# NOTE: torch and transformers are imported lazily, inside the HuggingfaceLocal
+# methods that need them. They are the only consumers, and importing torch at
+# module scope made every importer of this package pay for it -- including
+# `Endpoint.track_all_costs`, which imports `.endpoint` (and so runs this
+# package's `__init__`) on instrumented calls that never touch a local model.
+# torch's import also dlopens bundled CUDA libraries, which has segfaulted the
+# Python 3.13 CI workers mid-test.
 from trulens.core._utils.pycompat import Future  # import style exception
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import provider as core_provider
@@ -718,6 +723,9 @@ class HuggingfaceLocal(HuggingfaceBase):
     def _retrieve_tokenizer_and_model(
         self, key: str, tokenizer_kwargs: Optional[Dict[str, Any]] = None
     ) -> Tuple[Any, Any]:
+        from transformers import AutoModelForSequenceClassification
+        from transformers import AutoTokenizer
+
         if key not in self._cached_tokenizers:
             tokenizer_kwargs = tokenizer_kwargs if tokenizer_kwargs else {}
             self._cached_tokenizers[key] = AutoTokenizer.from_pretrained(
@@ -759,6 +767,8 @@ class HuggingfaceLocal(HuggingfaceBase):
     # TODEP
     @_tci
     def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
+        import torch
+
         tokenizer, model = self._retrieve_tokenizer_and_model(
             HUGS_DOCNLI_MODEL_PATH, tokenizer_kwargs={"use_fast": False}
         )

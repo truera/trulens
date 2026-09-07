@@ -175,7 +175,8 @@ class TestOtelEvaluator(OtelTestCase):
             ["test_record_id"],
             [
                 curr["record_attributes"][SpanAttributes.RECORD_ID]
-                for _, curr in mock_app.compute_feedbacks.call_args_list[0]
+                for _, curr in mock_app.compute_feedbacks
+                .call_args_list[0]
                 .kwargs["events"]
                 .iterrows()
             ],

@@ -170,8 +170,10 @@ class BedrockEndpoint(core_endpoint.Endpoint):
             self._instrument_class_wrapper(
                 botocore_client.ClientCreator,
                 wrapper_method_name="_create_api_method",
-                wrapped_method_filter=lambda f: f.__name__
-                in ["invoke_model", "invoke_model_with_response_stream"],
+                wrapped_method_filter=lambda f: (
+                    f.__name__
+                    in ["invoke_model", "invoke_model_with_response_stream"]
+                ),
             )
 
         if "client" in kwargs:

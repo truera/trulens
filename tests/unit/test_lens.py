@@ -123,7 +123,8 @@ class TestLens(TestCase):
         with self.subTest("Collect"):
             self.assertEqual(
                 # note we are not manually collecting from the generator here, collect does it for us
-                serial_utils.Lens()["outerstr", "outerint"]
+                serial_utils
+                .Lens()["outerstr", "outerint"]
                 .collect()
                 .get_sole_item(self.obj1),
                 ["lalala", 0xDEADBEEF],
@@ -163,7 +164,8 @@ class TestLens(TestCase):
         with self.subTest("GetSlice"):
             self.assertEqual(self.obj1["outerkey"].seqkey[3:1:-1], [4, 3])
             obj1 = (
-                serial_utils.Lens()["outerkey"]
+                serial_utils
+                .Lens()["outerkey"]
                 .seqkey[3:1:-1]
                 .set(self.obj1, 43)
             )

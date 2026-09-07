@@ -55,3 +55,11 @@ some derive from [LLMProvider][trulens.feedback.llm_provider.LLMProvider].
     ```bash
     pip install trulens-providers-openai
     ```
+
+- [Ollama][trulens.providers.ollama.provider.Ollama] in package
+  `trulens-providers-ollama`. Runs feedback functions against a local (or
+  remote) [Ollama](https://ollama.com/) server without an API key.
+
+    ```bash
+    pip install trulens-providers-ollama
+    ```

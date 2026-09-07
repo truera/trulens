@@ -27,9 +27,9 @@ _IGNORED_SIGNATURE_PARAMETERS = {
 }
 
 
-def _exported_prompt_template_classes() -> (
-    Iterable[type[templates_base.FeedbackTemplate]]
-):
+def _exported_prompt_template_classes() -> Iterable[
+    type[templates_base.FeedbackTemplate]
+]:
     """Yield exported template classes that define a system prompt."""
     for symbol in templates.__all__:
         value = getattr(templates, symbol)

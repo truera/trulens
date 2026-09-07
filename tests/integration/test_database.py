@@ -339,9 +339,9 @@ def _test_db_migration(db: sqlalchemy_db.SQLAlchemyDB):
 
     # apply each upgrade at a time up to head revision
     for i, next_rev in enumerate(history):
-        assert (
-            int(next_rev) == i + 1
-        ), f"Versions must be monotonically increasing from 1: {history}"
+        assert int(next_rev) == i + 1, (
+            f"Versions must be monotonically increasing from 1: {history}"
+        )
         assert_revision(engine, curr_rev, "behind")
         db_migrations.upgrade_db(engine, revision=next_rev)
         curr_rev = next_rev
@@ -491,3 +491,94 @@ def _populate_data(db: core_db.DB):
         print("  ", res)
 
     return fb, app, rec
+
+
+class TestDatasetGroundTruthRoundTrip(TestCase):
+    """Round-trip persistence for datasets and ground truths."""
+
+    def _seed(self, db: sqlalchemy_db.SQLAlchemyDB):
+        from trulens.core.schema.dataset import Dataset
+        from trulens.core.schema.groundtruth import GroundTruth
+
+        dataset_id = db.insert_dataset(
+            Dataset(name="support-quality", meta={"source": "prod"})
+        )
+        ground_truth_id = db.insert_ground_truth(
+            GroundTruth(
+                query="what is the refund window?",
+                dataset_id=dataset_id,
+                expected_response="30 days from purchase.",
+            )
+        )
+        return dataset_id, ground_truth_id
+
+    def test_get_datasets_round_trip(self) -> None:
+        with clean_db("sqlite_file") as db:
+            db.migrate_database()
+            dataset_id, _ = self._seed(db)
+
+            datasets = db.get_datasets()
+
+            self.assertEqual(
+                datasets.columns.tolist(), ["dataset_id", "name", "meta"]
+            )
+            self.assertEqual(len(datasets), 1)
+            row = datasets.iloc[0]
+            self.assertEqual(row["dataset_id"], dataset_id)
+            self.assertEqual(row["name"], "support-quality")
+            self.assertEqual(row["meta"], {"source": "prod"})
+
+    def test_get_ground_truth_round_trip(self) -> None:
+        with clean_db("sqlite_file") as db:
+            db.migrate_database()
+            dataset_id, ground_truth_id = self._seed(db)
+
+            ground_truth = db.get_ground_truth(ground_truth_id)
+
+            self.assertIsInstance(ground_truth, dict)
+            self.assertEqual(ground_truth["ground_truth_id"], ground_truth_id)
+            self.assertEqual(
+                ground_truth["query"], "what is the refund window?"
+            )
+            self.assertEqual(
+                ground_truth["expected_response"], "30 days from purchase."
+            )
+            self.assertEqual(ground_truth["dataset_id"], dataset_id)
+
+    def test_get_ground_truth_missing_id_returns_none(self) -> None:
+        with clean_db("sqlite_file") as db:
+            db.migrate_database()
+            self.assertIsNone(db.get_ground_truth("does-not-exist"))
+
+
+class TestFeedbackDefinitionUpsert(TestCase):
+    """Regression test for a silent update loss.
+
+    ``insert_feedback_definition`` is an upsert. Its update branch assigned the
+    serialized definition to ``app_json``, which is not a column on the
+    ``FeedbackDefinition`` ORM (its JSON column is ``feedback_json``), so the
+    stray attribute was accepted by SQLAlchemy and the real column was never
+    updated. Re-inserting an existing id therefore dropped the change silently.
+    """
+
+    def test_reinsert_updates_definition(self) -> None:
+        from trulens.core.schema.feedback import FeedbackDefinition
+
+        with clean_db("sqlite_file") as db:
+            db.migrate_database()
+
+            db.insert_feedback_definition(
+                FeedbackDefinition(
+                    feedback_definition_id="fd1", supplied_name="ORIGINAL"
+                )
+            )
+            db.insert_feedback_definition(
+                FeedbackDefinition(
+                    feedback_definition_id="fd1", supplied_name="UPDATED"
+                )
+            )
+
+            defs = db.get_feedback_defs(feedback_definition_id="fd1")
+            self.assertEqual(len(defs), 1)
+            stored = defs.iloc[0]["feedback_json"]
+            self.assertEqual(stored["supplied_name"], "UPDATED")

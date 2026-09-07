@@ -588,11 +588,11 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 "trace": Selector(
                     trace_level=True,
                     span_type=SpanAttributes.SpanType.RETRIEVAL,
-                    span_attributes_processor=lambda attr: attr[
-                        SpanAttributes.CALL.FUNCTION
-                    ]
-                    .split(".")[-1]
-                    .upper(),
+                    span_attributes_processor=lambda attr: (
+                        attr[SpanAttributes.CALL.FUNCTION]
+                        .split(".")[-1]
+                        .upper()
+                    ),
                 ),
             },
         )

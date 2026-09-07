@@ -98,7 +98,10 @@ def test_context_relevance_returns_float(monkeypatch):
 
 @pytest.mark.optional
 def test_huggingface_local_model_loading_cached(monkeypatch):
-    import trulens.providers.huggingface.provider as provider_mod
+    # Patch the transformers classes directly: the provider imports them inside
+    # `_retrieve_tokenizer_and_model` rather than at module scope, so they are
+    # not attributes of the provider module.
+    import transformers
     from trulens.providers.huggingface.provider import HuggingfaceLocal
 
     provider = HuggingfaceLocal()
@@ -119,10 +122,10 @@ def test_huggingface_local_model_loading_cached(monkeypatch):
         return object()
 
     monkeypatch.setattr(
-        provider_mod.AutoTokenizer, "from_pretrained", fake_tokenizer_load
+        transformers.AutoTokenizer, "from_pretrained", fake_tokenizer_load
     )
     monkeypatch.setattr(
-        provider_mod.AutoModelForSequenceClassification,
+        transformers.AutoModelForSequenceClassification,
         "from_pretrained",
         fake_model_load,
     )

@@ -43,8 +43,8 @@ The `dataset_spec` dictionary maps span attribute paths to column names in your 
 
 ```python
 dataset_spec = {
-    "input": "QUESTION_COLUMN",           # maps to record root input
-    "ground_truth_output": "EXPECTED_COL", # optional ground truth
+    "input": "QUESTION_COLUMN",  # maps to record root input
+    "ground_truth_output": "EXPECTED_COL",  # optional ground truth
 }
 ```
 
@@ -70,6 +70,7 @@ After starting a run, poll `run.get_status()` to track progress:
 ```python
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
+
 
 class MyApp:
     @instrument(
@@ -152,9 +153,11 @@ This invokes `app.respond()` for each row in the dataset, exports the OTEL spans
 ```python
 while True:
     status = run.get_status()
-    if status in (RunStatus.INVOCATION_COMPLETED,
-                  RunStatus.COMPLETED,
-                  RunStatus.FAILED):
+    if status in (
+        RunStatus.INVOCATION_COMPLETED,
+        RunStatus.COMPLETED,
+        RunStatus.FAILED,
+    ):
         break
     time.sleep(10)
 ```
@@ -177,9 +180,11 @@ Metrics can be:
 ```python
 while True:
     status = run.get_status()
-    if status in (RunStatus.COMPLETED,
-                  RunStatus.PARTIALLY_COMPLETED,
-                  RunStatus.FAILED):
+    if status in (
+        RunStatus.COMPLETED,
+        RunStatus.PARTIALLY_COMPLETED,
+        RunStatus.FAILED,
+    ):
         break
     time.sleep(10)
 ```
@@ -207,11 +212,13 @@ tru_app = TruApp(
     feedbacks=[...],  # Metric objects
 )
 
-test_dataset = pd.DataFrame({"input": [
-    "What is machine learning?",
-    "Explain gradient descent",
-    "What is overfitting?",
-]})
+test_dataset = pd.DataFrame({
+    "input": [
+        "What is machine learning?",
+        "Explain gradient descent",
+        "What is overfitting?",
+    ]
+})
 ```
 
 ### 2. Create and start a run
@@ -243,22 +250,40 @@ For the full set of `RunConfig` fields and run methods, see `trulens.core.run`.
 Runs are scoped to an app version. To compare versions, create separate `TruApp` instances with different `app_version` values and run the same dataset through each:
 
 ```python
-tru_v1 = TruApp(app_v1, app_name="my_app", app_version="v1",
-                 connector=connector, main_method=app_v1.respond)
+tru_v1 = TruApp(
+    app_v1,
+    app_name="my_app",
+    app_version="v1",
+    connector=connector,
+    main_method=app_v1.respond,
+)
 
-tru_v2 = TruApp(app_v2, app_name="my_app", app_version="v2",
-                 connector=connector, main_method=app_v2.respond)
+tru_v2 = TruApp(
+    app_v2,
+    app_name="my_app",
+    app_version="v2",
+    connector=connector,
+    main_method=app_v2.respond,
+)
 
-run_v1 = tru_v1.add_run(run_config=RunConfig(
-    run_name="v1_eval", dataset_name="eval_questions",
-    source_type="TABLE", dataset_spec={"input": "INPUT"},
-))
+run_v1 = tru_v1.add_run(
+    run_config=RunConfig(
+        run_name="v1_eval",
+        dataset_name="eval_questions",
+        source_type="TABLE",
+        dataset_spec={"input": "INPUT"},
+    )
+)
 run_v1.start()
 
-run_v2 = tru_v2.add_run(run_config=RunConfig(
-    run_name="v2_eval", dataset_name="eval_questions",
-    source_type="TABLE", dataset_spec={"input": "INPUT"},
-))
+run_v2 = tru_v2.add_run(
+    run_config=RunConfig(
+        run_name="v2_eval",
+        dataset_name="eval_questions",
+        source_type="TABLE",
+        dataset_spec={"input": "INPUT"},
+    )
+)
 run_v2.start()
 ```
 

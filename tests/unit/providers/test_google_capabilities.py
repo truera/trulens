@@ -157,15 +157,15 @@ def test_litellm_model_cost_import():
     google_models = [
         key for key in model_cost.keys() if "gemini" in key.lower()
     ]
-    assert (
-        len(google_models) > 0
-    ), "model_cost should contain at least one Gemini model"
+    assert len(google_models) > 0, (
+        "model_cost should contain at least one Gemini model"
+    )
 
     # Verify the structure of at least one model entry
     sample_model = next(iter(model_cost.values()))
-    assert isinstance(
-        sample_model, dict
-    ), "Each model entry should be a dictionary"
+    assert isinstance(sample_model, dict), (
+        "Each model entry should be a dictionary"
+    )
 
     # Check for expected pricing fields
     expected_fields = [
@@ -180,9 +180,9 @@ def test_litellm_model_cost_import():
         all(field in model_cost[google_model] for field in expected_fields)
         for google_model in google_models
     )
-    assert (
-        has_valid_structure
-    ), "At least one Gemini model should have all expected pricing fields"
+    assert has_valid_structure, (
+        "At least one Gemini model should have all expected pricing fields"
+    )
 
 
 @pytest.mark.optional

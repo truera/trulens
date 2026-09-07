@@ -43,8 +43,8 @@ apply when referring to things like package names, classes, or methods.
   <https://google.github.io/styleguide/pyguide.html#22-imports>. That is:
 
     ```python
-    from trulens.schema.record import Record # don't do this
-    from trulens.schema import record as record_schema # do this instead
+    from trulens.schema.record import Record  # don't do this
+    from trulens.schema import record as record_schema  # do this instead
     ```
 
     This approach prevents the `record` module from being loaded until something inside it
@@ -54,8 +54,8 @@ apply when referring to things like package names, classes, or methods.
 - Import and rename modules:
 
     ```python
-    from trulens.schema import record # don't do this
-    from trulens.schema import record as record_schema # do this
+    from trulens.schema import record  # don't do this
+    from trulens.schema import record as record_schema  # do this
     ```
 
     This is especially important for module names, which might cause name
@@ -110,7 +110,7 @@ apply when referring to things like package names, classes, or methods.
     from typing import TYPE_CHECKING
 
     if TYPE_CHECKING:
-      from trulens.schema import record as record_schema
+        from trulens.schema import record as record_schema
     ```
 
 - Do not create exportable aliases (an alias that is listed in `__all__` and
@@ -118,8 +118,8 @@ apply when referring to things like package names, classes, or methods.
   aliases, even exportable ones are ok:
 
     ```python
-    Thunk[T] = Callable[[], T] # OK
-    AppID = types_schema.AppID # not OK
+    Thunk[T] = Callable[[], T]  # OK
+    AppID = types_schema.AppID  # not OK
     ```
 
 #### Circular imports
@@ -142,9 +142,10 @@ above may help alleviate the problem. A few more things can help:
 
     ...
 
-    class SomeModel(pydantic.BaseModel):
 
-      some_attribute: some_module.SomeType
+    class SomeModel(pydantic.BaseModel):
+        some_attribute: some_module.SomeType
+
 
     ...
 

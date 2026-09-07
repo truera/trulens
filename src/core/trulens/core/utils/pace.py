@@ -88,14 +88,14 @@ class Pace(BaseModel):
         **kwargs,
     ):
         if marks_per_second is None:
-            assert (
-                rpm is not None
-            ), "Either `marks_per_second` or `rpm` must be given."
+            assert rpm is not None, (
+                "Either `marks_per_second` or `rpm` must be given."
+            )
             marks_per_second = rpm / 60.0
         else:
-            assert (
-                rpm is None
-            ), "Only one of `marks_per_second` or `rpm` can be given."
+            assert rpm is None, (
+                "Only one of `marks_per_second` or `rpm` can be given."
+            )
 
         max_marks = int(seconds_per_period * marks_per_second)
         if max_marks == 0:

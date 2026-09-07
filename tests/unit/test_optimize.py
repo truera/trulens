@@ -150,6 +150,15 @@ class TestInit:
                 metric="invalid_metric",
             )
 
+    def test_structured_examples_require_integer_scores(self):
+        with pytest.raises(ValueError, match="integer scores"):
+            FewShotOptimizer(
+                feedback_fn=make_feedback_fn(),
+                candidates=CANDIDATES,
+                eval_dataset=EVAL_DATASET,
+                examples_format="structured",
+            )
+
 
 # ---------------------------------------------------------------------------
 # optimize() end-to-end
@@ -245,6 +254,35 @@ class TestOptimize:
         assert result.metric_score is not None
         assert baseline is not None
         assert result.metric_score >= baseline
+
+    def test_feedback_fn_receives_structured_examples(self):
+        received = []
+        structured_candidates = [
+            (arguments, round(score * 3)) for arguments, score in CANDIDATES
+        ]
+
+        def feedback_fn(examples=None, **kwargs) -> float:
+            received.append(examples)
+            return 0.8
+
+        opt = FewShotOptimizer(
+            feedback_fn=feedback_fn,
+            candidates=structured_candidates,
+            eval_dataset=EVAL_DATASET,
+            n_examples=1,
+            max_workers=1,
+            examples_format="structured",
+        )
+        result = opt.optimize()
+
+        assert result.best_examples
+        assert received
+        assert all(isinstance(examples, list) for examples in received)
+        assert all(
+            isinstance(example, tuple)
+            for examples in received
+            for example in examples
+        )
 
     def test_optimize_parallel_workers(self):
         opt = FewShotOptimizer(

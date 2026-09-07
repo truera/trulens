@@ -49,6 +49,15 @@ def _get_nonzero_cost_columns(df: pd.DataFrame) -> List[str]:
     return cols
 
 
+def _add_sample_rate_display(df: pd.DataFrame) -> pd.DataFrame:
+    """Add the formatted sample rate shown in leaderboard views."""
+    df = df.copy()
+    df["Sample rate"] = df.apply(
+        dashboard_utils.format_leaderboard_sample_rate, axis=1
+    )
+    return df
+
+
 def init_page_state():
     if st.session_state.get(
         f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.initialized", False
@@ -65,6 +74,11 @@ def init_page_state():
     st.session_state[
         f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.initialized"
     ] = True
+
+
+def scored_count_col(feedback_col_name: str) -> str:
+    """Name of the helper column holding how many records a metric scored."""
+    return f"{feedback_col_name} __scored_count"
 
 
 def _preprocess_df(
@@ -96,9 +110,13 @@ def _preprocess_df(
     for col in feedback_col_names:
         if col in records_df:
             agg_dict[col] = (col, "mean")
+            # `mean` skips records with no score; `Records` counts them. Keep
+            # the metric's own denominator so the two can be told apart.
+            agg_dict[scored_count_col(col)] = (col, "count")
 
     app_agg_df: pd.DataFrame = (
-        records_df.groupby(
+        records_df
+        .groupby(
             by=["app_version", "app_name", "app_id"], dropna=True, sort=True
         )
         .aggregate(**agg_dict)
@@ -153,6 +171,12 @@ def _build_grid_options(
         ],
         filter="agNumberColumnFilter",
     )
+    if "Sample rate" in df.columns:
+        gb.configure_column(
+            "Sample rate",
+            header_name="Sample Rate",
+            filter="agTextColumnFilter",
+        )
     gb.configure_columns(
         version_metadata_col_names, filter="agMultiColumnFilter", editable=True
     )
@@ -183,6 +207,10 @@ def _build_grid_options(
         resizable=True,
         filter="agMultiColumnFilter",
     )
+
+    for feedback_col in feedback_col_names:
+        if scored_count_col(feedback_col) in df:
+            gb.configure_column(scored_count_col(feedback_col), hide=True)
 
     for feedback_col in feedback_col_names:
         if "distance" in feedback_col:
@@ -280,6 +308,7 @@ def _render_grid(
 
     column_order = [
         "app_version",
+        "Sample rate",
         "records",
         "latency",
         *cost_cols_to_show,
@@ -666,6 +695,8 @@ def _render_list_tab(
             select_app_col,
         ) = st_columns([1, 1, 1, 1, 1])
         n_records_col.metric("Records", app_row["Records"])
+        if "Sample rate" in app_row:
+            n_records_col.caption(f"Sample rate: {app_row['Sample rate']}")
 
         latency_mean = app_row["Average Latency (s)"]
         latency_col.metric(
@@ -706,6 +737,12 @@ def _render_list_tab(
                     continue
                 col = feedback_cols[i % max_feedback_cols]
                 feedback_container = col.container(border=True)
+
+                scored = app_row.get(scored_count_col(col_name))
+                if scored is not None and scored < app_row["Records"]:
+                    feedback_container.caption(
+                        f"Scored {int(scored)} of {int(app_row['Records'])} records"
+                    )
 
                 higher_is_better = feedback_directions.get(col_name, True)
 
@@ -801,7 +838,7 @@ def _render_plot_tab(
             mean_score = float(_df.mean())
             bar_color = dashboard_styles.CATEGORY.of_score(
                 mean_score, higher_is_better=higher_is_better
-            ).color
+            ).color[:7]
             plot = go.Histogram(
                 x=_df,
                 xbins={"size": 0.1},
@@ -824,7 +861,7 @@ def _render_plot_tab(
             mean_score = float(_df.mean())
             violin_color = dashboard_styles.CATEGORY.of_score(
                 mean_score, higher_is_better=higher_is_better
-            ).color
+            ).color[:7]
             plot = go.Violin(
                 y=_df,
                 box_visible=True,
@@ -922,6 +959,7 @@ def render_leaderboard(app_name: str):
         validate="many_to_one",
         on=["app_id", "app_name", "app_version"],
     ).round(3)
+    df = _add_sample_rate_display(df)
     if dashboard_constants.PINNED_COL_NAME in df.columns:
         df[dashboard_constants.PINNED_COL_NAME] = (
             df[dashboard_constants.PINNED_COL_NAME].fillna(False).astype(bool)

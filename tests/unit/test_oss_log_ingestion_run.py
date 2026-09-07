@@ -39,8 +39,7 @@ class TestOssLogIngestionRun(OtelTestCase):
                 "input_id": "finance-answer-001",
                 "input": "What was ACME Corp's total revenue in FY2024?",
                 "output": (
-                    "ACME Corp reported total revenue of 2.3 billion "
-                    "in FY2024."
+                    "ACME Corp reported total revenue of 2.3 billion in FY2024."
                 ),
                 "retrieved_contexts": [],
             },

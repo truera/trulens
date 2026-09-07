@@ -10,9 +10,9 @@ from trulens.otel.semconv.trace import SpanAttributes
 from tests.util.otel_test_case import OtelTestCase
 
 _context_relevance = Metric(
-    implementation=lambda query, context: 0.0
-    if "irrelevant" in context
-    else 1.0,
+    implementation=lambda query, context: (
+        0.0 if "irrelevant" in context else 1.0
+    ),
     name="context relevance",
 )
 

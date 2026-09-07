@@ -44,9 +44,10 @@ column_with_evaluation_scores = ...
 # The names of the columns to be skipped (e.g. auxiliary evaluation scores)
 columns_to_be_skipped = ...
 
-hotspots_config=HotspotsConfig(
-   score_column=column_with_evaluation_score,
-   skip_columns=columns_to_be_skipped)
+hotspots_config = HotspotsConfig(
+    score_column=column_with_evaluation_score,
+    skip_columns=columns_to_be_skipped,
+)
 
 
 hotspots_df = hotspots_as_df(hotspots_config, evaluation_results_df)
@@ -63,7 +64,7 @@ session = TruSession()
 
 # ... running the whole experiment
 
-feedback_name = "Comprehensiveness" # one of the feedbacks
+feedback_name = "Comprehensiveness"  # one of the feedbacks
 hotspots_df = get_hotspots(session, feedback="Comprehensiveness")
 # hotspots_df is a data frame with hotspots
 ```

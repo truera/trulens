@@ -20,13 +20,13 @@ from trulens.providers.openai import OpenAI
 provider = OpenAI()
 
 f_relevance = (
-    Feedback(provider.relevance, name="Answer Relevance")
-    .on_input()
-    .on_output()
+    Feedback(provider.relevance, name="Answer Relevance").on_input().on_output()
 )
 
 f_groundedness = (
-    Feedback(provider.groundedness_measure_with_cot_reasons, name="Groundedness")
+    Feedback(
+        provider.groundedness_measure_with_cot_reasons, name="Groundedness"
+    )
     .on_context(collect_list=True)
     .on_output()
     .on_input()
@@ -179,6 +179,7 @@ The old `Feedback` class still works and will emit a deprecation warning:
 ```python
 # This still works but shows a deprecation warning
 from trulens.core import Feedback
+
 f = Feedback(provider.relevance).on_input().on_output()
 ```
 
@@ -189,8 +190,7 @@ The chained `.on_*()` methods also work on `Metric` for gradual migration, but t
 The `Feedback` class is implemented as a subclass of `Metric`:
 
 ```python
-class Feedback(Metric):
-    ...
+class Feedback(Metric): ...
 ```
 
 This means:

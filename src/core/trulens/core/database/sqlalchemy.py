@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 import json
 import logging
 from sqlite3 import OperationalError
@@ -18,6 +20,7 @@ from typing import (
     Type,
     Union,
 )
+import uuid
 import warnings
 
 import numpy as np
@@ -43,6 +46,7 @@ from trulens.core.schema import base as base_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
+from trulens.core.schema import prompt as prompt_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.schema.event import Event
@@ -186,6 +190,19 @@ class SQLAlchemyDB(core_db.DB):
             - sa.func.julianday(self.orm.Event.start_timestamp) * 86400
         )
 
+    def _latency_seconds_expr(self) -> Any:
+        """Return record latency in seconds without aggregation."""
+        if self.engine.dialect.name == "postgresql":
+            return sa.extract(
+                "epoch",
+                sa.cast(self.orm.Event.timestamp, sa.DateTime)
+                - sa.cast(self.orm.Event.start_timestamp, sa.DateTime),
+            )
+        return (
+            sa.func.julianday(self.orm.Event.timestamp) * 86400
+            - sa.func.julianday(self.orm.Event.start_timestamp) * 86400
+        )
+
     def _json_path_expr(self, column_obj: Any, path: str) -> Any:
         """Build a SQL expression that extracts ``path`` from a JSON column.
         Default covers SQLite/MySQL/Postgres. Subclasses override for other
@@ -195,6 +212,24 @@ class SQLAlchemyDB(core_db.DB):
             return sa.func.json_extract_path_text(column_obj, path)
         # SQLite and MySQL use json_extract with JSONPath syntax.
         return sa.func.json_extract(column_obj, f'$."{path}"')
+
+    def _time_bucket_expr(self, bucket: str) -> Any:
+        """Return a portable day or week bucket expression."""
+        if bucket not in ("day", "week"):
+            raise ValueError("bucket must be 'day' or 'week'")
+        if self.engine.dialect.name == "postgresql":
+            return sa.func.date_trunc(bucket, self.orm.Event.start_timestamp)
+        if bucket == "day":
+            return sa.func.strftime(
+                "%Y-%m-%d 00:00:00", self.orm.Event.start_timestamp
+            )
+        weekday = sa.cast(
+            sa.func.strftime("%w", self.orm.Event.start_timestamp), sa.Integer
+        )
+        return sa.func.date(
+            self.orm.Event.start_timestamp,
+            sa.func.printf("-%d days", (weekday + 6) % 7),
+        )
 
     @classmethod
     def from_tru_args(
@@ -422,7 +457,8 @@ class SQLAlchemyDB(core_db.DB):
         _rec = self.orm.Record.parse(record, redact_keys=self.redact_keys)
         with self.session.begin() as session:
             if (
-                session.query(self.orm.Record)
+                session
+                .query(self.orm.Record)
                 .filter_by(record_id=record.record_id)
                 .first()
             ):
@@ -459,7 +495,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             if (
-                _app := session.query(self.orm.AppDefinition)
+                _app := session
+                .query(self.orm.AppDefinition)
                 .filter_by(app_id=app_id)
                 .first()
             ):
@@ -479,7 +516,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             if (
-                _app := session.query(self.orm.AppDefinition)
+                _app := session
+                .query(self.orm.AppDefinition)
                 .filter_by(app_id=app_id)
                 .first()
             ):
@@ -509,7 +547,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             if (
-                _app := session.query(self.orm.AppDefinition)
+                _app := session
+                .query(self.orm.AppDefinition)
                 .filter_by(app_id=app.app_id)
                 .first()
             ):
@@ -535,7 +574,8 @@ class SQLAlchemyDB(core_db.DB):
         """
         with self.session.begin() as session:
             _app = (
-                session.query(self.orm.AppDefinition)
+                session
+                .query(self.orm.AppDefinition)
                 .filter_by(app_id=app_id)
                 .first()
             )
@@ -554,13 +594,16 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             if (
-                _fb_def := session.query(self.orm.FeedbackDefinition)
+                _fb_def := session
+                .query(self.orm.FeedbackDefinition)
                 .filter_by(
                     feedback_definition_id=feedback_definition.feedback_definition_id
                 )
                 .first()
             ):
-                _fb_def.app_json = feedback_definition.model_dump_json()
+                _fb_def.feedback_json = self.orm.FeedbackDefinition.parse(
+                    feedback_definition, redact_keys=self.redact_keys
+                ).feedback_json
             else:
                 _fb_def = self.orm.FeedbackDefinition.parse(
                     feedback_definition, redact_keys=self.redact_keys
@@ -857,6 +900,8 @@ class SQLAlchemyDB(core_db.DB):
         app_version: Optional[types_schema.AppVersion] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
         run_name: Optional[types_schema.RunName] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> sa.Select:
@@ -938,6 +983,10 @@ class SQLAlchemyDB(core_db.DB):
                 "record_attributes", SpanAttributes.RUN_NAME
             )
             conditions.append(run_name_expr == run_name)
+        if start_time is not None:
+            conditions.append(self.orm.Event.start_timestamp >= start_time)
+        if end_time is not None:
+            conditions.append(self.orm.Event.start_timestamp < end_time)
 
         # Apply all conditions
         stmt = stmt.where(sa.and_(*conditions))
@@ -946,7 +995,9 @@ class SQLAlchemyDB(core_db.DB):
         stmt = stmt.group_by("record_id")
 
         # Order by timestamp descending (newest first)
-        stmt = stmt.order_by(sa.desc("min_start_timestamp"))
+        stmt = stmt.order_by(
+            sa.desc("min_start_timestamp"), sa.text("record_id")
+        )
 
         # Apply pagination
         if limit is not None:
@@ -956,6 +1007,56 @@ class SQLAlchemyDB(core_db.DB):
 
         return stmt
 
+    def _expand_conversation_record_ids_otel(
+        self, session, matched_record_ids: List[types_schema.RecordID]
+    ) -> List[types_schema.RecordID]:
+        record_id_expr = self._json_extract_otel(
+            "record_attributes", SpanAttributes.RECORD_ID
+        )
+        conversation_expr = self._json_extract_otel(
+            "record_attributes", SpanAttributes.CONVERSATION_ID
+        )
+        app_name_expr = self._json_extract_otel(
+            "resource_attributes", ResourceAttributes.APP_NAME
+        )
+        version_expr = self._json_extract_otel(
+            "resource_attributes", ResourceAttributes.APP_VERSION
+        )
+        root_condition = (
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.SPAN_TYPE
+            )
+            == SpanAttributes.SpanType.RECORD_ROOT.value
+        )
+        matched_rows = session.execute(
+            sa.select(
+                record_id_expr, conversation_expr, app_name_expr, version_expr
+            ).where(root_condition, record_id_expr.in_(matched_record_ids))
+        ).all()
+        conversation_keys = {
+            (row[2], row[3], row[1])
+            for row in matched_rows
+            if row[1] not in (None, "")
+        }
+        expanded = set(matched_record_ids)
+        if conversation_keys:
+            conditions = [
+                sa.and_(
+                    app_name_expr == app_name,
+                    version_expr == version,
+                    conversation_expr == conversation_id,
+                )
+                for app_name, version, conversation_id in conversation_keys
+            ]
+            expanded.update(
+                session.execute(
+                    sa.select(record_id_expr).where(
+                        root_condition, sa.or_(*conditions)
+                    )
+                ).scalars()
+            )
+        return list(expanded)
+
     def _get_records_and_feedback_otel(
         self,
         app_ids: Optional[List[str]] = None,
@@ -964,6 +1065,10 @@ class SQLAlchemyDB(core_db.DB):
         app_versions: Optional[List[types_schema.AppVersion]] = None,
         run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
+        matched_record_ids: Optional[List[types_schema.RecordID]] = None,
+        include_conversation_context: bool = False,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -986,6 +1091,12 @@ class SQLAlchemyDB(core_db.DB):
             A tuple of (records dataframe, feedback column names).
         """
         with self.session.begin() as session:
+            if matched_record_ids is not None:
+                record_ids = matched_record_ids
+            if include_conversation_context and matched_record_ids:
+                record_ids = self._expand_conversation_record_ids_otel(
+                    session, matched_record_ids
+                )
             # Get paginated record IDs
             if record_ids is None:
                 record_id_subquery = self._get_paginated_record_ids_otel(
@@ -994,12 +1105,18 @@ class SQLAlchemyDB(core_db.DB):
                     app_version=app_version,
                     app_versions=app_versions,
                     run_name=run_name,
+                    start_time=start_time,
+                    end_time=end_time,
                     offset=offset,
                     limit=limit,
                 )
                 record_ids_sql = sa.select(record_id_subquery.c.record_id)
             else:
-                record_ids_sql = record_ids
+                record_ids_sql = record_ids[
+                    offset or 0 : (offset or 0) + limit
+                    if limit is not None
+                    else None
+                ]
 
             # Now get all events for those record IDs
             stmt = sa.select(self.orm.Event).where(
@@ -1010,11 +1127,17 @@ class SQLAlchemyDB(core_db.DB):
 
             # Execute query
             events = session.execute(stmt).scalars().all()
-            return self._get_records_and_feedback_otel_from_events(
-                events=events,
-                app_ids=app_ids,
-                app_name=app_name,
+            result, feedback_columns = (
+                self._get_records_and_feedback_otel_from_events(
+                    events=events,
+                    app_ids=app_ids,
+                    app_name=app_name,
+                )
             )
+            result["is_match"] = result["record_id"].isin(
+                matched_record_ids or result["record_id"]
+            )
+            return result, feedback_columns
 
     def _build_otel_conditions(
         self,
@@ -1083,13 +1206,24 @@ class SQLAlchemyDB(core_db.DB):
             app_versions=app_versions,
         )
         latency_expr = self._latency_expr()
+        recent_cutoff = datetime.utcnow() - timedelta(days=7)
 
         base_stmt = (
-            sa.select(
+            sa
+            .select(
                 app_name_col,
                 app_version_col,
                 app_id_col,
                 sa.func.count(sa.distinct(record_id_col)).label("Records"),
+                sa.func.sum(
+                    sa.case(
+                        (self.orm.Event.start_timestamp >= recent_cutoff, 1),
+                        else_=0,
+                    )
+                ).label("Recent Records"),
+                sa.func.max(self.orm.Event.start_timestamp).label(
+                    "Latest Record Timestamp"
+                ),
                 latency_expr.label("Average Latency (s)"),
                 sa.func.sum(sa.cast(cost_col, sa.Float)).label("total_cost"),
                 sa.func.coalesce(
@@ -1123,7 +1257,8 @@ class SQLAlchemyDB(core_db.DB):
             app_versions=app_versions,
         )
         eval_stmt = (
-            sa.select(
+            sa
+            .select(
                 self._json_extract_otel(
                     "resource_attributes", ResourceAttributes.APP_NAME
                 ).label("app_name"),
@@ -1145,9 +1280,38 @@ class SQLAlchemyDB(core_db.DB):
             )
         )
 
+        decision_rate_col = self._json_extract_otel(
+            "record_attributes", SpanAttributes.EVAL_DECISION.SAMPLE_RATE
+        )
+        decision_conditions = self._build_otel_conditions(
+            SpanAttributes.SpanType.EVAL_DECISION.value,
+            app_name=app_name,
+            app_versions=app_versions,
+        )
+        decision_stmt = (
+            sa
+            .select(
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_NAME
+                ).label("app_name"),
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_VERSION
+                ).label("app_version"),
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_ID
+                ).label("app_id"),
+                sa.cast(decision_rate_col, sa.Float).label("sample_rate"),
+                self.orm.Event.start_timestamp.label("decision_timestamp"),
+                self.orm.Event.event_id.label("event_id"),
+            )
+            .where(sa.and_(*decision_conditions))
+            .order_by(self.orm.Event.start_timestamp, self.orm.Event.event_id)
+        )
+
         with self.session.begin() as session:
             base_rows = session.execute(base_stmt).all()
             eval_rows = session.execute(eval_stmt).all()
+            decision_rows = session.execute(decision_stmt).all()
 
         base_df = pd.DataFrame(
             base_rows,
@@ -1156,6 +1320,8 @@ class SQLAlchemyDB(core_db.DB):
                 "app_version",
                 "app_id",
                 "Records",
+                "Recent Records",
+                "Latest Record Timestamp",
                 "Average Latency (s)",
                 "total_cost",
                 "cost_currency",
@@ -1213,9 +1379,340 @@ class SQLAlchemyDB(core_db.DB):
                 how="left",
             )
 
+        base_df["Sample Rate"] = np.nan
+        base_df["Sample Rate Min"] = np.nan
+        base_df["Sample Rate Max"] = np.nan
+        if decision_rows:
+            decision_df = pd.DataFrame(
+                decision_rows,
+                columns=[
+                    "app_name",
+                    "app_version",
+                    "app_id",
+                    "sample_rate",
+                    "decision_timestamp",
+                    "event_id",
+                ],
+            )
+            group_cols = ["app_name", "app_version", "app_id"]
+            decision_df = decision_df.sort_values(
+                ["decision_timestamp", "event_id"], kind="stable"
+            )
+            rate_bounds = decision_df.groupby(
+                group_cols, as_index=False, dropna=False
+            ).agg(**{
+                "Sample Rate Min": ("sample_rate", "min"),
+                "Sample Rate Max": ("sample_rate", "max"),
+            })
+            latest_rates = decision_df.drop_duplicates(
+                subset=group_cols, keep="last"
+            )[group_cols + ["sample_rate"]].rename(
+                columns={"sample_rate": "Sample Rate"}
+            )
+            rate_df = latest_rates.merge(rate_bounds, on=group_cols, how="left")
+            base_df = base_df.drop(
+                columns=["Sample Rate", "Sample Rate Min", "Sample Rate Max"]
+            ).merge(rate_df, on=group_cols, how="left")
+
         base_df = base_df.round(3)
         base_df["tags"] = ""
         return base_df, feedback_col_names
+
+    def get_feedback_score_trends(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        bucket: str = "day",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> pd.DataFrame:
+        """See [DB.get_feedback_score_trends][trulens.core.database.base.DB.get_feedback_score_trends]."""
+        if not is_otel_tracing_enabled():
+            return pd.DataFrame()
+
+        bucket_col = self._time_bucket_expr(bucket).label("time_bucket")
+        score_col = sa.cast(
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.EVAL_ROOT.SCORE
+            ),
+            sa.Float,
+        )
+        conditions = self._build_otel_conditions(
+            SpanAttributes.SpanType.EVAL_ROOT.value,
+            app_name=app_name,
+            app_versions=app_versions,
+        )
+        if start_time is not None:
+            conditions.append(self.orm.Event.start_timestamp >= start_time)
+        if end_time is not None:
+            conditions.append(self.orm.Event.start_timestamp < end_time)
+        stmt = (
+            sa
+            .select(
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_NAME
+                ).label("app_name"),
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_VERSION
+                ).label("app_version"),
+                self._json_extract_otel(
+                    "record_attributes", SpanAttributes.EVAL_ROOT.METRIC_NAME
+                ).label("metric_name"),
+                bucket_col,
+                sa.func.count(score_col).label("count"),
+                sa.func.avg(score_col).label("mean"),
+                sa.func.avg(score_col * score_col).label("mean_square"),
+            )
+            .where(sa.and_(*conditions))
+            .group_by(
+                sa.text("app_name"),
+                sa.text("app_version"),
+                sa.text("metric_name"),
+                bucket_col,
+            )
+            .order_by(bucket_col)
+        )
+        with self.session.begin() as session:
+            rows = session.execute(stmt).all()
+        trends = pd.DataFrame(
+            rows,
+            columns=[
+                "app_name",
+                "app_version",
+                "metric_name",
+                "time_bucket",
+                "count",
+                "mean",
+                "mean_square",
+            ],
+        )
+        if trends.empty:
+            return trends
+        trends["time_bucket"] = pd.to_datetime(trends["time_bucket"])
+        variance = (trends["mean_square"] - trends["mean"] ** 2).clip(lower=0)
+        sample_variance = (
+            variance * trends["count"] / (trends["count"] - 1)
+        ).where(trends["count"] > 1)
+        standard_error = np.sqrt(sample_variance / trends["count"])
+        trends["standard_error"] = standard_error
+        margin = 1.96 * standard_error
+        trends["ci_lower"] = (trends["mean"] - margin).clip(lower=0)
+        trends["ci_upper"] = (trends["mean"] + margin).clip(upper=1)
+        return trends.drop(columns=["mean_square"])
+
+    def get_app_metric_trends(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        bucket: str = "day",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> pd.DataFrame:
+        """See [DB.get_app_metric_trends][trulens.core.database.base.DB.get_app_metric_trends]."""
+        if not is_otel_tracing_enabled():
+            return pd.DataFrame()
+        conditions = self._build_otel_conditions(
+            SpanAttributes.SpanType.RECORD_ROOT.value,
+            app_name=app_name,
+            app_versions=app_versions,
+        )
+        if start_time is not None:
+            conditions.append(self.orm.Event.start_timestamp >= start_time)
+        if end_time is not None:
+            conditions.append(self.orm.Event.start_timestamp < end_time)
+        stmt = sa.select(
+            self._json_extract_otel(
+                "resource_attributes", ResourceAttributes.APP_NAME
+            ).label("app_name"),
+            self._json_extract_otel(
+                "resource_attributes", ResourceAttributes.APP_VERSION
+            ).label("app_version"),
+            self._time_bucket_expr(bucket).label("time_bucket"),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.RECORD_ID
+            ).label("record_id"),
+            self._latency_seconds_expr().label("latency"),
+            sa.cast(
+                self._json_extract_otel(
+                    "record_attributes", SpanAttributes.COST.COST
+                ),
+                sa.Float,
+            ).label("cost"),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.COST.CURRENCY
+            ).label("currency"),
+        ).where(sa.and_(*conditions))
+        with self.session.begin() as session:
+            rows = session.execute(stmt).all()
+        records = pd.DataFrame(
+            rows,
+            columns=[
+                "app_name",
+                "app_version",
+                "time_bucket",
+                "record_id",
+                "latency",
+                "cost",
+                "currency",
+            ],
+        )
+        if records.empty:
+            return records
+        records["time_bucket"] = pd.to_datetime(records["time_bucket"])
+        records["currency"] = records["currency"].fillna("USD")
+        records["cost"] = records["cost"].fillna(0.0)
+        records = records.sort_values("time_bucket").drop_duplicates(
+            subset=["app_name", "app_version", "record_id"], keep="last"
+        )
+        group_cols = ["app_name", "app_version", "time_bucket", "currency"]
+        return (
+            records
+            .groupby(group_cols, as_index=False, dropna=False)
+            .agg(
+                record_count=("latency", "count"),
+                average_latency=("latency", "mean"),
+                p90_latency=("latency", lambda values: values.quantile(0.90)),
+                p99_latency=("latency", lambda values: values.quantile(0.99)),
+                total_app_cost=("cost", "sum"),
+                average_app_cost=("cost", "mean"),
+            )
+            .sort_values("time_bucket")
+        )
+
+    def get_eval_cost_trends(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        bucket: str = "day",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> pd.DataFrame:
+        """See [DB.get_eval_cost_trends][trulens.core.database.base.DB.get_eval_cost_trends]."""
+        if not is_otel_tracing_enabled():
+            return pd.DataFrame()
+        conditions = self._build_otel_conditions(
+            SpanAttributes.SpanType.EVAL_ROOT.value,
+            app_name=app_name,
+            app_versions=app_versions,
+        )
+        if start_time is not None:
+            conditions.append(self.orm.Event.start_timestamp >= start_time)
+        if end_time is not None:
+            conditions.append(self.orm.Event.start_timestamp < end_time)
+        stmt = sa.select(
+            self._json_extract_otel(
+                "resource_attributes", ResourceAttributes.APP_NAME
+            ).label("app_name"),
+            self._json_extract_otel(
+                "resource_attributes", ResourceAttributes.APP_VERSION
+            ).label("app_version"),
+            self._time_bucket_expr(bucket).label("time_bucket"),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.RECORD_ID
+            ).label("record_id"),
+            sa.cast(
+                self._json_extract_otel(
+                    "record_attributes", SpanAttributes.COST.COST
+                ),
+                sa.Float,
+            ).label("cost"),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.COST.CURRENCY
+            ).label("currency"),
+        ).where(sa.and_(*conditions))
+        with self.session.begin() as session:
+            rows = session.execute(stmt).all()
+        evals = pd.DataFrame(
+            rows,
+            columns=[
+                "app_name",
+                "app_version",
+                "time_bucket",
+                "record_id",
+                "cost",
+                "currency",
+            ],
+        )
+        if evals.empty:
+            return evals
+        evals = evals[evals["cost"].notna()].copy()
+        if evals.empty:
+            return evals
+        evals["time_bucket"] = pd.to_datetime(evals["time_bucket"])
+        evals["currency"] = evals["currency"].fillna("USD")
+        group_cols = ["app_name", "app_version", "time_bucket", "currency"]
+        return (
+            evals
+            .groupby(group_cols, as_index=False, dropna=False)
+            .agg(
+                evaluated_record_count=("record_id", "nunique"),
+                total_eval_cost=("cost", "sum"),
+            )
+            .assign(
+                average_eval_cost=lambda frame: (
+                    frame["total_eval_cost"] / frame["evaluated_record_count"]
+                )
+            )
+            .sort_values("time_bucket")
+        )
+
+    def get_eval_drilldown_record_ids(
+        self,
+        app_name: types_schema.AppName,
+        app_versions: List[types_schema.AppVersion],
+        metric_kind: str,
+        metric_name: str,
+        start_time: datetime,
+        end_time: datetime,
+        currency: Optional[str] = None,
+    ) -> List[types_schema.RecordID]:
+        if not is_otel_tracing_enabled():
+            raise NotImplementedError(
+                "Evaluation-time drill-down requires OTEL tracing."
+            )
+        if metric_kind not in ("feedback", "eval_cost"):
+            raise ValueError(
+                f"Unsupported evaluation drill-down: {metric_kind}"
+            )
+        conditions = self._build_otel_conditions(
+            SpanAttributes.SpanType.EVAL_ROOT.value,
+            app_name=app_name,
+            app_versions=app_versions,
+        )
+        conditions.extend([
+            self.orm.Event.start_timestamp >= start_time,
+            self.orm.Event.start_timestamp < end_time,
+        ])
+        if metric_kind == "feedback":
+            metric_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.EVAL_ROOT.METRIC_NAME
+            )
+            conditions.append(metric_expr.in_(metric_name.split(",")))
+            score_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.EVAL_ROOT.SCORE
+            )
+            conditions.append(score_expr.isnot(None))
+        if currency:
+            currency_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.COST.CURRENCY
+            )
+            if currency == "USD":
+                conditions.append(
+                    sa.or_(currency_expr == currency, currency_expr.is_(None))
+                )
+            else:
+                conditions.append(currency_expr == currency)
+        record_id_expr = self._json_extract_otel(
+            "record_attributes", SpanAttributes.RECORD_ID
+        )
+        stmt = (
+            sa
+            .select(record_id_expr.label("record_id"))
+            .where(sa.and_(*conditions))
+            .group_by(record_id_expr)
+        )
+        with self.session.begin() as session:
+            return list(session.execute(stmt).scalars().all())
 
     def _get_leaderboard_aggregates_pre_otel(
         self,
@@ -1256,7 +1753,8 @@ class SQLAlchemyDB(core_db.DB):
             base_rows = session.execute(record_stmt).all()
 
             fb_stmt = (
-                sa.select(
+                sa
+                .select(
                     self.orm.AppDefinition.app_name.label("app_name"),
                     self.orm.AppDefinition.app_version.label("app_version"),
                     self.orm.AppDefinition.app_id.label("app_id"),
@@ -1362,6 +1860,10 @@ class SQLAlchemyDB(core_db.DB):
         app_versions: Optional[List[types_schema.AppVersion]] = None,
         run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
+        matched_record_ids: Optional[List[types_schema.RecordID]] = None,
+        include_conversation_context: bool = False,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -1382,6 +1884,10 @@ class SQLAlchemyDB(core_db.DB):
                 app_versions=app_versions,
                 run_name=run_name,
                 record_ids=record_ids,
+                matched_record_ids=matched_record_ids,
+                include_conversation_context=include_conversation_context,
+                start_time=start_time,
+                end_time=end_time,
                 offset=offset,
                 limit=limit,
             )
@@ -1471,7 +1977,8 @@ class SQLAlchemyDB(core_db.DB):
         # TODO: thread safety
         with self.session.begin() as session:
             if (
-                _ground_truth := session.query(self.orm.GroundTruth)
+                _ground_truth := session
+                .query(self.orm.GroundTruth)
                 .filter_by(ground_truth_id=ground_truth.ground_truth_id)
                 .first()
             ):
@@ -1499,7 +2006,8 @@ class SQLAlchemyDB(core_db.DB):
 
             # Fetch existing GroundTruth records that match these ids in one query
             existing_ground_truths = (
-                session.query(self.orm.GroundTruth)
+                session
+                .query(self.orm.GroundTruth)
                 .filter(
                     self.orm.GroundTruth.ground_truth_id.in_(ground_truth_ids)
                 )
@@ -1536,11 +2044,12 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             if (
-                _ground_truth := session.query(self.orm.GroundTruth)
+                _ground_truth := session
+                .query(self.orm.GroundTruth)
                 .filter_by(ground_truth_id=ground_truth_id)
                 .first()
             ):
-                return json.loads(_ground_truth)
+                return json.loads(_ground_truth.ground_truth_json)
 
     def get_ground_truths_by_dataset(
         self, dataset_name: str
@@ -1642,7 +2151,8 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             if (
-                _dataset := session.query(self.orm.Dataset)
+                _dataset := session
+                .query(self.orm.Dataset)
                 .filter_by(dataset_id=dataset.dataset_id)
                 .first()
             ):
@@ -1666,9 +2176,383 @@ class SQLAlchemyDB(core_db.DB):
         with self.session.begin() as session:
             results = session.query(self.orm.Dataset)
 
+            def _row(ds):
+                # Dataset ORM stores everything except the id in dataset_json;
+                # name and meta are not columns.
+                dataset_json = json.loads(ds.dataset_json)
+                return (
+                    ds.dataset_id,
+                    dataset_json.get("name"),
+                    dataset_json.get("meta"),
+                )
+
             return pd.DataFrame(
-                data=((ds.dataset_id, ds.name, ds.meta) for ds in results),
+                data=[_row(ds) for ds in results],
                 columns=["dataset_id", "name", "meta"],
+            )
+
+    def insert_prompt(
+        self, prompt: prompt_schema.Prompt
+    ) -> types_schema.PromptID:
+        """See [DB.insert_prompt][trulens.core.database.base.DB.insert_prompt]."""
+
+        with self.session.begin() as session:
+            if (
+                _prompt := session
+                .query(self.orm.Prompt)
+                .filter_by(prompt_id=prompt.prompt_id)
+                .first()
+            ):
+                if _prompt.prompt_type != prompt.prompt_type.value:
+                    raise ValueError(
+                        f"Prompt {prompt.slug!r} already exists with type "
+                        f"{_prompt.prompt_type!r}. Prompt type is fixed after "
+                        "creation."
+                    )
+                _prompt.prompt_json = prompt.model_dump_json()
+            else:
+                _prompt = self.orm.Prompt.parse(
+                    prompt, redact_keys=self.redact_keys
+                )
+                session.merge(_prompt)
+
+            logger.info(
+                f"{text_utils.UNICODE_CHECK} added prompt {_prompt.prompt_id}"
+            )
+
+            return _prompt.prompt_id
+
+    def get_prompt(
+        self,
+        prompt_id: Optional[types_schema.PromptID] = None,
+        slug: Optional[str] = None,
+    ) -> Optional[prompt_schema.Prompt]:
+        """See [DB.get_prompt][trulens.core.database.base.DB.get_prompt]."""
+
+        if prompt_id is None and slug is None:
+            raise ValueError("Either `prompt_id` or `slug` must be given.")
+
+        with self.session.begin() as session:
+            query = session.query(self.orm.Prompt)
+            if prompt_id is not None:
+                query = query.filter_by(prompt_id=prompt_id)
+            else:
+                query = query.filter_by(slug=slug)
+
+            if (_prompt := query.first()) is None:
+                return None
+
+            return prompt_schema.Prompt.model_validate_json(_prompt.prompt_json)
+
+    def get_prompts(self) -> pd.DataFrame:
+        """See [DB.get_prompts][trulens.core.database.base.DB.get_prompts]."""
+
+        with self.session.begin() as session:
+            results = session.query(self.orm.Prompt).order_by(
+                self.orm.Prompt.slug
+            )
+            return _extract_prompts(results)
+
+    def _retry_on_conflict(self, operation, attempts: int = 5):
+        """Re-run `operation` when a concurrent writer wins the insert race.
+
+        Two processes moving the same label for the first time both see no row
+        and both insert. The loser gets an integrity error and, on the retry,
+        finds the row and takes the update path instead. This is what keeps one
+        current pointer per `(prompt_id, label)`.
+        """
+
+        for attempt in range(attempts):
+            try:
+                return operation()
+            except sa.exc.IntegrityError:
+                if attempt == attempts - 1:
+                    raise
+                logger.debug(
+                    "Prompt write lost an insert race, retrying (attempt %d).",
+                    attempt + 1,
+                )
+
+    def insert_prompt_version(
+        self,
+        version: prompt_schema.PromptVersion,
+        move_latest: bool = True,
+    ) -> types_schema.PromptVersionID:
+        """See [DB.insert_prompt_version][trulens.core.database.base.DB.insert_prompt_version]."""
+
+        return self._retry_on_conflict(
+            lambda: self._insert_prompt_version(version, move_latest)
+        )
+
+    def _insert_prompt_version(
+        self,
+        version: prompt_schema.PromptVersion,
+        move_latest: bool,
+    ) -> types_schema.PromptVersionID:
+        with self.session.begin() as session:
+            _prompt = (
+                session
+                .query(self.orm.Prompt)
+                .filter_by(prompt_id=version.prompt_id)
+                .first()
+            )
+            if _prompt is None:
+                raise ValueError(
+                    f"No prompt with id {version.prompt_id!r} exists."
+                )
+            if _prompt.prompt_type != version.prompt_type.value:
+                raise ValueError(
+                    f"Version type {version.prompt_type.value!r} does not match "
+                    f"prompt type {_prompt.prompt_type!r}."
+                )
+
+            existing = (
+                session
+                .query(self.orm.PromptVersion)
+                .filter_by(version_id=version.version_id)
+                .first()
+            )
+            if existing is None:
+                session.add(
+                    self.orm.PromptVersion.parse(
+                        version, redact_keys=self.redact_keys
+                    )
+                )
+                logger.info(
+                    f"{text_utils.UNICODE_CHECK} added prompt version "
+                    f"{version.version_id}"
+                )
+
+            if move_latest:
+                self._set_prompt_label(
+                    session,
+                    prompt_id=version.prompt_id,
+                    label=prompt_schema.LATEST_LABEL,
+                    version_id=version.version_id,
+                    moved_by=version.created_by,
+                )
+
+            return version.version_id
+
+    def get_prompt_version(
+        self, version_id: types_schema.PromptVersionID
+    ) -> Optional[prompt_schema.PromptVersion]:
+        """See [DB.get_prompt_version][trulens.core.database.base.DB.get_prompt_version]."""
+
+        with self.session.begin() as session:
+            _version = (
+                session
+                .query(self.orm.PromptVersion)
+                .filter_by(version_id=version_id)
+                .first()
+            )
+            if _version is None:
+                return None
+
+            return prompt_schema.PromptVersion.model_validate_json(
+                _version.prompt_version_json
+            )
+
+    def get_prompt_versions(
+        self, prompt_id: types_schema.PromptID
+    ) -> pd.DataFrame:
+        """See [DB.get_prompt_versions][trulens.core.database.base.DB.get_prompt_versions]."""
+
+        with self.session.begin() as session:
+            results = (
+                session
+                .query(self.orm.PromptVersion)
+                .filter_by(prompt_id=prompt_id)
+                .order_by(self.orm.PromptVersion.created_at)
+            )
+            return _extract_prompt_versions(results)
+
+    def _set_prompt_label(
+        self,
+        session,
+        prompt_id: types_schema.PromptID,
+        label: str,
+        version_id: types_schema.PromptVersionID,
+        moved_by: Optional[str] = None,
+    ) -> prompt_schema.PromptLabel:
+        """Move a label inside an open transaction."""
+
+        now = datetime.now(timezone.utc)
+
+        _label = (
+            session
+            .query(self.orm.PromptLabel)
+            .filter_by(prompt_id=prompt_id, label=label)
+            .with_for_update()
+            .first()
+        )
+        previous_version_id = _label.version_id if _label else None
+
+        if _label is None:
+            _label = self.orm.PromptLabel(
+                prompt_id=prompt_id,
+                label=label,
+                version_id=version_id,
+                updated_at=now.timestamp(),
+            )
+            session.add(_label)
+        else:
+            _label.version_id = version_id
+            _label.updated_at = now.timestamp()
+
+        history = prompt_schema.PromptLabelHistory(
+            history_id=str(uuid.uuid4()),
+            prompt_id=prompt_id,
+            label=label,
+            previous_version_id=previous_version_id,
+            new_version_id=version_id,
+            moved_by=moved_by,
+            timestamp=now,
+        )
+        session.add(
+            self.orm.PromptLabelHistory.parse(
+                history, redact_keys=self.redact_keys
+            )
+        )
+
+        return prompt_schema.PromptLabel(
+            prompt_id=prompt_id,
+            label=label,
+            version_id=version_id,
+            updated_at=now,
+        )
+
+    def set_prompt_label(
+        self,
+        prompt_id: types_schema.PromptID,
+        label: str,
+        version_id: types_schema.PromptVersionID,
+        moved_by: Optional[str] = None,
+    ) -> prompt_schema.PromptLabel:
+        """See [DB.set_prompt_label][trulens.core.database.base.DB.set_prompt_label]."""
+
+        return self._retry_on_conflict(
+            lambda: self._set_prompt_label_txn(
+                prompt_id, label, version_id, moved_by
+            )
+        )
+
+    def _set_prompt_label_txn(
+        self,
+        prompt_id: types_schema.PromptID,
+        label: str,
+        version_id: types_schema.PromptVersionID,
+        moved_by: Optional[str],
+    ) -> prompt_schema.PromptLabel:
+        with self.session.begin() as session:
+            _version = (
+                session
+                .query(self.orm.PromptVersion)
+                .filter_by(version_id=version_id, prompt_id=prompt_id)
+                .first()
+            )
+            if _version is None:
+                raise ValueError(
+                    f"Version {version_id!r} does not belong to prompt "
+                    f"{prompt_id!r}."
+                )
+
+            return self._set_prompt_label(
+                session,
+                prompt_id=prompt_id,
+                label=label,
+                version_id=version_id,
+                moved_by=moved_by,
+            )
+
+    def get_prompt_label(
+        self, prompt_id: types_schema.PromptID, label: str
+    ) -> Optional[prompt_schema.PromptLabel]:
+        """See [DB.get_prompt_label][trulens.core.database.base.DB.get_prompt_label]."""
+
+        with self.session.begin() as session:
+            _label = (
+                session
+                .query(self.orm.PromptLabel)
+                .filter_by(prompt_id=prompt_id, label=label)
+                .first()
+            )
+            if _label is None:
+                return None
+
+            return prompt_schema.PromptLabel(
+                prompt_id=_label.prompt_id,
+                label=_label.label,
+                version_id=_label.version_id,
+                updated_at=datetime.fromtimestamp(
+                    _label.updated_at, tz=timezone.utc
+                ),
+            )
+
+    def get_prompt_labels(
+        self, prompt_id: types_schema.PromptID
+    ) -> pd.DataFrame:
+        """See [DB.get_prompt_labels][trulens.core.database.base.DB.get_prompt_labels]."""
+
+        with self.session.begin() as session:
+            results = (
+                session
+                .query(self.orm.PromptLabel)
+                .filter_by(prompt_id=prompt_id)
+                .order_by(self.orm.PromptLabel.label)
+            )
+            return pd.DataFrame(
+                data=(
+                    (
+                        row.prompt_id,
+                        row.label,
+                        row.version_id,
+                        datetime.fromtimestamp(row.updated_at, tz=timezone.utc),
+                    )
+                    for row in results
+                ),
+                columns=["prompt_id", "label", "version_id", "updated_at"],
+            )
+
+    def get_prompt_label_history(
+        self,
+        prompt_id: types_schema.PromptID,
+        label: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """See [DB.get_prompt_label_history][trulens.core.database.base.DB.get_prompt_label_history]."""
+
+        with self.session.begin() as session:
+            query = session.query(self.orm.PromptLabelHistory).filter_by(
+                prompt_id=prompt_id
+            )
+            if label is not None:
+                query = query.filter_by(label=label)
+            results = query.order_by(
+                self.orm.PromptLabelHistory.timestamp.desc()
+            )
+
+            return pd.DataFrame(
+                data=(
+                    (
+                        row.history_id,
+                        row.prompt_id,
+                        row.label,
+                        row.previous_version_id,
+                        row.new_version_id,
+                        row.moved_by,
+                        datetime.fromtimestamp(row.timestamp, tz=timezone.utc),
+                    )
+                    for row in results
+                ),
+                columns=[
+                    "history_id",
+                    "prompt_id",
+                    "label",
+                    "previous_version_id",
+                    "new_version_id",
+                    "moved_by",
+                    "timestamp",
+                ],
             )
 
     def insert_event(self, event: Event) -> types_schema.EventID:
@@ -1850,6 +2734,72 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
     )
 
 
+def _extract_prompts(
+    results: Iterable["db_orm.Prompt"],
+) -> pd.DataFrame:
+    def _extract(_result: "db_orm.Prompt"):
+        prompt_json = json.loads(_result.prompt_json)
+
+        return (
+            _result.prompt_id,
+            prompt_json["slug"],
+            prompt_json["name"],
+            prompt_json["prompt_type"],
+            prompt_json.get("description"),
+            prompt_json.get("tags", []),
+            prompt_json.get("created_at"),
+            prompt_json.get("updated_at"),
+        )
+
+    return pd.DataFrame(
+        data=(_extract(r) for r in results),
+        columns=[
+            "prompt_id",
+            "slug",
+            "name",
+            "prompt_type",
+            "description",
+            "tags",
+            "created_at",
+            "updated_at",
+        ],
+    )
+
+
+def _extract_prompt_versions(
+    results: Iterable["db_orm.PromptVersion"],
+) -> pd.DataFrame:
+    def _extract(_result: "db_orm.PromptVersion"):
+        version_json = json.loads(_result.prompt_version_json)
+
+        return (
+            _result.version_id,
+            _result.prompt_id,
+            version_json.get("parent_version_id"),
+            version_json["prompt_type"],
+            version_json.get("variables", []),
+            version_json.get("change_note"),
+            _result.content_hash,
+            version_json.get("created_at"),
+            version_json.get("created_by"),
+        )
+
+    return pd.DataFrame(
+        data=(_extract(r) for r in results),
+        columns=[
+            "version_id",
+            "prompt_id",
+            "parent_version_id",
+            "prompt_type",
+            "variables",
+            "change_note",
+            "content_hash",
+            "created_at",
+            "created_by",
+        ],
+    )
+
+
 def _extract_ground_truths(
     results: Iterable["db_orm.GroundTruth"],
 ) -> pd.DataFrame:
@@ -1902,9 +2852,9 @@ class AppsExtractor(core_db.BaseAppsExtractor):
                 with `apps`.
         """
 
-        assert (
-            apps is None or records is None
-        ), "`apps` and `records` are mutually exclusive"
+        assert apps is None or records is None, (
+            "`apps` and `records` are mutually exclusive"
+        )
 
         if apps is not None:
             df = pd.concat(self.extract_apps(apps))

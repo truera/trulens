@@ -76,3 +76,20 @@ class SnowflakeSQLAlchemyDB(SQLAlchemyDB):
                 self.orm.Event.timestamp,
             )
         )
+
+    def _latency_seconds_expr(self) -> Any:
+        return (
+            sa.func.timestampdiff(
+                sa.text("NANOSECOND"),
+                self.orm.Event.start_timestamp,
+                self.orm.Event.timestamp,
+            )
+            / 1_000_000_000.0
+        )
+
+    def _time_bucket_expr(self, bucket: str) -> Any:
+        if bucket not in ("day", "week"):
+            raise ValueError("bucket must be 'day' or 'week'")
+        return sa.func.date_trunc(
+            sa.text(bucket.upper()), self.orm.Event.start_timestamp
+        )

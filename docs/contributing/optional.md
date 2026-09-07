@@ -21,6 +21,9 @@ Tools for instrumenting LLM apps built with other frameworks:
 
 - `trulens-apps-langchain` - Instrument LangChain apps with `TruChain`
 - `trulens-apps-llamaindex` - Instrument LlamaIndex apps with `TruLlama`
+- `trulens-apps-cursor` - Cursor coding-agent hook instrumentation
+- `trulens-apps-claude` - Claude Code hook instrumentation
+- `trulens-apps-opencode` - OpenCode plugin hook instrumentation
 - `trulens-apps-nemo` - Instrument NeMo Guardrails apps
 
 ### Provider Integrations (`trulens-providers-*`)
@@ -28,6 +31,8 @@ Tools for instrumenting LLM apps built with other frameworks:
 Integrations for running feedback functions with different LLM providers:
 
 - `trulens-providers-openai` - OpenAI models
+- `trulens-providers-ollama` - Local (or remote) Ollama models via its
+  native API
 - `trulens-providers-litellm` - LiteLLM (supports Ollama and many others)
 - `trulens-providers-huggingface` - HuggingFace models
 - `trulens-providers-bedrock` - AWS Bedrock models

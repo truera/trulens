@@ -485,9 +485,22 @@ class Selector:
     function_attribute: Optional[str] = None
     conversation_attribute: Optional[str] = None
 
+    # Reads an attribute from the span's OTEL *events* rather than from the
+    # span's attributes. Span events carry GenAI message content such as
+    # `gen_ai.input.messages` and `gen_ai.output.messages`, which are emitted as
+    # events (not attributes) and only when content capture is opted in.
+    # Named `span_event_*` rather than `event_*` because `Trace.events` already
+    # refers to the spans of a trace.
+    span_event_attribute: Optional[str] = None
+
+    # Optionally restrict `span_event_attribute` to events with this name, e.g.
+    # `gen_ai.client.inference.operation.details`. When None, every event on the
+    # span is searched.
+    span_event_name: Optional[str] = None
+
     # If the value extracted from the span is None (i.e. from
-    # `span_attributes_processor`, `span_attribute`, or `function_attribute`),
-    # then whether to ignore it or not.
+    # `span_attributes_processor`, `span_attribute`, `function_attribute`, or
+    # `span_event_attribute`), then whether to ignore it or not.
     ignore_none_values: bool = False
 
     # If this selector describes a list, which of the following two should we
@@ -505,6 +518,14 @@ class Selector:
     # Ignored when `trace_level` is True.
     match_only_if_no_ancestor_matched: bool = False
 
+    # If set, this selector reads its value from a column of a tabular dataset
+    # (a pandas DataFrame or a list of dicts) rather than from spans in a trace.
+    # This is used for batch/offline evaluation where there is no live app or
+    # recording session (see `Selector.from_column` and
+    # `trulens.core.batch.BatchEvaluator`). When `dataset_column` is set, all of
+    # the span-related fields above are ignored.
+    dataset_column: Optional[str] = None
+
     def __init__(
         self,
         trace_level: bool = False,
@@ -518,9 +539,12 @@ class Selector:
         span_attribute: Optional[str] = None,
         function_attribute: Optional[str] = None,
         conversation_attribute: Optional[str] = None,
+        span_event_attribute: Optional[str] = None,
+        span_event_name: Optional[str] = None,
         ignore_none_values: bool = False,
         collect_list: bool = True,
         match_only_if_no_ancestor_matched: bool = False,
+        dataset_column: Optional[str] = None,
     ):
         if trace_level and conversation_level:
             raise ValueError(
@@ -535,18 +559,39 @@ class Selector:
                 "Conversation selectors require `conversation_attribute` to be "
                 "one of 'records', 'input', or 'output'."
             )
-        if (
+        if dataset_column is not None:
+            # A dataset (tabular) selector must not also specify span-based
+            # extraction fields since the two selection modes are mutually
+            # exclusive.
+            if any([
+                span_attributes_processor is not None,
+                span_attribute is not None,
+                function_attribute is not None,
+                span_event_attribute is not None,
+            ]):
+                raise ValueError(
+                    "`dataset_column` cannot be combined with "
+                    "`span_attributes_processor`, `span_attribute`, "
+                    "`function_attribute`, or `span_event_attribute`."
+                )
+        elif (
             not trace_level
             and not conversation_level
             and sum([
                 span_attributes_processor is not None,
                 span_attribute is not None,
                 function_attribute is not None,
+                span_event_attribute is not None,
             ])
             != 1
         ):
             raise ValueError(
-                "Must specify exactly one of `span_attributes_processor`, `span_attribute`, or `function_attribute`!"
+                "Must specify exactly one of `span_attributes_processor`, `span_attribute`, `function_attribute`, or `span_event_attribute`!"
+            )
+        if span_event_name is not None and span_event_attribute is None:
+            raise ValueError(
+                "`span_event_name` only filters `span_event_attribute`, which "
+                "is not set."
             )
         self.trace_level = trace_level
         self.conversation_level = conversation_level
@@ -557,11 +602,56 @@ class Selector:
         self.span_attribute = span_attribute
         self.function_attribute = function_attribute
         self.conversation_attribute = conversation_attribute
+        self.span_event_attribute = span_event_attribute
+        self.span_event_name = span_event_name
         self.ignore_none_values = ignore_none_values
         self.collect_list = collect_list
         self.match_only_if_no_ancestor_matched = (
             match_only_if_no_ancestor_matched
         )
+        self.dataset_column = dataset_column
+
+    @staticmethod
+    def from_column(
+        column_name: str,
+        *,
+        collect_list: bool = True,
+        ignore_none_values: bool = False,
+    ) -> Selector:
+        """Returns a `Selector` that reads its value from a dataset column.
+
+        This is used for batch/offline evaluation with
+        [BatchEvaluator][trulens.core.batch.BatchEvaluator], where metrics are
+        run over a pre-collected dataset (a pandas DataFrame or a list of dicts)
+        instead of over spans produced by a live app. Batch results are
+        returned in-memory only and are not persisted to the dashboard; for
+        dashboard-visible evaluation of pre-collected data, use
+        [Run][trulens.core.run.Run] with `mode=Mode.LOG_INGESTION`.
+
+        Args:
+            column_name: The name of the dataset column to read the value from.
+
+            collect_list: Only relevant when the column holds list values. If
+                True (default), the whole list is passed to the metric in a
+                single call. If False, the metric is called once per item in the
+                list and the results are aggregated.
+
+            ignore_none_values: If True, skip evaluation for rows where the
+                selected value is None (or missing).
+
+        Returns:
+            A `Selector` that selects from the given tabular column.
+        """
+        return Selector(
+            dataset_column=column_name,
+            collect_list=collect_list,
+            ignore_none_values=ignore_none_values,
+        )
+
+    @property
+    def is_dataset_selector(self) -> bool:
+        """Whether this selector reads from a tabular dataset column."""
+        return self.dataset_column is not None
 
     def describes_same_spans(self, other: Selector) -> bool:
         return (
@@ -572,6 +662,7 @@ class Selector:
             and self.span_type == other.span_type
             and self.match_only_if_no_ancestor_matched
             == other.match_only_if_no_ancestor_matched
+            and self.dataset_column == other.dataset_column
         )
 
     @staticmethod
@@ -607,14 +698,59 @@ class Selector:
             )
         return ret
 
+    def _extract_from_span_events(
+        self, span_events: Optional[List[Dict[str, Any]]]
+    ) -> Any:
+        """Read `span_event_attribute` from a span's OTEL events.
+
+        Args:
+            span_events: The span's serialised events, as stored under
+                `record["events"]`.
+
+        Returns:
+            The single matching value, a list when several events match, or
+            None when nothing matches.
+        """
+        values = []
+        for event in span_events or ():
+            if not isinstance(event, dict):
+                continue
+            if (
+                self.span_event_name is not None
+                and event.get("name") != self.span_event_name
+            ):
+                continue
+            event_attributes = event.get("attributes") or {}
+            if self.span_event_attribute in event_attributes:
+                values.append(event_attributes[self.span_event_attribute])
+        if not values:
+            return None
+        # A single match is returned bare so feedback functions receive a scalar
+        # rather than a one-element list; several matches behave like any other
+        # list-valued selection and honour `collect_list`.
+        return values[0] if len(values) == 1 else values
+
     def process_span(
-        self, span_id: str, attributes: Dict[str, Any]
+        self,
+        span_id: str,
+        attributes: Dict[str, Any],
+        span_events: Optional[List[Dict[str, Any]]] = None,
     ) -> FeedbackFunctionInput:
         ret = FeedbackFunctionInput(
             span_id=span_id, collect_list=self.collect_list
         )
         if self.span_attributes_processor is not None:
             ret.value = self.span_attributes_processor(attributes)
+        elif self.span_event_attribute is not None:
+            # Record where the value came from so evaluation provenance and the
+            # already-computed check can distinguish it from a span attribute of
+            # the same name.
+            ret.span_attribute = (
+                f"{self.span_event_name}/{self.span_event_attribute}"
+                if self.span_event_name is not None
+                else f"event/{self.span_event_attribute}"
+            )
+            ret.value = self._extract_from_span_events(span_events)
         else:
             if self.span_attribute is not None:
                 ret.span_attribute = self.span_attribute
@@ -625,7 +761,7 @@ class Selector:
                     ret.span_attribute = f"{SpanAttributes.CALL.KWARGS}.{self.function_attribute}"
             elif not self.trace_level and not self.conversation_level:
                 raise ValueError(
-                    "None of `span_attributes_processor`, `span_attribute`, or `function_attribute` are set!"
+                    "None of `span_attributes_processor`, `span_attribute`, `function_attribute`, or `span_event_attribute` are set!"
                 )
             ret.value = attributes.get(ret.span_attribute, None)
         return ret

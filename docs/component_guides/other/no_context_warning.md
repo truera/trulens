@@ -40,7 +40,11 @@ from contextvars import copy_context
 Thread(target=your_thread_target, args=(yourargs, ...), kwargs=...)
 
 # after:
-Thread(target=copy_context().run, args=(your_thread_target, yourargs, ...), kwargs=...)
+Thread(
+    target=copy_context().run,
+    args=(your_thread_target, yourargs, ...),
+    kwargs=...,
+)
 ```
 
 ## Async Tasks
@@ -61,7 +65,7 @@ If using async tasks, ensure `Task` uses the default `copy_context` behavior. Th
     # after:
     task = loop.create_task(your_coroutine, ..., context=copy_context())
     # or:
-    task = loop.create_task(your_coroutine, ...) # use default context behavior
+    task = loop.create_task(your_coroutine, ...)  # use default context behavior
     ```
 
 Note: for Python < 3.11, `copy_context` is a fixed behavior and cannot be changed.

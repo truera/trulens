@@ -139,9 +139,9 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
         latency_mean = (
             app_df["latency"]
             .apply(
-                lambda td: td
-                if td != legacy_migration.MIGRATION_UNKNOWN_STR
-                else None
+                lambda td: (
+                    td if td != legacy_migration.MIGRATION_UNKNOWN_STR else None
+                )
             )
             .mean()
         )

@@ -267,7 +267,7 @@ class FewShotExamples(pydantic.BaseModel):
 
     def format_examples(self) -> str:
         formatted_examples = [
-            "\n\nUse the following examples to guide" " scoring: \n"
+            "\n\nUse the following examples to guide scoring: \n"
         ]
         for idx, example in enumerate(self.examples, start=1):
             example_str = [f"Example {idx}:\n"]

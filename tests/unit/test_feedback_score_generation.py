@@ -9,8 +9,7 @@ from trulens.feedback import generated as feedback_generated
 test_data = [
     ("The relevance score is 7.", 7),
     ("I rate this an 8 out of 10.", 8),
-    ("In the range of 0-10, I give this a 9.", 0),
-    # Currently does not have ideal handling as it returns the minimum integer found.
+    ("In the range of 0-10, I give this a 9.", 9),
     ("This should be a 10!", 10),
     ("The score is 5", 5),
     ("A perfect score: 10.", 10),
@@ -34,6 +33,86 @@ def test_re_0_10_rating(test_input, expected):
     except feedback_generated.ParseError:
         result = None
 
-    assert (
-        result == expected
-    ), f"Failed on {test_input}: expected {expected}, got {result}"
+    assert result == expected, (
+        f"Failed on {test_input}: expected {expected}, got {result}"
+    )
+
+
+# A judge that states its own scale before answering used to have those bounds
+# read as candidate ratings, so the minimum was returned instead of the rating.
+scale_statement_data = [
+    ("On a scale of 0 to 10, I rate this 8", 8),
+    ("Using a 0 to 10 scale, the answer deserves a 7.", 7),
+    ("Rate from 0-10. Score: 9", 9),
+    ("Between 0 and 10, this is a 6.", 6),
+    ("Scoring 0 through 10, I give it a 4.", 4),
+    ("Legend: 0 = irrelevant, 10 = perfect. I give this a 8.", 8),
+]
+
+
+@pytest.mark.parametrize("test_input,expected", scale_statement_data)
+def test_re_0_10_rating_ignores_a_stated_scale(test_input, expected):
+    """The stated bounds are not candidate ratings."""
+
+    result = feedback_generated.re_0_10_rating(test_input)
+
+    assert result == expected, (
+        f"Failed on {test_input}: expected {expected}, got {result}"
+    )
+
+
+configured_scale_data = [
+    ("On a scale of 0 to 3, I rate this 3", 3),
+    ("Score 0-3: the context is fully relevant, so 3", 3),
+    ("Rating scale 0 to 3. My rating: 2", 2),
+    ("Given the criteria (0 = irrelevant, 3 = highly relevant), I give 3", 3),
+]
+
+
+@pytest.mark.parametrize("test_input,expected", configured_scale_data)
+def test_re_configured_rating_ignores_a_stated_scale(test_input, expected):
+    """Same, on the 0-3 scale re_configured_rating defaults to."""
+
+    result = feedback_generated.re_configured_rating(test_input)
+
+    assert result == expected, (
+        f"Failed on {test_input}: expected {expected}, got {result}"
+    )
+
+
+# Raised in review on #2726: when stripping the scale leaves MORE than one candidate,
+# the old code fell back to the un-stripped string and re-injected the bounds, so the
+# floor won anyway. The stripped text is now used consistently.
+multi_candidate_data = [
+    ("scale of 0 to 3, I give 2 or 3", 2),
+    ("Rating 0 to 3: between 2 and 3, call it 3", 2),
+]
+
+
+@pytest.mark.parametrize("test_input,expected", multi_candidate_data)
+def test_re_configured_rating_stripped_text_used_throughout(
+    test_input, expected
+):
+    """The stated bounds do not come back when several candidates remain."""
+
+    result = feedback_generated.re_configured_rating(test_input)
+
+    assert result == expected, (
+        f"Failed on {test_input}: expected {expected}, got {result}"
+    )
+
+
+out_of_data = [
+    ("The rating is 1 out of 3.", 1),
+]
+
+
+@pytest.mark.parametrize("test_input,expected", out_of_data)
+def test_re_configured_rating_keeps_out_of_phrasing(test_input, expected):
+    """ "N out of M" is not a scale statement and keeps its existing handling."""
+
+    result = feedback_generated.re_configured_rating(test_input)
+
+    assert result == expected, (
+        f"Failed on {test_input}: expected {expected}, got {result}"
+    )

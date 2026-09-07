@@ -111,13 +111,49 @@ TruLens also provides explicit selector factories when a custom evaluator needs 
 part of the transcript:
 
 ```python
-Selector.select_conversation()         # Ordered input/output records
-Selector.select_conversation_input()   # Ordered record inputs
+Selector.select_conversation()  # Ordered input/output records
+Selector.select_conversation_input()  # Ordered record inputs
 Selector.select_conversation_output()  # Ordered record outputs
 ```
 
 Conversation selectors cannot be mixed with record or span selectors in the same
 `Metric`. Attach separate metrics at each scope instead.
+
+### Add domain context to the judge
+
+Every conversation-level metric accepts `additional_instructions`, which appends
+domain guidance to the judge's system prompt. Reach for it when assistant turns
+are not natural language, such as SQL result rows, JSON payloads, or generated
+code, because the default prompts are calibrated for prose:
+
+```python
+f_conversation_coherence = Metric(
+    implementation=provider.coherence_across_turns,
+    name="Coherence Across Turns",
+    additional_instructions=(
+        "Assistant turns are structured SQL result rows rather than prose. "
+        "Judge coherence on whether each result follows from the user request "
+        "in the same turn and stays consistent with earlier results."
+    ),
+).on_conversation()
+```
+
+### Return the judge's reasoning
+
+Each conversation-level metric also has a `_with_cot_reasons` variant that
+returns the score together with the reasoning behind it, so a low score points at
+the turn that caused it instead of leaving the whole transcript under suspicion:
+
+```python
+f_conversation_coherence = Metric(
+    implementation=provider.coherence_across_turns_with_cot_reasons,
+    name="Coherence Across Turns",
+).on_conversation()
+```
+
+The conversation-level metrics are `coherence_across_turns`,
+`conversation_helpfulness`, `topic_adherence`, and `agent_goal_accuracy`. Each
+one has a matching `_with_cot_reasons` variant.
 
 ## Attach both metrics to an app
 
@@ -204,7 +240,8 @@ Use `groupby` only when you want to summarize a per-turn metric:
 
 ```python
 answer_relevance_by_conversation = (
-    records.dropna(subset=["conversation_id", "Answer Relevance"])
+    records
+    .dropna(subset=["conversation_id", "Answer Relevance"])
     .groupby("conversation_id", as_index=False)["Answer Relevance"]
     .mean()
     .rename(columns={"Answer Relevance": "Average Answer Relevance"})
@@ -246,8 +283,11 @@ On the **Records** page, records sharing a `conversation_id` appear as one threa
 
 ## See also
 
-- [Conversation ID — Grouping Multi-Turn Traces](conversation_id.md)
-- [Conversation Evaluation Quickstart](../../getting_started/quickstarts/conversation_evaluation.ipynb)
+- [Conversation ID — Grouping Multi-Turn Traces](conversation_id.md) — propagation
+  mechanics and API reference
+- [Span Groups](span_groups.md) — localize metrics to specific segments within a
+  single turn
+- [Feedback Selectors](../evaluation/feedback_selectors/index.md) — choosing what
+  to evaluate in each turn
+- [Conversation Evaluation Quickstart notebook](../../getting_started/quickstarts/conversation_evaluation.ipynb)
 - [LangChain Conversation Evaluation](https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/langchain/conversation_evaluation.ipynb)
-- [Feedback Selectors](../evaluation/feedback_selectors/index.md)
-- [Span Groups](span_groups.md)

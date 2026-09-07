@@ -42,6 +42,31 @@ def pytest_addoption(parser):
 
 
 def pytest_collection_modifyitems(config, items):
+    """Filter collected test items based on CLI flags and environment variables.
+
+    Applies skip markers to tests according to the following rules:
+
+    - Tests marked ``required_only`` are skipped when optional or snowflake
+      test modes are active, or when basic tests are disabled.
+    - Tests marked ``optional`` are skipped unless ``--run_optional_tests`` is
+      set or the ``TEST_OPTIONAL`` environment variable is truthy.
+    - Tests marked ``snowflake`` are skipped unless ``--run_snowflake_tests``
+      is set or the ``TEST_SNOWFLAKE`` environment variable is truthy.
+    - Tests marked ``huggingface`` are skipped unless
+      ``--run_huggingface_tests`` is set or the ``TEST_HUGGINGFACE``
+      environment variable is truthy.
+    - Unmarked tests are skipped when basic tests are disabled via
+      ``--skip_basic_tests`` or the ``SKIP_BASIC_TESTS`` environment variable.
+
+    Args:
+        config: The pytest configuration object providing access to CLI options.
+        items: The list of collected test ``Item`` objects to be modified
+            in-place.
+
+    Raises:
+        ValueError: If a test item is marked with more than one of
+            ``required_only``, ``optional``, ``snowflake``, or ``huggingface``.
+    """
     basic = not config.getoption("--skip_basic_tests") and os.environ.get(
         "SKIP_BASIC_TESTS", ""
     ).lower() not in ["1", "true"]

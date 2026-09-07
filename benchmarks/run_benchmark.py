@@ -111,7 +111,8 @@ class RAG:
             return "I don't have enough information to answer this question."
         context = "\n---\n".join(context_list)
         completion = (
-            cortex_client.chat.completions.create(
+            cortex_client.chat.completions
+            .create(
                 model=self.model_name,
                 messages=[
                     {
@@ -192,7 +193,8 @@ SERVER_METRICS = ["groundedness", "context_relevance"]
 
 def get_snowflake_connector():
     snowpark_session = (
-        Session.builder.config("connection_name", CONN_NAME)
+        Session.builder
+        .config("connection_name", CONN_NAME)
         .config("database", "TRULENS_TEST")
         .config("schema", "PUBLIC")
         .config("warehouse", "COMPUTE")

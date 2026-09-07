@@ -142,14 +142,18 @@ class TestLangChainInstrumentation(OtelTestCase):
         # Filter for LLM invoke events
         llm_events = events_df[
             events_df["record"].apply(
-                lambda x: "invoke" in x.get("name", "")
-                and "FakeListLLM" in x.get("name", "")
+                lambda x: (
+                    "invoke" in x.get("name", "")
+                    and "FakeListLLM" in x.get("name", "")
+                )
             )
         ]
         llm_events = llm_events[
             llm_events["record_attributes"].apply(
-                lambda attrs: attrs.get(SpanAttributes.SPAN_TYPE)
-                == SpanAttributes.SpanType.GENERATION
+                lambda attrs: (
+                    attrs.get(SpanAttributes.SPAN_TYPE)
+                    == SpanAttributes.SpanType.GENERATION
+                )
             )
         ]
 
@@ -192,14 +196,18 @@ class TestLangChainInstrumentation(OtelTestCase):
         # Filter for LLM ainvoke events
         llm_events = events_df[
             events_df["record"].apply(
-                lambda x: "ainvoke" in x.get("name", "")
-                and "FakeListLLM" in x.get("name", "")
+                lambda x: (
+                    "ainvoke" in x.get("name", "")
+                    and "FakeListLLM" in x.get("name", "")
+                )
             )
         ]
         llm_events = llm_events[
             llm_events["record_attributes"].apply(
-                lambda attrs: attrs.get(SpanAttributes.SPAN_TYPE)
-                == SpanAttributes.SpanType.GENERATION
+                lambda attrs: (
+                    attrs.get(SpanAttributes.SPAN_TYPE)
+                    == SpanAttributes.SpanType.GENERATION
+                )
             )
         ]
 

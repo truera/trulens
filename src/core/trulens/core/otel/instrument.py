@@ -1,20 +1,17 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
+from collections.abc import Sequence
 from contextvars import ContextVar
 import inspect
 import logging
+import time
 import types
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
 )
 
 from opentelemetry import trace
@@ -46,6 +43,12 @@ from trulens.core.schema.app import AppDefinition
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import Attributes
 from trulens.experimental.otel_tracing.core.span import (
+    add_genai_inference_event,
+)
+from trulens.experimental.otel_tracing.core.span import (
+    add_genai_retrieval_events,
+)
+from trulens.experimental.otel_tracing.core.span import (
     set_function_call_attributes,
 )
 from trulens.experimental.otel_tracing.core.span import (
@@ -64,6 +67,9 @@ from trulens.experimental.otel_tracing.core.span import (
     set_record_root_span_attributes,
 )
 from trulens.experimental.otel_tracing.core.span import (
+    set_span_attribute_safely,
+)
+from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
 )
 from trulens.otel.semconv.constants import (
@@ -80,6 +86,7 @@ import wrapt
 
 if TYPE_CHECKING:
     from trulens.core.app import App
+    from trulens.core.schema import prompt as prompt_schema
 
 
 logger = logging.getLogger(__name__)
@@ -87,7 +94,7 @@ logger = logging.getLogger(__name__)
 # ContextVar holding the current span-group stack as a tuple of strings.
 # Using a tuple (immutable) so that each ContextVar token captures a
 # snapshot — no shared-mutable-state bugs across concurrent contexts.
-_current_span_groups: ContextVar[Tuple[str, ...]] = ContextVar(
+_current_span_groups: ContextVar[tuple[str, ...]] = ContextVar(
     "_current_span_groups", default=()
 )
 
@@ -128,6 +135,66 @@ class span_group:
             self._token = None
 
 
+def set_prompt_lineage_attributes(
+    span: Span,
+    rendered: "prompt_schema.RenderedPrompt",
+) -> None:
+    """Attach prompt lineage to a span the caller owns.
+
+    Only identifiers and a hash of the rendered content are written, so this
+    works with GenAI content capture off and never copies a prompt body into
+    the span.
+
+    Args:
+        span: The span to write to. Ignored when it is not recording.
+        rendered: The result of rendering one exact prompt version.
+    """
+
+    if span is None or not span.is_recording():
+        return
+
+    set_span_attribute_safely(
+        span, SpanAttributes.PROMPT.ID, rendered.prompt_id
+    )
+    set_span_attribute_safely(span, SpanAttributes.PROMPT.SLUG, rendered.slug)
+    set_span_attribute_safely(
+        span, SpanAttributes.PROMPT.VERSION_ID, rendered.version_id
+    )
+    set_span_attribute_safely(span, SpanAttributes.PROMPT.LABEL, rendered.label)
+    set_span_attribute_safely(
+        span,
+        SpanAttributes.PROMPT.RENDERED_CONTENT_HASH,
+        rendered.rendered_content_hash,
+    )
+
+
+class prompt_lineage:
+    """Context manager that tags the current span with prompt lineage.
+
+    The span belongs to the caller. This writes the prompt id, slug, exact
+    version id, requested label, and rendered-content hash onto it, and calls
+    no model.
+
+    Example::
+
+        resolved = session.get_prompt("support-assistant", label="production")
+        request = resolved.render(question=question)
+
+        with prompt_lineage(request):
+            answer = my_generation_call(request.messages)
+    """
+
+    def __init__(self, rendered: "prompt_schema.RenderedPrompt") -> None:
+        self.rendered = rendered
+
+    def __enter__(self) -> "prompt_schema.RenderedPrompt":
+        set_prompt_lineage_attributes(trace.get_current_span(), self.rendered)
+        return self.rendered
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+
 def get_func_name(func: Callable) -> str:
     if (
         hasattr(func, "__module__")
@@ -144,11 +211,11 @@ def get_func_name(func: Callable) -> str:
 
 def _resolve_attributes(
     attributes: Attributes,
-    ret: Optional[Any],
-    exception: Optional[Exception],
+    ret: Any | None,
+    exception: Exception | None,
     args: Sequence[Any],
-    all_kwargs: Dict[str, Any],
-) -> Dict[str, Any]:
+    all_kwargs: dict[str, Any],
+) -> dict[str, Any]:
     if attributes is None:
         return {}
     if callable(attributes):
@@ -168,11 +235,11 @@ def _set_span_attributes(
     span_type: SpanAttributes.SpanType,
     func_name: str,
     func: Callable,
-    func_exception: Optional[Exception],
+    func_exception: Exception | None,
     attributes: Attributes,
     instance: Any,
-    args: Tuple[Any],
-    kwargs: Dict[str, Any],
+    args: tuple[Any],
+    kwargs: dict[str, Any],
     ret: Any,
     only_set_user_defined_attributes: bool = False,
 ):
@@ -242,8 +309,26 @@ def _set_span_attributes(
             provider_name=resolved_attributes.get("provider_name"),
             operation_name=resolved_attributes.get("operation_name"),
         )
+        add_genai_inference_event(
+            span,
+            input_messages=resolved_attributes.get("prompt")
+            or resolved_attributes.get("input")
+            or resolved_attributes.get("messages"),
+            output_messages=resolved_attributes.get("completion")
+            or resolved_attributes.get("output")
+            or (ret if isinstance(ret, str) else None),
+        )
     elif span_type == SpanAttributes.SpanType.RETRIEVAL:
         set_genai_retrieval_attributes(
+            span,
+            query_text=resolved_attributes.get(
+                SpanAttributes.RETRIEVAL.QUERY_TEXT
+            ),
+            documents=resolved_attributes.get(
+                SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS
+            ),
+        )
+        add_genai_retrieval_events(
             span,
             query_text=resolved_attributes.get(
                 SpanAttributes.RETRIEVAL.QUERY_TEXT
@@ -265,21 +350,60 @@ def _set_span_attributes(
         )
 
 
+def _set_streaming_attributes(
+    span: Span,
+    started: float,
+    first_yield: float | None,
+    chunks_received: int,
+) -> None:
+    """Record streaming timing for a generator that TruLens iterated itself.
+
+    This covers anything that streams without going through a provider we
+    instrument directly: LangChain's `stream`/`astream`, or a plain async
+    generator. Token counts are unknowable from here, so throughput is left
+    unset rather than guessed at.
+
+    Skipped when a provider has already reported a stream on this span. One
+    that tracks its own sees chunks as they leave the network and knows how many
+    tokens they held, so its measurements are the better ones and must not be
+    overwritten by this coarser view. A provider reporting a *non*-streaming
+    call does not block us: the generator around it may still be streaming
+    something of its own.
+    """
+    if span is None or not span.is_recording():
+        return
+
+    existing = getattr(span, "attributes", None) or {}
+    if existing.get(SpanAttributes.GENERATION.IS_STREAMING):
+        return
+
+    span.set_attribute(SpanAttributes.GENERATION.IS_STREAMING, True)
+    span.set_attribute(
+        SpanAttributes.GENERATION.CHUNKS_RECEIVED, chunks_received
+    )
+
+    if first_yield is not None:
+        span.set_attribute(
+            SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS,
+            (first_yield - started) * 1000.0,
+        )
+
+
 def _finalize_span(
     span: Span,
     span_type: SpanAttributes.SpanType,
     func_name: str,
     func: Callable,
-    func_exception: Optional[Exception],
+    func_exception: Exception | None,
     attributes: Attributes,
     instance: Any,
-    args: Tuple[Any],
-    kwargs: Dict[str, Any],
+    args: tuple[Any],
+    kwargs: dict[str, Any],
     ret: Any,
     only_set_user_defined_attributes: bool = False,
-    span_end_callbacks: List[Callable[[Span], None]] = [],
+    span_end_callbacks: list[Callable[[Span], None]] = [],
 ):
-    attributes_exception: Optional[Exception] = None
+    attributes_exception: Exception | None = None
     try:
         _set_span_attributes(
             span,
@@ -311,7 +435,7 @@ class instrument:
     def __init__(
         self,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
         attributes: Attributes = None,
         **kwargs,
@@ -401,14 +525,20 @@ class instrument:
                 span_type=self.span_type,
             ) as span:
                 ret = None
-                func_exception: Optional[Exception] = None
+                func_exception: Exception | None = None
+                started = time.perf_counter()
+                first_yield: float | None = None
+                streamed = False
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
                     if isinstance(result, types.GeneratorType):
+                        streamed = True
                         yield "is_generator"
                         ret = []
                         for curr in result:
+                            if first_yield is None:
+                                first_yield = time.perf_counter()
                             ret.append(curr)
                             yield curr
                     else:
@@ -421,6 +551,15 @@ class instrument:
                     # None as a return value.
                     func_exception = e
                 finally:
+                    if streamed:
+                        # Also runs when the consumer abandons the generator,
+                        # so a partially consumed stream is still measured.
+                        _set_streaming_attributes(
+                            span,
+                            started,
+                            first_yield,
+                            len(ret) if ret else 0,
+                        )
                     _finalize_span(
                         span,
                         self.span_type,
@@ -449,7 +588,7 @@ class instrument:
                 span_type=self.span_type,
             ) as span:
                 ret = None
-                func_exception: Optional[Exception] = None
+                func_exception: Exception | None = None
                 # Run function.
                 try:
                     ret = await func(*args, **kwargs)
@@ -510,12 +649,16 @@ class instrument:
                 span_type=self.span_type,
             ) as span:
                 ret = None
-                func_exception: Optional[Exception] = None
+                func_exception: Exception | None = None
+                started = time.perf_counter()
+                first_yield: float | None = None
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
                     ret = []
                     async for curr in result:
+                        if first_yield is None:
+                            first_yield = time.perf_counter()
                         ret.append(curr)
                         yield curr
                 except Exception as e:
@@ -524,6 +667,12 @@ class instrument:
                     # None as a return value.
                     func_exception = e
                 finally:
+                    _set_streaming_attributes(
+                        span,
+                        started,
+                        first_yield,
+                        len(ret) if ret else 0,
+                    )
                     _finalize_span(
                         span,
                         self.span_type,
@@ -616,13 +765,13 @@ class OtelBaseRecordingContext:
     The ID of the input that the recording context is currently processing.
     """
 
-    tokens: List[object] = []
+    tokens: list[object] = []
     """
     OTEL context tokens for the current context manager. These tokens are how the OTEL
     context api keeps track of what is changed in the context, and used to undo the changes.
     """
 
-    context_keys_added: List[str] = []
+    context_keys_added: list[str] = []
     """
     Keys added to the OTEL context.
     """
@@ -684,9 +833,9 @@ class OtelBaseRecordingContext:
 
     async def __aexit__(
         self,
-        exc_type: Optional[BaseException],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: BaseException | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         return self.__exit__(exc_type, exc_val, exc_tb)
 
@@ -700,12 +849,11 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         app_version: str,
         run_name: str,
         input_id: str,
-        input_records_count: Optional[int] = None,
-        ground_truth_output: Optional[str] = None,
-        input_selector: Optional[
-            Callable[[Tuple[Any, ...], Dict[str, Any]], Any]
-        ] = None,
-        conversation_id: Optional[str] = None,
+        input_records_count: int | None = None,
+        ground_truth_output: str | None = None,
+        input_selector: Callable[[tuple[Any, ...], dict[str, Any]], Any]
+        | None = None,
+        conversation_id: str | None = None,
     ) -> None:
         app_id = AppDefinition._compute_app_id(app_name, app_version)
         super().__init__(
@@ -720,10 +868,10 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         self.ground_truth_output = ground_truth_output
         self.input_selector = input_selector
         self.conversation_id = conversation_id
-        self.recording: Optional[Recording] = None
+        self.recording: Recording | None = None
 
     @property
-    def record_ids(self) -> List[str]:
+    def record_ids(self) -> list[str]:
         """Record IDs created inside this recording context."""
         if self.recording is None:
             return []
@@ -881,7 +1029,7 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
 # === Trace Beautification Utilities ===
 
 
-def extract_input_content(messages) -> str:
+def extract_input_content(messages: Sequence[Any]) -> str:
     """Extract the text content from the input messages.
 
     Looks for the last HumanMessage's content, or falls back to the first
@@ -911,7 +1059,7 @@ def extract_input_content(messages) -> str:
     return str(messages[0])
 
 
-def extract_output_content(ret) -> str:
+def extract_output_content(ret: Any) -> str:
     """Extract the text content from an LLM response.
 
     Args:
@@ -927,7 +1075,7 @@ def extract_output_content(ret) -> str:
     return str(ret)
 
 
-def extract_tool_calls(ret) -> Optional[str]:
+def extract_tool_calls(ret: Any) -> str | None:
     """Extract and format tool calls from an LLM response.
 
     Formats tool calls as: "tool_name(arg1=val1, arg2=val2), other_tool(...)"
@@ -985,7 +1133,7 @@ def generation_attributes() -> Callable:
             return model.invoke(messages)
     """
 
-    def _extract(ret, exception, *args, **kwargs) -> Dict[str, Any]:
+    def _extract(ret, exception, *args, **kwargs) -> dict[str, Any]:
         result = {}
 
         # Extract input content from first positional arg (usually messages)
@@ -1010,7 +1158,7 @@ def generation_attributes() -> Callable:
 
 
 def instrument_tools(
-    tools_by_name: Dict[str, Any],
+    tools_by_name: dict[str, Any],
     *,
     invoke_method: str = "invoke",
 ) -> None:

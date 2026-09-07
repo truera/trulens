@@ -34,9 +34,7 @@ Consider the following instrumented class method, `retrieve_contexts`:
 
     class MyRAG:
         @instrument()
-        def retrieve_contexts(
-            self, query: str
-        ) -> List[str]:
+        def retrieve_contexts(self, query: str) -> List[str]:
             """This function has no custom attributes."""
             return ["context 1", "context 2"]
     ```
@@ -84,6 +82,7 @@ In addition to using the `attributes` arg to pass in a dictionary of span attrib
     from trulens.core.otel.instrument import instrument
     from trulens.otel.semconv.trace import SpanAttributes
 
+
     class RAG:
         @instrument(
             span_type=SpanAttributes.SpanType.RETRIEVAL,
@@ -114,7 +113,6 @@ In addition to using the `attributes` arg to pass in a dictionary of span attrib
             """
             Retrieve relevant text given a query, and then generate an answer from the context.
             """
-
     ```
 
 ## Manipulating custom attributes
@@ -174,17 +172,17 @@ In cases where you are leveraging frameworks like `LangChain`, `LangGraph` and `
         from trulens.apps.langchain import TruChain
 
         rag_chain = (
-            {"context": filtered_retriever
-            | format_docs, "question": RunnablePassthrough()}
+            {
+                "context": filtered_retriever | format_docs,
+                "question": RunnablePassthrough(),
+            }
             | prompt
             | llm
             | StrOutputParser()
         )
 
         tru_recorder = TruChain(
-            rag_chain,
-            app_name="ChatApplication",
-            app_version="Base"
+            rag_chain, app_name="ChatApplication", app_version="Base"
         )
         ```
 
@@ -195,11 +193,7 @@ In cases where you are leveraging frameworks like `LangChain`, `LangGraph` and `
 
         graph = graph_builder.compile()
 
-        tru_recorder = TruGraph(
-            graph,
-            app_name="LangGraph Agent",
-            app_version="Base"
-            )
+        tru_recorder = TruGraph(graph, app_name="LangGraph Agent", app_version="Base")
         ```
 
     === "_LlamaIndex_"
@@ -210,9 +204,7 @@ In cases where you are leveraging frameworks like `LangChain`, `LangGraph` and `
         query_engine = index.as_query_engine(similarity_top_k=3)
 
         tru_query_engine_recorder = TruLlama(
-            query_engine,
-            app_name="LlamaIndex_App",
-            app_version="base"
+            query_engine, app_name="LlamaIndex_App", app_version="base"
         )
         ```
 
@@ -261,14 +253,14 @@ instrumented is via `instrument_method`. See a usage example below:
     from somepackage.custom_retriever import CustomRetriever
 
     instrument_method(
-        cls = CustomRetriever,
-        method_name = "retrieve",
+        cls=CustomRetriever,
+        method_name="retrieve",
         span_type=SpanAttributes.SpanType.RETRIEVAL,
         attributes={
             SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",
             SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
-        }
-        )
+        },
+    )
 
     # ... rest of the custom class follows ...
     ```

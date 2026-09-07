@@ -1,17 +1,14 @@
 """Benchmark: compare old (fetch-all) vs new (SQL aggregate) leaderboard paths.
 
 Usage:
-    TRULENS_OTEL_TRACING=1 python scripts/benchmark_dashboard.py [--db test_perf.sqlite] [--runs 5]
+    python scripts/benchmark_dashboard.py [--db test_perf.sqlite] [--runs 5]
 """
 
 from __future__ import annotations
 
 import argparse
-import os
 import statistics
 import time
-
-os.environ["TRULENS_OTEL_TRACING"] = "1"
 
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
 

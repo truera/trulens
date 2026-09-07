@@ -120,9 +120,9 @@ class TruBasicApp(core_app.App):
         if text_to_text is not None:
             app = TruWrapperApp(text_to_text)
         else:
-            assert (
-                app is not None
-            ), "Need to provide either `app: TruWrapperApp` or a `text_to_text: Callable`."
+            assert app is not None, (
+                "Need to provide either `app: TruWrapperApp` or a `text_to_text: Callable`."
+            )
         if "main_method" in kwargs and kwargs["main_method"] is not None:
             raise ValueError(
                 "`main_method` should not be provided for `TruBasicApp`!"

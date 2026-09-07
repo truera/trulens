@@ -31,8 +31,8 @@ config = RunConfig(
     dataset_name="eval_questions",
     source_type="TABLE",
     dataset_spec={"input": "QUESTION"},
-    invocation_max_workers=8,   # parallel app calls
-    metric_max_workers=4,       # parallel metric computation
+    invocation_max_workers=8,  # parallel app calls
+    metric_max_workers=4,  # parallel metric computation
 )
 
 run = tru_app.add_run(run_config=config)
@@ -70,10 +70,12 @@ import pydantic
 from trulens.feedback.schema_validator import SchemaValidator
 from trulens.core.metric.metric import Metric
 
+
 class ToolCall(pydantic.BaseModel):
     tool_name: str
     arguments: dict
     reasoning: str
+
 
 validator = SchemaValidator(schema=ToolCall)
 f_schema = Metric(validator.validate_json).on_output()

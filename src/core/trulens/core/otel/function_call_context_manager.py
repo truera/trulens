@@ -93,7 +93,8 @@ class CreateSpanFunctionCallContextManager:
             else SpanKind.INTERNAL
         )
         self.span_context_manager = (
-            trace.get_tracer_provider()
+            trace
+            .get_tracer_provider()
             .get_tracer(TRULENS_SERVICE_NAME)
             .start_as_current_span(name=self.span_name, kind=span_kind)
         )

@@ -1,6 +1,7 @@
 from collections.abc import Callable
 import logging
 from typing import (
+    TYPE_CHECKING,
     ClassVar,
     Optional,
 )
@@ -12,7 +13,6 @@ import pydantic
 from scipy import stats
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import matthews_corrcoef
-from sklearn.metrics import ndcg_score
 from sklearn.metrics import roc_auc_score
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema as pyschema_utils
@@ -21,11 +21,16 @@ from trulens.core.utils import stats as stats_utils
 from trulens.feedback import generated as feedback_generated
 from trulens.feedback import llm_provider
 
-with import_utils.OptionalImports(
-    messages=import_utils.format_import_errors(
-        "bert-score", purpose="measuring BERT Score"
-    )
-):
+# NOTE: bert-score is imported lazily, inside the one method that uses it.
+# `bert_score` imports torch and transformers at module scope, and this module is
+# re-exported by `trulens.feedback.__init__`, so importing it eagerly made every
+# importer of `trulens.feedback` pay for torch. torch's import also dlopens
+# bundled CUDA libraries, which has segfaulted Python 3.13 CI workers mid-test.
+_BERT_SCORE_MESSAGES = import_utils.format_import_errors(
+    "bert-score", purpose="measuring BERT Score"
+)
+
+if TYPE_CHECKING:
     from bert_score import BERTScorer
 
 with import_utils.OptionalImports(
@@ -40,6 +45,11 @@ logger = logging.getLogger(__name__)
 
 # Canonical implementation lives in trulens-core; re-export for back-compat.
 paired_permutation_pvalue = stats_utils.paired_permutation_pvalue
+
+
+def _dcg(scores: list[float]) -> float:
+    """Discounted cumulative gain: ``sum(score_i / log2(i + 2))`` (0-based)."""
+    return sum(score / np.log2(i + 2) for i, score in enumerate(scores))
 
 
 # TODEP
@@ -357,23 +367,33 @@ class GroundTruthAgreement(
             rel_scores = [0.0] * len(
                 retrieved_context_chunks
             )  # Initialize with 0 relevance for all
+            # Credit each golden chunk at most once: a retriever that returns
+            # the same relevant chunk more than once must not earn its
+            # relevance repeatedly, which would push DCG above the ideal DCG
+            # and yield NDCG > 1.
+            consumed_golden = set()
             for i, chunk in enumerate(retrieved_context_chunks[:k]):
-                if chunk in golden_chunks:
+                if chunk in golden_chunks and chunk not in consumed_golden:
                     index_in_golden = golden_chunks.index(chunk)
                     rel_scores[i] = golden_scores[
                         index_in_golden
                     ]  # Use the true relevance score
+                    consumed_golden.add(chunk)
 
-            # Step 5: Prepare the ground truth scores as a vector
-            # Ideal DCG (IDCG) is calculated by placing all relevant items at the top in descending order
-            ideal_golden_scores = sorted(golden_scores, reverse=True)[:k]
-
-            # Step 6: Calculate NDCG@k using sklearn's ndcg_score
-            return ndcg_score(
-                y_true=np.array([ideal_golden_scores]),
-                y_score=np.array([rel_scores[:k]]),  # Consider only top-k items
-                k=k,
-            )
+            # Step 5: Compute NDCG@k directly from the standard formula.
+            # DCG discounts each retrieved chunk's golden relevance by the
+            # log of its rank; IDCG is the best achievable DCG@k, i.e. the
+            # golden scores in descending order. This is computed by hand
+            # rather than via sklearn's ndcg_score, which requires matching
+            # y_true/y_score shapes (it raises when the golden set annotates
+            # fewer/more chunks than the retriever returns) and averages
+            # gains across tied y_score values, distorting the score when
+            # several retrieved chunks share the same (zero) relevance.
+            dcg = _dcg(rel_scores[:k])
+            ideal_dcg = _dcg(sorted(golden_scores, reverse=True)[:k])
+            # ideal_dcg of 0 means the golden set annotates nothing relevant,
+            # so nDCG has no denominator. Undefined, not a measured zero.
+            return dcg / ideal_dcg if ideal_dcg > 0 else np.nan
         else:
             return np.nan
 
@@ -431,7 +451,8 @@ class GroundTruthAgreement(
             return (
                 relevant_retrieved / len(retrieved_top_k)
                 if len(retrieved_top_k) > 0
-                else 0.0
+                # Nothing retrieved, so precision has no denominator.
+                else np.nan
             )
         else:
             return np.nan
@@ -483,14 +504,16 @@ class GroundTruthAgreement(
                 # If no relevance scores, use the top-k retrieved chunks as they are
                 retrieved_top_k = retrieved_context_chunks[:k]
 
-            # Calculate recall at k with tie handling
-            relevant_retrieved = len([
-                chunk for chunk in retrieved_top_k if chunk in golden_chunks
-            ])
+            # Count unique golden chunks that were retrieved. Counting
+            # occurrences instead would let a retriever that returns the same
+            # relevant chunk more than once exceed the number of golden
+            # chunks, yielding recall > 1.
+            relevant_retrieved = len(golden_chunks & set(retrieved_top_k))
             return (
                 relevant_retrieved / len(golden_chunks)
                 if len(golden_chunks) > 0
-                else 0.0
+                # No relevant chunks exist, so recall has no denominator.
+                else np.nan
             )
         else:
             return np.nan
@@ -530,6 +553,11 @@ class GroundTruthAgreement(
                 ]
 
             # Find the rank of the first relevant item in the sorted list
+            # No relevant chunks at all means there was nothing to rank, which
+            # is undefined. Retrieving none of several that DO exist is a real 0.
+            if not golden_chunks:
+                return np.nan
+
             for i, chunk in enumerate(retrieved_context_chunks):
                 if chunk in golden_chunks:
                     return 1 / (
@@ -567,6 +595,9 @@ class GroundTruthAgreement(
             golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
 
             # Calculate hit rate at k (1 if at least one relevant item is retrieved, 0 otherwise)
+            # Same split as mrr: an empty golden set is undefined, a miss is 0.
+            if not golden_chunks:
+                return np.nan
             return (
                 1.0
                 if any(
@@ -661,6 +692,9 @@ class GroundTruthAgreement(
             dict: with key 'ground_truth_response'
         """
         if self.bert_scorer is None:
+            with import_utils.OptionalImports(messages=_BERT_SCORE_MESSAGES):
+                from bert_score import BERTScorer
+
             self.bert_scorer = BERTScorer(lang="en", rescale_with_baseline=True)
         ground_truth_response = self._find_response(prompt)
         if ground_truth_response:
@@ -861,8 +895,10 @@ class GroundTruthAgreement(
         expected = self._find_expected_memories(query)
         if expected is None:
             return np.nan
+        # An empty expected set means there was nothing to find, which is
+        # not the same event as retrieving nothing relevant.
         if not expected:
-            return 0.0
+            return np.nan
         if retrieved_memories is None:
             raise TypeError("retrieved_memories must be a list, not None")
         if not retrieved_memories:
@@ -910,8 +946,10 @@ class GroundTruthAgreement(
         expected = self._find_expected_memories(query)
         if expected is None:
             return np.nan
+        # An empty expected set means there was nothing to find, which is
+        # not the same event as retrieving nothing relevant.
         if not expected:
-            return 0.0
+            return np.nan
         if retrieved_memories is None:
             raise TypeError("retrieved_memories must be a list, not None")
         if not retrieved_memories:
@@ -1094,12 +1132,18 @@ class GroundTruthAggregator(
             # threshold at 0.5 for binary classification
             scores = [1 if score >= threshold else 0 for score in scores]
 
-        if any(isinstance(label, float) for label in self.true_labels):
-            self.true_labels = [
-                1 if label >= threshold else 0 for label in self.true_labels
+        # convert to categorical if necessary; binarize into a local list so
+        # that self.true_labels is not mutated — mutating it here would
+        # silently corrupt every other metric computed afterwards (e.g. mae,
+        # brier_score) and make subsequent calls with a different threshold
+        # no-ops since the labels would already be ints.
+        true_labels = self.true_labels
+        if any(isinstance(label, float) for label in true_labels):
+            true_labels = [
+                1 if label >= threshold else 0 for label in true_labels
             ]
 
-        kappa = cohen_kappa_score(self.true_labels, scores)
+        kappa = cohen_kappa_score(true_labels, scores)
         return kappa
 
     def recall(self, scores: list[float] | list[list], threshold=0.5):
@@ -1139,8 +1183,11 @@ class GroundTruthAggregator(
         )
 
         # Handle the case where there are no actual positives to avoid division by zero
+        # Undefined: the ground truth holds no positives, so there was nothing to recall.
+        # Same reasoning as brier_score below: 0.0 here is indistinguishable
+        # from a measured zero once these are averaged across a run.
         if true_positives + false_negatives == 0:
-            return 0.0  # or handle as needed (e.g., return None, raise an exception)
+            return np.nan
 
         # Calculate recall
         recall = true_positives / (true_positives + false_negatives)
@@ -1176,8 +1223,11 @@ class GroundTruthAggregator(
         )
 
         # Handle the case where there are no predicted positives to avoid division by zero
+        # Undefined: nothing was predicted positive, so there is nothing to be right about.
+        # Same reasoning as brier_score below: 0.0 here is indistinguishable
+        # from a measured zero once these are averaged across a run.
         if true_positives + false_positives == 0:
-            return 0.0  # or handle as needed (e.g., return None, raise an exception)
+            return np.nan
 
         # Calculate precision
         precision = true_positives / (true_positives + false_positives)
