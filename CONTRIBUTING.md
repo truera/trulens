@@ -126,6 +126,45 @@ Past community contributions include the SQLAlchemy connector and LiteLLM provid
 
 ---
 
+## Signing the CLA
+
+On your first pull request a bot will ask you to sign the
+[Contributor License Agreement](CLA.md). It says that you wrote the change or have
+the right to submit it, and that the project may ship it under its licence.
+
+Signing is one comment on your pull request:
+
+```
+I have read the CLA Document and I hereby sign the CLA
+```
+
+That is the whole process. There is no form, no account to create, and nothing to do
+outside GitHub. The bot records the signature and the check goes green, usually
+within a minute. You will not be asked again on later pull requests.
+
+If your employer owns the copyright in work you do, check that you are permitted to
+contribute it before signing.
+
+If the check stays red after you comment, comment `recheck` to run it again.
+
+## Certifying the Standards
+
+The pull request template also has a checkbox:
+
+```
+- [x] This change follows the TruLens standards for code style, imports, docstrings, and tests
+```
+
+It points at [Standards](docs/contributing/standards.md), also published at
+<https://www.trulens.org/contributing/standards/>. Most of it is enforced by
+`make format` and `make lint`; the parts that aren't are the module-import
+conventions, the docstring format, and the guidance on
+[AI-assisted contributions](docs/contributing/standards.md#ai-assisted-contributions),
+which is worth reading before you open a pull request.
+
+Leave the line in the description. Rewording around it is fine — the check looks for
+a task-list item mentioning TruLens standards, not for exact wording.
+
 ## Reference
 
 Before contributing, familiarize yourself with:
@@ -139,6 +178,28 @@ Before contributing, familiarize yourself with:
 | [Release Policies](docs/contributing/policies.md) | Versioning, deprecation, and experimental features |
 | [Tech Debt](docs/contributing/techdebt.md) | Known issues and areas needing refactoring |
 | [Database Schema](docs/contributing/database.md) | OTEL events table, legacy schema, and migrations |
+
+---
+
+## Taking on More Responsibility
+
+Contributing regularly and want a larger role? TruLens has a documented path from
+contributor to maintainer, with published criteria at each step:
+
+| Rung | Write access | Scope |
+| ---- | ------------ | ----- |
+| Contributor | None | — |
+| Area Triager | None (GitHub Triage role) | Issues and PRs in one area |
+| Area Reviewer | Merge, scoped to paths | One named area |
+| Maintainer | Merge, project-wide | Whole project |
+
+Area Triager needs about a month of contribution history and one sponsor. Most active
+contributors are ready for it sooner than they expect. See the [Contributor
+Ladder](CONTRIBUTOR_LADDER.md) for requirements and the nomination process, and
+[Governance](GOVERNANCE.md) for how decisions get made.
+
+If you're already contributing and interested, say so in an issue or to a
+maintainer. You don't need to wait to be noticed.
 
 ---
 
