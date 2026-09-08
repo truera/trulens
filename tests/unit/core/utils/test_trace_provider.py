@@ -423,6 +423,19 @@ class TestTraceProviderRegistry:
 class TestTraceCompression:
     """Tests for trace compression utilities."""
 
+    def test_basic_compression_skips_non_mapping_spans(self):
+        compressor = TraceCompressor()
+
+        result = compressor._basic_compression({
+            "spans": [
+                None,
+                {"span_name": "valid", "span_id": "span-1"},
+                "invalid",
+            ]
+        })
+
+        assert result["spans"] == [{"span_name": "valid", "span_id": "span-1"}]
+
     def test_compress_trace_for_feedback_basic(self):
         """Basic trace compression should work."""
         trace_data = {
