@@ -1,0 +1,24 @@
+stages:
+  - eval-gate
+
+trulens-eval-gate:
+  stage: eval-gate
+  image: python:3.11-slim
+  variables:
+    TRULENS_MIN_SCORE: "0.7"
+    TRULENS_JUNIT_XML: "reports/trulens-eval-gate.xml"
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install trulens trulens-providers-openai
+  script:
+    - python examples/cicd/gitlab_ci/eval_gate.py
+  artifacts:
+    when: always
+    reports:
+      junit: reports/trulens-eval-gate.xml
+    paths:
+      - reports/trulens-eval-gate.xml
+  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
