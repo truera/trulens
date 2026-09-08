@@ -12,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-connectors-snowflake/#files
-  sha256: 4b1293722d8bd323401bcd535b7d5895a26a253441be453c00e6dc14dc04590f
+  sha256: 4510ad3abf6d456dc6591be496ad1441d6b5dc93c55017d11a1f5c71c7964b47
   {% endif %}
 
 build:
