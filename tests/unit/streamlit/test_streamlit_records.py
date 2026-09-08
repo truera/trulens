@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from trulens.dashboard.tabs.Records import _build_thread_grid_options
 from trulens.dashboard.tabs.Records import _build_thread_summary
@@ -48,6 +49,27 @@ def test_preprocess_filters_skipped_records():
     result = _preprocess_df(_records(), online_eval_filter="Skipped")
 
     assert set(result["record_id"]) == {"record-1", "record-2"}
+
+
+def test_preprocess_search_query_survives_nan_output_column():
+    # A column of all-missing outputs (e.g. SQL NULLs) round-trips as
+    # float64, not object/string, which used to crash the search box's
+    # `.str.contains` call with an AttributeError.
+    df = _records()
+    df["output"] = pd.Series([np.nan] * 5, index=df.index, dtype="float64")
+
+    result = _preprocess_df(df, record_query="input 2")
+
+    assert set(result["record_id"]) == {"record-2"}
+
+
+def test_preprocess_search_query_survives_numeric_app_version():
+    df = _records()
+    df["app_version"] = [1, 1, 1, 1, 1]
+
+    result = _preprocess_df(df, record_query="input 3")
+
+    assert set(result["record_id"]) == {"record-3"}
 
 
 def test_conversation_bubbles_use_theme_colors():
