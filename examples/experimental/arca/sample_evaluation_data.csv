@@ -1,0 +1,18 @@
+question,ground_truth
+"What is the capital of France?","Paris"
+"Who wrote 1984?","George Orwell"
+"What is 12 * 8?","96"
+"What is the capital of Japan?","Tokyo"
+"If a train travels 60 miles in 45 minutes, how many miles does it travel in 2 hours?","160 miles"
+"Alice has twice as many apples as Bob. Bob has 3 fewer apples than Carol who has 12 apples. How many apples does Alice have?","18 apples"
+"What is the main difference between a democracy and a republic?","A democracy is direct rule by the people, while a republic is representative government through elected officials"
+"How does mitosis differ from meiosis?","Mitosis produces two identical diploid cells, while meiosis produces four genetically diverse haploid cells"
+"Why did the chicken cross the road?","To get to the other side"
+"What does 'break the ice' mean?","To start a conversation or ease tension in a social situation"
+"What is the time complexity of binary search?","O(log n)"
+"Explain what REST API stands for.","Representational State Transfer Application Programming Interface"
+"What is photosynthesis?","The process by which plants convert light energy into chemical energy to produce glucose from carbon dioxide and water"
+"What causes seasons on Earth?","The tilt of Earth's axis as it orbits the sun"
+"In what year did World War II end?","1945"
+"Who was the first person to walk on the moon?","Neil Armstrong"
+
