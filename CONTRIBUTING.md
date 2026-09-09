@@ -193,6 +193,10 @@ contributor to maintainer, with published criteria at each step:
 | Area Reviewer | Merge, scoped to paths | One named area |
 | Maintainer | Merge, project-wide | Whole project |
 
+Area Triagers are automatically requested on pull requests touching their assigned
+areas. Their reviews are advisory; an Area Reviewer or Maintainer still provides
+the approval required to merge.
+
 Area Triager needs about a month of contribution history and one sponsor. Most active
 contributors are ready for it sooner than they expect. See the [Contributor
 Ladder](CONTRIBUTOR_LADDER.md) for requirements and the nomination process, and
