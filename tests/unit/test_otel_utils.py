@@ -42,11 +42,12 @@ class TestOtelUtils(TestCase):
 
     def test_warns_when_disabled(self) -> None:
         """Disabling tracing is otherwise silent, so it must warn."""
+        otel_utils._OTEL_DISABLED_WARNING_EMITTED = False
         with mock.patch.dict(
             os.environ, {"TRULENS_OTEL_TRACING": "0"}, clear=True
         ):
             with self.assertLogs(
-                otel_utils.logger, level=logging.WARNING
+                "trulens.core.otel.utils", level=logging.WARNING
             ) as cm:
                 otel_utils.is_otel_tracing_enabled()
         self.assertTrue(

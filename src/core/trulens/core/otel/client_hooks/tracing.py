@@ -24,7 +24,7 @@ from trulens.otel.semconv.trace import SpanAttributes
 
 def _otel_id(seed: str, bits: int) -> int:
     size = bits // 8
-    value = int.from_bytes(hashlib.sha256(seed.encode()).digest()[:size])
+    value = int.from_bytes(hashlib.sha256(seed.encode()).digest()[:size], "big")
     return value or 1
 
 

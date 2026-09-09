@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 """Tests for streaming instrumentation: TTFT, throughput and chunk counts."""
 
 import asyncio
@@ -6,7 +7,9 @@ import time
 import unittest
 from unittest import mock
 
-import openai
+import pytest
+
+openai = pytest.importorskip("openai")
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
 from openai.types.chat.chat_completion_chunk import Choice
 from openai.types.chat.chat_completion_chunk import ChoiceDelta
