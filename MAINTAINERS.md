@@ -37,7 +37,7 @@ Issue and pull request triage in a named area. No write access to the codebase.
 
 | Name | Affiliation | GitHub | Area |
 | ---- | ----------- | ------ | ---- |
-| Payal Nagaonkar | Northeastern University | Payal2000 | Feedback functions and metrics; OpenTelemetry semantic conventions |
+| Payal Nagaonkar | Peeker AI | Payal2000 | Feedback functions and metrics; OpenTelemetry semantic conventions |
 
 ## Emeritus
 
