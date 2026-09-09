@@ -138,11 +138,9 @@ Signing is one comment on your pull request:
 I have read the CLA Document and I hereby sign the CLA
 ```
 
-That is the whole process. There is no form, no account to create, and nothing to do
-outside GitHub. The bot records the signature and the check goes green, usually
-within a minute. Signatures are stored in `signatures/version1/cla.json` on the
-dedicated `cla-signatures` branch, so you will not be asked again on later pull
-requests.
+The bot records the signature in `signatures/version1/cla.json` on the dedicated
+`cla-signatures` branch. The check usually updates within a minute, and the
+signature applies to later pull requests.
 
 If your employer owns the copyright in work you do, check that you are permitted to
 contribute it before signing.
