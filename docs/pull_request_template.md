@@ -17,3 +17,11 @@ Please include any other details of this change useful for _TruLens_ developers.
 - [ ] New Tests
 - [ ] This change includes re-generated golden test results
 - [ ] This change requires a documentation update
+
+## Certification
+
+- [ ] This change follows the [TruLens standards](https://www.trulens.org/contributing/standards/) for code style, imports, docstrings, and tests
+
+Please leave that line in place; a CI check looks for it.
+
+A bot will ask you to sign the Contributor License Agreement on your first pull request. It takes one comment and you are never asked again.

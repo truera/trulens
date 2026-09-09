@@ -1,0 +1,112 @@
+# Area reviewers: advisory review routing.
+#
+# This file exists separately from CODEOWNERS because GitHub ignores CODEOWNERS
+# entries for accounts without write access. Area Triagers hold the Triage role,
+# not write, so they cannot be code owners. Review requests only require read
+# access, so they can be routed here instead.
+#
+# Two mechanisms, two files:
+#   .github/CODEOWNERS          -> Area Reviewers and Maintainers. Blocking.
+#   .github/area-reviewers.yml  -> Area Triagers. Advisory, non-blocking.
+#
+# When an Area Triager is promoted to Area Reviewer, move them from here into
+# CODEOWNERS in the same PR that grants scoped write access.
+#
+# PATH MATCHING: prefixes and exact paths only, matched against each changed
+# file. A pattern ending in "/" matches everything beneath that directory. An
+# optional `exclude:` list carves out paths owned by someone else. No wildcards —
+# the predictability is deliberate, since this file routes review requests to
+# people rather than gating merges.
+#
+# Areas may overlap. A PR touching several gets a request from each, which is
+# intended: overlapping areas are how someone gains exposure outside their own.
+#
+# See CONTRIBUTOR_LADDER.md for how areas are assigned.
+
+# Reviewers are commented out until each nomination is accepted and the Triage
+# role is granted. Uncomment in the same PR that adds them to MAINTAINERS.md.
+
+areas:
+  - name: Core
+    # The largest area in the repo, and everything else depends on it. Routed to
+    # the whole cohort rather than to one owner, so that reviewers build context
+    # in core before owning anything that sits on top of it.
+    paths:
+      - src/core/
+    reviewers: []
+    # reviewers: [<handle>]
+
+  - name: Documentation
+    paths:
+      - docs/
+      - mkdocs.yml
+      - README.md
+    reviewers: []
+    # reviewers: [<handle>]
+
+  - name: OpenTelemetry semantic conventions
+    paths:
+      - src/otel/
+    reviewers: []
+    # reviewers: [<handle>]
+
+  - name: Feedback functions
+    paths:
+      - src/feedback/
+    reviewers: []
+    # reviewers: [<handle>]
+
+  - name: Feedback templates
+    paths:
+      - src/feedback/trulens/feedback/templates/
+    reviewers: []
+    # reviewers: [<handle>]
+
+  - name: Ensemble and prompt optimization
+    paths:
+      - src/apps/gepa/
+      - src/feedback/trulens/feedback/optimize.py
+    reviewers: []
+    # reviewers: [<handle>]
+
+  - name: LLM judge alignment
+    paths:
+      - src/benchmark/trulens/benchmark/alignment_report.py
+      - src/benchmark/trulens/benchmark/cross_model_alignment.py
+      - src/benchmark/trulens/benchmark/criteria_ab_test.py
+      - src/benchmark/trulens/benchmark/score_distribution.py
+      - docs/component_guides/evaluation/llm_judge_alignment.md
+    reviewers: []
+    # reviewers: [<handle>]
+
+  - name: Benchmarking and golden sets
+    paths:
+      - src/benchmark/
+    reviewers: []
+    # reviewers: [<handle>]
+
+  - name: Offline and batch evaluation
+    paths:
+      - src/core/trulens/core/batch.py
+      - src/benchmark/trulens/benchmark/golden_set_generator.py
+    reviewers: []
+    # reviewers: [<handle>]
+
+  - name: Runs and online evaluation sampling
+    paths:
+      - src/core/trulens/core/run.py
+      - src/core/trulens/core/sampling.py
+    reviewers: []
+    # reviewers: [<handle>]
+
+  - name: Providers
+    # All provider integrations except Cortex. Scoped as one area because the
+    # integrations share plumbing and the same failure modes recur across them.
+    # Cortex is excluded: it tracks unreleased Snowflake API changes, so
+    # maintainers keep reviewing it.
+    paths:
+      - src/providers/
+    exclude:
+      - src/providers/cortex/
+    reviewers: []
+    # reviewers: [<handle>]

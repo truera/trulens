@@ -425,10 +425,18 @@ def _preprocess_df(
     #     records_df = records_df.drop(columns="app_json")
 
     if record_query:
+
+        def _searchable(col: str) -> pd.Series:
+            # Columns can arrive as non-string dtypes (e.g. all-NaN output
+            # columns come back float64, app_version can be numeric), and
+            # `.str` accessors raise AttributeError on those. Coerce to
+            # string first so the search box never crashes on such data.
+            return records_df[col].fillna("").astype(str)
+
         records_df = records_df[
-            records_df["app_version"].str.contains(record_query, case=False)
-            | records_df["input"].str.contains(record_query, case=False)
-            | records_df["output"].str.contains(record_query, case=False)
+            _searchable("app_version").str.contains(record_query, case=False)
+            | _searchable("input").str.contains(record_query, case=False)
+            | _searchable("output").str.contains(record_query, case=False)
         ]
     if online_eval_filter == "Selected":
         records_df = records_df[records_df["online_eval_status"] == "Selected"]
