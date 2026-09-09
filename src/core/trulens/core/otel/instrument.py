@@ -592,14 +592,14 @@ class instrument:
                 # Run function.
                 try:
                     ret = await func(*args, **kwargs)
-                except asyncio.CancelledError as error:
+                except asyncio.CancelledError:
                     try:
                         _finalize_span(
                             span,
                             self.span_type,
                             func_name_for_call,
                             func,
-                            error,
+                            None,
                             self.attributes,
                             instance,
                             args,
@@ -608,9 +608,9 @@ class instrument:
                             self.only_set_user_defined_attributes,
                             span_end_callbacks,
                         )
-                    except Exception as e:
-                        logger.error(
-                            f"Error finalizing span during cancellation. {e}"
+                    except Exception:
+                        logger.exception(
+                            "Error finalizing span during cancellation."
                         )
                     raise
                 except Exception as e:

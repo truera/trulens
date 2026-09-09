@@ -37,7 +37,6 @@ def instrument_openai() -> None:
     try:
         from openai.resources import chat
         from trulens.core.otel.instrument import instrument_method
-        from trulens.providers.openai.endpoint import OpenAICostComputer
 
         def openai_attributes(
             ret: Any, exception: Exception | None, *args: Any, **kwargs: Any
@@ -56,6 +55,10 @@ def instrument_openai() -> None:
 
             if ret is not None:
                 try:
+                    from trulens.providers.openai.endpoint import (
+                        OpenAICostComputer,
+                    )
+
                     cost_attrs = OpenAICostComputer.handle_response(ret)
                     attrs.update(cost_attrs)
                 except Exception as e:
@@ -156,7 +159,6 @@ def instrument_google() -> None:
     try:
         from google.genai import models
         from trulens.core.otel.instrument import instrument_method
-        from trulens.providers.google.endpoint import GoogleCostComputer
 
         def google_attributes(
             ret: Any, exception: Exception | None, *args: Any, **kwargs: Any
@@ -175,6 +177,10 @@ def instrument_google() -> None:
 
             if ret is not None:
                 try:
+                    from trulens.providers.google.endpoint import (
+                        GoogleCostComputer,
+                    )
+
                     cost_attrs = GoogleCostComputer.handle_response(ret)
                     attrs.update(cost_attrs)
                 except Exception as e:
@@ -276,7 +282,6 @@ def instrument_litellm() -> None:
     try:
         import litellm
         from trulens.core.otel.instrument import instrument_method
-        from trulens.providers.litellm.endpoint import LiteLLMCostComputer
 
         def litellm_attributes(
             ret: Any, exception: Exception | None, *args: Any, **kwargs: Any
@@ -295,6 +300,10 @@ def instrument_litellm() -> None:
 
             if ret is not None:
                 try:
+                    from trulens.providers.litellm.endpoint import (
+                        LiteLLMCostComputer,
+                    )
+
                     cost_attrs = LiteLLMCostComputer.handle_response(ret)
                     attrs.update(cost_attrs)
                 except Exception as e:
