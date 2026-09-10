@@ -37,7 +37,7 @@ Issue and pull request triage in a named area. No write access to the codebase.
 
 | Name | Affiliation | GitHub | Area |
 | ---- | ----------- | ------ | ---- |
-| Abel Yagubyan | C3 AI | Abelo9996 | Shared core code |
+| Abel Yagubyan | C3 AI | Abelo9996 | OpenTelemetry instrumentation; evaluation and database correctness; shared core code |
 | Payal Nagaonkar | Peeker AI | Payal2000 | Feedback functions and metrics; OpenTelemetry semantic conventions |
 
 ## Emeritus
