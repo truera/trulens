@@ -47,14 +47,14 @@ areas:
   - name: OpenTelemetry semantic conventions
     paths:
       - src/otel/
-    reviewers: []
-    # reviewers: [<handle>]
+    reviewers: [Payal2000]
 
-  - name: Feedback functions
+  - name: Feedback functions and metrics
     paths:
       - src/feedback/
-    reviewers: []
-    # reviewers: [<handle>]
+      - src/core/trulens/core/feedback/
+      - src/core/trulens/core/metric/
+    reviewers: [Payal2000]
 
   - name: Feedback templates
     paths:
