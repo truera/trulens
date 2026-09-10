@@ -33,8 +33,7 @@ areas:
     # in core before owning anything that sits on top of it.
     paths:
       - src/core/
-    reviewers: []
-    # reviewers: [<handle>]
+    reviewers: [bashward]
 
   - name: Documentation
     paths:
@@ -66,8 +65,7 @@ areas:
     paths:
       - src/apps/gepa/
       - src/feedback/trulens/feedback/optimize.py
-    reviewers: []
-    # reviewers: [<handle>]
+    reviewers: [bashward]
 
   - name: LLM judge alignment
     paths:
