@@ -28,9 +28,6 @@
 
 areas:
   - name: Core
-    # The largest area in the repo, and everything else depends on it. Routed to
-    # the whole cohort rather than to one owner, so that reviewers build context
-    # in core before owning anything that sits on top of it.
     paths:
       - src/core/
     reviewers: []
@@ -62,12 +59,15 @@ areas:
     reviewers: []
     # reviewers: [<handle>]
 
-  - name: Ensemble and prompt optimization
+  - name: Ensemble judges and prompt optimization
     paths:
       - src/apps/gepa/
+      - src/feedback/trulens/feedback/jury.py
       - src/feedback/trulens/feedback/optimize.py
-    reviewers: []
-    # reviewers: [<handle>]
+      - docs/cookbook/use_cases/llm_jury.ipynb
+      - examples/expositional/use_cases/llm_jury.ipynb
+      - tests/unit/test_jury.py
+    reviewers: [bashward]
 
   - name: LLM judge alignment
     paths:
