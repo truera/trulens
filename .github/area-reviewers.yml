@@ -28,12 +28,10 @@
 
 areas:
   - name: Core
-    # The largest area in the repo, and everything else depends on it. Routed to
-    # the whole cohort rather than to one owner, so that reviewers build context
-    # in core before owning anything that sits on top of it.
     paths:
       - src/core/
-    reviewers: [bashward]
+    reviewers: []
+    # reviewers: [<handle>]
 
   - name: Documentation
     paths:
