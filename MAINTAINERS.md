@@ -37,7 +37,8 @@ Issue and pull request triage in a named area. No write access to the codebase.
 
 | Name | Affiliation | GitHub | Area |
 | ---- | ----------- | ------ | ---- |
-| Nikhil Thakur | InviGrid | bashward | Ensemble and prompt optimization |
+| Nikhil Thakur | InviGrid | bashward | Ensemble judges and prompt optimization |
+| Payal Nagaonkar | Peeker AI | Payal2000 | Feedback functions and metrics; OpenTelemetry semantic conventions |
 
 ## Emeritus
 
