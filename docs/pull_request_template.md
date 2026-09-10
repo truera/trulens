@@ -20,7 +20,7 @@ Please include any other details of this change useful for _TruLens_ developers.
 
 ## Certification
 
-- [ ] This change follows the [TruLens standards](https://www.trulens.org/contributing/standards/) for code style, imports, docstrings, and tests
+- [ ] This change follows the TruLens standards (https://www.trulens.org/contributing/standards/)
 
 Please leave that line in place; a CI check looks for it.
 

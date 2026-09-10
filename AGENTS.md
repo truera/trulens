@@ -53,6 +53,15 @@
 
 Enable optional tests: `TEST_OPTIONAL=true`
 
+## Pull request certification
+
+Before submitting a pull request, confirm it includes this checked certification:
+
+```markdown
+## Certification
+- [x] This change follows the TruLens standards (https://www.trulens.org/contributing/standards/)
+```
+
 ## Build commands
 
 - Format code: `make format`
