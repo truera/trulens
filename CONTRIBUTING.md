@@ -138,9 +138,9 @@ Signing is one comment on your pull request:
 I have read the CLA Document and I hereby sign the CLA
 ```
 
-That is the whole process. There is no form, no account to create, and nothing to do
-outside GitHub. The bot records the signature and the check goes green, usually
-within a minute. You will not be asked again on later pull requests.
+The bot records the signature in `signatures/version1/cla.json` on the dedicated
+`cla-signatures` branch. The check usually updates within a minute, and the
+signature applies to later pull requests.
 
 If your employer owns the copyright in work you do, check that you are permitted to
 contribute it before signing.
@@ -192,6 +192,10 @@ contributor to maintainer, with published criteria at each step:
 | Area Triager | None (GitHub Triage role) | Issues and PRs in one area |
 | Area Reviewer | Merge, scoped to paths | One named area |
 | Maintainer | Merge, project-wide | Whole project |
+
+Area Triagers are automatically requested on pull requests touching their assigned
+areas. Their reviews are advisory; an Area Reviewer or Maintainer still provides
+the approval required to merge.
 
 Area Triager needs about a month of contribution history and one sponsor. Most active
 contributors are ready for it sooner than they expect. See the [Contributor
