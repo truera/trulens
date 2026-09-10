@@ -49,8 +49,6 @@ areas:
     paths:
       - src/core/trulens/core/otel/
       - src/otel/
-      - tests/unit/test_otel_streaming.py
-      - tests/unit/test_otel_id_byteorder.py
     reviewers: [Abelo9996]
 
   - name: Feedback functions and metrics
@@ -69,7 +67,6 @@ areas:
   - name: Evaluation correctness
     paths:
       - src/feedback/trulens/feedback/groundtruth.py
-      - tests/unit/test_groundtruth_ir_metrics.py
     reviewers: [Abelo9996]
 
   - name: Ensemble and prompt optimization
