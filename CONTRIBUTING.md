@@ -149,21 +149,22 @@ If the check stays red after you comment, comment `recheck` to run it again.
 
 ## Certifying the Standards
 
-The pull request template also has a checkbox:
+Before submitting a pull request, confirm it includes this checked certification:
 
-```
-- [x] This change follows the TruLens standards for code style, imports, docstrings, and tests
+```markdown
+## Certification
+- [x] This change follows the TruLens standards (https://www.trulens.org/contributing/standards/)
 ```
 
-It points at [Standards](docs/contributing/standards.md), also published at
-<https://www.trulens.org/contributing/standards/>. Most of it is enforced by
-`make format` and `make lint`; the parts that aren't are the module-import
-conventions, the docstring format, and the guidance on
+The linked [Standards](docs/contributing/standards.md) are also published at
+<https://www.trulens.org/contributing/standards/>. Most are enforced by `make
+format` and `make lint`; the parts that aren't are the module-import conventions,
+the docstring format, and the guidance on
 [AI-assisted contributions](docs/contributing/standards.md#ai-assisted-contributions),
 which is worth reading before you open a pull request.
 
-Leave the line in the description. Rewording around it is fine — the check looks for
-a task-list item mentioning TruLens standards, not for exact wording.
+Leave the certification line in the description. Rewording around it is fine — the
+check looks for a task-list item mentioning TruLens standards, not exact wording.
 
 ## Reference
 
