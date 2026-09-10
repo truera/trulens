@@ -1190,6 +1190,9 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             for feedback_name, feedback_result in record_data[
                 "feedback_results"
             ].items():
+                # Drop the internal latest-score timestamp used only to pick the
+                # most recent EVAL_ROOT; it is not part of the public schema.
+                feedback_result.pop("_score_ts", None)
                 # NOTE: we use the mean score as the feedback result
                 record_row[feedback_name] = feedback_result["mean_score"]
 

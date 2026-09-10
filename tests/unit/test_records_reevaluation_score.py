@@ -95,10 +95,12 @@ class TestReevaluationScore(OtelTestCase):
         df, _ = db.get_records_and_feedback()
         return df.iloc[0]["Context Relevance"]
 
-    def test_score_is_latest_regardless_of_event_order(self):
-        # Both insertion orders must yield the latest evaluation (1.0), not
-        # whichever span was iterated last.
+    def test_score_latest_when_old_first(self):
+        # Older EVAL_ROOT inserted first: the latest (1.0) must still win.
         self.assertEqual(self._db_with_two_evals(["root", "old", "new"]), 1.0)
+
+    def test_score_latest_when_new_first(self):
+        # Newer EVAL_ROOT inserted first: the latest (1.0) must still win.
         self.assertEqual(self._db_with_two_evals(["root", "new", "old"]), 1.0)
 
 
