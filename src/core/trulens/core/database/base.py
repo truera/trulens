@@ -1036,13 +1036,22 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                         record_attributes.get(SpanAttributes.SPAN_TYPE)
                         == SpanAttributes.SpanType.EVAL_ROOT.value
                     ):
-                        # NOTE: EVAL_ROOT.SCORE should provide the mean score of all related EVAL spans
-                        feedback_result["mean_score"] = eval_root_score
-                        # TODO(SNOW-2112879): HIGHER_IS_BETTER has not been populated in the OTEL spans yet
-                        feedback_result["direction"] = record_attributes.get(
-                            SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER,
-                            None,
-                        )
+                        # A record and metric can have several EVAL_ROOT spans
+                        # when the metric is re-evaluated. Keep the latest one by
+                        # timestamp so the reported score is deterministic rather
+                        # than whichever span happens to be iterated last.
+                        prev_ts = feedback_result.get("_score_ts")
+                        if prev_ts is None or event.start_timestamp >= prev_ts:
+                            feedback_result["_score_ts"] = event.start_timestamp
+                            # NOTE: EVAL_ROOT.SCORE should provide the mean score of all related EVAL spans
+                            feedback_result["mean_score"] = eval_root_score
+                            # TODO(SNOW-2112879): HIGHER_IS_BETTER has not been populated in the OTEL spans yet
+                            feedback_result["direction"] = (
+                                record_attributes.get(
+                                    SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER,
+                                    None,
+                                )
+                            )
                         # Add call data for EVAL_ROOT spans
                         args_span_id = self._extract_namespaced_attributes(
                             record_attributes,
