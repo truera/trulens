@@ -1160,32 +1160,45 @@ class TestGroundTruthAggregator(TestCase):
 
     @pytest.mark.optional
     def test_zero_division_handling(self):
-        """Test handling of zero division scenarios."""
-        # Test precision with no predicted positives
+        """An undefined metric reports nan, the same as brier_score on empty input.
+
+        Updated deliberately. These three used to assert 0.0. The problem is that
+        0.0 is also a real score here: a model that missed every positive has a
+        recall of 0.0, and one whose every positive prediction was wrong has a
+        precision of 0.0. Reusing 0.0 for "there was nothing to measure" makes a
+        degenerate slice indistinguishable from a bad model once a run is
+        averaged, which is the argument brier_score already makes in this class.
+        """
+        # No positives predicted, so precision has no denominator.
         all_negative_predictions = [0.0, 0.0, 0.0, 0.0, 0.0]
-        precision_result = self.aggregator.precision(all_negative_predictions)
-        self.assertEqual(
-            precision_result,
-            0.0,
-            msg="Precision should be 0.0 when no positives are predicted",
+        self.assertTrue(
+            np.isnan(self.aggregator.precision(all_negative_predictions)),
+            msg="Precision is undefined when no positives are predicted",
         )
 
-        # Test recall with no actual positives
-        all_negative_labels = [0, 0, 0, 0, 0]
-        negative_aggregator = GroundTruthAggregator(
-            true_labels=all_negative_labels
-        )
-        recall_result = negative_aggregator.recall([0.8, 0.2, 0.9, 0.1, 0.7])
-        self.assertEqual(
-            recall_result,
-            0.0,
-            msg="Recall should be 0.0 when no actual positives exist",
+        # No positives in the ground truth, so recall has no denominator.
+        negative_aggregator = GroundTruthAggregator(true_labels=[0, 0, 0, 0, 0])
+        self.assertTrue(
+            np.isnan(negative_aggregator.recall([0.8, 0.2, 0.9, 0.1, 0.7])),
+            msg="Recall is undefined when no actual positives exist",
         )
 
-        # Test F1 score with zero precision and recall
-        f1_result = negative_aggregator.f1_score(all_negative_predictions)
+        # f1_score needs no guard of its own: nan falls through its
+        # precision + recall == 0 check and propagates.
+        self.assertTrue(
+            np.isnan(negative_aggregator.f1_score(all_negative_predictions)),
+            msg="F1 is undefined when precision and recall are undefined",
+        )
+
+        # The measured zeros are unchanged.
+        missed_every_positive = GroundTruthAggregator(true_labels=[1, 1, 0, 0])
         self.assertEqual(
-            f1_result,
+            missed_every_positive.recall([0.1, 0.1, 0.1, 0.1]),
             0.0,
-            msg="F1 score should be 0.0 when both precision and recall are zero",
+            msg="a model that missed every positive has a measured recall of 0.0",
+        )
+        self.assertEqual(
+            self.aggregator.f1_score(self.worst_scores),
+            0.0,
+            msg="f1 of a classifier that got everything wrong is a measured 0.0",
         )

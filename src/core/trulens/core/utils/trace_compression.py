@@ -297,7 +297,7 @@ class TraceCompressor:
                         if important_attrs:
                             compressed_span["span_attributes"] = important_attrs
 
-            compressed_spans.append(compressed_span)
+                compressed_spans.append(compressed_span)
 
         return compressed_spans
 

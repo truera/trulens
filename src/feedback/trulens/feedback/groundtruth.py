@@ -367,12 +367,18 @@ class GroundTruthAgreement(
             rel_scores = [0.0] * len(
                 retrieved_context_chunks
             )  # Initialize with 0 relevance for all
+            # Credit each golden chunk at most once: a retriever that returns
+            # the same relevant chunk more than once must not earn its
+            # relevance repeatedly, which would push DCG above the ideal DCG
+            # and yield NDCG > 1.
+            consumed_golden = set()
             for i, chunk in enumerate(retrieved_context_chunks[:k]):
-                if chunk in golden_chunks:
+                if chunk in golden_chunks and chunk not in consumed_golden:
                     index_in_golden = golden_chunks.index(chunk)
                     rel_scores[i] = golden_scores[
                         index_in_golden
                     ]  # Use the true relevance score
+                    consumed_golden.add(chunk)
 
             # Step 5: Compute NDCG@k directly from the standard formula.
             # DCG discounts each retrieved chunk's golden relevance by the
@@ -385,7 +391,9 @@ class GroundTruthAgreement(
             # several retrieved chunks share the same (zero) relevance.
             dcg = _dcg(rel_scores[:k])
             ideal_dcg = _dcg(sorted(golden_scores, reverse=True)[:k])
-            return dcg / ideal_dcg if ideal_dcg > 0 else 0.0
+            # ideal_dcg of 0 means the golden set annotates nothing relevant,
+            # so nDCG has no denominator. Undefined, not a measured zero.
+            return dcg / ideal_dcg if ideal_dcg > 0 else np.nan
         else:
             return np.nan
 
@@ -443,7 +451,8 @@ class GroundTruthAgreement(
             return (
                 relevant_retrieved / len(retrieved_top_k)
                 if len(retrieved_top_k) > 0
-                else 0.0
+                # Nothing retrieved, so precision has no denominator.
+                else np.nan
             )
         else:
             return np.nan
@@ -495,14 +504,16 @@ class GroundTruthAgreement(
                 # If no relevance scores, use the top-k retrieved chunks as they are
                 retrieved_top_k = retrieved_context_chunks[:k]
 
-            # Calculate recall at k with tie handling
-            relevant_retrieved = len([
-                chunk for chunk in retrieved_top_k if chunk in golden_chunks
-            ])
+            # Count unique golden chunks that were retrieved. Counting
+            # occurrences instead would let a retriever that returns the same
+            # relevant chunk more than once exceed the number of golden
+            # chunks, yielding recall > 1.
+            relevant_retrieved = len(golden_chunks & set(retrieved_top_k))
             return (
                 relevant_retrieved / len(golden_chunks)
                 if len(golden_chunks) > 0
-                else 0.0
+                # No relevant chunks exist, so recall has no denominator.
+                else np.nan
             )
         else:
             return np.nan
@@ -542,6 +553,11 @@ class GroundTruthAgreement(
                 ]
 
             # Find the rank of the first relevant item in the sorted list
+            # No relevant chunks at all means there was nothing to rank, which
+            # is undefined. Retrieving none of several that DO exist is a real 0.
+            if not golden_chunks:
+                return np.nan
+
             for i, chunk in enumerate(retrieved_context_chunks):
                 if chunk in golden_chunks:
                     return 1 / (
@@ -579,6 +595,9 @@ class GroundTruthAgreement(
             golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
 
             # Calculate hit rate at k (1 if at least one relevant item is retrieved, 0 otherwise)
+            # Same split as mrr: an empty golden set is undefined, a miss is 0.
+            if not golden_chunks:
+                return np.nan
             return (
                 1.0
                 if any(
@@ -876,8 +895,10 @@ class GroundTruthAgreement(
         expected = self._find_expected_memories(query)
         if expected is None:
             return np.nan
+        # An empty expected set means there was nothing to find, which is
+        # not the same event as retrieving nothing relevant.
         if not expected:
-            return 0.0
+            return np.nan
         if retrieved_memories is None:
             raise TypeError("retrieved_memories must be a list, not None")
         if not retrieved_memories:
@@ -925,8 +946,10 @@ class GroundTruthAgreement(
         expected = self._find_expected_memories(query)
         if expected is None:
             return np.nan
+        # An empty expected set means there was nothing to find, which is
+        # not the same event as retrieving nothing relevant.
         if not expected:
-            return 0.0
+            return np.nan
         if retrieved_memories is None:
             raise TypeError("retrieved_memories must be a list, not None")
         if not retrieved_memories:
@@ -1160,8 +1183,11 @@ class GroundTruthAggregator(
         )
 
         # Handle the case where there are no actual positives to avoid division by zero
+        # Undefined: the ground truth holds no positives, so there was nothing to recall.
+        # Same reasoning as brier_score below: 0.0 here is indistinguishable
+        # from a measured zero once these are averaged across a run.
         if true_positives + false_negatives == 0:
-            return 0.0  # or handle as needed (e.g., return None, raise an exception)
+            return np.nan
 
         # Calculate recall
         recall = true_positives / (true_positives + false_negatives)
@@ -1197,8 +1223,11 @@ class GroundTruthAggregator(
         )
 
         # Handle the case where there are no predicted positives to avoid division by zero
+        # Undefined: nothing was predicted positive, so there is nothing to be right about.
+        # Same reasoning as brier_score below: 0.0 here is indistinguishable
+        # from a measured zero once these are averaged across a run.
         if true_positives + false_positives == 0:
-            return 0.0  # or handle as needed (e.g., return None, raise an exception)
+            return np.nan
 
         # Calculate precision
         precision = true_positives / (true_positives + false_positives)

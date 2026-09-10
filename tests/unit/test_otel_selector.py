@@ -2,6 +2,7 @@ from typing import Optional
 
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import Selector
+from trulens.otel.semconv.trace import GenAIEvents
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_test_case import OtelTestCase
@@ -180,3 +181,127 @@ class TestOtelSelector(OtelTestCase):
                 span_attribute=f"{SpanAttributes.CALL.KWARGS}.arg1",
             ),
         )
+
+    def test_span_event_attribute_is_an_extraction_mode(self) -> None:
+        # Satisfies the "exactly one extraction mode" requirement on its own.
+        selector = Selector(
+            span_event_attribute=GenAIEvents.EventAttributes.INPUT_MESSAGES
+        )
+        self.assertEqual(
+            selector.span_event_attribute,
+            GenAIEvents.EventAttributes.INPUT_MESSAGES,
+        )
+
+        with self.subTest("cannot combine with span_attribute"):
+            with self.assertRaises(ValueError):
+                Selector(
+                    span_attribute="a",
+                    span_event_attribute=GenAIEvents.EventAttributes.INPUT_MESSAGES,
+                )
+
+        with self.subTest("cannot combine with dataset_column"):
+            with self.assertRaises(ValueError):
+                Selector(
+                    dataset_column="a",
+                    span_event_attribute=GenAIEvents.EventAttributes.INPUT_MESSAGES,
+                )
+
+        with self.subTest("span_event_name requires span_event_attribute"):
+            with self.assertRaises(ValueError):
+                Selector(
+                    span_attribute="a",
+                    span_event_name=GenAIEvents.CLIENT_INFERENCE_OPERATION_DETAILS,
+                )
+
+    def test_process_span_reads_span_event_attributes(self) -> None:
+        span_events = [
+            {
+                "name": GenAIEvents.CLIENT_INFERENCE_OPERATION_DETAILS,
+                "timestamp": 1,
+                "attributes": {
+                    GenAIEvents.EventAttributes.INPUT_MESSAGES: "in",
+                    GenAIEvents.EventAttributes.OUTPUT_MESSAGES: "out",
+                },
+            }
+        ]
+
+        with self.subTest("single match returns a scalar"):
+            result = Selector(
+                span_event_attribute=GenAIEvents.EventAttributes.INPUT_MESSAGES
+            ).process_span("1", {}, span_events)
+            self.assertEqual(result.value, "in")
+            # Provenance distinguishes an event attribute from a span attribute
+            # of the same name.
+            self.assertEqual(
+                result.span_attribute,
+                f"event/{GenAIEvents.EventAttributes.INPUT_MESSAGES}",
+            )
+
+        with self.subTest("span_event_name filters by event"):
+            self.assertEqual(
+                Selector(
+                    span_event_attribute=GenAIEvents.EventAttributes.INPUT_MESSAGES,
+                    span_event_name=GenAIEvents.CLIENT_INFERENCE_OPERATION_DETAILS,
+                )
+                .process_span("1", {}, span_events)
+                .value,
+                "in",
+            )
+            self.assertIsNone(
+                Selector(
+                    span_event_attribute=GenAIEvents.EventAttributes.INPUT_MESSAGES,
+                    span_event_name="some.other.event",
+                )
+                .process_span("1", {}, span_events)
+                .value,
+            )
+
+        with self.subTest("missing attribute yields None"):
+            self.assertIsNone(
+                Selector(span_event_attribute="nope")
+                .process_span("1", {}, span_events)
+                .value
+            )
+
+        with self.subTest("no events yields None"):
+            self.assertIsNone(
+                Selector(
+                    span_event_attribute=GenAIEvents.EventAttributes.INPUT_MESSAGES
+                )
+                .process_span("1", {}, None)
+                .value
+            )
+
+        with self.subTest("several matching events yield a list"):
+            repeated = span_events + [
+                {
+                    "name": GenAIEvents.CLIENT_INFERENCE_OPERATION_DETAILS,
+                    "timestamp": 2,
+                    "attributes": {
+                        GenAIEvents.EventAttributes.INPUT_MESSAGES: "in2"
+                    },
+                }
+            ]
+            self.assertEqual(
+                Selector(
+                    span_event_attribute=GenAIEvents.EventAttributes.INPUT_MESSAGES
+                )
+                .process_span("1", {}, repeated)
+                .value,
+                ["in", "in2"],
+            )
+
+        with self.subTest("span attributes are not consulted"):
+            # An event selector must not silently fall back to a span attribute
+            # that happens to share the key.
+            self.assertIsNone(
+                Selector(
+                    span_event_attribute=GenAIEvents.EventAttributes.INPUT_MESSAGES
+                )
+                .process_span(
+                    "1",
+                    {GenAIEvents.EventAttributes.INPUT_MESSAGES: "from_span"},
+                    None,
+                )
+                .value
+            )

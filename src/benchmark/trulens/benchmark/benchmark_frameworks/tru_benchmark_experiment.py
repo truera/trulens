@@ -187,7 +187,13 @@ class TruBenchmarkExperiment:
             future_to_index = {}
             index_to_results: Dict[int, List] = {}
 
-            for index, row in ground_truth.iterrows():
+            # Key by POSITION, not by the frame's index label. iterrows()
+            # yields labels, and a frame left behind by a filter, a set_index
+            # or a concat does not have labels 0..n-1. Reassembling such a
+            # frame positionally drops rows whose label falls outside the
+            # range and reorders rows that share a label, both silently, while
+            # the docstring above requires this order to match true_labels.
+            for position, (_, row) in enumerate(ground_truth.iterrows()):
                 if "expected_chunks" in row:
                     for expected_chunk in row["expected_chunks"]:
                         future = executor.submit(
@@ -195,28 +201,29 @@ class TruBenchmarkExperiment:
                             self.feedback_fn,
                             [row["query"], expected_chunk["text"]],
                         )
-                        future_to_index[future] = index
+                        future_to_index[future] = position
                 elif "expected_response" in row:
                     future = executor.submit(
                         self.run_score_generation_on_single_row,
                         self.feedback_fn,
                         [row["query"], row["expected_response"]],
                     )
-                    future_to_index[future] = index
+                    future_to_index[future] = position
 
             for future in as_completed(future_to_index):
-                index = future_to_index[future]
+                position = future_to_index[future]
                 try:
                     ret = future.result()
-                    index_to_results.setdefault(index, []).append(ret)
+                    index_to_results.setdefault(position, []).append(ret)
 
                 except Exception as e:
                     log.error(f"Row generated an exception: {e}")
 
-            # Process results in the original order
-            for index in range(len(ground_truth)):
-                if index in index_to_results:
-                    for ret in index_to_results[index]:
+            # Process results in the original order. index_to_results is
+            # keyed by position, so this range always lines up.
+            for position in range(len(ground_truth)):
+                if position in index_to_results:
+                    for ret in index_to_results[position]:
                         if isinstance(ret, float):
                             score = ret
                         else:
