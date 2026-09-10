@@ -3,8 +3,8 @@ name: CLA
 # Asks contributors to sign the Contributor License Agreement in /CLA.md, and
 # records the signature.
 #
-# NOT YET IN FORCE. CLA.md needs Snowflake Legal approval first, and `CLA` should
-# not be added to the required status checks on main until it has been approved.
+# Signatures are stored on the unprotected `cla-signatures` branch. The CLA check
+# is active but is not a required status check on `main`.
 #
 # HOW A CONTRIBUTOR SIGNS: the bot comments on their pull request with a link to
 # the agreement. They reply with one comment containing exactly:
