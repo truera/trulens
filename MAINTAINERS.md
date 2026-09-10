@@ -37,7 +37,7 @@ Issue and pull request triage in a named area. No write access to the codebase.
 
 | Name | Affiliation | GitHub | Area |
 | ---- | ----------- | ------ | ---- |
-| Nikhil Thakur | Not declared | bashward | Ensemble and prompt optimization |
+| Nikhil Thakur | InviGrid | bashward | Ensemble and prompt optimization |
 
 ## Emeritus
 
