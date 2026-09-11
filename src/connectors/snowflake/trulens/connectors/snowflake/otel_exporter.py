@@ -2,7 +2,7 @@ from collections import defaultdict
 import logging
 import os
 import tempfile
-from typing import Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 from google.protobuf.internal.encoder import _EncodeVarint
 from opentelemetry.sdk.trace import ReadableSpan
@@ -26,6 +26,43 @@ from trulens.otel.semconv.trace import SpanAttributes
 from snowflake.snowpark import Session
 
 logger = logging.getLogger(__name__)
+
+
+def make_ai_gateway_otel_exporter(
+    gateway_base_url: str,
+    token: str,
+    *,
+    timeout: Optional[int] = None,
+) -> SpanExporter:
+    """Build an OTLP exporter targeting a Snowflake Cortex AI Gateway.
+
+    AI Gateways serve OTLP over HTTP/protobuf at
+    ``<gateway_base_url>/telemetry/v1/traces`` (not gRPC), so the stock
+    ``otel_exporter="otlp"`` path cannot reach them. This helper returns the
+    correct exporter plus the auth header the gateway expects.
+
+    Args:
+        gateway_base_url: Gateway URL up to and including the gateway name,
+            e.g. ``https://<account-host>/api/v2/aigateways/<gateway>``.
+        token: Bearer token (e.g. programmatic access token) the gateway
+            authenticates with.
+        timeout: Optional export timeout in seconds.
+
+    Returns:
+        An ``OTLPSpanExporter`` (HTTP/protobuf) pointed at the gateway
+        telemetry endpoint.
+    """
+
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+        OTLPSpanExporter,
+    )
+
+    kwargs = {"endpoint": f"{gateway_base_url}/telemetry/v1/traces"}
+    if timeout is not None:
+        kwargs["timeout"] = timeout
+    return OTLPSpanExporter(
+        headers={"Authorization": f"Bearer {token}"}, **kwargs
+    )
 
 
 class TruLensSnowflakeSpanExporter(SpanExporter):
