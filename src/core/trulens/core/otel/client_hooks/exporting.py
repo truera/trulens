@@ -10,7 +10,6 @@ from typing import Optional, Sequence
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExportResult
 from trulens.core import session as core_session
-from trulens.core.experimental import Feature
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +80,6 @@ def _ai_gateway_session() -> core_session.TruSession:
     )
     return core_session.TruSession(
         _experimental_otel_exporter=exporter,
-        experimental_feature_flags={Feature.OTEL_TRACING: True},
     )
 
 
