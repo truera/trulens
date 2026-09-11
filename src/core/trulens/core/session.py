@@ -130,6 +130,11 @@ class TruSession(
             when that is also unset, ``"grpc"`` is used for backward
             compatibility.
 
+        span_exporter: An explicit ``SpanExporter`` instance for sending
+            traces. Use this when you need full control over the exporter
+            (for example, exporting to a Snowflake AI Gateway). Cannot be
+            combined with ``otel_exporter="otlp"``.
+
         **kwargs: All other arguments are used to initialize
             [DefaultDBConnector][trulens.core.database.connector.default.DefaultDBConnector].
             Mutually exclusive with `connector`.
@@ -282,6 +287,7 @@ class TruSession(
         otel_exporter: Optional[str] = None,
         otlp_endpoint: Optional[str] = None,
         otlp_protocol: Optional[str] = None,
+        span_exporter: Optional[SpanExporter] = None,
         _experimental_otel_exporter: Optional[SpanExporter] = None,
         _experimental_otel_metric_exporter: Optional[MetricExporter] = None,
         **kwargs: Any,
@@ -323,6 +329,19 @@ class TruSession(
 
         # for WithExperimentalSettings mixin
         self.experimental_set_features(experimental_feature_flags)
+
+        # Merge public span_exporter into the internal slot; auto-enable
+        # OTEL tracing when an explicit exporter is provided.
+        if span_exporter is not None and _experimental_otel_exporter is not None:
+            raise ValueError(
+                "Cannot combine `span_exporter` with "
+                "`_experimental_otel_exporter`."
+            )
+        if span_exporter is not None:
+            _experimental_otel_exporter = span_exporter
+            self.experimental_enable_feature(
+                core_experimental.Feature.OTEL_TRACING
+            )
 
         if otel_exporter is not None:
             if not isinstance(otel_exporter, str):

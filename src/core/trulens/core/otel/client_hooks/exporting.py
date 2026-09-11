@@ -79,7 +79,7 @@ def _ai_gateway_session() -> core_session.TruSession:
         headers={"Authorization": f"Bearer {token}"},
     )
     return core_session.TruSession(
-        _experimental_otel_exporter=exporter,
+        span_exporter=exporter,
     )
 
 
