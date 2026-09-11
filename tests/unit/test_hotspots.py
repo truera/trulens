@@ -1,9 +1,9 @@
-import os
+import importlib.util
 from pathlib import Path
 import re
-import subprocess
-import sys
 from unittest import TestCase
+from unittest import mock
+import warnings
 
 import pytest
 
@@ -19,28 +19,31 @@ class TestHotspots(TestCase):
 
     def test_package_deprecation_warning(self) -> None:
         """Importing the package emits its deprecation warning."""
-        package_root = Path(__file__).parents[2] / "src" / "hotspots"
-        env = os.environ.copy()
-        env["PYTHONPATH"] = os.pathsep.join([
-            str(package_root),
-            env.get("PYTHONPATH", ""),
-        ])
-        result = subprocess.run(
-            [
-                sys.executable,
-                "-W",
-                "always::DeprecationWarning",
-                "-c",
-                "import trulens.hotspots",
-            ],
-            check=True,
-            capture_output=True,
-            env=env,
-            text=True,
-        )
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", DeprecationWarning)
+            package_path = (
+                Path(__file__).parents[2]
+                / "src"
+                / "hotspots"
+                / "trulens"
+                / "hotspots"
+                / "__init__.py"
+            )
+            spec = importlib.util.spec_from_file_location(
+                "_test_trulens_hotspots_deprecation", package_path
+            )
+            self.assertIsNotNone(spec)
+            self.assertIsNotNone(spec.loader)
+            module = importlib.util.module_from_spec(spec)
+            with mock.patch("importlib.metadata.version", return_value="test"):
+                spec.loader.exec_module(module)
 
-        self.assertIn(
-            "The `trulens-hotspots` package is deprecated", result.stderr
+        self.assertTrue(
+            any(
+                "The `trulens-hotspots` package is deprecated"
+                in str(warning.message)
+                for warning in caught
+            )
         )
 
     @pytest.mark.optional
