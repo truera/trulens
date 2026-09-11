@@ -9,6 +9,7 @@ from typing import Optional, Sequence
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExportResult
 from trulens.core import session as core_session
+from trulens.core.experimental import Feature
 
 
 def _local_session() -> core_session.TruSession:
@@ -50,8 +51,43 @@ def _snowflake_session() -> core_session.TruSession:
     return core_session.TruSession(connector=connector)
 
 
+def _ai_gateway_session() -> core_session.TruSession:
+    gateway_url = os.environ.get("TRULENS_AI_GATEWAY_URL")
+    if not gateway_url:
+        raise ValueError("Set TRULENS_AI_GATEWAY_URL for AI Gateway export.")
+    token_file = os.environ.get("TRULENS_AI_GATEWAY_PAT_FILE")
+    if token_file:
+        with open(Path(token_file).expanduser()) as handle:
+            token = handle.read().strip()
+    else:
+        token = os.environ.get("TRULENS_AI_GATEWAY_TOKEN")
+    if not token:
+        raise ValueError(
+            "Set TRULENS_AI_GATEWAY_PAT_FILE or TRULENS_AI_GATEWAY_TOKEN for "
+            "AI Gateway export."
+        )
+    # AI Gateways serve OTLP over HTTP/protobuf (not gRPC), so build the
+    # exporter directly rather than via otel_exporter="otlp".
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+        OTLPSpanExporter,
+    )
+
+    exporter = OTLPSpanExporter(
+        endpoint=f"{gateway_url}/telemetry/v1/traces",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    return core_session.TruSession(
+        _experimental_otel_exporter=exporter,
+        experimental_feature_flags={Feature.OTEL_TRACING: True},
+    )
+
+
 def create_session() -> core_session.TruSession:
-    """Create the configured database, Snowflake, or OTLP TruLens session."""
+    """Create the configured destination TruLens session.
+
+    Supported ``TRULENS_DESTINATION`` values: local (default), database,
+    snowflake, otlp, and ai_gateway.
+    """
 
     destination = os.environ.get("TRULENS_DESTINATION", "local").lower()
     if destination in {"local", "database"}:
@@ -63,8 +99,11 @@ def create_session() -> core_session.TruSession:
         return core_session.TruSession(
             otel_exporter="otlp", otlp_endpoint=endpoint
         )
+    if destination == "ai_gateway":
+        return _ai_gateway_session()
     raise ValueError(
-        "TRULENS_DESTINATION must be local, database, snowflake, or otlp."
+        "TRULENS_DESTINATION must be local, database, snowflake, otlp, or "
+        "ai_gateway."
     )
 
 
