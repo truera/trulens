@@ -22,7 +22,6 @@ class TestDeprecation(TestCase):
                 "Tru",  # main interface
                 # app types
                 "TruBasicApp",
-                "TruCustomApp",
                 "TruChain",
                 "TruLlama",
                 "TruVirtual",
