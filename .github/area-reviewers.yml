@@ -27,11 +27,10 @@
 # role is granted. Uncomment in the same PR that adds them to MAINTAINERS.md.
 
 areas:
-  - name: Core
+  - name: Shared core code
     paths:
       - src/core/
-    reviewers: []
-    # reviewers: [<handle>]
+    reviewers: [Abelo9996]
 
   - name: Documentation
     paths:
@@ -46,6 +45,12 @@ areas:
       - src/otel/
     reviewers: [Payal2000]
 
+  - name: OpenTelemetry instrumentation
+    paths:
+      - src/core/trulens/core/otel/
+      - src/otel/
+    reviewers: [Abelo9996]
+
   - name: Feedback functions and metrics
     paths:
       - src/feedback/
@@ -58,6 +63,11 @@ areas:
       - src/feedback/trulens/feedback/templates/
     reviewers: []
     # reviewers: [<handle>]
+
+  - name: Evaluation correctness
+    paths:
+      - src/feedback/trulens/feedback/groundtruth.py
+    reviewers: [Abelo9996]
 
   - name: Ensemble judges and prompt optimization
     paths:
