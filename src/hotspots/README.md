@@ -1,5 +1,10 @@
 # TruLens Hotspots
 
+> **Deprecated:** The `trulens-hotspots` package is deprecated and will be
+> removed after the deprecation process documented in
+> [POLICIES.md](../../POLICIES.md). There is no direct replacement. Existing
+> installations continue to work during the warning period.
+
 TruLens Hotspots is a tool for listing features in your evaluation data that correlate with worse results, according to your evaluation metric.
 
 TruLens Hotspots:
