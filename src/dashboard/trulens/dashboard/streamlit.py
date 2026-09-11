@@ -288,11 +288,7 @@ def trulens_trace(record: Union[record_schema.Record, str]):
     session = core_session.TruSession()
     if isinstance(record, record_schema.Record):
         app = session.get_app(app_id=record.app_id)
-    if dashboard_utils.is_sis_compatibility_enabled():
-        st.warning(
-            "TruLens trace view is not enabled when SiS compatibility is enabled."
-        )
-    elif isinstance(record, str):
+    if isinstance(record, str):
         event_spans = _get_event_otel_spans(record)
         if event_spans:
             dashboard_record_viewer_otel.record_viewer_otel(

@@ -19,7 +19,6 @@ from trulens.dashboard.utils.dashboard_utils import _get_event_otel_spans
 from trulens.dashboard.utils.dashboard_utils import _show_no_records_error
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
-from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
 from trulens.dashboard.utils.dashboard_utils import (
     read_query_params_into_session_state,
 )
@@ -322,7 +321,7 @@ def _render_record_detail(
     # Fetched before the metrics row so that time-to-first-token can be shown
     # alongside latency, and reused for the trace viewer further down.
     event_spans: List[OtelSpan] = []
-    if not is_sis_compatibility_enabled() and is_otel_tracing_enabled():
+    if is_otel_tracing_enabled():
         event_spans = _get_event_otel_spans(
             selected_row["record_id"], selected_row["app_name"]
         )
@@ -360,13 +359,7 @@ def _render_record_detail(
 
     # Trace details
 
-    if is_sis_compatibility_enabled():
-        st.subheader("Trace Details")
-        st.json(record_json, expanded=1)
-
-        st.subheader("App Details")
-        st.json(app_json, expanded=1)
-    elif is_otel_tracing_enabled():
+    if is_otel_tracing_enabled():
         with trace_details:
             st.subheader("Trace Details")
             if event_spans:
@@ -709,33 +702,32 @@ def _render_grid(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
-    if not is_sis_compatibility_enabled():
-        try:
-            import st_aggrid
-            from st_aggrid.shared import ColumnsAutoSizeMode
-            from st_aggrid.shared import DataReturnMode
+    try:
+        import st_aggrid
+        from st_aggrid.shared import ColumnsAutoSizeMode
+        from st_aggrid.shared import DataReturnMode
 
-            event = st_aggrid.AgGrid(
-                df,
-                gridOptions=_build_grid_options(
-                    df=df,
-                    feedback_col_names=feedback_col_names,
-                    feedback_directions=feedback_directions,
-                    version_metadata_col_names=version_metadata_col_names,
-                ),
-                update_on=["selectionChanged"],
-                custom_css={**aggrid_css, **radio_button_css},
-                columns_auto_size_mode=ColumnsAutoSizeMode.NO_AUTOSIZE,
-                fit_columns_on_grid_load=False,
-                reload_data=True,
-                data_return_mode=DataReturnMode.FILTERED,
-                allow_unsafe_jscode=True,
-            )
-            return pd.DataFrame(event.selected_rows)
+        event = st_aggrid.AgGrid(
+            df,
+            gridOptions=_build_grid_options(
+                df=df,
+                feedback_col_names=feedback_col_names,
+                feedback_directions=feedback_directions,
+                version_metadata_col_names=version_metadata_col_names,
+            ),
+            update_on=["selectionChanged"],
+            custom_css={**aggrid_css, **radio_button_css},
+            columns_auto_size_mode=ColumnsAutoSizeMode.NO_AUTOSIZE,
+            fit_columns_on_grid_load=False,
+            reload_data=True,
+            data_return_mode=DataReturnMode.FILTERED,
+            allow_unsafe_jscode=True,
+        )
+        return pd.DataFrame(event.selected_rows)
 
-        except ImportError:
-            # Fallback to st.dataframe if st_aggrid is not installed
-            pass
+    except ImportError:
+        # Fallback to st.dataframe if st_aggrid is not installed
+        pass
 
     # Build column order dynamically for eval cost columns
     eval_cols_to_show = []
@@ -1073,32 +1065,31 @@ def _render_thread_grid(
     feedback_directions: Dict[str, bool],
     conversation_cols: Optional[Sequence[str]] = None,
 ):
-    if not is_sis_compatibility_enabled():
-        try:
-            import st_aggrid
-            from st_aggrid.shared import ColumnsAutoSizeMode
-            from st_aggrid.shared import DataReturnMode
+    try:
+        import st_aggrid
+        from st_aggrid.shared import ColumnsAutoSizeMode
+        from st_aggrid.shared import DataReturnMode
 
-            event = st_aggrid.AgGrid(
-                df,
-                gridOptions=_build_thread_grid_options(
-                    df=df,
-                    feedback_col_names=feedback_col_names,
-                    feedback_directions=feedback_directions,
-                    conversation_cols=conversation_cols,
-                ),
-                update_on=["selectionChanged"],
-                custom_css={**aggrid_css, **radio_button_css},
-                columns_auto_size_mode=ColumnsAutoSizeMode.NO_AUTOSIZE,
-                fit_columns_on_grid_load=False,
-                reload_data=True,
-                data_return_mode=DataReturnMode.FILTERED,
-                allow_unsafe_jscode=True,
-                key=f"{page_name}.thread_grid",
-            )
-            return pd.DataFrame(event.selected_rows)
-        except ImportError:
-            pass
+        event = st_aggrid.AgGrid(
+            df,
+            gridOptions=_build_thread_grid_options(
+                df=df,
+                feedback_col_names=feedback_col_names,
+                feedback_directions=feedback_directions,
+                conversation_cols=conversation_cols,
+            ),
+            update_on=["selectionChanged"],
+            custom_css={**aggrid_css, **radio_button_css},
+            columns_auto_size_mode=ColumnsAutoSizeMode.NO_AUTOSIZE,
+            fit_columns_on_grid_load=False,
+            reload_data=True,
+            data_return_mode=DataReturnMode.FILTERED,
+            allow_unsafe_jscode=True,
+            key=f"{page_name}.thread_grid",
+        )
+        return pd.DataFrame(event.selected_rows)
+    except ImportError:
+        pass
 
     column_order = [
         "conversation_id",
