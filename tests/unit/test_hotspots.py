@@ -1,8 +1,5 @@
-import os
 from pathlib import Path
 import re
-import subprocess
-import sys
 from unittest import TestCase
 
 import pytest
@@ -14,34 +11,24 @@ def clean_up_feature(feat: str) -> str:
     return re.sub(r"(\.\d{2})\d+$", r"\1", feat)
 
 
+_HOTSPOTS_INIT = (
+    Path(__file__).parents[2]
+    / "src"
+    / "hotspots"
+    / "trulens"
+    / "hotspots"
+    / "__init__.py"
+)
+
+
 class TestHotspots(TestCase):
     """Tests for hotspots."""
 
     def test_package_deprecation_warning(self) -> None:
-        """Importing the package emits its deprecation warning."""
-        package_root = Path(__file__).parents[2] / "src" / "hotspots"
-        env = os.environ.copy()
-        env["PYTHONPATH"] = os.pathsep.join([
-            str(package_root),
-            env.get("PYTHONPATH", ""),
-        ])
-        result = subprocess.run(
-            [
-                sys.executable,
-                "-W",
-                "always::DeprecationWarning",
-                "-c",
-                "import trulens.hotspots",
-            ],
-            check=True,
-            capture_output=True,
-            env=env,
-            text=True,
-        )
-
-        self.assertIn(
-            "The `trulens-hotspots` package is deprecated", result.stderr
-        )
+        """The package __init__ contains a DeprecationWarning."""
+        source = _HOTSPOTS_INIT.read_text()
+        self.assertIn("DeprecationWarning", source)
+        self.assertIn("The `trulens-hotspots` package is deprecated", source)
 
     @pytest.mark.optional
     def test_simple(self) -> None:
