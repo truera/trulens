@@ -67,8 +67,11 @@ jobs:
             under the project's licence.
 
 
-            Please read $pathToCLADocument and then post a comment on this pull
-            request containing exactly:
+            Please read the [CLA](https://github.com/truera/trulens/blob/main/CLA.md)
+            and then post a comment on this pull request containing exactly:
+
+            The TruLens standards checkbox is a separate certification and does
+            not sign the CLA.
           custom-pr-sign-comment: I have read the CLA Document and I hereby sign the CLA
           custom-allsigned-prcomment: >-
             All contributors have signed the CLA. Thanks — you will not be asked
