@@ -119,9 +119,16 @@ class TruSession(
             export TruLens traces and GenAI metrics using OTLP. If omitted,
             the existing TruLens/Snowflake exporter remains the default.
 
-        otlp_endpoint: Optional OTLP gRPC endpoint. This is only valid with
+        otlp_endpoint: Optional OTLP endpoint. This is only valid with
             ``otel_exporter="otlp"``. If omitted, the standard OpenTelemetry
             environment variables are used.
+
+        otlp_protocol: Optional OTLP transport protocol, ``"grpc"`` or
+            ``"http/protobuf"``. This is only valid with
+            ``otel_exporter="otlp"``. If omitted, the standard
+            ``OTEL_EXPORTER_OTLP_PROTOCOL`` environment variable is honored;
+            when that is also unset, ``"grpc"`` is used for backward
+            compatibility.
 
         **kwargs: All other arguments are used to initialize
             [DefaultDBConnector][trulens.core.database.connector.default.DefaultDBConnector].
@@ -274,6 +281,7 @@ class TruSession(
         ] = None,
         otel_exporter: Optional[str] = None,
         otlp_endpoint: Optional[str] = None,
+        otlp_protocol: Optional[str] = None,
         _experimental_otel_exporter: Optional[SpanExporter] = None,
         _experimental_otel_metric_exporter: Optional[MetricExporter] = None,
         **kwargs: Any,
@@ -338,6 +346,17 @@ class TruSession(
         elif otlp_endpoint is not None:
             raise ValueError('`otlp_endpoint` requires `otel_exporter="otlp"`.')
 
+        if otlp_protocol is not None and otel_exporter != "otlp":
+            raise ValueError(
+                '`otlp_protocol` requires `otel_exporter="otlp".'
+            )
+        if otlp_protocol is not None:
+            otlp_protocol = otlp_protocol.lower()
+            if otlp_protocol not in {"grpc", "http/protobuf", "http_proto"}:
+                raise ValueError(
+                    '`otlp_protocol` must be "grpc" or "http/protobuf".'
+                )
+
         if (
             _experimental_otel_exporter is not None
             or _experimental_otel_metric_exporter is not None
@@ -361,6 +380,7 @@ class TruSession(
                 _experimental_otel_exporter,
                 exporter_name=otel_exporter,
                 otlp_endpoint=otlp_endpoint,
+                otlp_protocol=otlp_protocol,
                 metric_exporter=_experimental_otel_metric_exporter,
             )
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 from typing import Optional, Sequence
@@ -10,6 +11,8 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExportResult
 from trulens.core import session as core_session
 from trulens.core.experimental import Feature
+
+logger = logging.getLogger(__name__)
 
 
 def _local_session() -> core_session.TruSession:
@@ -96,8 +99,13 @@ def create_session() -> core_session.TruSession:
         return _snowflake_session()
     if destination == "otlp":
         endpoint = os.environ.get("TRULENS_OTLP_ENDPOINT")
+        protocol = os.environ.get("TRULENS_OTLP_PROTOCOL") or os.environ.get(
+            "OTEL_EXPORTER_OTLP_PROTOCOL"
+        )
         return core_session.TruSession(
-            otel_exporter="otlp", otlp_endpoint=endpoint
+            otel_exporter="otlp",
+            otlp_endpoint=endpoint,
+            otlp_protocol=protocol,
         )
     if destination == "ai_gateway":
         return _ai_gateway_session()
@@ -119,6 +127,10 @@ def export_spans(
     active_session = session or create_session()
     exporter = active_session.experimental_otel_exporter
     if exporter is None:
+        logger.warning(
+            "Hook export destination produced no OTel exporter; spans were "
+            "not exported."
+        )
         return False
     result = exporter.export(spans)
     flushed = active_session.force_flush()

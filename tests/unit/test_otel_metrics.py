@@ -1,5 +1,6 @@
 import builtins
 from importlib.util import find_spec
+import os
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -44,6 +45,19 @@ def _has_otlp_exporter() -> bool:
     except ModuleNotFoundError:
         # ``find_spec`` raises when the optional ``opentelemetry.exporter``
         # parent package is not installed at all.
+        return False
+
+
+def _has_otlp_http_exporter() -> bool:
+    """Return whether the optional OTLP HTTP exporter package is installed."""
+    try:
+        return (
+            find_spec(
+                "opentelemetry.exporter.otlp.proto.http.trace_exporter"
+            )
+            is not None
+        )
+    except ModuleNotFoundError:
         return False
 
 
@@ -129,7 +143,9 @@ class TestOtelMetricsSpanProcessor(unittest.TestCase):
                 otel_exporter="otlp",
                 otlp_endpoint="http://localhost:4317",
             )
-            create_exporters.assert_called_once_with("http://localhost:4317")
+            create_exporters.assert_called_once_with(
+                "http://localhost:4317", None
+            )
             tracer = session._experimental_tracer_provider.get_tracer(
                 "test-otel-metrics"
             )
@@ -171,6 +187,10 @@ class TestOtelMetricsSpanProcessor(unittest.TestCase):
             TruSession(otel_exporter="invalid")
         with self.assertRaises(ValueError):
             TruSession(otlp_endpoint="http://localhost:4317")
+        with self.assertRaises(ValueError):
+            TruSession(otel_exporter="otlp", otlp_protocol="bogus")
+        with self.assertRaises(ValueError):
+            TruSession(otlp_protocol="grpc")
         TruSession.delete_singleton(TruSession)
 
     def test_otlp_factory_missing_dependency_has_install_hint(self):
@@ -181,13 +201,50 @@ class TestOtelMetricsSpanProcessor(unittest.TestCase):
                 raise ImportError("missing optional exporter")
             return original_import(name, *args, **kwargs)
 
+        # Guard against a developer machine exporting the protocol variable.
+        env_without_protocol = {
+            key: value
+            for key, value in os.environ.items()
+            if key != "OTEL_EXPORTER_OTLP_PROTOCOL"
+            and key != "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL"
+        }
         with mock.patch(
             "builtins.__import__", side_effect=import_without_otlp_exporter
-        ):
+        ), mock.patch.dict(os.environ, env_without_protocol, clear=True):
             with self.assertRaisesRegex(
                 ImportError, r'pip install "trulens\[otlp\]"'
             ):
                 _create_otlp_exporters("http://localhost:4317")
+
+    def test_otlp_factory_http_missing_dependency_has_install_hint(self):
+        original_import = builtins.__import__
+
+        def import_without_otlp_exporter(name, *args, **kwargs):
+            if name.startswith("opentelemetry.exporter.otlp.proto.http"):
+                raise ImportError("missing optional exporter")
+            return original_import(name, *args, **kwargs)
+
+        env_without_protocol = {
+            key: value
+            for key, value in os.environ.items()
+            if key != "OTEL_EXPORTER_OTLP_PROTOCOL"
+            and key != "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL"
+        }
+        with mock.patch(
+            "builtins.__import__", side_effect=import_without_otlp_exporter
+        ), mock.patch.dict(os.environ, env_without_protocol, clear=True):
+            with self.assertRaisesRegex(
+                ImportError, r'pip install "trulens\[otlp\]"'
+            ):
+                _create_otlp_exporters(
+                    "http://localhost:4318/v1/traces", "http/protobuf"
+                )
+
+    def test_otlp_factory_rejects_unknown_protocol(self):
+        with self.assertRaisesRegex(ValueError, "http/protobuf"):
+            _create_otlp_exporters(
+                "http://localhost:4317", "carrier-pigeon"
+            )
 
     @unittest.skipUnless(
         _has_otlp_exporter(),
@@ -202,6 +259,43 @@ class TestOtelMetricsSpanProcessor(unittest.TestCase):
         self.assertEqual(type(metric_exporter).__name__, "OTLPMetricExporter")
         span_exporter.shutdown()
         metric_exporter.shutdown()
+
+    @unittest.skipUnless(
+        _has_otlp_http_exporter(),
+        "OTLP HTTP exporter is not installed",
+    )
+    def test_otlp_factory_http_protocol_creates_http_exporters(self):
+        span_exporter, metric_exporter = _create_otlp_exporters(
+            "http://localhost:4318/v1/traces", "http/protobuf"
+        )
+
+        self.assertEqual(
+            type(span_exporter).__module__,
+            "opentelemetry.exporter.otlp.proto.http.trace_exporter",
+        )
+        self.assertEqual(
+            type(metric_exporter).__module__,
+            "opentelemetry.exporter.otlp.proto.http.metric_exporter",
+        )
+        span_exporter.shutdown()
+        metric_exporter.shutdown()
+
+    @unittest.skipUnless(
+        _has_otlp_http_exporter(),
+        "OTLP HTTP exporter is not installed",
+    )
+    def test_otlp_factory_http_protocol_env_var(self):
+        with mock.patch.dict(
+            os.environ, {"OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf"}
+        ):
+            span_exporter, _ = _create_otlp_exporters(
+                "http://localhost:4318/v1/traces"
+            )
+        self.assertEqual(
+            type(span_exporter).__module__,
+            "opentelemetry.exporter.otlp.proto.http.trace_exporter",
+        )
+        span_exporter.shutdown()
 
     def test_generation_span_emits_token_usage_and_duration(self):
         meter = _Meter()
