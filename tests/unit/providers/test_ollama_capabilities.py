@@ -43,6 +43,27 @@ def test_defaults_to_local_ollama_server(monkeypatch):
 
 
 @pytest.mark.optional
+def test_blank_env_vars_fall_back_to_defaults(monkeypatch):
+    # .env templates often export OLLAMA_BASE_URL= and OLLAMA_API_KEY= as
+    # empty strings. Those must not replace the local default URL or the
+    # dummy key the OpenAI client requires.
+    monkeypatch.setenv("OLLAMA_BASE_URL", "")
+    monkeypatch.setenv("OLLAMA_API_KEY", "")
+
+    from trulens.providers.ollama import (
+        Ollama,  # type: ignore[import-not-found]
+    )
+
+    provider = Ollama()
+
+    assert str(provider.endpoint.client.client.base_url) == (
+        "http://localhost:11434/v1/"
+    )
+    assert provider.endpoint.client.client.api_key == "ollama"
+    assert provider._native_base_url() == "http://localhost:11434"
+
+
+@pytest.mark.optional
 def test_respects_env_var_base_url(monkeypatch):
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://my-ollama-host:11434/v1")
     monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
