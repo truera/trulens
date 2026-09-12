@@ -65,6 +65,7 @@ Install with a specific LLM provider for feedback evaluation:
 
 ```bash
 pip install trulens trulens-providers-openai   # OpenAI / Azure OpenAI
+pip install trulens trulens-providers-orcarouter  # OrcaRouter (OpenAI-compatible gateway)
 pip install trulens trulens-providers-litellm  # LiteLLM (Anthropic, Cohere, Mistral, …)
 pip install trulens trulens-providers-google   # Google Gemini
 pip install trulens trulens-providers-bedrock  # AWS Bedrock
@@ -192,6 +193,7 @@ f_context_relevance = Metric(
 | Snowflake Cortex | `trulens-providers-cortex` |
 | HuggingFace | `trulens-providers-huggingface` |
 | LangChain models | `trulens-providers-langchain` |
+| OrcaRouter (OpenAI-compatible gateway) | `trulens-providers-orcarouter` |
 
 ## 💡 Contributing & Community
 

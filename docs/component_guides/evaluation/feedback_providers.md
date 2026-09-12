@@ -154,6 +154,50 @@ or any reverse-proxy that speaks `/v1/chat/completions`.
     )
     ```
 
+### Using OrcaRouter
+
+[OrcaRouter](https://www.orcarouter.ai) is an OpenAI-compatible gateway that
+exposes a provider-prefixed model namespace (`openai/gpt-4o-mini`,
+`anthropic/claude-sonnet-4.6`, `google/gemini-2.5-pro`, `orcarouter/auto`,
+and many more) behind a single endpoint, combining routing, failover,
+observability, guardrails and agent-tool governance on the same connection.
+
+Instead of pointing the OpenAI provider at the gateway's base URL manually,
+you can use the dedicated [OrcaRouter
+provider][trulens.providers.orcarouter.OrcaRouter] from
+`trulens-providers-orcarouter`. It preconfigures the gateway endpoint and
+reads the `ORCAROUTER_API_KEY` environment variable, and reuses the OpenAI
+implementation because OrcaRouter is API-compatible with OpenAI (structured
+outputs, Responses API and capability probing all keep working). Note that
+OrcaRouter does not currently expose OpenAI's moderation endpoint.
+
+```bash
+pip install trulens-providers-orcarouter
+```
+
+```python
+from trulens.providers.orcarouter import OrcaRouter
+
+# Uses ORCAROUTER_API_KEY; pick any model in the gateway catalog.
+provider = OrcaRouter(model_engine="anthropic/claude-sonnet-4.6")
+
+# Example feedback call
+score, reasons = provider.relevance_with_cot_reasons(
+    "What is the capital of France?",
+    "Paris is the capital of France.",
+)
+```
+
+You can also override the endpoint and key explicitly:
+
+```python
+provider = OrcaRouter(
+    model_engine="orcarouter/auto",
+    base_url="https://api.orcarouter.ai/v1",
+    api_key=os.environ["ORCAROUTER_API_KEY"],
+)
+```
+
 ## Embedding-based Providers
 
 - [Embeddings][trulens.feedback.embeddings.Embeddings]
