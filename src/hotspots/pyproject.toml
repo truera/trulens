@@ -7,7 +7,7 @@ requires = [
 [tool.poetry]
 name = "trulens-hotspots"
 version = "2.14.0"
-description = "Library and command-line tool to list features lowering your evaluation score."
+description = "Deprecated library and CLI for finding features that lower evaluation scores."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
 ]
@@ -22,7 +22,7 @@ repository = "https://github.com/truera/trulens"
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 7 - Inactive",
   "License :: OSI Approved :: MIT License",
 ]
 

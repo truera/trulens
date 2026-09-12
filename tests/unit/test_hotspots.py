@@ -1,5 +1,9 @@
+import importlib.util
+from pathlib import Path
 import re
 from unittest import TestCase
+from unittest import mock
+import warnings
 
 import pytest
 
@@ -12,6 +16,35 @@ def clean_up_feature(feat: str) -> str:
 
 class TestHotspots(TestCase):
     """Tests for hotspots."""
+
+    def test_package_deprecation_warning(self) -> None:
+        """Importing the package emits its deprecation warning."""
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", DeprecationWarning)
+            package_path = (
+                Path(__file__).parents[2]
+                / "src"
+                / "hotspots"
+                / "trulens"
+                / "hotspots"
+                / "__init__.py"
+            )
+            spec = importlib.util.spec_from_file_location(
+                "_test_trulens_hotspots_deprecation", package_path
+            )
+            self.assertIsNotNone(spec)
+            self.assertIsNotNone(spec.loader)
+            module = importlib.util.module_from_spec(spec)
+            with mock.patch("importlib.metadata.version", return_value="test"):
+                spec.loader.exec_module(module)
+
+        self.assertTrue(
+            any(
+                "The `trulens-hotspots` package is deprecated"
+                in str(warning.message)
+                for warning in caught
+            )
+        )
 
     @pytest.mark.optional
     def test_simple(self) -> None:
