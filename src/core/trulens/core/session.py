@@ -551,11 +551,11 @@ class TruSession(
                 *args, app=app, connector=self.connector, **kwargs
             )
 
-        # If all else fails, assume it is a custom app.
-        print(f"{text_utils.UNICODE_SQUID} Instrumenting custom app.")
-        from trulens.apps import custom
+        # If all else fails, use the generic app recorder.
+        print(f"{text_utils.UNICODE_SQUID} Instrumenting generic app.")
+        from trulens.apps import app as app_module
 
-        return custom.TruCustomApp(
+        return app_module.TruApp(
             *args, app=app, connector=self.connector, **kwargs
         )
 
@@ -570,18 +570,6 @@ class TruSession(
         from trulens.apps.basic import TruBasicApp
 
         return TruBasicApp(*args, connector=self.connector, **kwargs)
-
-    @deprecation_utils.method_renamed("TruSession.App")
-    def Custom(self, *args, **kwargs) -> base_app.App:
-        """
-        !!! warning "Deprecated"
-            Use
-            [trulens.core.session.TruSession.App][trulens.core.session.TruSession.App]
-            instead.
-        """
-        from trulens.apps.custom import TruCustomApp
-
-        return TruCustomApp(*args, connector=self.connector, **kwargs)
 
     @deprecation_utils.method_renamed("TruSession.App")
     def Virtual(self, *args, **kwargs) -> base_app.App:

@@ -10,8 +10,8 @@ from unittest import TestCase
 import uuid
 
 import pytest
+from trulens.apps import app as app_module
 from trulens.apps import basic as basic_app
-from trulens.apps import custom as custom_app
 from trulens.apps import virtual as virtual_app
 from trulens.core import session as core_session
 from trulens.core.metric import metric as core_metric
@@ -185,17 +185,17 @@ class TestTru(TestCase):
                     with self.assertRaises(Exception):
                         basic_app.TruBasicApp(**{arg: app})
 
-        with self.subTest(type="TruCustomApp"):
+        with self.subTest(type="TruApp"):
             app = self._create_custom()
 
-            custom_app.TruCustomApp(app)
-            custom_app.TruCustomApp(app=app)
+            app_module.TruApp(app)
+            app_module.TruApp(app=app)
 
             # Not specifying callable should be an error.
             with self.assertRaises(Exception):
-                custom_app.TruCustomApp()
+                app_module.TruApp()
             with self.assertRaises(Exception):
-                custom_app.TruCustomApp(None)
+                app_module.TruApp(None)
 
             # Specifying custom app using any of these other argument names
             # should be an error.
@@ -203,7 +203,7 @@ class TestTru(TestCase):
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
-                        custom_app.TruCustomApp(**{arg: app})
+                        app_module.TruApp(**{arg: app})
 
         with self.subTest(type="TruVirtual"):
             virtual_app.TruVirtual(None)
@@ -281,7 +281,7 @@ class TestTru(TestCase):
 
         session = core_session.TruSession()
 
-        tru_app = custom_app.TruCustomApp(app)
+        tru_app = app_module.TruApp(app)
 
         with tru_app as recording:
             app.respond_to_query("hello")
@@ -337,7 +337,7 @@ class TestTru(TestCase):
 
         session = core_session.TruSession()
 
-        tru_app = custom_app.TruCustomApp(app)
+        tru_app = app_module.TruApp(app)
 
         with tru_app as recording:
             app.respond_to_query("hello")

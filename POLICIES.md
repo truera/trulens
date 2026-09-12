@@ -51,8 +51,6 @@ Some newer features like `App.run()`, `App.input()`, and
 | Deprecated | Replacement |
 |------------|-------------|
 | `Tru()` | `TruSession()` |
-| `TruCustomApp` | `TruApp` |
-| `from trulens.apps.custom import instrument` | `from trulens.apps.app import instrument` |
 | Custom `app_id` parameter | Use `app_name` and `app_version` |
 | `TruSession.update_record()` | `connector.db.insert_record()` |
 
@@ -61,7 +59,6 @@ Some newer features like `App.run()`, `App.input()`, and
 Use `TruSession.App()` instead of these deprecated methods:
 
 - `TruSession.Basic()`
-- `TruSession.Custom()`
 - `TruSession.Virtual()`
 - `TruSession.Chain()`
 - `TruSession.Llama()`
