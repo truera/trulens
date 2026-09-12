@@ -67,6 +67,21 @@ class TestGroundTruthAggregator(TestCase):
         ):
             self.aggregator.ece([(0.5, 0.8), (0.3, 0.7)])
 
+        # recall, precision and f1_score used to zip past the gap and score
+        # the surviving rows against the wrong labels.
+        for method in (
+            self.aggregator.recall,
+            self.aggregator.precision,
+            self.aggregator.f1_score,
+        ):
+            with self.assertRaises(
+                ValueError,
+                msg=f"{method.__name__} should reject mismatched lengths",
+            ):
+                method(short_scores)
+        with self.assertRaises(ValueError):
+            self.aggregator.recall([0.9] * (len(self.true_labels) + 1))
+
         # Test with invalid score types (should handle gracefully or raise clear errors)
         with self.assertRaises(
             (TypeError, ValueError), msg="Methods should handle invalid types"
