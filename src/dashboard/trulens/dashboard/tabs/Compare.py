@@ -14,7 +14,6 @@ from trulens.dashboard.constants import PINNED_COL_NAME
 from trulens.dashboard.utils.dashboard_utils import _get_event_otel_spans
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
-from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
 from trulens.dashboard.utils.dashboard_utils import (
     read_query_params_into_session_state,
 )
@@ -393,36 +392,33 @@ def _render_grid(
     num_comparators: int,
     grid_key: Optional[str] = None,
 ):
-    if not is_sis_compatibility_enabled():
-        try:
-            import st_aggrid
+    try:
+        import st_aggrid
 
-            columns_state = st.session_state.get(
-                f"{grid_key}.columns_state", None
-            )
+        columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
 
-            height = 1000 if len(df) > 20 else 45 * len(df) + 100
+        height = 1000 if len(df) > 20 else 45 * len(df) + 100
 
-            event = st_aggrid.AgGrid(
-                df,
-                # key=grid_key,
-                height=height,
-                columns_state=columns_state,
-                gridOptions=_build_grid_options(
-                    df=df,
-                    agg_diff_col=agg_diff_col,
-                    diff_cols=diff_cols,
-                    record_id_cols=record_id_cols,
-                    num_comparators=num_comparators,
-                ),
-                custom_css={**aggrid_css, **radio_button_css, **diff_cell_css},
-                update_on=["selectionChanged"],
-                allow_unsafe_jscode=True,
-            )
-            return pd.DataFrame(event.selected_rows)
-        except ImportError:
-            # Fallback to st.dataframe if st_aggrid is not installed
-            pass
+        event = st_aggrid.AgGrid(
+            df,
+            # key=grid_key,
+            height=height,
+            columns_state=columns_state,
+            gridOptions=_build_grid_options(
+                df=df,
+                agg_diff_col=agg_diff_col,
+                diff_cols=diff_cols,
+                record_id_cols=record_id_cols,
+                num_comparators=num_comparators,
+            ),
+            custom_css={**aggrid_css, **radio_button_css, **diff_cell_css},
+            update_on=["selectionChanged"],
+            allow_unsafe_jscode=True,
+        )
+        return pd.DataFrame(event.selected_rows)
+    except ImportError:
+        # Fallback to st.dataframe if st_aggrid is not installed
+        pass
 
     # Configure column help text for st.dataframe fallback
     column_config = {}
@@ -828,13 +824,7 @@ def render_app_comparison(app_name: str):
                 record_json = selected_row["record_json"]
                 app_json = selected_row["app_json"]
 
-                if is_sis_compatibility_enabled():
-                    st.subheader("Trace Details")
-                    st.json(record_json, expanded=1)
-
-                    st.subheader("App Details")
-                    st.json(app_json, expanded=1)
-                elif is_otel_tracing_enabled():
+                if is_otel_tracing_enabled():
                     event_spans = _get_event_otel_spans(
                         selected_row["record_id"], app_name
                     )

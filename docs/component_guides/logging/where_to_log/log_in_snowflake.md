@@ -47,9 +47,8 @@ connectors.
     the TruLens dashboard's **Trends** time-series views for evaluation metrics,
     latency, app cost, or evaluation cost.
 
-    The older `init_sis_dashboard=True` setup path for deploying the TruLens
-    Streamlit dashboard in Snowflake is deprecated. Use the managed Snowsight
-    UI for Snowflake-connected traces and evaluations.
+    TruLens does not provision a Streamlit dashboard in Snowflake. Use the
+    managed Snowsight UI for Snowflake-connected traces and evaluations.
 
 ---
 
