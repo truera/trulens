@@ -71,7 +71,7 @@ hotspots_df = get_hotspots(session, feedback="Comprehensiveness")
 
 ### As a part of a stand-alone Streamlit app
 
-It's easy to run TruLens Hotspots as a part of a [Streamlit](https://streamlit.io/) app, see [trulens/streamlit.py](trulens/streamlit.py) for helper
+It's easy to run TruLens Hotspots as a part of a [Streamlit](https://streamlit.io/) app, see [trulens/hotspots/hotspots_streamlit.py](trulens/hotspots/hotspots_streamlit.py) for helper
 functions and an example. You can run it as follows:
 
 ```bash
