@@ -1926,6 +1926,26 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
+name = "evalport-sdk"
+version = "1.3.1"
+description = "Python SDK for EvalPort — The Open Evaluation Standard"
+optional = false
+python-versions = ">=3.8"
+groups = ["required"]
+files = [
+    {file = "evalport_sdk-1.3.1-py3-none-any.whl", hash = "sha256:1fba7d5e933da09c04ebc9479347c4b852b47e696824081911bd70360904a41a"},
+    {file = "evalport_sdk-1.3.1.tar.gz", hash = "sha256:4172c31450bed6b2ed73243bdea91d939eee0be099476f6c6411bd0a59aa4884"},
+]
+
+[package.extras]
+test = ["jsonschema", "pytest"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
+
+[[package]]
 name = "exceptiongroup"
 version = "1.3.1"
 description = "Backport of PEP 654 (exception groups)"
@@ -12236,6 +12256,25 @@ type = "directory"
 url = "src/benchmark"
 
 [[package]]
+name = "trulens-connectors-openeval"
+version = "2.13.1"
+description = "Convert between TruLens Run records and EvalPort (https://github.com/adhabnr-ux/evalport) suites and result sets."
+optional = false
+python-versions = "^3.9"
+groups = ["required"]
+files = []
+develop = true
+
+[package.dependencies]
+evalport-sdk = ">=1.0.0"
+pandas = ">=1.0.0"
+trulens-core = "^2.0.0"
+
+[package.source]
+type = "directory"
+url = "src/connectors/openeval"
+
+[[package]]
 name = "trulens-connectors-snowflake"
 version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
@@ -13932,4 +13971,4 @@ otlp = ["opentelemetry-exporter-otlp-proto-grpc"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "cb032d20571ebbf5b831cf9de3561b1b9a53572409fa4565eed38eac5a41cf8e"
+content-hash = "c524c0d7960fcd4030aceebee670c53d9e84cf52fb969f578b46d03beee71c64"
