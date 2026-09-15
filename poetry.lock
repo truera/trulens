@@ -12083,7 +12083,7 @@ reference = "pypi-public"
 
 [[package]]
 name = "trulens-apps-claude"
-version = "2.13.1"
+version = "2.14.0"
 description = "Claude Code hook instrumentation plugin for TruLens."
 optional = false
 python-versions = "^3.9"
@@ -12100,7 +12100,7 @@ url = "src/apps/claude"
 
 [[package]]
 name = "trulens-apps-cursor"
-version = "2.13.1"
+version = "2.14.0"
 description = "Cursor hook instrumentation plugin for TruLens."
 optional = false
 python-versions = "^3.9"
@@ -12117,7 +12117,7 @@ url = "src/apps/cursor"
 
 [[package]]
 name = "trulens-apps-gepa"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -12134,7 +12134,7 @@ url = "src/apps/gepa"
 
 [[package]]
 name = "trulens-apps-langchain"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -12155,7 +12155,7 @@ url = "src/apps/langchain"
 
 [[package]]
 name = "trulens-apps-langgraph"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LangGraph based applications."
 optional = false
 python-versions = "^3.9"
@@ -12181,7 +12181,7 @@ url = "src/apps/langgraph"
 
 [[package]]
 name = "trulens-apps-llamaindex"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -12205,7 +12205,7 @@ url = "src/apps/llamaindex"
 
 [[package]]
 name = "trulens-apps-opencode"
-version = "2.13.1"
+version = "2.14.0"
 description = "OpenCode hook instrumentation plugin for TruLens."
 optional = false
 python-versions = "^3.9"
@@ -12222,7 +12222,7 @@ url = "src/apps/opencode"
 
 [[package]]
 name = "trulens-apps-rl"
-version = "2.13.1"
+version = "2.14.0"
 description = "RL reward integration for TruLens feedback metrics."
 optional = false
 python-versions = "^3.9"
@@ -12239,7 +12239,7 @@ url = "src/apps/rl"
 
 [[package]]
 name = "trulens-benchmark"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -12276,7 +12276,7 @@ url = "src/connectors/openeval"
 
 [[package]]
 name = "trulens-connectors-snowflake"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,<3.14"
@@ -12296,7 +12296,7 @@ url = "src/connectors/snowflake"
 
 [[package]]
 name = "trulens-core"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -12335,7 +12335,7 @@ url = "src/core"
 
 [[package]]
 name = "trulens-dashboard"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,!=3.9.7"
@@ -12365,7 +12365,7 @@ url = "src/dashboard"
 
 [[package]]
 name = "trulens-eval"
-version = "2.13.1"
+version = "2.14.0"
 description = "Backwards-compatibility package for API of trulens_eval<1.0.0 using API of trulens-*>=1.0.0."
 optional = false
 python-versions = "^3.9,!=3.9.7"
@@ -12384,7 +12384,7 @@ url = "src/trulens_eval"
 
 [[package]]
 name = "trulens-feedback"
-version = "2.13.1"
+version = "2.14.0"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "^3.9"
@@ -12407,7 +12407,7 @@ url = "src/feedback"
 
 [[package]]
 name = "trulens-hotspots"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library and command-line tool to list features lowering your evaluation score."
 optional = false
 python-versions = "^3.9"
@@ -12427,7 +12427,7 @@ url = "src/hotspots"
 
 [[package]]
 name = "trulens-otel-semconv"
-version = "2.13.1"
+version = "2.14.0"
 description = "Semantic conventions for spans produced by TruLens."
 optional = false
 python-versions = "^3.9"
@@ -12445,7 +12445,7 @@ url = "src/otel/semconv"
 
 [[package]]
 name = "trulens-providers-anthropic"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -12465,7 +12465,7 @@ url = "src/providers/anthropic"
 
 [[package]]
 name = "trulens-providers-bedrock"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -12485,7 +12485,7 @@ url = "src/providers/bedrock"
 
 [[package]]
 name = "trulens-providers-cortex"
-version = "2.13.1"
+version = "2.14.0"
 description = "A TruLens extension package adding Snowflake Cortex support for LLM App evaluation."
 optional = false
 python-versions = "^3.9,<3.14"
@@ -12508,7 +12508,7 @@ url = "src/providers/cortex"
 
 [[package]]
 name = "trulens-providers-google"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -12528,7 +12528,7 @@ url = "src/providers/google"
 
 [[package]]
 name = "trulens-providers-huggingface"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -12551,7 +12551,7 @@ url = "src/providers/huggingface"
 
 [[package]]
 name = "trulens-providers-langchain"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -12570,7 +12570,7 @@ url = "src/providers/langchain"
 
 [[package]]
 name = "trulens-providers-litellm"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -12589,7 +12589,7 @@ url = "src/providers/litellm"
 
 [[package]]
 name = "trulens-providers-ollama"
-version = "2.13.0"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -12611,7 +12611,7 @@ url = "src/providers/ollama"
 
 [[package]]
 name = "trulens-providers-openai"
-version = "2.13.1"
+version = "2.14.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"

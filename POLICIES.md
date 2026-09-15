@@ -32,6 +32,12 @@ will occur at the introduction of the warning period.
 
 ## Currently Deprecated Features
 
+### TruLens Hotspots
+
+The `trulens-hotspots` package is deprecated and has no direct replacement. It
+will continue to work during the warning period and will be removed after the
+deprecation process described above.
+
 ### Legacy Instrumentation
 
 The legacy stack-based instrumentation system is deprecated in favor of
@@ -51,8 +57,6 @@ Some newer features like `App.run()`, `App.input()`, and
 | Deprecated | Replacement |
 |------------|-------------|
 | `Tru()` | `TruSession()` |
-| `TruCustomApp` | `TruApp` |
-| `from trulens.apps.custom import instrument` | `from trulens.apps.app import instrument` |
 | Custom `app_id` parameter | Use `app_name` and `app_version` |
 | `TruSession.update_record()` | `connector.db.insert_record()` |
 
@@ -61,7 +65,6 @@ Some newer features like `App.run()`, `App.input()`, and
 Use `TruSession.App()` instead of these deprecated methods:
 
 - `TruSession.Basic()`
-- `TruSession.Custom()`
 - `TruSession.Virtual()`
 - `TruSession.Chain()`
 - `TruSession.Llama()`

@@ -28,6 +28,13 @@ from trulens.core.schema.feedback import FeedbackDefinition
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackResult
 from trulens.core.schema.groundtruth import GroundTruth
+from trulens.core.schema.prompt import Prompt
+from trulens.core.schema.prompt import PromptLabel
+from trulens.core.schema.prompt import PromptLabelHistory
+from trulens.core.schema.prompt import PromptType
+from trulens.core.schema.prompt import PromptVersion
+from trulens.core.schema.prompt import RenderedPrompt
+from trulens.core.schema.prompt import ResolvedPrompt
 from trulens.core.schema.record import Record
 from trulens.core.schema.select import Select
 
@@ -41,4 +48,11 @@ __all__ = [
     "Record",
     "GroundTruth",
     "Dataset",
+    "Prompt",
+    "PromptLabel",
+    "PromptLabelHistory",
+    "PromptType",
+    "PromptVersion",
+    "RenderedPrompt",
+    "ResolvedPrompt",
 ]

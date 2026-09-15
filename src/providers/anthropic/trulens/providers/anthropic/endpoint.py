@@ -13,6 +13,7 @@ from typing import (
 from litellm import model_cost
 import pydantic
 from trulens.core.feedback import endpoint as core_endpoint
+from trulens.core.schema import base as base_schema
 from trulens.otel.semconv.trace import SpanAttributes
 
 import anthropic
@@ -91,9 +92,9 @@ class AnthropicCallback(core_endpoint.EndpointCallback):
         super().handle_generation(response)
         cost_info = AnthropicCostComputer.handle_response(response)
 
-        addl_cost = core_endpoint.Cost(
+        addl_cost = base_schema.Cost(
             cost=cost_info.get(SpanAttributes.COST.COST, 0.0),
-            currency=cost_info.get(SpanAttributes.COST.CURRENCY, "USD"),
+            cost_currency=cost_info.get(SpanAttributes.COST.CURRENCY, "USD"),
             n_tokens=cost_info.get(SpanAttributes.COST.NUM_TOKENS, 0),
             n_prompt_tokens=cost_info.get(
                 SpanAttributes.COST.NUM_PROMPT_TOKENS, 0
@@ -190,9 +191,11 @@ class AnthropicEndpoint(core_endpoint.Endpoint):
 
         cost_info = AnthropicCostComputer.handle_response(response)
         for cb in callbacks:
-            addl_cost = core_endpoint.Cost(
+            addl_cost = base_schema.Cost(
                 cost=cost_info.get(SpanAttributes.COST.COST, 0.0),
-                currency=cost_info.get(SpanAttributes.COST.CURRENCY, "USD"),
+                cost_currency=cost_info.get(
+                    SpanAttributes.COST.CURRENCY, "USD"
+                ),
                 n_tokens=cost_info.get(SpanAttributes.COST.NUM_TOKENS, 0),
                 n_prompt_tokens=cost_info.get(
                     SpanAttributes.COST.NUM_PROMPT_TOKENS, 0

@@ -491,6 +491,34 @@ class SpanAttributes:
         CHUNKS_RECEIVED = base + ".chunks_received"
         """Number of chunks received over the stream."""
 
+    class PROMPT:
+        """Lineage back to a managed prompt version.
+
+        These identify which stored prompt produced a generation. They are
+        identifiers and hashes only, so lineage works whether or not GenAI
+        content capture is on, and no prompt body is copied into the span.
+        """
+
+        base = BASE_SCOPE + ".prompt"
+
+        ID = base + ".id"
+        """Stable id of the prompt."""
+
+        SLUG = base + ".slug"
+        """Stable slug of the prompt."""
+
+        VERSION_ID = base + ".version_id"
+        """Id of the exact version that was used."""
+
+        LABEL = base + ".label"
+        """Label that was requested, when the version came from one.
+
+        Absent when the caller asked for an exact version.
+        """
+
+        RENDERED_CONTENT_HASH = base + ".rendered_content_hash"
+        """Hash of the rendered content, not the content itself."""
+
     class GRAPH_TASK:
         """A graph task function execution."""
 

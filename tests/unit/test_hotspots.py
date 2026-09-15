@@ -1,3 +1,4 @@
+from pathlib import Path
 import re
 from unittest import TestCase
 
@@ -10,8 +11,24 @@ def clean_up_feature(feat: str) -> str:
     return re.sub(r"(\.\d{2})\d+$", r"\1", feat)
 
 
+_HOTSPOTS_INIT = (
+    Path(__file__).parents[2]
+    / "src"
+    / "hotspots"
+    / "trulens"
+    / "hotspots"
+    / "__init__.py"
+)
+
+
 class TestHotspots(TestCase):
     """Tests for hotspots."""
+
+    def test_package_deprecation_warning(self) -> None:
+        """The package __init__ contains a DeprecationWarning."""
+        source = _HOTSPOTS_INIT.read_text()
+        self.assertIn("DeprecationWarning", source)
+        self.assertIn("The `trulens-hotspots` package is deprecated", source)
 
     @pytest.mark.optional
     def test_simple(self) -> None:
