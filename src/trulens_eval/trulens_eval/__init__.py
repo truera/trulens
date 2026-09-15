@@ -18,7 +18,6 @@ __version__ = ".".join(map(str, __version_info__))
 
 from trulens.apps.app import TruApp
 from trulens.apps.basic import TruBasicApp
-from trulens.apps.custom import TruCustomApp
 from trulens.apps.virtual import TruVirtual
 from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.provider import Provider
@@ -89,7 +88,6 @@ __all__ = [
     # app types
     "TruBasicApp",
     "TruApp",
-    "TruCustomApp",
     "TruChain",
     "TruLlama",
     "TruVirtual",

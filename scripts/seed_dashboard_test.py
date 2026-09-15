@@ -229,8 +229,8 @@ def _seed_app_definitions(db, app_versions_flat):
             app_name=app_name,
             app_version=app_version,
             root_class={
-                "name": "TruCustomApp",
-                "module": {"module_name": "trulens.apps.custom"},
+                "name": "TruApp",
+                "module": {"module_name": "trulens.apps.app"},
             },
             app={},
             metadata=metadata,

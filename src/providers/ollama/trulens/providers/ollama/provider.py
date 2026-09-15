@@ -140,12 +140,19 @@ class Ollama(openai_provider.OpenAI):
             model_engine = self.DEFAULT_MODEL_ENGINE
 
         if base_url is None:
-            base_url = os.environ.get("OLLAMA_BASE_URL", self.DEFAULT_BASE_URL)
+            # A blank OLLAMA_BASE_URL (common in .env templates) is unset, not
+            # an empty server address. os.environ.get returns "" when the
+            # variable is present but empty, which would otherwise replace the
+            # local default.
+            base_url = (
+                os.environ.get("OLLAMA_BASE_URL") or self.DEFAULT_BASE_URL
+            )
 
         if api_key is None:
             # Ollama does not require an API key, but the underlying OpenAI
-            # client requires the value to be a non-empty string.
-            api_key = os.environ.get("OLLAMA_API_KEY", "ollama")
+            # client requires the value to be a non-empty string. Treat a blank
+            # OLLAMA_API_KEY the same as unset so construction still succeeds.
+            api_key = os.environ.get("OLLAMA_API_KEY") or "ollama"
 
         super().__init__(
             *args,
