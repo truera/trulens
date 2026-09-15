@@ -376,8 +376,6 @@ class App(
         apps.
     - [TruVirtual][trulens.apps.virtual.TruVirtual] for recording
         information about invocations of apps without access to those apps.
-    - `TruCustomApp` (To be deprecated in favor of TruApp) for custom
-        apps. These need to be decorated to have appropriate data recorded.
     - [TruApp][trulens.apps.app.TruApp] for custom
         apps allowing maximized flexibility. These need to be decorated to have appropriate data recorded.
     - [TruBasicApp][trulens.apps.basic.TruBasicApp] for apps defined

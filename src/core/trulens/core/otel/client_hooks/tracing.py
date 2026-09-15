@@ -24,7 +24,12 @@ from trulens.otel.semconv.trace import SpanAttributes
 
 def _otel_id(seed: str, bits: int) -> int:
     size = bits // 8
-    value = int.from_bytes(hashlib.sha256(seed.encode()).digest()[:size])
+    # byteorder is required on Python 3.10 (it only became optional, defaulting
+    # to "big", in 3.11), so pass it explicitly. "big" matches the 3.11+ default,
+    # keeping ids unchanged on newer versions.
+    value = int.from_bytes(
+        hashlib.sha256(seed.encode()).digest()[:size], byteorder="big"
+    )
     return value or 1
 
 

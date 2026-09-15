@@ -518,6 +518,53 @@ def get_feedback_defs():
     return feedback_defs, feedback_directions
 
 
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting prompts"
+)
+def get_prompts():
+    session = get_session()
+    lms = session.connector.db
+    assert lms
+    return lms.get_prompts()
+
+
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting prompt versions"
+)
+def get_prompt_versions(prompt_id: str):
+    session = get_session()
+    lms = session.connector.db
+    assert lms
+    return lms.get_prompt_versions(prompt_id)
+
+
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting prompt labels"
+)
+def get_prompt_labels(prompt_id: str):
+    session = get_session()
+    lms = session.connector.db
+    assert lms
+    return lms.get_prompt_labels(prompt_id)
+
+
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting label history"
+)
+def get_prompt_label_history(prompt_id: str, label: Optional[str] = None):
+    session = get_session()
+    lms = session.connector.db
+    assert lms
+    return lms.get_prompt_label_history(prompt_id, label=label)
+
+
+def get_prompt_version(version_id: str):
+    session = get_session()
+    lms = session.connector.db
+    assert lms
+    return lms.get_prompt_version(version_id)
+
+
 def update_app_metadata(app_id: str, metadata: dict):
     session = get_session()
     lms = session.connector.db

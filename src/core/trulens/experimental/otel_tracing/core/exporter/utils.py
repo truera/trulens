@@ -120,7 +120,40 @@ def convert_readable_span_to_proto(span: ReadableSpan) -> SpanProto:
     span_proto.attributes.append(
         KeyValue(key="name", value=convert_to_any_value(span.name))
     )
+    for event in span.events or ():
+        proto_event = span_proto.events.add()
+        proto_event.name = event.name
+        proto_event.time_unix_nano = event.timestamp or 0
+        for key, value in (event.attributes or {}).items():
+            proto_event.attributes.append(
+                KeyValue(key=key, value=convert_to_any_value(value))
+            )
     return span_proto
+
+
+def convert_span_events(span: ReadableSpan) -> list:
+    """Serialise a span's OTEL events into JSON-friendly dictionaries.
+
+    Span events carry GenAI message content (see
+    [add_genai_inference_event][trulens.experimental.otel_tracing.core.span.add_genai_inference_event]),
+    which is gated behind the content-capture policy and therefore absent unless
+    the user opted in.
+
+    Args:
+        span: The span whose events should be serialised.
+
+    Returns:
+        One dictionary per event, each with `name`, `timestamp`, and
+        `attributes`. Empty when the span has no events.
+    """
+    return [
+        {
+            "name": event.name,
+            "timestamp": event.timestamp,
+            "attributes": dict(event.attributes or {}),
+        }
+        for event in span.events or ()
+    ]
 
 
 def to_timestamp(timestamp: Optional[int]) -> datetime:
@@ -164,18 +197,25 @@ def construct_event(span: ReadableSpan) -> event_schema.Event:
     if context is None:
         raise ValueError("Span context is None")
 
+    record = {
+        "name": span.name,
+        "kind": _SPAN_KIND_TO_PROTO.get(
+            span.kind, SpanProto.SpanKind.SPAN_KIND_INTERNAL
+        ),
+        "parent_span_id": str(parent.span_id if parent else ""),
+        "status": "STATUS_CODE_ERROR"
+        if span.status.status_code == StatusCode.ERROR
+        else "STATUS_CODE_UNSET",
+    }
+    # Only present the key when there is something to record, so spans without
+    # events (the default, since content capture is opt-in) are unchanged.
+    events = convert_span_events(span)
+    if events:
+        record["events"] = events
+
     ret = event_schema.Event(
         event_id=str(context.span_id),
-        record={
-            "name": span.name,
-            "kind": _SPAN_KIND_TO_PROTO.get(
-                span.kind, SpanProto.SpanKind.SPAN_KIND_INTERNAL
-            ),
-            "parent_span_id": str(parent.span_id if parent else ""),
-            "status": "STATUS_CODE_ERROR"
-            if span.status.status_code == StatusCode.ERROR
-            else "STATUS_CODE_UNSET",
-        },
+        record=record,
         record_attributes=span.attributes,
         record_type=event_schema.EventRecordType.SPAN,
         resource_attributes=span.resource.attributes,

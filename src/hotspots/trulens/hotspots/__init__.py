@@ -1,6 +1,7 @@
 # WARNING: This file does not follow the no-init aliases import standard.
 
 from importlib.metadata import version
+import warnings
 
 from trulens.core.utils import imports as import_utils
 from trulens.hotspots.hotspots import HotspotsConfig
@@ -9,6 +10,14 @@ from trulens.hotspots.hotspots import hotspots
 from trulens.hotspots.hotspots import hotspots_as_df
 from trulens.hotspots.hotspots import hotspots_dict_to_df
 from trulens.hotspots.hotspots import main
+
+warnings.warn(
+    "The `trulens-hotspots` package is deprecated and will be removed after "
+    "the deprecation process documented in POLICIES.md. There is no direct "
+    "replacement.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 __version__ = version(
     import_utils.safe_importlib_package_name(__package__ or __name__)

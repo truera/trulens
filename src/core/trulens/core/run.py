@@ -1357,7 +1357,7 @@ class Run(BaseModel):
         if computed_metrics:
             return (
                 f"Cannot compute metrics because the following metric(s) are already computed or in progress: "
-                f"{', '.join(computed_metrics)}. If you want to recompute, please cancel the run and start a new one."
+                f"{', '.join(m if isinstance(m, str) else m.name for m in computed_metrics)}. If you want to recompute, please cancel the run and start a new one."
             )
 
         # Separate client-side and server-side metrics

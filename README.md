@@ -96,7 +96,7 @@ TruLens instrumentation is built on [OpenTelemetry](https://opentelemetry.io/).
 Every function call, LLM generation, retrieval, and tool invocation is captured
 as a structured OTEL span. This makes TruLens interoperable with existing
 observability infrastructure — export traces to Jaeger, Grafana Tempo, Datadog,
-or any OTLP-compatible backend.
+New Relic, or any OTLP-compatible backend.
 
 ```python
 from trulens.core.otel.instrument import instrument

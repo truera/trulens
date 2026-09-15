@@ -4,7 +4,7 @@ Exporting spans is not sufficient to make a turn observable. A run's displayed
 status is derived from its run metadata, not from the presence of spans, and the
 only writer that creates and completes invocation metadata is the ingestion
 query started through
-[RunDaoBase.start_ingestion_query][trulens.core.dao.run.RunDaoBase.start_ingestion_query].
+`RunDaoBase.start_ingestion_query`.
 Without it a run stays non-terminal forever and renders as perpetually
 in-progress.
 

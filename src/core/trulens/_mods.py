@@ -7,7 +7,6 @@ import this module otherwise.
 """
 
 from trulens.apps import basic as basic_app
-from trulens.apps import custom as custom_app
 from trulens.apps import virtual as virtual_app
 from trulens.apps.langchain import guardrails as langchain_guardrails
 from trulens.apps.langchain import langchain as langchain_app
