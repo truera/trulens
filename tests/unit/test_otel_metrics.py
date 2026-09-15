@@ -52,9 +52,7 @@ def _has_otlp_http_exporter() -> bool:
     """Return whether the optional OTLP HTTP exporter package is installed."""
     try:
         return (
-            find_spec(
-                "opentelemetry.exporter.otlp.proto.http.trace_exporter"
-            )
+            find_spec("opentelemetry.exporter.otlp.proto.http.trace_exporter")
             is not None
         )
     except ModuleNotFoundError:
@@ -208,9 +206,12 @@ class TestOtelMetricsSpanProcessor(unittest.TestCase):
             if key != "OTEL_EXPORTER_OTLP_PROTOCOL"
             and key != "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL"
         }
-        with mock.patch(
-            "builtins.__import__", side_effect=import_without_otlp_exporter
-        ), mock.patch.dict(os.environ, env_without_protocol, clear=True):
+        with (
+            mock.patch(
+                "builtins.__import__", side_effect=import_without_otlp_exporter
+            ),
+            mock.patch.dict(os.environ, env_without_protocol, clear=True),
+        ):
             with self.assertRaisesRegex(
                 ImportError, r'pip install "trulens\[otlp\]"'
             ):
@@ -230,9 +231,12 @@ class TestOtelMetricsSpanProcessor(unittest.TestCase):
             if key != "OTEL_EXPORTER_OTLP_PROTOCOL"
             and key != "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL"
         }
-        with mock.patch(
-            "builtins.__import__", side_effect=import_without_otlp_exporter
-        ), mock.patch.dict(os.environ, env_without_protocol, clear=True):
+        with (
+            mock.patch(
+                "builtins.__import__", side_effect=import_without_otlp_exporter
+            ),
+            mock.patch.dict(os.environ, env_without_protocol, clear=True),
+        ):
             with self.assertRaisesRegex(
                 ImportError, r'pip install "trulens\[otlp\]"'
             ):
@@ -242,9 +246,7 @@ class TestOtelMetricsSpanProcessor(unittest.TestCase):
 
     def test_otlp_factory_rejects_unknown_protocol(self):
         with self.assertRaisesRegex(ValueError, "http/protobuf"):
-            _create_otlp_exporters(
-                "http://localhost:4317", "carrier-pigeon"
-            )
+            _create_otlp_exporters("http://localhost:4317", "carrier-pigeon")
 
     @unittest.skipUnless(
         _has_otlp_exporter(),

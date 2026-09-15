@@ -332,7 +332,10 @@ class TruSession(
 
         # Merge public span_exporter into the internal slot; auto-enable
         # OTEL tracing when an explicit exporter is provided.
-        if span_exporter is not None and _experimental_otel_exporter is not None:
+        if (
+            span_exporter is not None
+            and _experimental_otel_exporter is not None
+        ):
             raise ValueError(
                 "Cannot combine `span_exporter` with "
                 "`_experimental_otel_exporter`."
@@ -366,9 +369,7 @@ class TruSession(
             raise ValueError('`otlp_endpoint` requires `otel_exporter="otlp"`.')
 
         if otlp_protocol is not None and otel_exporter != "otlp":
-            raise ValueError(
-                '`otlp_protocol` requires `otel_exporter="otlp".'
-            )
+            raise ValueError('`otlp_protocol` requires `otel_exporter="otlp"`.')
         if otlp_protocol is not None:
             otlp_protocol = otlp_protocol.lower()
             if otlp_protocol not in {"grpc", "http/protobuf", "http_proto"}:
