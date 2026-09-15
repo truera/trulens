@@ -146,6 +146,60 @@ class TestLeaderboardPreOtel(TruTestCase):
         self.assertEqual(len(df), 1)
         self.assertEqual(df.iloc[0]["app_name"], "appA")
 
+    def test_leaderboard_mixed_currency_split(self):
+        """USD and Snowflake Credits costs are reported in separate columns."""
+        tru_session = self._make_session()
+        db = tru_session.connector.db
+
+        app_id = "mixed_app_v1"
+        with db.session.begin() as s:
+            s.add(
+                db.orm.AppDefinition(
+                    app_id=app_id,
+                    app_name="mixed_app",
+                    app_version="v1",
+                    app_json='{"app_name": "mixed_app", "app_version": "v1"}',
+                )
+            )
+
+        now = datetime.datetime.now(tz=datetime.timezone.utc)
+        perf = json.dumps({
+            "start_time": now.isoformat(),
+            "end_time": (now + datetime.timedelta(seconds=1)).isoformat(),
+        })
+
+        records = [
+            ("rec_usd_1", json.dumps({"n_tokens": 100, "cost": 5.0, "cost_currency": "USD"})),
+            ("rec_usd_2", json.dumps({"n_tokens": 200, "cost": 5.0, "cost_currency": "USD"})),
+            ("rec_sf_1", json.dumps({"n_tokens": 0, "cost": 400.0, "cost_currency": "Snowflake credits"})),
+            ("rec_sf_2", json.dumps({"n_tokens": 0, "cost": 600.0, "cost_currency": "Snowflake credits"})),
+        ]
+        with db.session.begin() as s:
+            for rid, cost_json in records:
+                s.add(
+                    db.orm.Record(
+                        record_id=rid,
+                        app_id=app_id,
+                        input="q",
+                        output="a",
+                        record_json="{}",
+                        cost_json=cost_json,
+                        perf_json=perf,
+                        ts=now.timestamp(),
+                        tags="",
+                    )
+                )
+
+        df, _ = db._get_leaderboard_aggregates_pre_otel()
+
+        self.assertFalse(df.empty)
+        self.assertIn("Total Cost (USD)", df.columns)
+        self.assertIn("Total Cost (Snowflake Credits)", df.columns)
+
+        row = df.iloc[0]
+        self.assertAlmostEqual(float(row["Total Cost (USD)"]), 10.0, places=4)
+        self.assertAlmostEqual(float(row["Total Cost (Snowflake Credits)"]), 1000.0, places=4)
+
 
 if __name__ == "__main__":
     unittest.main()

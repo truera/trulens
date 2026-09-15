@@ -1738,6 +1738,9 @@ class SQLAlchemyDB(core_db.DB):
             ),
             sa.Float,
         )
+        currency_expr = self._json_path_expr(
+            self.orm.Record.cost_json, "cost_currency"
+        )
 
         # Dialect-aware average latency from ISO datetime strings in perf_json.
         start_str = self._json_path_expr(
@@ -1768,7 +1771,18 @@ class SQLAlchemyDB(core_db.DB):
                 ),
                 sa.func.sum(n_tokens_expr).label("Total Tokens"),
                 latency_expr.label("Average Latency (s)"),
-                sa.func.sum(cost_expr).label("Total Cost (USD)"),
+                sa.func.sum(
+                    sa.case(
+                        (currency_expr == sa.literal("Snowflake credits"), 0.0),
+                        else_=cost_expr,
+                    )
+                ).label("Total Cost (USD)"),
+                sa.func.sum(
+                    sa.case(
+                        (currency_expr == sa.literal("Snowflake credits"), cost_expr),
+                        else_=0.0,
+                    )
+                ).label("Total Cost (Snowflake Credits)"),
             ).join(self.orm.Record.app)
             if app_name:
                 record_stmt = record_stmt.where(
@@ -1829,6 +1843,7 @@ class SQLAlchemyDB(core_db.DB):
                 "Total Tokens",
                 "Average Latency (s)",
                 "Total Cost (USD)",
+                "Total Cost (Snowflake Credits)",
             ],
         )
         if base_df.empty:
@@ -1841,13 +1856,12 @@ class SQLAlchemyDB(core_db.DB):
                     "Total Tokens",
                     "Average Latency (s)",
                     "Total Cost (USD)",
+                    "Total Cost (Snowflake Credits)",
                 ]
             )
-            empty["Total Cost (Snowflake Credits)"] = pd.Series(dtype=float)
             empty["tags"] = pd.Series(dtype=str)
             return empty, []
 
-        base_df["Total Cost (Snowflake Credits)"] = 0.0
         base_df["tags"] = ""
 
         feedback_col_names = []
