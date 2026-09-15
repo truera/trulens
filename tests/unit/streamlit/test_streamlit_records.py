@@ -1,4 +1,6 @@
+import numpy as np
 import pandas as pd
+from trulens.dashboard.tabs.Records import _build_thread_grid_options
 from trulens.dashboard.tabs.Records import _build_thread_summary
 from trulens.dashboard.tabs.Records import _conversation_metric_row
 from trulens.dashboard.tabs.Records import _conversation_turn_html
@@ -47,6 +49,27 @@ def test_preprocess_filters_skipped_records():
     result = _preprocess_df(_records(), online_eval_filter="Skipped")
 
     assert set(result["record_id"]) == {"record-1", "record-2"}
+
+
+def test_preprocess_search_query_survives_nan_output_column():
+    # A column of all-missing outputs (e.g. SQL NULLs) round-trips as
+    # float64, not object/string, which used to crash the search box's
+    # `.str.contains` call with an AttributeError.
+    df = _records()
+    df["output"] = pd.Series([np.nan] * 5, index=df.index, dtype="float64")
+
+    result = _preprocess_df(df, record_query="input 2")
+
+    assert set(result["record_id"]) == {"record-2"}
+
+
+def test_preprocess_search_query_survives_numeric_app_version():
+    df = _records()
+    df["app_version"] = [1, 1, 1, 1, 1]
+
+    result = _preprocess_df(df, record_query="input 3")
+
+    assert set(result["record_id"]) == {"record-3"}
 
 
 def test_conversation_bubbles_use_theme_colors():
@@ -248,3 +271,49 @@ def test_thread_summary_turn_metric_still_averaged():
 
     summary = _build_thread_summary(df, ["Answer Relevance"])
     assert summary.iloc[0]["Answer Relevance"] == 0.5
+
+
+def test_thread_grid_header_labels_conversation_vs_turn_metrics():
+    """Regression for the #2725 follow-up: conversation-scoped metric columns
+    show the latest value per thread, so their header must read "(latest)",
+    while turn-scoped metrics keep "(avg)"."""
+    summary = pd.DataFrame({
+        "thread_key": ["t1"],
+        "app_name": ["a"],
+        "app_version": ["v1"],
+        "app_id": ["id"],
+        "num_messages": [2],
+        "matched_turn_count": [1],
+        "total_turn_count": [2],
+        "first_input": ["q"],
+        "last_output": ["o"],
+        "start_ts": ["2026-01-01"],
+        "ts": ["2026-01-02"],
+        "total_tokens": [1],
+        "total_cost": [0.0],
+        "cost_currency": ["USD"],
+        "latency": [1.0],
+        "is_thread": [True],
+        "conversation_id": ["c1"],
+        "record_id": [None],
+        "Topic Adherence": [0.0],
+        "Answer Relevance": [0.5],
+    })
+
+    options = _build_thread_grid_options(
+        df=summary,
+        feedback_col_names=["Topic Adherence", "Answer Relevance"],
+        feedback_directions={
+            "Topic Adherence": True,
+            "Answer Relevance": True,
+        },
+        conversation_cols=["Topic Adherence"],
+    )
+
+    headers = {
+        c["field"]: c.get("headerName")
+        for c in options["columnDefs"]
+        if c.get("field") in ("Topic Adherence", "Answer Relevance")
+    }
+    assert headers["Topic Adherence"] == "Topic Adherence (latest)"
+    assert headers["Answer Relevance"] == "Answer Relevance (avg)"

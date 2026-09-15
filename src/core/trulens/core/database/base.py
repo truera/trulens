@@ -23,6 +23,7 @@ from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
+from trulens.core.schema import prompt as prompt_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.schema.event import Event
@@ -660,6 +661,167 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         """
         raise NotImplementedError()
 
+    # Prompt management.
+    #
+    # These are not abstract so that a database implementation that has no
+    # prompt storage keeps working without change.
+
+    def insert_prompt(
+        self, prompt: prompt_schema.Prompt
+    ) -> types_schema.PromptID:
+        """Insert a prompt, or update the metadata of an existing one.
+
+        The prompt id is derived from the slug, so re-inserting the same slug
+        updates the name, description, and tags in place.
+
+        Args:
+            prompt: The prompt to insert.
+
+        Returns:
+            The id of the given prompt.
+
+        Raises:
+            ValueError: If a prompt with the same slug exists with a different
+                prompt type.
+        """
+        raise NotImplementedError()
+
+    def get_prompt(
+        self,
+        prompt_id: Optional[types_schema.PromptID] = None,
+        slug: Optional[str] = None,
+    ) -> Optional[prompt_schema.Prompt]:
+        """Get one prompt by id or by slug.
+
+        Args:
+            prompt_id: The id to look up.
+            slug: The slug to look up. Ignored when `prompt_id` is given.
+
+        Returns:
+            The prompt, or None when it does not exist.
+        """
+        raise NotImplementedError()
+
+    def get_prompts(self) -> pd.DataFrame:
+        """Get all prompts from the database.
+
+        Returns:
+            A dataframe with the prompts.
+        """
+        raise NotImplementedError()
+
+    def insert_prompt_version(
+        self,
+        version: prompt_schema.PromptVersion,
+        move_latest: bool = True,
+    ) -> types_schema.PromptVersionID:
+        """Insert an immutable prompt version.
+
+        Inserting a version that already exists is a no-op, which makes
+        creation idempotent.
+
+        Args:
+            version: The version to insert.
+            move_latest: Whether to move the `latest` label onto this version
+                in the same transaction.
+
+        Returns:
+            The id of the given version.
+        """
+        raise NotImplementedError()
+
+    def get_prompt_version(
+        self, version_id: types_schema.PromptVersionID
+    ) -> Optional[prompt_schema.PromptVersion]:
+        """Get one exact prompt version.
+
+        Args:
+            version_id: The version to look up.
+
+        Returns:
+            The version, or None when it does not exist.
+        """
+        raise NotImplementedError()
+
+    def get_prompt_versions(
+        self, prompt_id: types_schema.PromptID
+    ) -> pd.DataFrame:
+        """Get every version of a prompt, oldest first.
+
+        Args:
+            prompt_id: The prompt whose versions to list.
+
+        Returns:
+            A dataframe with the versions.
+        """
+        raise NotImplementedError()
+
+    def set_prompt_label(
+        self,
+        prompt_id: types_schema.PromptID,
+        label: str,
+        version_id: types_schema.PromptVersionID,
+        moved_by: Optional[str] = None,
+    ) -> prompt_schema.PromptLabel:
+        """Point a label at one exact version and record the movement.
+
+        Args:
+            prompt_id: The prompt whose label to move.
+            label: The label name.
+            version_id: The version to point at.
+            moved_by: Caller label written to the history entry.
+
+        Returns:
+            The resulting label pointer.
+
+        Raises:
+            ValueError: If the version does not belong to the prompt.
+        """
+        raise NotImplementedError()
+
+    def get_prompt_label(
+        self, prompt_id: types_schema.PromptID, label: str
+    ) -> Optional[prompt_schema.PromptLabel]:
+        """Get the current pointer for one label.
+
+        Args:
+            prompt_id: The prompt to look in.
+            label: The label name.
+
+        Returns:
+            The label pointer, or None when the label is unset.
+        """
+        raise NotImplementedError()
+
+    def get_prompt_labels(
+        self, prompt_id: types_schema.PromptID
+    ) -> pd.DataFrame:
+        """Get every label of a prompt.
+
+        Args:
+            prompt_id: The prompt whose labels to list.
+
+        Returns:
+            A dataframe with the labels.
+        """
+        raise NotImplementedError()
+
+    def get_prompt_label_history(
+        self,
+        prompt_id: types_schema.PromptID,
+        label: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """Get the append-only history of label movements, newest first.
+
+        Args:
+            prompt_id: The prompt whose history to read.
+            label: Restrict to one label when given.
+
+        Returns:
+            A dataframe with the history entries.
+        """
+        raise NotImplementedError()
+
     @abc.abstractmethod
     def insert_event(self, event: event_schema.Event) -> types_schema.EventID:
         """Insert an event into the database.
@@ -874,13 +1036,22 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                         record_attributes.get(SpanAttributes.SPAN_TYPE)
                         == SpanAttributes.SpanType.EVAL_ROOT.value
                     ):
-                        # NOTE: EVAL_ROOT.SCORE should provide the mean score of all related EVAL spans
-                        feedback_result["mean_score"] = eval_root_score
-                        # TODO(SNOW-2112879): HIGHER_IS_BETTER has not been populated in the OTEL spans yet
-                        feedback_result["direction"] = record_attributes.get(
-                            SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER,
-                            None,
-                        )
+                        # A record and metric can have several EVAL_ROOT spans
+                        # when the metric is re-evaluated. Keep the latest one by
+                        # timestamp so the reported score is deterministic rather
+                        # than whichever span happens to be iterated last.
+                        prev_ts = feedback_result.get("_score_ts")
+                        if prev_ts is None or event.start_timestamp >= prev_ts:
+                            feedback_result["_score_ts"] = event.start_timestamp
+                            # NOTE: EVAL_ROOT.SCORE should provide the mean score of all related EVAL spans
+                            feedback_result["mean_score"] = eval_root_score
+                            # TODO(SNOW-2112879): HIGHER_IS_BETTER has not been populated in the OTEL spans yet
+                            feedback_result["direction"] = (
+                                record_attributes.get(
+                                    SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER,
+                                    None,
+                                )
+                            )
                         # Add call data for EVAL_ROOT spans
                         args_span_id = self._extract_namespaced_attributes(
                             record_attributes,
@@ -1019,6 +1190,9 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             for feedback_name, feedback_result in record_data[
                 "feedback_results"
             ].items():
+                # Drop the internal latest-score timestamp used only to pick the
+                # most recent EVAL_ROOT; it is not part of the public schema.
+                feedback_result.pop("_score_ts", None)
                 # NOTE: we use the mean score as the feedback result
                 record_row[feedback_name] = feedback_result["mean_score"]
 

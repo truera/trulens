@@ -29,6 +29,7 @@ from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
+from trulens.core.schema import prompt as prompt_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import json as json_utils
 
@@ -123,6 +124,10 @@ class ORM(abc.ABC, Generic[T]):
     Dataset: Type[T]
     Event: Type[T]
     Run: Type[T]
+    Prompt: Type[T]
+    PromptVersion: Type[T]
+    PromptLabel: Type[T]
+    PromptLabelHistory: Type[T]
 
 
 def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
@@ -406,6 +411,143 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                 return cls(
                     dataset_id=obj.dataset_id,
                     dataset_json=obj.model_dump_json(redact_keys=redact_keys),
+                )
+
+        class Prompt(base):
+            """ORM class for [Prompt][trulens.core.schema.prompt.Prompt]."""
+
+            _table_base_name = "prompts"
+
+            prompt_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            slug = Column(VARCHAR(256), nullable=False)
+            prompt_type = Column(TYPE_ENUM, nullable=False)
+            prompt_json = Column(TYPE_JSON, nullable=False)
+
+            __table_args__ = (UniqueConstraint("slug"),)
+
+            @classmethod
+            def parse(
+                cls,
+                obj: prompt_schema.Prompt,
+                redact_keys: bool = False,
+            ) -> ORM.Prompt:
+                return cls(
+                    prompt_id=obj.prompt_id,
+                    slug=obj.slug,
+                    prompt_type=obj.prompt_type.value,
+                    prompt_json=obj.model_dump_json(redact_keys=redact_keys),
+                )
+
+        class PromptVersion(base):
+            """ORM class for
+            [PromptVersion][trulens.core.schema.prompt.PromptVersion]."""
+
+            _table_base_name = "prompt_versions"
+
+            version_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            prompt_id = Column(
+                TYPE_ID,
+                ForeignKey(f"{prefix}prompts.prompt_id"),
+                nullable=False,
+            )
+            parent_version_id = Column(TYPE_ID, nullable=True)
+            content_hash = Column(TYPE_ID, nullable=False)
+            created_at = Column(TYPE_TIMESTAMP, nullable=False)
+            prompt_version_json = Column(TYPE_JSON, nullable=False)
+
+            prompt = relationship(
+                "Prompt",
+                backref=backref(
+                    "versions",
+                    cascade="all,delete",
+                    order_by=created_at,
+                ),
+            )
+            # See NOTE(backref order_by).
+
+            @classmethod
+            def parse(
+                cls,
+                obj: prompt_schema.PromptVersion,
+                redact_keys: bool = False,
+            ) -> ORM.PromptVersion:
+                return cls(
+                    version_id=obj.version_id,
+                    prompt_id=obj.prompt_id,
+                    parent_version_id=obj.parent_version_id,
+                    content_hash=obj.content_hash,
+                    created_at=obj.created_at.timestamp(),
+                    prompt_version_json=obj.model_dump_json(
+                        redact_keys=redact_keys
+                    ),
+                )
+
+        class PromptLabel(base):
+            """ORM class for
+            [PromptLabel][trulens.core.schema.prompt.PromptLabel].
+
+            The composite primary key is what keeps one current pointer per
+            `(prompt_id, label)` when several processes move a label at once.
+            """
+
+            _table_base_name = "prompt_labels"
+
+            prompt_id = Column(
+                TYPE_ID,
+                ForeignKey(f"{prefix}prompts.prompt_id"),
+                nullable=False,
+                primary_key=True,
+            )
+            label = Column(VARCHAR(256), nullable=False, primary_key=True)
+            version_id = Column(TYPE_ID, nullable=False)
+            updated_at = Column(TYPE_TIMESTAMP, nullable=False)
+
+            @classmethod
+            def parse(
+                cls,
+                obj: prompt_schema.PromptLabel,
+                redact_keys: bool = False,
+            ) -> ORM.PromptLabel:
+                return cls(
+                    prompt_id=obj.prompt_id,
+                    label=obj.label,
+                    version_id=obj.version_id,
+                    updated_at=obj.updated_at.timestamp(),
+                )
+
+        class PromptLabelHistory(base):
+            """ORM class for
+            [PromptLabelHistory][trulens.core.schema.prompt.PromptLabelHistory].
+            """
+
+            _table_base_name = "prompt_label_history"
+
+            history_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            prompt_id = Column(
+                TYPE_ID,
+                ForeignKey(f"{prefix}prompts.prompt_id"),
+                nullable=False,
+            )
+            label = Column(VARCHAR(256), nullable=False)
+            previous_version_id = Column(TYPE_ID, nullable=True)
+            new_version_id = Column(TYPE_ID, nullable=False)
+            moved_by = Column(VARCHAR(256), nullable=True)
+            timestamp = Column(TYPE_TIMESTAMP, nullable=False)
+
+            @classmethod
+            def parse(
+                cls,
+                obj: prompt_schema.PromptLabelHistory,
+                redact_keys: bool = False,
+            ) -> ORM.PromptLabelHistory:
+                return cls(
+                    history_id=obj.history_id,
+                    prompt_id=obj.prompt_id,
+                    label=obj.label,
+                    previous_version_id=obj.previous_version_id,
+                    new_version_id=obj.new_version_id,
+                    moved_by=obj.moved_by,
+                    timestamp=obj.timestamp.timestamp(),
                 )
 
         class Run(base):

@@ -549,3 +549,36 @@ class TestDatasetGroundTruthRoundTrip(TestCase):
         with clean_db("sqlite_file") as db:
             db.migrate_database()
             self.assertIsNone(db.get_ground_truth("does-not-exist"))
+
+
+class TestFeedbackDefinitionUpsert(TestCase):
+    """Regression test for a silent update loss.
+
+    ``insert_feedback_definition`` is an upsert. Its update branch assigned the
+    serialized definition to ``app_json``, which is not a column on the
+    ``FeedbackDefinition`` ORM (its JSON column is ``feedback_json``), so the
+    stray attribute was accepted by SQLAlchemy and the real column was never
+    updated. Re-inserting an existing id therefore dropped the change silently.
+    """
+
+    def test_reinsert_updates_definition(self) -> None:
+        from trulens.core.schema.feedback import FeedbackDefinition
+
+        with clean_db("sqlite_file") as db:
+            db.migrate_database()
+
+            db.insert_feedback_definition(
+                FeedbackDefinition(
+                    feedback_definition_id="fd1", supplied_name="ORIGINAL"
+                )
+            )
+            db.insert_feedback_definition(
+                FeedbackDefinition(
+                    feedback_definition_id="fd1", supplied_name="UPDATED"
+                )
+            )
+
+            defs = db.get_feedback_defs(feedback_definition_id="fd1")
+            self.assertEqual(len(defs), 1)
+            stored = defs.iloc[0]["feedback_json"]
+            self.assertEqual(stored["supplied_name"], "UPDATED")
