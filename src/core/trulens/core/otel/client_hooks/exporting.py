@@ -1,4 +1,19 @@
-"""Destination configuration and span export for coding-agent hooks."""
+"""Destination configuration and span export for coding-agent hooks.
+
+Everything here is configured through the environment; there are no arguments to pass.
+
+`TRULENS_DESTINATION` selects the destination and defaults to `local`:
+
+- `local` or `database` -- `TRULENS_DATABASE_URL` if set, otherwise a SQLite file at
+  `TRULENS_DATABASE_PATH` (default `~/.trulens/client-hooks.sqlite`, created mode 0700).
+- `snowflake` -- `TRULENS_SNOWFLAKE_CONNECTION` (required) names the connection; the optional
+  `TRULENS_SNOWFLAKE_DATABASE` and `TRULENS_SNOWFLAKE_SCHEMA` override what it resolves to.
+- `otlp` -- `TRULENS_OTLP_ENDPOINT` is the collector to export to. Unset, the exporter falls
+  back to its own default rather than failing here, so a typo in the variable name shows up
+  as spans arriving somewhere unexpected rather than as an error.
+
+Any other value of `TRULENS_DESTINATION` raises.
+"""
 
 from __future__ import annotations
 
