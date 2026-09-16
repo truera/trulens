@@ -105,6 +105,14 @@ class HookService:
                                 exc_info=True,
                             )
                 except Exception:
+                    logger.error(
+                        "Failed to export hook turn %s for client %s "
+                        "(conversation %s); releasing for retry.",
+                        turn_id,
+                        client,
+                        conversation_id,
+                        exc_info=True,
+                    )
                     self.journal.release_claim(
                         client,
                         conversation_id,

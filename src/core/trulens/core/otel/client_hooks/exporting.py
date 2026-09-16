@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 from typing import Optional, Sequence
@@ -9,6 +10,8 @@ from typing import Optional, Sequence
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExportResult
 from trulens.core import session as core_session
+
+logger = logging.getLogger(__name__)
 
 
 def _local_session() -> core_session.TruSession:
@@ -50,8 +53,42 @@ def _snowflake_session() -> core_session.TruSession:
     return core_session.TruSession(connector=connector)
 
 
+def _ai_gateway_session() -> core_session.TruSession:
+    gateway_url = os.environ.get("TRULENS_AI_GATEWAY_URL")
+    if not gateway_url:
+        raise ValueError("Set TRULENS_AI_GATEWAY_URL for AI Gateway export.")
+    token_file = os.environ.get("TRULENS_AI_GATEWAY_PAT_FILE")
+    if token_file:
+        with open(Path(token_file).expanduser()) as handle:
+            token = handle.read().strip()
+    else:
+        token = os.environ.get("TRULENS_AI_GATEWAY_TOKEN")
+    if not token:
+        raise ValueError(
+            "Set TRULENS_AI_GATEWAY_PAT_FILE or TRULENS_AI_GATEWAY_TOKEN for "
+            "AI Gateway export."
+        )
+    # AI Gateways serve OTLP over HTTP/protobuf (not gRPC), so build the
+    # exporter directly rather than via otel_exporter="otlp".
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+        OTLPSpanExporter,
+    )
+
+    exporter = OTLPSpanExporter(
+        endpoint=f"{gateway_url}/telemetry/v1/traces",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    return core_session.TruSession(
+        span_exporter=exporter,
+    )
+
+
 def create_session() -> core_session.TruSession:
-    """Create the configured database, Snowflake, or OTLP TruLens session."""
+    """Create the configured destination TruLens session.
+
+    Supported ``TRULENS_DESTINATION`` values: local (default), database,
+    snowflake, otlp, and ai_gateway.
+    """
 
     destination = os.environ.get("TRULENS_DESTINATION", "local").lower()
     if destination in {"local", "database"}:
@@ -60,11 +97,19 @@ def create_session() -> core_session.TruSession:
         return _snowflake_session()
     if destination == "otlp":
         endpoint = os.environ.get("TRULENS_OTLP_ENDPOINT")
-        return core_session.TruSession(
-            otel_exporter="otlp", otlp_endpoint=endpoint
+        protocol = os.environ.get("TRULENS_OTLP_PROTOCOL") or os.environ.get(
+            "OTEL_EXPORTER_OTLP_PROTOCOL"
         )
+        return core_session.TruSession(
+            otel_exporter="otlp",
+            otlp_endpoint=endpoint,
+            otlp_protocol=protocol,
+        )
+    if destination == "ai_gateway":
+        return _ai_gateway_session()
     raise ValueError(
-        "TRULENS_DESTINATION must be local, database, snowflake, or otlp."
+        "TRULENS_DESTINATION must be local, database, snowflake, otlp, or "
+        "ai_gateway."
     )
 
 
@@ -80,6 +125,10 @@ def export_spans(
     active_session = session or create_session()
     exporter = active_session.experimental_otel_exporter
     if exporter is None:
+        logger.warning(
+            "Hook export destination produced no OTel exporter; spans were "
+            "not exported."
+        )
         return False
     result = exporter.export(spans)
     flushed = active_session.force_flush()

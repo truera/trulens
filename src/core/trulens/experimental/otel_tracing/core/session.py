@@ -78,22 +78,62 @@ def _set_up_tracer_provider() -> TracerProvider:
 
 def _create_otlp_exporters(
     endpoint: Optional[str],
+    protocol: Optional[str] = None,
 ) -> tuple[otel_export_sdk.SpanExporter, MetricExporter]:
-    """Create OTLP gRPC exporters for traces and metrics."""
-    try:
-        from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
-            OTLPMetricExporter,
+    """Create OTLP exporters for traces and metrics.
+
+    Supports both gRPC and HTTP/protobuf transports. The transport is selected
+    via ``protocol`` or, when unset, the standard
+    ``OTEL_EXPORTER_OTLP_PROTOCOL`` environment variable (``grpc`` or
+    ``http/protobuf``). When neither is set, gRPC is used for backward
+    compatibility.
+    """
+
+    import os
+
+    if protocol is None:
+        # Per the OTLP spec, signal-specific variables override the generic
+        # OTEL_EXPORTER_OTLP_PROTOCOL.
+        protocol = os.environ.get("OTEL_EXPORTER_OTLP_TRACES_PROTOCOL") or (
+            os.environ.get("OTEL_EXPORTER_OTLP_PROTOCOL")
         )
-        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-            OTLPSpanExporter,
+    if protocol is not None:
+        protocol = protocol.lower()
+    if protocol in (None, "grpc"):
+        try:
+            from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
+                OTLPMetricExporter,
+            )
+            from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+                OTLPSpanExporter,
+            )
+        except ImportError as exc:
+            raise ImportError(
+                "OTLP export requires the optional "
+                "`opentelemetry-exporter-otlp-proto-grpc` dependency. "
+                'Install it with `pip install "trulens[otlp]"` '
+                'or `pip install "trulens-core[otlp]"`.'
+            ) from exc
+    elif protocol in ("http/protobuf", "http_proto"):
+        try:
+            from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
+                OTLPMetricExporter,
+            )
+            from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+                OTLPSpanExporter,
+            )
+        except ImportError as exc:
+            raise ImportError(
+                "OTLP export requires the optional "
+                "`opentelemetry-exporter-otlp-proto-http` dependency. "
+                'Install it with `pip install "trulens[otlp]"` '
+                'or `pip install "trulens-core[otlp]"`.'
+            ) from exc
+    else:
+        raise ValueError(
+            'OTLP protocol must be "grpc" or "http/protobuf" '
+            f'(got "{protocol}").'
         )
-    except ImportError as exc:
-        raise ImportError(
-            "OTLP export requires the optional "
-            "`opentelemetry-exporter-otlp-proto-grpc` dependency. "
-            'Install it with `pip install "trulens[otlp]"` '
-            'or `pip install "trulens-core[otlp]"`.'
-        ) from exc
 
     exporter_kwargs = {}
     if endpoint is not None:
@@ -162,6 +202,7 @@ class _TruSession(core_session.TruSession):
         *,
         exporter_name: Optional[str] = None,
         otlp_endpoint: Optional[str] = None,
+        otlp_protocol: Optional[str] = None,
         metric_exporter: Optional[MetricExporter] = None,
     ):
         if exporter_name == "otlp":
@@ -170,7 +211,9 @@ class _TruSession(core_session.TruSession):
                     "OTLP exporter selection cannot be combined with custom "
                     "experimental OTel exporters."
                 )
-            exporter, metric_exporter = _create_otlp_exporters(otlp_endpoint)
+            exporter, metric_exporter = _create_otlp_exporters(
+                otlp_endpoint, otlp_protocol
+            )
         elif exporter_name is not None:
             raise ValueError(f"Unsupported OTel exporter: {exporter_name}")
         elif otlp_endpoint is not None:
