@@ -109,6 +109,19 @@ areas:
     reviewers: []
     # reviewers: [<handle>]
 
+  - name: Dashboard
+    paths:
+      - src/dashboard/trulens/dashboard/
+    exclude:
+      - src/dashboard/trulens/dashboard/components/record_viewer/dist/
+      - src/dashboard/trulens/dashboard/components/record_viewer_otel/dist/
+    reviewers: [connectsudhindra-gif]
+
+  - name: Ollama provider
+    paths:
+      - src/providers/ollama/
+    reviewers: [connectsudhindra-gif]
+
   - name: Providers
     # All provider integrations except Cortex. Scoped as one area because the
     # integrations share plumbing and the same failure modes recur across them.

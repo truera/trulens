@@ -40,6 +40,7 @@ Issue and pull request triage in a named area. No write access to the codebase.
 | Abel Yagubyan | University of Georgia, Athens | Abelo9996 | OpenTelemetry instrumentation; evaluation and database correctness; shared core code |
 | Nikhil Thakur | InviGrid | bashward | Ensemble judges and prompt optimization |
 | Payal Nagaonkar | Peeker AI | Payal2000 | Feedback functions and metrics; OpenTelemetry semantic conventions |
+| Sudhindra Desai | Not declared | connectsudhindra-gif | Dashboard; Ollama provider |
 
 ## Emeritus
 
