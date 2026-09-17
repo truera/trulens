@@ -1720,22 +1720,21 @@ class SQLAlchemyDB(core_db.DB):
         app_versions: Optional[List[types_schema.AppVersion]] = None,
     ) -> Tuple[pd.DataFrame, List[str]]:
         with self.session.begin() as session:
+            # cost_json/perf_json are Text columns (TYPE_JSON = Text), not
+            # JSON-typed ones, and Record has no `latency` column at all -
+            # so tokens/cost/latency can't be aggregated at the SQL level
+            # the way the OTel path aggregates real JSON columns. Fetch the
+            # raw per-record values and reuse the same extraction helpers
+            # already used elsewhere in this file for this exact shape of
+            # data (_extract_tokens_and_cost, _extract_latency), then
+            # aggregate in pandas.
             record_stmt = sa.select(
                 self.orm.AppDefinition.app_name.label("app_name"),
                 self.orm.AppDefinition.app_version.label("app_version"),
                 self.orm.AppDefinition.app_id.label("app_id"),
-                sa.func.count(sa.distinct(self.orm.Record.record_id)).label(
-                    "Records"
-                ),
-                sa.func.avg(
-                    self.orm.Record.cost_json["n_tokens"].as_float()
-                ).label("Total Tokens"),
-                sa.func.avg(self.orm.Record.latency).label(
-                    "Average Latency (s)"
-                ),
-                sa.func.sum(self.orm.Record.cost_json["cost"].as_float()).label(
-                    "Total Cost (USD)"
-                ),
+                self.orm.Record.record_id.label("record_id"),
+                self.orm.Record.cost_json.label("cost_json"),
+                self.orm.Record.perf_json.label("perf_json"),
             ).join(self.orm.Record.app)
             if app_name:
                 record_stmt = record_stmt.where(
@@ -1745,13 +1744,42 @@ class SQLAlchemyDB(core_db.DB):
                 record_stmt = record_stmt.where(
                     self.orm.AppDefinition.app_version.in_(app_versions)
                 )
-            record_stmt = record_stmt.group_by(
-                self.orm.AppDefinition.app_name,
-                self.orm.AppDefinition.app_version,
-                self.orm.AppDefinition.app_id,
-            )
-            base_rows = session.execute(record_stmt).all()
+            record_rows = session.execute(record_stmt).all()
 
+        records_df = pd.DataFrame(
+            record_rows,
+            columns=[
+                "app_name",
+                "app_version",
+                "app_id",
+                "record_id",
+                "cost_json",
+                "perf_json",
+            ],
+        )
+        if records_df.empty:
+            base_rows = []
+        else:
+            records_df["latency"] = _extract_latency(records_df["perf_json"])
+            records_df = pd.concat(
+                [records_df, _extract_tokens_and_cost(records_df["cost_json"])],
+                axis=1,
+            )
+            base_rows = list(
+                records_df
+                .groupby(["app_name", "app_version", "app_id"], as_index=False)
+                .agg(
+                    Records=("record_id", "nunique"),
+                    **{
+                        "Total Tokens": ("total_tokens", "mean"),
+                        "Average Latency (s)": ("latency", "mean"),
+                        "Total Cost (USD)": ("total_cost", "sum"),
+                    },
+                )
+                .itertuples(index=False, name=None)
+            )
+
+        with self.session.begin() as session:
             fb_stmt = (
                 sa
                 .select(
