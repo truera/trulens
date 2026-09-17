@@ -169,10 +169,38 @@ class TestLeaderboardPreOtel(TruTestCase):
         })
 
         records = [
-            ("rec_usd_1", json.dumps({"n_tokens": 100, "cost": 5.0, "cost_currency": "USD"})),
-            ("rec_usd_2", json.dumps({"n_tokens": 200, "cost": 5.0, "cost_currency": "USD"})),
-            ("rec_sf_1", json.dumps({"n_tokens": 0, "cost": 400.0, "cost_currency": "Snowflake credits"})),
-            ("rec_sf_2", json.dumps({"n_tokens": 0, "cost": 600.0, "cost_currency": "Snowflake credits"})),
+            (
+                "rec_usd_1",
+                json.dumps({
+                    "n_tokens": 100,
+                    "cost": 5.0,
+                    "cost_currency": "USD",
+                }),
+            ),
+            (
+                "rec_usd_2",
+                json.dumps({
+                    "n_tokens": 200,
+                    "cost": 5.0,
+                    "cost_currency": "USD",
+                }),
+            ),
+            (
+                "rec_sf_1",
+                json.dumps({
+                    "n_tokens": 0,
+                    "cost": 400.0,
+                    "cost_currency": "Snowflake credits",
+                }),
+            ),
+            (
+                "rec_sf_2",
+                json.dumps({
+                    "n_tokens": 0,
+                    "cost": 600.0,
+                    "cost_currency": "Snowflake credits",
+                }),
+            ),
         ]
         with db.session.begin() as s:
             for rid, cost_json in records:
@@ -198,7 +226,9 @@ class TestLeaderboardPreOtel(TruTestCase):
 
         row = df.iloc[0]
         self.assertAlmostEqual(float(row["Total Cost (USD)"]), 10.0, places=4)
-        self.assertAlmostEqual(float(row["Total Cost (Snowflake Credits)"]), 1000.0, places=4)
+        self.assertAlmostEqual(
+            float(row["Total Cost (Snowflake Credits)"]), 1000.0, places=4
+        )
 
 
 if __name__ == "__main__":

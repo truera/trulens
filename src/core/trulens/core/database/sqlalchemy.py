@@ -1779,7 +1779,10 @@ class SQLAlchemyDB(core_db.DB):
                 ).label("Total Cost (USD)"),
                 sa.func.sum(
                     sa.case(
-                        (currency_expr == sa.literal("Snowflake credits"), cost_expr),
+                        (
+                            currency_expr == sa.literal("Snowflake credits"),
+                            cost_expr,
+                        ),
                         else_=0.0,
                     )
                 ).label("Total Cost (Snowflake Credits)"),
