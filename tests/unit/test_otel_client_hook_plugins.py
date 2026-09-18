@@ -339,6 +339,89 @@ def test_claude_stop_uses_only_current_turn_and_skips_bad_transcript_lines(
     assert event.output_tokens == 4
 
 
+def test_cursor_stop_recovers_usage_from_transcript(tmp_path):
+    """Cursor's hook payloads never carry token usage on any event (unlike
+    `model`, present directly on the payload, and response text, present on
+    `afterAgentResponse` via the existing `text` field alias) - this
+    exercises the transcript-based backfill on the terminal `stop` event.
+    """
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        "\n".join(
+            json.dumps(entry)
+            for entry in (
+                {
+                    "type": "user",
+                    "message": {"role": "user", "content": "hello"},
+                },
+                {
+                    "type": "assistant",
+                    "message": {
+                        "id": "message-1",
+                        "content": [{"type": "text", "text": "working"}],
+                        "usage": {"input_tokens": 10, "output_tokens": 4},
+                    },
+                },
+                {
+                    "type": "assistant",
+                    "message": {
+                        "id": "message-2",
+                        "content": [{"type": "text", "text": "done"}],
+                        "usage": {"input_tokens": 5, "output_tokens": 3},
+                    },
+                },
+            )
+        )
+    )
+    clients.register_client(cursor_spec)
+
+    event = parsers.parse(
+        "cursor",
+        {
+            "conversation_id": "conversation-1",
+            "hook_event_name": "stop",
+            "model": "claude-sonnet-4-5",
+            "transcript_path": str(transcript),
+        },
+    )
+
+    # model comes through unchanged from the payload - no override needed.
+    assert event.model == "claude-sonnet-4-5"
+    assert event.input_tokens == 15
+    assert event.output_tokens == 7
+
+
+def test_cursor_non_stop_event_does_not_read_transcript(tmp_path):
+    """The transcript override only activates on `stop`; other events (even
+    ones carrying a transcript_path) pass through unaffected."""
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        json.dumps({
+            "type": "assistant",
+            "message": {
+                "id": "message-1",
+                "content": [{"type": "text", "text": "working"}],
+                "usage": {"input_tokens": 10, "output_tokens": 4},
+            },
+        })
+    )
+    clients.register_client(cursor_spec)
+
+    event = parsers.parse(
+        "cursor",
+        {
+            "conversation_id": "conversation-1",
+            "hook_event_name": "afterAgentResponse",
+            "text": "final answer",
+            "transcript_path": str(transcript),
+        },
+    )
+
+    assert event.response == "final answer"
+    assert event.input_tokens is None
+    assert event.output_tokens is None
+
+
 def test_plugin_parse_rejects_missing_conversation_identity():
     clients.register_client(cursor_spec)
     with pytest.raises(ValueError, match="missing a conversation ID"):
