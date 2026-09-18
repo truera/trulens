@@ -2,6 +2,7 @@
 import json
 from typing import Any, Dict, List
 
+import pydantic
 import pytest
 
 
@@ -111,6 +112,34 @@ def test_model_family_request_and_response(
     assert calls[0]["contentType"] == "application/json"
     body = json.loads(calls[0]["body"])
     assert body_key in body
+
+
+@pytest.mark.optional
+def test_response_format_is_disclosed_not_silently_dropped(caplog):
+    """response_format can't be honored by the hand-rolled per-family
+    InvokeModel bodies here (no JSON-schema mechanism wired up for any of
+    them), so it must be disclosed the same way the LangChain provider
+    discloses the same "unsupported" situation, not silently ignored."""
+    import logging
+
+    class _Schema(pydantic.BaseModel):
+        score: float
+
+    provider = _make_provider(
+        "amazon.nova-lite-v1:0",
+        {"output": {"message": {"content": [{"text": "nova-ok"}]}}},
+    )
+
+    with caplog.at_level(logging.DEBUG):
+        out = provider._create_chat_completion(
+            messages=[{"role": "user", "content": "hi"}],
+            response_format=_Schema,
+        )
+
+    assert out == "nova-ok"
+    assert any(
+        "response_format" in record.getMessage() for record in caplog.records
+    )
 
 
 @pytest.mark.optional

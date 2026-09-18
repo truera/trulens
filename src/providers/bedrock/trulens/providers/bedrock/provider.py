@@ -64,6 +64,18 @@ class Bedrock(llm_provider.LLMProvider):
     ) -> str:
         assert self.endpoint is not None
 
+        # Bedrock's raw InvokeModel request/response shapes below are
+        # hand-rolled per model family (Nova, Titan, Anthropic, Cohere, AI21,
+        # Mistral, Meta) and none of them wire up a JSON-schema mechanism, so
+        # response_format can't be honored here. Disclose this the same way
+        # the LangChain provider does for the same "can't support structured
+        # outputs" situation, rather than silently dropping it.
+        if response_format is not None:
+            logger.debug(
+                "Ignoring response_format in Bedrock provider; not supported "
+                "by the InvokeModel request bodies used here."
+            )
+
         if messages:
             messages_str = " ".join([
                 f"{message['role']}: {message['content']}"
