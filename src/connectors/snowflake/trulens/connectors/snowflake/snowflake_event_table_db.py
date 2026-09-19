@@ -288,7 +288,11 @@ class SnowflakeEventTableDB(core_db.DB):
     ) -> Iterable[serial_utils.JSONized[app_schema.AppDefinition]]:
         """See [DB.get_apps][trulens.core.database.base.DB.get_apps]."""
         if app_name is None:
-            app_names = self._external_agent_dao._list_agents()["name"].values
+            agents = self._external_agent_dao._list_agents()
+            if agents.empty or "name" not in agents.columns:
+                return
+
+            app_names = agents["name"].values
         else:
             app_names = [app_name]
         for app_name in app_names:
