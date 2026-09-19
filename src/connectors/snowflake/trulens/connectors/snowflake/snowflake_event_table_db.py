@@ -299,10 +299,8 @@ class SnowflakeEventTableDB(core_db.DB):
                     app_name
                 )["name"].values
             for app_version in agent_versions:
-                app_id = (
-                    app_schema.AppDefinition._compute_app_id(
-                        app_name, app_version
-                    ),
+                app_id = app_schema.AppDefinition._compute_app_id(
+                    app_name, app_version
                 )
                 app_defn = app_schema.AppDefinition(
                     app_id=app_id,

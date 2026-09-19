@@ -1,9 +1,11 @@
 import unittest
 from unittest.mock import MagicMock
 from unittest.mock import patch
+import warnings
 
 import pandas as pd
 import pytest
+from trulens.core.schema import app as app_schema
 
 try:
     from trulens.connectors.snowflake.dao.enums import ObjectType
@@ -13,6 +15,13 @@ try:
 
 except Exception:
     pass
+
+try:
+    from trulens.connectors.snowflake.snowflake_event_table_db import (
+        SnowflakeEventTableDB,
+    )
+except Exception:
+    SnowflakeEventTableDB = None
 
 
 @pytest.mark.snowflake
@@ -191,3 +200,45 @@ class TestExternalAgentDao(unittest.TestCase):
         )
         self.assertEqual(escape_quotes('""""'), '""""""""')
         self.assertEqual(escape_quotes(""), "")
+
+
+@pytest.mark.snowflake
+class TestEventTableDBExternalApps(unittest.TestCase):
+    """``SnowflakeEventTableDB.get_apps`` lists external agent versions."""
+
+    def setUp(self):
+        if SnowflakeEventTableDB is None:
+            self.skipTest(
+                "SnowflakeEventTableDB is not available because optional "
+                "tests are disabled."
+            )
+        db = SnowflakeEventTableDB.__new__(SnowflakeEventTableDB)
+        session = MagicMock()
+        # SHOW AGENTS IN ACCOUNT reports no cortex agent, so the versions of
+        # the named agent come from the external agent DAO.
+        session.sql.return_value.to_pandas.return_value = pd.DataFrame({
+            '"name"': []
+        })
+        db._snowpark_session = session
+        db._external_agent_dao = MagicMock()
+        db._external_agent_dao.list_agent_versions.return_value = pd.DataFrame({
+            "name": ["v1", "v2"]
+        })
+        self.db = db
+
+    def test_listed_apps_do_not_report_a_custom_app_id(self):
+        """The app ids it builds are the computed ones, not custom values."""
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            apps = list(self.db.get_apps(app_name="my_agent"))
+
+        expected = {
+            (
+                app_schema.AppDefinition._compute_app_id("my_agent", version),
+                version,
+            )
+            for version in ("v1", "v2")
+        }
+        self.assertEqual(
+            {(app["app_id"], app["app_version"]) for app in apps}, expected
+        )
