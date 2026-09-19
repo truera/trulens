@@ -299,9 +299,13 @@ class SnowflakeEventTableDB(core_db.DB):
             if self._is_cortex_agent(app_name):
                 agent_versions = ["base"]
             else:
-                agent_versions = self._external_agent_dao.list_agent_versions(
+                versions = self._external_agent_dao.list_agent_versions(
                     app_name
-                )["name"].values
+                )
+                if versions.empty or "name" not in versions.columns:
+                    continue
+
+                agent_versions = versions["name"].values
             for app_version in agent_versions:
                 app_id = (
                     app_schema.AppDefinition._compute_app_id(

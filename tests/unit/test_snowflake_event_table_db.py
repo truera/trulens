@@ -75,6 +75,7 @@ class TestSnowflakeEventTableDBGetApps(unittest.TestCase):
         """
         df = execute_query(FakeSession(), "SHOW EXTERNAL AGENTS;")
 
+        self.assertIsInstance(df, pd.DataFrame)
         self.assertEqual(len(df), 0)
         self.assertNotIn("name", df.columns)
 
@@ -106,3 +107,23 @@ class TestSnowflakeEventTableDBGetApps(unittest.TestCase):
         db = SnowflakeEventTableDB(snowpark_session=FakeSession())
 
         self.assertEqual(list(db.get_apps()), [])
+
+    def test_get_apps_skips_an_agent_that_reports_no_versions(self):
+        """A versionless agent is skipped rather than ending the listing.
+
+        ``create_agent_if_not_exist`` treats an empty version listing as a
+        state it has to handle, so the app listing has to tolerate the same
+        shape from ``SHOW VERSIONS``.
+        """
+        session = FakeSession(
+            agents=[
+                AgentRow("AGENT_1", "EXTERNAL"),
+                AgentRow("AGENT_2", "EXTERNAL"),
+            ],
+            versions={"AGENT_2": [VersionRow("v1", "DEFAULT")]},
+        )
+        db = SnowflakeEventTableDB(snowpark_session=session)
+
+        apps = list(db.get_apps())
+
+        self.assertEqual([str(app["app_name"]) for app in apps], ["AGENT_2"])
