@@ -209,7 +209,7 @@ class TestEventTableDBExternalApps(unittest.TestCase):
     def setUp(self):
         if SnowflakeEventTableDB is None:
             self.skipTest(
-                "SnowflakeEventTableDB is not available because optional "
+                "SnowflakeEventTableDB is not available because snowflake "
                 "tests are disabled."
             )
         db = SnowflakeEventTableDB.__new__(SnowflakeEventTableDB)
