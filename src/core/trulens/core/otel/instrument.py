@@ -80,6 +80,7 @@ from trulens.otel.semconv.constants import (
     TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
 )
 from trulens.otel.semconv.constants import TRULENS_SPAN_END_CALLBACKS
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 import wrapt
@@ -343,10 +344,15 @@ def _set_span_attributes(
     ):
         set_genai_tool_attributes(
             span,
-            # func_name is the instrumented function / tool name.
-            tool_name=func_name,
-            call_arguments=resolved_attributes.get("call_arguments"),
-            call_result=resolved_attributes.get("call_result"),
+            # Instrumentation that knows the tool being called reports it
+            # directly; otherwise func_name is the instrumented function.
+            tool_name=resolved_attributes.get(
+                GenAIAttributes.TOOL.NAME, func_name
+            ),
+            call_arguments=resolved_attributes.get("call_arguments")
+            or resolved_attributes.get(GenAIAttributes.TOOL.CALL_ARGUMENTS),
+            call_result=resolved_attributes.get("call_result")
+            or resolved_attributes.get(GenAIAttributes.TOOL.CALL_RESULT),
         )
 
 

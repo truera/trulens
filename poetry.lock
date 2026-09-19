@@ -562,6 +562,110 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
+name = "autogen"
+version = "0.14.1"
+description = "A programming framework for agentic AI"
+optional = false
+python-versions = ">=3.10"
+groups = ["apps"]
+files = [
+    {file = "autogen-0.14.1-py3-none-any.whl", hash = "sha256:e8fee67a0b8a7cacd0730ed1854e281d49ac3429786606545c2610ab707528f2"},
+    {file = "autogen-0.14.1.tar.gz", hash = "sha256:befc6b0a148e3773c6b6a5ebe1c7d098f9eee5ca803c40bcf211b000e188cee2"},
+]
+
+[package.dependencies]
+anyio = ">=4.0.0,<5.0.0"
+fast-depends = {version = ">=3.0.8,<4.0.0", extras = ["pydantic"]}
+httpx = ">=0.28.1,<1"
+packaging = "*"
+pydantic = ">=2.6.1,<3"
+python-dotenv = "*"
+pyyaml = ">=6.0.2"
+termcolor = "*"
+tiktoken = "*"
+
+[package.extras]
+a2a = ["a2a-sdk (>=1.1.0,<2)"]
+a2ui = ["jsonschema (>=4.18.0,<5)", "starlette (>=0.40,<1)"]
+ag-ui = ["ag-ui-protocol (>=0.1.15,<0.2)"]
+anthropic = ["anthropic[vertex] (>=0.79.0,<1)"]
+autobuild = ["chromadb (>=1.4.1,<1.6)", "huggingface-hub", "sentence-transformers (>=5.2.2,<=6)"]
+bedrock = ["boto3 (>=1.34.149)"]
+blendsearch = ["flaml[blendsearch]"]
+browser-use = ["browser-use (>=0.3.1,<1.0) ; python_version >= \"3.11\"", "langchain-google-vertexai (>=2.0,<4.0)"]
+captainagent = ["chromadb (>=1.4.1,<1.6)", "huggingface-hub", "pandas", "sentence-transformers (>=5.2.2,<=6)"]
+cerebras = ["cerebras-cloud-sdk (>=1.0.0)"]
+cohere = ["cohere (>=5.13.5)"]
+commsagent-discord = ["discord-py (>=2.4.0,<2.8)"]
+commsagent-slack = ["slack-sdk (>=3.33.0,<3.43)"]
+commsagent-telegram = ["telethon (>=1.38.1,<2)"]
+cosmosdb = ["azure-cosmos (>=4.2.0)"]
+crawl4ai = ["crawl4ai (>=0.5.0,<0.9)"]
+dashscope = ["dashscope (>=1.25.13)"]
+ddgs = ["ddgs (>=9.0.0,<10)"]
+deepseek = ["openai (>=2.44.0,<3.0)"]
+dev = ["a2a-sdk (>=1.1.0,<2)", "ag-ui-protocol (>=0.1.15,<0.2)", "aiofiles (>=24.1.0,<26.0.0)", "anthropic[vertex] (>=0.79.0,<1)", "cairosvg", "codespell (==2.4.2)", "dashscope (>=1.25.13)", "daytona (>=0.171.0,<1)", "ddgs (>=9.0.0,<10)", "detect-secrets (==1.5.0)", "dirty-equals (>=0.11,<0.12)", "docker (>=6.0.0,<8)", "exa-py (>=2.12.1,<3)", "fastapi (>=0.115.0,<1)", "fix-busted-json (>=0.0.18)", "freezegun (>=1.5.5,<2)", "google-api-core", "google-auth", "google-cloud-aiplatform", "google-genai (>=1.20.0,<3.0)", "ipykernel (==7.3.0)", "jinja2 (==3.1.6)", "jsonschema", "mcp (>=1.11.0)", "mcp (>=1.11.0,<2)", "mdx-include (==1.4.2)", "mike (==2.2.0)", "mkdocs-git-revision-date-localized-plugin (==1.5.3)", "mkdocs-glightbox (==0.5.2)", "mkdocs-literate-nav (==0.6.3)", "mkdocs-macros-plugin (==1.5.0)", "mkdocs-material (==9.7.6)", "mkdocs-minify-plugin (==0.8.0)", "mkdocs-redirects (==1.2.3)", "mypy (==1.17.1)", "nbclient (==0.11.0)", "nbconvert (==7.17.1)", "nbformat (==5.10.4)", "ollama (>=0.4.7)", "openai (>=2.44.0,<3.0)", "opentelemetry-exporter-otlp-proto-grpc (>=1.20)", "opentelemetry-sdk (>=1.20)", "pandas (>=2.2.0,<3)", "perplexityai (>=0.30.0,<1)", "pillow", "prek (==0.4.5)", "pytest (==9.1.0)", "pytest-asyncio (==1.4.0)", "pytest-cov (==7.1.0)", "pytest-timeout (>=2.4.0,<3)", "pyyaml (==6.0.3)", "redis (>=5.0,<9)", "respx (>=0.23.0,<0.24.0)", "ruff (==0.14.14)", "tavily-python (>=0.7.4,<0.8)", "termcolor (==3.1.0)", "tinyfish (>=0.2.3) ; python_version >= \"3.11\"", "toml (==0.10.2)", "typer (>=0.22,<0.27)", "types-aiofiles", "types-decorator", "types-pycurl", "types-python-dateutil", "types-pyyaml", "types-requests", "types-ujson", "uv (==0.11.21)", "watchdog (>=4.0,<7)", "xai-sdk (>=1.12.2,<2)", "zizmor (==1.25.2)"]
+diskcache = ["diskcache"]
+docker = ["docker (>=6.0.0,<8)"]
+docs = ["a2a-sdk (>=1.1.0,<2)", "ag-ui-protocol (>=0.1.15,<0.2)", "anthropic[vertex] (>=0.79.0,<1)", "cairosvg", "dashscope (>=1.25.13)", "daytona (>=0.171.0,<1)", "ddgs (>=9.0.0,<10)", "docker (>=6.0.0,<8)", "exa-py (>=2.12.1,<3)", "fix-busted-json (>=0.0.18)", "google-api-core", "google-auth", "google-cloud-aiplatform", "google-genai (>=1.20.0,<3.0)", "jinja2 (==3.1.6)", "jsonschema", "mcp (>=1.11.0)", "mdx-include (==1.4.2)", "mike (==2.2.0)", "mkdocs-git-revision-date-localized-plugin (==1.5.3)", "mkdocs-glightbox (==0.5.2)", "mkdocs-literate-nav (==0.6.3)", "mkdocs-macros-plugin (==1.5.0)", "mkdocs-material (==9.7.6)", "mkdocs-minify-plugin (==0.8.0)", "mkdocs-redirects (==1.2.3)", "nbclient (==0.11.0)", "ollama (>=0.4.7)", "openai (>=2.44.0,<3.0)", "opentelemetry-exporter-otlp-proto-grpc (>=1.20)", "opentelemetry-sdk (>=1.20)", "perplexityai (>=0.30.0,<1)", "pillow", "pyyaml (==6.0.3)", "redis (>=5.0,<9)", "tavily-python (>=0.7.4,<0.8)", "termcolor (==3.1.0)", "tinyfish (>=0.2.3) ; python_version >= \"3.11\"", "typer (>=0.22,<0.27)", "watchdog (>=4.0,<7)", "xai-sdk (>=1.12.2,<2)"]
+duckduckgo = ["duckduckgo-search (>=8.0.2)"]
+flaml = ["flaml", "numpy (>=1.24.0,<2.0.0) ; python_version < \"3.13\"", "numpy (>=2.1) ; python_version >= \"3.13\""]
+gemini = ["google-api-core", "google-auth", "google-cloud-aiplatform", "google-genai (>=1.20.0,<3.0)", "jsonschema", "pillow"]
+gemini-realtime = ["google-api-core", "google-auth", "google-cloud-aiplatform", "google-genai (>=1.20.0,<3.0)", "google-genai (>=1.75.0,<3.0)", "jsonschema", "pillow", "websockets (>=14.0,<17)"]
+google-api = ["google-api-python-client (>=2.163.0,<3.0)", "google-auth-httplib2 (>=0.2.0,<0.5)", "google-auth-oauthlib (>=1.2.1,<2.0)"]
+google-client = ["google-api-python-client (>=2.163.0,<3.0)"]
+google-search = ["google-api-python-client (>=2.163.0,<3.0)"]
+graph = ["matplotlib", "networkx"]
+graph-rag-falkor-db = ["falkordb (>=1.0.10)", "graphrag-sdk (==1.3.0)"]
+groq = ["groq (>=0.9.0)"]
+interop = ["fasta2a", "langchain-community (>=0.3.12,<1)", "pydantic-ai-slim (>=1.0.12,<1.108)"]
+interop-langchain = ["langchain-community (>=0.3.12,<1)"]
+interop-pydantic-ai = ["fasta2a", "pydantic-ai-slim (>=1.0.12,<1.108)"]
+jupyter-executor = ["docker (>=6.0.0,<8)", "ipykernel (>=6.29.0)", "jupyter-client (>=8.6.0)", "jupyter-kernel-gateway", "requests", "websocket-client"]
+lint = ["codespell (==2.4.2)", "ruff (==0.14.14)", "zizmor (==1.25.2)"]
+lmm = ["pillow", "replicate"]
+long-context = ["llmlingua (<0.3)"]
+mathchat = ["sympy", "wolframalpha"]
+mcp = ["mcp (>=1.11.0,<2)"]
+mcp-proxy-gen = ["fastapi (>=0.112,<1)", "fastapi-code-generator (>=0.5.4)", "pyyaml", "requests", "typer"]
+mistral = ["mistralai (>=2.0.0,<3.0.0)"]
+neo4j = ["docx2txt (==0.9)", "llama-index (>=0.14.13,<0.15)", "llama-index-core (>=0.14.13,<0.15)", "llama-index-graph-stores-neo4j (>=0.4,<0.8)", "llama-index-readers-web (>=0.4,<0.7)"]
+network-ws = ["websockets (>=14.0,<17)"]
+nlip = ["nlip-sdk (>=0.1.0,<1)", "nlip-server (>=0.1.3,<1)"]
+ollama = ["fix-busted-json (>=0.0.18)", "ollama (>=0.4.7)"]
+openai = ["openai (>=2.44.0,<3.0)"]
+openai-realtime = ["openai (>=2.44.0,<3.0)", "openai[realtime]"]
+perplexity = ["perplexityai (>=0.30.0,<1)"]
+quick-research = ["beautifulsoup4", "crawl4ai (>=0.5.0,<0.9)", "tavily-python (>=0.7.4)", "tiktoken", "tldextract"]
+rag = ["chromadb (>=0.5,<2)", "docling (>=2.107.0,<3)", "llama-index (>=0.14.13,<0.15)", "llama-index-core (>=0.14.13,<0.15)", "llama-index-embeddings-huggingface (>=0.5,<0.8)", "llama-index-embeddings-openai (>=0.3,<0.8)", "llama-index-llms-langchain (>=0.6,<0.9)", "llama-index-llms-openai (>=0.4,<0.8)", "llama-index-vector-stores-chroma (>=0.4,<0.6)", "llama-index-vector-stores-mongodb (>=0.6,<0.11)", "requests (>=2.32.3,<3)", "selenium (>=4.28.1,<5)", "webdriver-manager (==4.1.2)"]
+redis = ["redis (>=5.0,<9)"]
+remyx = ["docker (>=6.0.0,<8)", "remyxai (>=0.2.0)"]
+retrievechat = ["beautifulsoup4", "chromadb (>=1.4.1,<1.6)", "ipython", "markdownify", "protobuf (>=6,<7)", "pypdf", "sentence-transformers (>=5.2.2,<=6)"]
+retrievechat-couchbase = ["beautifulsoup4", "chromadb (>=1.4.1,<1.6)", "couchbase (>=4.3.0)", "ipython", "markdownify", "numpy", "protobuf (>=6,<7)", "pypdf", "sentence-transformers (>=5.2.2,<=6)"]
+retrievechat-mongodb = ["beautifulsoup4", "chromadb (>=1.4.1,<1.6)", "ipython", "markdownify", "numpy", "protobuf (>=6,<7)", "pymongo (>=4.0.0)", "pypdf", "sentence-transformers (>=5.2.2,<=6)"]
+retrievechat-pgvector = ["beautifulsoup4", "chromadb (>=1.4.1,<1.6)", "ipython", "markdownify", "pgvector (>=0.2.5)", "protobuf (>=6,<7)", "psycopg (>=3.1.18) ; platform_system == \"Linux\"", "psycopg[binary] (>=3.1.18) ; platform_system == \"Windows\" or platform_system == \"Darwin\"", "pypdf", "sentence-transformers (>=5.2.2,<=6)"]
+retrievechat-qdrant = ["beautifulsoup4", "chromadb (>=1.4.1,<1.6)", "fastembed (>=0.3.1)", "ipython", "markdownify", "protobuf (>=6,<7)", "pypdf", "qdrant-client", "sentence-transformers (>=5.2.2,<=6)"]
+tavily = ["tavily-python (>=0.7.4,<0.8)"]
+teachable = ["chromadb"]
+test = ["aiofiles (>=24.1.0,<26.0.0)", "dirty-equals (>=0.11,<0.12)", "docker (>=6.0.0,<8)", "fastapi (>=0.115.0,<1)", "freezegun (>=1.5.5,<2)", "ipykernel (==7.3.0)", "mcp (>=1.11.0,<2)", "nbconvert (==7.17.1)", "nbformat (==5.10.4)", "pandas (>=2.2.0,<3)", "pytest (==9.1.0)", "pytest-asyncio (==1.4.0)", "pytest-cov (==7.1.0)", "pytest-timeout (>=2.4.0,<3)", "respx (>=0.23.0,<0.24.0)"]
+test-core = ["dirty-equals (>=0.11,<0.12)", "freezegun (>=1.5.5,<2)", "pytest (==9.1.0)", "pytest-asyncio (==1.4.0)", "pytest-cov (==7.1.0)", "pytest-timeout (>=2.4.0,<3)"]
+together = ["together (>=1.2)"]
+tracing = ["opentelemetry-exporter-otlp-proto-grpc (>=1.20)", "opentelemetry-sdk (>=1.20)"]
+types = ["a2a-sdk (>=1.1.0,<2)", "ag-ui-protocol (>=0.1.15,<0.2)", "aiofiles (>=24.1.0,<26.0.0)", "dirty-equals (>=0.11,<0.12)", "docker (>=6.0.0,<8)", "fastapi (>=0.115.0,<1)", "freezegun (>=1.5.5,<2)", "ipykernel (==7.3.0)", "mcp (>=1.11.0,<2)", "mypy (==1.17.1)", "nbconvert (==7.17.1)", "nbformat (==5.10.4)", "openai (>=2.44.0,<3.0)", "pandas (>=2.2.0,<3)", "pytest (==9.1.0)", "pytest-asyncio (==1.4.0)", "pytest-cov (==7.1.0)", "pytest-timeout (>=2.4.0,<3)", "respx (>=0.23.0,<0.24.0)", "types-aiofiles", "types-decorator", "types-pycurl", "types-python-dateutil", "types-pyyaml", "types-requests", "types-ujson"]
+watchdog = ["watchdog (>=4.0,<7)"]
+websockets = ["websockets (>=14.0,<17)"]
+websurfer = ["beautifulsoup4", "markdownify", "pathvalidate", "pdfminer-six"]
+wikipedia = ["wikipedia-api (>=0.8.1,<1.0)"]
+xai = ["xai-sdk (>=1.12.2,<2)"]
+yepcode = ["python-dotenv", "yepcode-run (>=1.6.1) ; python_version >= \"3.11\""]
+zai = ["zai-sdk (>=0.2.3,<1)"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
+
+[[package]]
 name = "babel"
 version = "2.18.0"
 description = "Internationalization utilities"
@@ -1983,6 +2087,32 @@ files = [
 
 [package.extras]
 tests = ["asttokens (>=2.1.0)", "coverage", "coverage-enable-subprocess", "ipython", "littleutils", "pytest", "rich ; python_version >= \"3.11\""]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
+
+[[package]]
+name = "fast-depends"
+version = "3.0.9"
+description = "FastDepends - extracted and cleared from HTTP domain logic FastAPI Dependency Injection System. Async and sync are both supported."
+optional = false
+python-versions = ">=3.10"
+groups = ["apps"]
+files = [
+    {file = "fast_depends-3.0.9-py3-none-any.whl", hash = "sha256:a9fda223e4f9f92ade11dabfdc31d20e62fedc25340f1a5b1f01db2ae25ab1d9"},
+    {file = "fast_depends-3.0.9.tar.gz", hash = "sha256:c31c3985d0196ea4998da9f5913a76ede75cc4484d89eeafcea1a6bd64fbca82"},
+]
+
+[package.dependencies]
+anyio = ">=4.0.0,<5.0.0"
+pydantic = {version = ">=1.7.4,<1.8 || >1.8,<1.8.1 || >1.8.1,<3.0.0", optional = true, markers = "extra == \"pydantic\""}
+typing-extensions = "!=4.12.1"
+
+[package.extras]
+msgspec = ["msgspec"]
+pydantic = ["pydantic (>=1.7.4,!=1.8,!=1.8.1,<3.0.0)"]
 
 [package.source]
 type = "legacy"
@@ -11498,6 +11628,26 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
+name = "termcolor"
+version = "3.3.0"
+description = "ANSI color formatting for output in terminal"
+optional = false
+python-versions = ">=3.10"
+groups = ["apps"]
+files = [
+    {file = "termcolor-3.3.0-py3-none-any.whl", hash = "sha256:cf642efadaf0a8ebbbf4bc7a31cec2f9b5f21a9f726f4ccbb08192c9c26f43a5"},
+    {file = "termcolor-3.3.0.tar.gz", hash = "sha256:348871ca648ec6a9a983a13ab626c0acce02f515b9e1983332b17af7979521c5"},
+]
+
+[package.extras]
+tests = ["pytest", "pytest-cov"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
+
+[[package]]
 name = "terminado"
 version = "0.18.1"
 description = "Tornado websocket backend for the Xterm.js Javascript terminal emulator library."
@@ -12062,6 +12212,25 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
+name = "trulens-apps-autogen"
+version = "2.14.0"
+description = "Library to systematically track and evaluate AutoGen (AG2) multi-agent applications."
+optional = false
+python-versions = "^3.10"
+groups = ["apps"]
+files = []
+develop = true
+
+[package.dependencies]
+autogen = ">=0.4,<1.0"
+pydantic = "^2.4.2"
+trulens-core = "^2.0.0"
+
+[package.source]
+type = "directory"
+url = "src/apps/autogen"
+
+[[package]]
 name = "trulens-apps-claude"
 version = "2.14.0"
 description = "Claude Code hook instrumentation plugin for TruLens."
@@ -12288,7 +12457,7 @@ typing_extensions = "^4.9"
 wrapt = ">=1.17.0"
 
 [package.extras]
-otlp = ["opentelemetry-exporter-otlp-proto-grpc (>=1.23.0)"]
+otlp = ["opentelemetry-exporter-otlp-proto-grpc (>=1.23.0)", "opentelemetry-exporter-otlp-proto-http (>=1.23.0)"]
 
 [package.source]
 type = "directory"
@@ -12369,7 +12538,7 @@ url = "src/feedback"
 [[package]]
 name = "trulens-hotspots"
 version = "2.14.0"
-description = "Library and command-line tool to list features lowering your evaluation score."
+description = "Deprecated library and CLI for finding features that lower evaluation scores."
 optional = false
 python-versions = "^3.9"
 groups = ["hotspots"]
@@ -13952,4 +14121,4 @@ otlp = ["opentelemetry-exporter-otlp-proto-grpc"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "12d92258b78f557474671ed9e04005fa1fb7c036c1b8cefa54288057c1351bdf"
+content-hash = "9042ea5a9d877b4d9b314fee8f4df71c4b5c1bb2e5bf69d62c49845d8dd942cd"

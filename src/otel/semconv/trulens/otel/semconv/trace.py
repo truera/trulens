@@ -576,6 +576,49 @@ class SpanAttributes:
         AGENT_NAME = base + ".agent_name"
         """Name of the agent executing in the workflow."""
 
+        SPEAKER_SELECTION_METHOD = base + ".speaker_selection_method"
+        """How the next agent to act was chosen.
+
+        For example an AutoGen group chat reports ``auto``, ``round_robin``,
+        ``random``, ``manual``, or the name of a custom selection function.
+        """
+
+        PARTICIPANT_AGENT_NAMES = base + ".participant_agent_names"
+        """Names of the agents taking part in the workflow step."""
+
+    class AGENT:
+        """An agent turn in an agentic application.
+
+        A turn is one agent producing one reply: who the agent is, what it was
+        told, and what it said back.
+        """
+
+        base = BASE_SCOPE + ".agent"
+
+        NAME = base + ".name"
+        """Name of the agent producing the reply."""
+
+        DESCRIPTION = base + ".description"
+        """Description of the agent, as advertised to other agents."""
+
+        SYSTEM_MESSAGE = base + ".system_message"
+        """System message the agent is configured with."""
+
+        INPUT_MESSAGES = base + ".input_messages"
+        """Message history the agent was given for this turn."""
+
+        INPUT_MESSAGE = base + ".input_message"
+        """Content of the most recent message the agent was given."""
+
+        INPUT_MESSAGE_ROLE = base + ".input_message_role"
+        """Role of the most recent message the agent was given."""
+
+        OUTPUT_MESSAGE = base + ".output_message"
+        """Content of the reply the agent produced."""
+
+        ERROR = base + ".error"
+        """Error raised while the agent was producing a reply."""
+
     class RERANKER:
         """A reranking operation."""
 
