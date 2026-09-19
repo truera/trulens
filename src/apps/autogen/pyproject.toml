@@ -1,0 +1,39 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = [
+  "poetry-core",
+]
+
+[tool.poetry]
+name = "trulens-apps-autogen"
+version = "2.14.0"
+description = "Library to systematically track and evaluate AutoGen (AG2) multi-agent applications."
+authors = [
+  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
+]
+license = "MIT"
+readme = "README.md"
+packages = [
+  { include = "trulens" },
+]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/getting_started/"
+repository = "https://github.com/truera/trulens"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+trulens-core = { version = "^2.0.0" }
+pydantic = "^2.4.2"
+# The `autogen` distribution is the AG2 project, which publishes the
+# `ConversableAgent` / `GroupChat` API this package instruments. AG2 1.0 moved
+# to a different, incompatible top-level module, so the ceiling is deliberate.
+autogen = ">=0.4,<1.0"
+
+[tool.poetry.group.dev.dependencies]
+trulens-core = { path = "../../core" }
