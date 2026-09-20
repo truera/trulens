@@ -1,0 +1,276 @@
+{
+  "name": "baseline",
+  "change": "Measure the current retrieval and answer configuration with TruLens.",
+  "acceptance": {
+    "compare_against": null,
+    "required_metrics": [
+      "answer_relevance",
+      "groundedness",
+      "context_relevance"
+    ]
+  },
+  "timestamp": "2026-09-20T20:57:10.024684+00:00",
+  "aggregated_scores": {
+    "groundedness": {
+      "mean": 0.6,
+      "min": 0.0,
+      "max": 1.0,
+      "std": 0.4898979485566356
+    },
+    "answer_relevance": {
+      "mean": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "std": 0.0
+    },
+    "context_relevance": {
+      "mean": 0.36666666666666664,
+      "min": 0.0,
+      "max": 0.7499999999999999,
+      "std": 0.27938424357067015
+    }
+  },
+  "experiment_scores": {},
+  "cases": [
+    {
+      "dataset_item_id": 1,
+      "input": "What is the purpose of FADEC and what does it replace in piston-engined aircraft?",
+      "expected_output": "FADEC (Full Authority Digital Engine Control) is used in almost all current-generation jet engines and increasingly in piston engines. It replaces both magnetos in piston-engined aircraft, making magneto maintenance obsolete and eliminating carburetor heat, mixture controls, and engine priming; it controls each engine cylinder independently for optimum fuel injection and spark timing.",
+      "label": 1,
+      "output": "Based on the provided context, here is the purpose of FADEC and what it replaces in piston-engined aircraft:\n\n### What FADEC Replaces in Piston-Engined Aircraft\nIn piston-engined aircraft, the FADEC system:\n* Replaces **both magnetos** (making costly magneto maintenance obsolete) [page 11].\n* Eliminates **carburetor heat, mixture controls, and engine priming** [page 11].\n\n### The Purpose of FADEC\nThe purposes and functions of FADEC include:\n* **Engine Control and Efficiency:** It controls each engine cylinder independently for optimum fuel injection and spark timing so the pilot no longer needs to monitor the fuel mixture [page 11]. It also constantly makes small operational changes in flight to maintain efficiency [page 10].\n* **Thrust Management:** It applies calculated thrust settings (such as takeoff thrust) by sending electronic signals to the engines without a direct linkage to open fuel flow [page 10]. It also provides care-free engine handling with guaranteed thrust settings [page 11].\n* **Engine Protection and Safety:** It provides automatic engine protection against out-of-tolerance operations, provides redundancy in case of failure via a multiple-channel computer, and can support automatic aircraft and engine emergency responses [page 11].\n* **Monitoring and Diagnostics:** It reduces the number of parameters flight crews must monitor, enables \"Fault Tolerant Systems,\" and provides long-term engine health monitoring, diagnostics, and maintenance reports [page 10, 11]. \n* **Programming Limitations:** It allows manufacturers to program engine limitations (such as automatically taking measures to avoid exceeding certain engine temperatures without pilot intervention) [page 10].",
+      "scores": {
+        "groundedness": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.7499999999999999,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 2,
+      "input": "What is a turnbuckle used for in a cable-operated flight control system?",
+      "expected_output": "A turnbuckle is used to adjust the length of the control cable.",
+      "label": 1,
+      "output": "Based on the provided context, there is no mention of a turnbuckle or its use in a cable-operated flight control system. Therefore, I do not know the answer.",
+      "scores": {
+        "groundedness": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.08333333333333333,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 3,
+      "input": "How does a three-position control valve manage cylinder movement in a hydraulic system?",
+      "expected_output": "In the upper position the valve connects the pressure line to port A, raising the load. In the lower position it connects to port B, lowering the load. In the center position it locks fluid into the cylinder, holding it in position, and dead-ends the line so pump output returns to the tank via the pressure relief.",
+      "label": 1,
+      "output": "Based on the provided context, a three-position changeover control valve manages cylinder movement through three distinct positions:\n\n1. **Upper Position:** When the piston of the valve is changed to the upper position, the pipe pressure line is connected to port A, which raises the load.\n2. **Lower Position:** When the valve is changed to the lower position, the pipe pressure line is connected to port B, which lowers the load.\n3. **Center Position:** When the valve is at the center position, it locks the fluid into the cylinder (holding it in position) and dead-ends the fluid line, which causes all of the pump output fluid to return to the tank via the pressure relief.\n\n(page 35)",
+      "scores": {
+        "groundedness": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.6666666666666666,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 4,
+      "input": "What forms can water contamination take in aviation fuel, and how can entrained water be recognized?",
+      "expected_output": "Water can be present in fuel either dissolved in it or entrained/suspended in it. Entrained water can be detected with the naked eye: finely divided droplets reflect light and, in high concentrations, give the fuel a dull, hazy, or cloudy appearance.",
+      "label": 1,
+      "output": "Based on the provided context, water contamination in aviation fuel can take two forms:\n\n1. **Dissolved** in the fuel.\n2. **Entrained or suspended** in the fuel (page 102).\n\n**How to recognize entrained water:**\nEntrained water can be detected with the naked eye. The finely divided droplets reflect light and, in high concentrations, give the fuel a dull, hazy, or cloudy appearance (page 102).",
+      "scores": {
+        "groundedness": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.49999999999999994,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 5,
+      "input": "What is the ACES II ejection seat, and what is its peak catapult acceleration?",
+      "expected_output": "The ACES II (Advanced Concept Ejection Seat) is a rugged, lightweight, easy-to-maintain third-generation ejection seat capable of ejecting a pilot from zero-zero conditions up to maximum altitude and airspeeds around 250 knots. Its peak catapult acceleration is about 12gz, and it has three main operating modes for low, medium, and high speed/altitude ejections.",
+      "label": 1,
+      "output": "Based on the provided context, the ACES II (Advanced Concept Ejection Seat) is a rugged, lightweight, easy-to-maintain, and updatable third-generation ejection seat. It is capable of ejecting a pilot from zero-zero conditions up to maximum altitude and airspeeds in the 250 knots (288 mph / 463 kph) range (page 165). \n\nIts features include:\n* Electronic sequencing and timing\n* Auto sensing of egress conditions\n* Parachute reefing to control opening at all speed ranges\n* Multi-mode operation for optimum recovery of the crewman (page 165)\n\nThe peak catapult acceleration of the ACES II is **about 12gz** (page 165).",
+      "scores": {
+        "groundedness": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.5833333333333333,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 6,
+      "input": "How often must aircraft transponders be tested according to the maintenance notes?",
+      "expected_output": "All transponders must be tested every 24 calendar months, or during an annual inspection if requested by the owner, and the test must be conducted by an authorized avionics repair facility.",
+      "label": 1,
+      "output": "According to the maintenance notes, all transponders must be tested every 24-calendar months, or during an annual inspection if requested by the owner (page 21).",
+      "scores": {
+        "groundedness": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.41666666666666663,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 7,
+      "input": "What methods are used to detect and prevent ice formation on an aircraft?",
+      "expected_output": "Ice detector sensors warn the flight crew of icing conditions via an annunciator light, and on some aircraft automatically activate wing anti-ice (WAI) systems. Ice prevention methods include heating surfaces with hot air, heating by electrical elements, breaking up ice formations with inflatable boots, and chemical application.",
+      "label": 1,
+      "output": "Based on the provided context, the methods used to detect and prevent ice formation on an aircraft are:\n\n### **Ice Detection Methods**\n* **Visual Detection:** Ice can be detected visually by the crew (page 144).\n* **Ice Detector Sensors:** Most modern aircraft use one or more ice detector sensors located on the forward fuselage. These sensors alert the flight crew via an annunciator light and, on some aircraft models, automatically activate the ice protection/WAI (Wing Anti-Ice) systems (page 144).\n\n### **Ice Prevention (and Control) Methods**\nThere are four primary means used to prevent or control ice formation on an aircraft:\n1. Heating surfaces with hot air (page 144).\n2. Heating by electrical elements (page 144).\n3. Breaking up ice formations, usually by inflatable boots (page 144).\n4. Chemical application (page 144).",
+      "scores": {
+        "groundedness": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.5833333333333334,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 8,
+      "input": "What does ETOPS stand for, and what determines the diversion time limit an operator is approved for?",
+      "expected_output": "ETOPS stands for Extended-range Twin-engine Operational Performance Standards (more recently redefined as Extended Operations). The approved diversion time - commonly 120, 180, or 207 minutes - is set by the regulator based on the operator's maintenance program, engine in-flight shutdown rate, crew training, and the aircraft type's demonstrated systems reliability, and it caps how far the aircraft may fly from an adequate en-route alternate airport.",
+      "label": 0,
+      "output": "Based on the provided context, I do not know what ETOPS stands for or what determines the diversion time limit, as this information is not mentioned in the text.",
+      "scores": {
+        "groundedness": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 9,
+      "input": "How do winglets reduce induced drag, and what is the aerodynamic trade-off of fitting them?",
+      "expected_output": "Winglets reduce induced drag by weakening the wingtip vortex - the spanwise flow that rolls up around the tip - which cuts the downwash behind the wing and tilts the lift vector forward, recovering some of the energy otherwise lost to the vortex. The trade-off is added wetted area and therefore more parasite drag, plus extra structural weight and higher root bending moment, so the net benefit only appears at higher lift coefficients, which is why the gain shows up in cruise and climb rather than in high-speed low-altitude flight.",
+      "label": 0,
+      "output": "I do not know. The provided context does not contain information about winglets, how they reduce induced drag, or the aerodynamic trade-offs of fitting them.",
+      "scores": {
+        "groundedness": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.08333333333333333,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 10,
+      "input": "What is V1 in takeoff performance, and why is it not simply a fixed speed for a given aircraft type?",
+      "expected_output": "V1 is the takeoff decision speed: the maximum speed at which the crew can initiate a reject and still stop within the remaining accelerate-stop distance, and equally the minimum speed from which the takeoff can be continued on the remaining engine after a failure. It is not fixed per type because it is recomputed for every departure from runway length and slope, aircraft weight, flap setting, air density, wind component, and runway surface condition - so the same airframe can have a materially different V1 on two different days or runways.",
+      "label": 0,
+      "output": "Based on the provided context, there is no mention of V1 or why it is not a fixed speed. Therefore, I do not know the answer to this question.",
+      "scores": {
+        "groundedness": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+[
+  {
+    "name": "baseline",
+    "change": "Measure the current retrieval and answer configuration with TruLens.",
+    "chat_model": "gemini-3.5-flash",
+    "retrieval_k": 4,
+    "acceptance": {
+      "compare_against": null,
+      "required_metrics": [
+        "answer_relevance",
+        "groundedness",
+        "context_relevance"
+      ]
+    },
+    "result": {
+      "decision": "no_baseline",
+      "reason": "No compare_against set - treated as the new baseline.",
+      "plateaued": false,
+      "flat": false,
+      "comparisons": []
+    }
+  },
+  {
+    "name": "topk-6",
+    "change": "retrieval_k 4 -> 6",
+    "chat_model": "gemini-3.1-flash-lite",
+    "retrieval_k": 6,
+    "acceptance": {
+      "compare_against": "baseline",
+      "required_metrics": [
+        "answer_relevance",
+        "groundedness",
+        "context_relevance"
+      ]
+    }
+  }
+]
