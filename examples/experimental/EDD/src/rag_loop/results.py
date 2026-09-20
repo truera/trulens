@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from datetime import datetime
+from datetime import timezone
 import json
 from pathlib import Path
 from typing import Any
@@ -21,7 +22,9 @@ def to_result_record(experiment: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def save_result(record: dict[str, Any], results_dir: Path = RESULTS_DIR) -> Path:
+def save_result(
+    record: dict[str, Any], results_dir: Path = RESULTS_DIR
+) -> Path:
     results_dir.mkdir(parents=True, exist_ok=True)
     path = results_dir / f"{record['name']}.json"
     path.write_text(json.dumps(record, indent=2))

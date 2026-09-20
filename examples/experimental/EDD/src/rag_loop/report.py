@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .results import RESULTS_DIR, load_result
+from .results import RESULTS_DIR
+from .results import load_result
 
 # In TruLens, all RAG triad metrics and clean_negative_recall are higher-is-better [0.0 - 1.0].
 LOWER_IS_BETTER: set[str] = set()

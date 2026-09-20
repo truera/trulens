@@ -9,9 +9,9 @@ allowed-tools:
 
 # Hybrid Search in Qdrant
 
-Hybrid search means running two or more different searches in parallel and combining their results into one. 
+Hybrid search means running two or more different searches in parallel and combining their results into one.
 
-In Qdrant this is powered by the Query API via `prefetch`: each `prefetch` runs exactly one type of search independently, and the outer `query` combines results from parallel prefetches.  
+In Qdrant this is powered by the Query API via `prefetch`: each `prefetch` runs exactly one type of search independently, and the outer `query` combines results from parallel prefetches.
 Prefetches can be nested and searches can be multi-stage, all pipeline happening in one request through Query API. See [Universal Query API](https://skills.qdrant.tech/md/course/essentials/day-5/universal-query-api/) for examples.
 
 Identify the user's problem and pick building blocks:

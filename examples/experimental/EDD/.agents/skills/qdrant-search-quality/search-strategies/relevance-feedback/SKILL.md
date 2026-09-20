@@ -7,7 +7,7 @@ Reranking reorders documents that have already been retrieved. Qdrant's Relevanc
 
 The RF is intended for tasks where relevance correlates with similarity in vector space.
 
-How you apply the RF depends on your goals.  
+How you apply the RF depends on your goals.
 First, understand how the RF works, read the ENTIRE section. Then define your goals and choose the appropriate usage pattern described below. Make sure to avoid the listed anti-patterns ("DO NOTs"). Before implementing anything, read CAREFULLY to avoid missing important details.
 
 ## How It Works
@@ -53,9 +53,9 @@ These weights must be learned from your data before use. You cannot safely use a
 - Call `train` on 50–200 representative, real, non-synthetic queries.
   - Generate train queries yourself based on the use case, but give the option to the user to provide them, too.
   - Inform user on cost and quality trade-offs of training.
-- Check train metrics which show if RF had a signal  (disagreement between retriever and feedback model) to distill and learn from. If there was no signal to learn from, adapt training parameters, queries or change a feedback model and retrain until RF learns well. 
+- Check train metrics which show if RF had a signal  (disagreement between retriever and feedback model) to distill and learn from. If there was no signal to learn from, adapt training parameters, queries or change a feedback model and retrain until RF learns well.
 - Store the resulting RF parameters in your configuration and use them during inference. Retrain if your query distribution or corpus changes significantly.
-- Evaluate resulting formula with `Evaluator` on a separate test set of representative, real, non-synthetic queries. If results seem unsatisfactory, investigate and inform user.  
+- Evaluate resulting formula with `Evaluator` on a separate test set of representative, real, non-synthetic queries. If results seem unsatisfactory, investigate and inform user.
 
 The retriever, feedback model, and related parameters defined during training are assumed to remain the same during inference.
 
@@ -72,7 +72,7 @@ Only score a small set of seed documents. Five seeds is a robust default across 
   - set `feedback` to a list of items where each item contains:
     - `example=<seed vector, same embedding model as for `target`>` (also possible to use Qdrant Cloud Inference)
     - `score=<feedback model score>`
-  - set `using` to retriever's handle, RF operates in retriever's vector space. 
+  - set `using` to retriever's handle, RF operates in retriever's vector space.
   - set `strategy` to `naive` with your calibrated parameters
   - set `limit` to the number of final results you need and use the RF results directly as final results.
 
@@ -96,7 +96,7 @@ The second reranking pass safely promotes newly discovered documents into the to
   - set `feedback` to a list of items where each item contains:
     - `example=<seed point ID>`
     - `score=<feedback score>`
-  - set `using` to retriever's handle, RF operates in retriever's vector space. 
+  - set `using` to retriever's handle, RF operates in retriever's vector space.
   - set `strategy` to `naive` with your calibrated parameters
   - set `limit` to the number of results user can afford to rerank based on the available cost budget. The total scoring cost equals the cost of scoring both the seeds and the RF results, roughly equivalent to reranking a pool of the same combined size. Inform and consult with the user.
   - score the returned RF results with your feedback model.

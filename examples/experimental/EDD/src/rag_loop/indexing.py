@@ -2,7 +2,8 @@ from langchain_community.document_loaders import PyPDFium2Loader
 from langchain_qdrant import QdrantVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from .config import Settings, get_settings
+from .config import Settings
+from .config import get_settings
 from .embeddings import get_embeddings
 
 

@@ -26,9 +26,9 @@ Use when: recency, popularity or other payload values should affect the merged r
 **[With formula query](https://skills.qdrant.tech/md/documentation/search/search-relevance/?s=score-boosting)**, access `score` of each prefetch and, if desired, payload field values.
 
 If you want to implement custom fusion on `score` of each prefetch:
-- Use decay or any other available expressions for normalizing score distributions before fusing them. 
-- Parameters of these expressions should be based on the collection & retriever score distributions (for example, adjusting these parameters on a subsample of real queries). 
-- Formula query is unable to provide ranks for custom fusions 
+- Use decay or any other available expressions for normalizing score distributions before fusing them.
+- Parameters of these expressions should be based on the collection & retriever score distributions (for example, adjusting these parameters on a subsample of real queries).
+- Formula query is unable to provide ranks for custom fusions
 
 When using `FormulaQuery` over multiple prefetches (e.g. per-representation weighting):
 - `$score[i]` indexes prefetches in declaration order. Reordering the `prefetch=` list silently shifts which weight applies to which retriever.
@@ -37,7 +37,7 @@ When using `FormulaQuery` over multiple prefetches (e.g. per-representation weig
 
 ## Need Good Ranking of Fused Candidates and Ready To Spend More Resources
 
-Use when: you want to use similarity between query and candidates' vector representations as the prefetches combiner and simultaneously ranker. 
+Use when: you want to use similarity between query and candidates' vector representations as the prefetches combiner and simultaneously ranker.
 More resource heavy than score/rank based fusions, but might be necessary due to use case requirements or need in a high top-K precision of results (when parallel prefetches have overall a good recall of retrieved candidates).
 
 You can use any type of vector as an outer query over the prefetches, to perform the fusion on the server-side in one QueryAPI request: sparse, dense, multivector. For that, same type of vector representations for documents need to be stored as named vectors per point.

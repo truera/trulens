@@ -99,7 +99,9 @@ def main() -> None:
             try:
                 from trulens.dashboard import run_dashboard
             except ImportError:
-                print("trulens-dashboard is not installed. Please install it with:")
+                print(
+                    "trulens-dashboard is not installed. Please install it with:"
+                )
                 print("  pip install trulens-dashboard")
                 return
 

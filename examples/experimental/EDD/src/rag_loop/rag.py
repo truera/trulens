@@ -1,15 +1,18 @@
 import logging
-from typing_extensions import TypedDict
 
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_qdrant import QdrantVectorStore
-from langgraph.graph import END, START, StateGraph
+from langgraph.graph import END
+from langgraph.graph import START
+from langgraph.graph import StateGraph
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
+from typing_extensions import TypedDict
 
-from .config import Settings, get_settings
+from .config import Settings
+from .config import get_settings
 from .embeddings import get_embeddings
 
 # Silence Google AFC advisory
@@ -56,19 +59,17 @@ def generate_answer(
     question: str, context: list[Document], settings: Settings | None = None
 ) -> str:
     settings = settings or get_settings()
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            (
-                "system",
-                "You are an aircraft systems reference assistant. Answer only from the "
-                "supplied context. If the context does not contain the answer, say you do "
-                "not know rather than guessing at a procedure, limitation, or value. Cite "
-                "page numbers when available.\n\n"
-                "Context:\n{context}",
-            ),
-            ("human", "Question: {question}"),
-        ]
-    )
+    prompt = ChatPromptTemplate.from_messages([
+        (
+            "system",
+            "You are an aircraft systems reference assistant. Answer only from the "
+            "supplied context. If the context does not contain the answer, say you do "
+            "not know rather than guessing at a procedure, limitation, or value. Cite "
+            "page numbers when available.\n\n"
+            "Context:\n{context}",
+        ),
+        ("human", "Question: {question}"),
+    ])
     chat_model = ChatGoogleGenerativeAI(
         model=settings.chat_model,
         api_key=settings.gemini_api_key,
@@ -78,9 +79,10 @@ def generate_answer(
         f"[page {document.metadata.get('page', '?') + 1}] {document.page_content}"
         for document in context
     )
-    response = (prompt | chat_model).invoke(
-        {"context": formatted_context, "question": question}
-    )
+    response = (prompt | chat_model).invoke({
+        "context": formatted_context,
+        "question": question,
+    })
     return response.text
 
 

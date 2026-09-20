@@ -1,13 +1,18 @@
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
-import numpy as np
 
+import numpy as np
+from tqdm import tqdm
 from trulens.apps.langgraph import TruGraph
-from trulens.core import Metric, Selector, TruSession
+from trulens.core import Metric
+from trulens.core import Selector
+from trulens.core import TruSession
 from trulens.providers.openai import OpenAI
 
-from .config import Settings, get_settings
+from .config import Settings
+from .config import get_settings
 from .dataset import load_validated_items
 from .rag import build_graph
 
@@ -87,7 +92,9 @@ def run_evaluation(
     dataset_path: Path = DATASET_PATH,
 ) -> EvaluationResult:
     settings = settings or get_settings()
-    exp_name = experiment_name or f"rag-{settings.chat_model}-{settings.retrieval_k}"
+    exp_name = (
+        experiment_name or f"rag-{settings.chat_model}-{settings.retrieval_k}"
+    )
 
     session = TruSession(database_url=settings.database_url)
     items = load_validated_items(dataset_path)
@@ -101,8 +108,12 @@ def run_evaluation(
         feedbacks=feedbacks,
     )
 
-    print(f"\n[eval] Running experiment '{exp_name}' over {len(items)} golden items...")
-    print("[eval] Generating answers and computing TruLens evaluations (takes ~2 minutes)...")
+    print(
+        f"\n[eval] Running experiment '{exp_name}' over {len(items)} golden items..."
+    )
+    print(
+        "[eval] Generating answers and computing TruLens evaluations (takes ~2 minutes)..."
+    )
 
     outputs = []
     with tru_graph as recording:
@@ -153,9 +164,7 @@ def run_evaluation(
                 calls_data = records_df[calls_col].iloc[idx]
                 if isinstance(calls_data, list) and calls_data:
                     meta = calls_data[0].get("meta", {})
-                    reason_val = (
-                        meta.get("reason") or meta.get("reasons") or ""
-                    )
+                    reason_val = meta.get("reason") or meta.get("reasons") or ""
 
             case_scores[col] = {
                 "value": score_val,

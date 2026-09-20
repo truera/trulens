@@ -5,7 +5,7 @@ description: "Constructing prefetch queries for hybrid retrieval, including spar
 
 # Different Searches in One Query API Request
 
-Each `prefetch` runs exactly one search per one query. 
+Each `prefetch` runs exactly one search per one query.
 
 Understand if user wants to run several parallel searches on:
 1. The same vector representations but different queries or filters.
@@ -23,7 +23,7 @@ Most likely you need a sparse vector for exact text search alongside the dense o
 
 ### Choose a Sparse Vector for Text
 - **BM25** statistical representations, built into Qdrant core (computed server-side). Good baseline, works out-of-domain, usually for long texts. Can be used for non-English content, but needs to be configured per language (tokenization, stemming, stopwords, etc) at indexing and retrieval time. More in [Text Search Guide](https://skills.qdrant.tech/md/documentation/search/text-search/full-text-search/?s=bm25)
-- **BM42** learned sparse, based on BM25, but better for small chunks of text & with meaning understanding. Works only on English. Requires fine-tuning for domain-specific retrieval. Requires FastEmbed (Python/REST only, not available in all SDKs). Not maintained. 
+- **BM42** learned sparse, based on BM25, but better for small chunks of text & with meaning understanding. Works only on English. Requires fine-tuning for domain-specific retrieval. Requires FastEmbed (Python/REST only, not available in all SDKs). Not maintained.
 - **miniCOIL** learned sparse, BM25 with additional understanding of words meaning in context. Works only on English. Requires fine-tuning for domain-specific retrieval. Requires FastEmbed. Usage shown in [FastEmbed miniCOIL documentation](https://skills.qdrant.tech/md/documentation/fastembed/fastembed-minicoil/).
 - **SPLADE++** learned sparse with term expansion. Heavier inference and resources usage but better performance due to term expansion. Requires fine-tuning for domain-specific retrieval. Provided in Qdrant Cloud Inference and FastEmbed versions work only on English. To use with FastEmbed, check [FastEmbed SPLADE documentation](https://skills.qdrant.tech/md/documentation/fastembed/fastembed-splade/).
 - **External learned sparse embeddings**, for example BAAI/bge-m3.
@@ -60,11 +60,10 @@ However, it comes with several considerations, as multivectors were designed to 
 
 Moreover, multivectors are rarely a good pick for prefetch:
 - max similarity metric is not symmetric, so [using HNSW index with it could be problematic](https://skills.qdrant.tech/md/course/multi-vector-search/module-1/maxsim-distance/#the-hnsw-challenge)
-- [multivector representations are very heavy, as search process on them](https://skills.qdrant.tech/md/course/multi-vector-search/module-1/problems-multi-vector). 
+- [multivector representations are very heavy, as search process on them](https://skills.qdrant.tech/md/course/multi-vector-search/module-1/problems-multi-vector).
 
 There are ways to make multivector retrieval cheaper (MUVERA, pooling), you can see more in ["Evaluating Tradeoffs of Multi-stage Multi-vector Search"](https://skills.qdrant.tech/md/course/multi-vector-search/module-3/evaluating-pipelines/)
 
 ## What NOT to Do
 - Choose any search method (for example, BM25) without evaluation of its quality & resources used.
 - Use any search method (for example, BM25) without paying attention to the specifics of their configuration and applicability to the use case.
-
