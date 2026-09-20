@@ -15,6 +15,22 @@ APP_NAME = "aircraft-systems"
 DATASET_PATH = Path("evals/seed.jsonl")
 
 
+class RAGTruGraph(TruGraph):
+    """TruGraph recorder that explicitly extracts 'question' as input and 'answer' as output."""
+
+    def main_input(self, func, sig, bindings) -> str:
+        if "input" in bindings.arguments:
+            temp = bindings.arguments["input"]
+            if isinstance(temp, dict) and "question" in temp:
+                return temp["question"]
+        return super().main_input(func, sig, bindings)
+
+    def main_output(self, func, sig, bindings, ret) -> str:
+        if isinstance(ret, dict) and "answer" in ret:
+            return ret["answer"]
+        return super().main_output(func, sig, bindings, ret)
+
+
 def get_feedback_functions(settings: Settings) -> list[Metric]:
     """Configure TruLens RAG Triad feedback functions."""
     provider = OpenAI(
@@ -78,21 +94,26 @@ def run_evaluation(
     feedbacks = get_feedback_functions(settings)
 
     graph = build_graph(settings)
-    tru_graph = TruGraph(
+    tru_graph = RAGTruGraph(
         graph,
         app_name=APP_NAME,
         app_version=exp_name,
         feedbacks=feedbacks,
     )
 
+    print(f"\n[eval] Running experiment '{exp_name}' over {len(items)} golden items...")
+    print("[eval] Generating answers and computing TruLens evaluations (takes ~2 minutes)...")
+
     outputs = []
     with tru_graph as recording:
-        for item in items:
+        for item in tqdm(items, desc="Evaluating RAG items", unit="query"):
             res = tru_graph.app.invoke({"question": item["input"]})
             outputs.append(res.get("answer", ""))
 
+    print("\n[eval] Awaiting TruLens feedback results from judges...")
     session.force_flush()
-    records_df = recording.retrieve_feedback_results(timeout=180)
+    records_df = recording.retrieve_feedback_results(timeout=300)
+    print("[eval] Completed evaluations successfully.\n")
 
     # Extract feedback column names
     feedback_cols = [f.name for f in feedbacks]

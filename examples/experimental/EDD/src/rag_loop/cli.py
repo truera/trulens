@@ -1,6 +1,13 @@
 import argparse
 import json
 from pathlib import Path
+import warnings
+
+from trulens.core import TruSession
+
+# Suppress UserWarnings from feedback providers and instrumentation
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", module="trulens")
 
 
 def main() -> None:
@@ -89,23 +96,27 @@ def main() -> None:
 
             print(load_and_format(args.name, n=args.worst, metric=args.metric))
         elif args.command == "dashboard":
-            from trulens.dashboard import run_dashboard
+            try:
+                from trulens.dashboard import run_dashboard
+            except ImportError:
+                print("trulens-dashboard is not installed. Please install it with:")
+                print("  pip install trulens-dashboard")
+                return
 
             session = TruSession()
             print("Starting TruLens dashboard...")
-            run_dashboard(session)
+            proc = run_dashboard(session)
+            try:
+                proc.wait()
+            except KeyboardInterrupt:
+                pass
         else:
             from .rag import answer_question
 
             result = answer_question(args.question)
             print(result["answer"])
     finally:
-        try:
-            from trulens.core import TruSession
-
-            TruSession().force_flush()
-        except Exception:
-            pass
+        TruSession().force_flush()
 
 
 if __name__ == "__main__":
