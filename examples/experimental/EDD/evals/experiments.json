@@ -32,6 +32,38 @@
         "groundedness",
         "context_relevance"
       ]
+    },
+    "result": {
+      "decision": "reject",
+      "reason": "Regressed on: context_relevance.",
+      "plateaued": false,
+      "flat": false,
+      "comparisons": [
+        {
+          "metric": "answer_relevance",
+          "current": 0.0,
+          "baseline": 0.0,
+          "delta": 0.0,
+          "direction": "higher",
+          "regressed": false
+        },
+        {
+          "metric": "groundedness",
+          "current": 0.6,
+          "baseline": 0.6,
+          "delta": 0.0,
+          "direction": "higher",
+          "regressed": false
+        },
+        {
+          "metric": "context_relevance",
+          "current": 0.3277777777777777,
+          "baseline": 0.36666666666666664,
+          "delta": -0.0389,
+          "direction": "higher",
+          "regressed": true
+        }
+      ]
     }
   }
 ]
