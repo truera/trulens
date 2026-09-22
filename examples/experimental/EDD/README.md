@@ -31,7 +31,7 @@ flowchart LR
 - **RAG Orchestration**: [LangGraph](https://github.com/langchain-ai/langgraph) (retrieve → generate state graph).
 - **Generation**: OpenAI (`gpt-5.6-luna`).
 - **Embeddings**: OpenAI (`text-embedding-3-small`, requires `OPENAI_API_KEY`).
-- **Vector Database**: Qdrant Cloud or local Qdrant.
+- **Vector Database**: [Qdrant Cloud](https://cloud.qdrant.io/) or local Qdrant.
 - **Evaluation & Tracing**: **TruLens** (`trulens-core`, `trulens-feedback`, `trulens-apps-langgraph`, `trulens-providers-openai`).
 
 ## The TruLens RAG Triad
