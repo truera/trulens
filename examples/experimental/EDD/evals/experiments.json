@@ -1,8 +1,8 @@
 [
   {
     "name": "baseline",
-    "change": "Measure the current retrieval and answer configuration with TruLens.",
-    "chat_model": "gemini-3.5-flash",
+    "change": "initial: Measure the current retrieval and answer configuration with TruLens.",
+    "chat_model": "gpt-5.6-luna",
     "retrieval_k": 4,
     "acceptance": {
       "compare_against": null,
@@ -22,8 +22,8 @@
   },
   {
     "name": "topk-6",
-    "change": "retrieval_k 4 -> 6",
-    "chat_model": "gemini-3.1-flash-lite",
+    "change": "retrieval_k 4 -> 6 and change of smaller model",
+    "chat_model": "gpt-4.1-nano",
     "retrieval_k": 6,
     "acceptance": {
       "compare_against": "baseline",
@@ -31,38 +31,6 @@
         "answer_relevance",
         "groundedness",
         "context_relevance"
-      ]
-    },
-    "result": {
-      "decision": "reject",
-      "reason": "Regressed on: context_relevance.",
-      "plateaued": false,
-      "flat": false,
-      "comparisons": [
-        {
-          "metric": "answer_relevance",
-          "current": 0.0,
-          "baseline": 0.0,
-          "delta": 0.0,
-          "direction": "higher",
-          "regressed": false
-        },
-        {
-          "metric": "groundedness",
-          "current": 0.6,
-          "baseline": 0.6,
-          "delta": 0.0,
-          "direction": "higher",
-          "regressed": false
-        },
-        {
-          "metric": "context_relevance",
-          "current": 0.3277777777777777,
-          "baseline": 0.36666666666666664,
-          "delta": -0.0389,
-          "direction": "higher",
-          "regressed": true
-        }
       ]
     }
   }

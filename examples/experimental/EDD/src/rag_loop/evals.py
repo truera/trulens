@@ -78,6 +78,7 @@ def get_feedback_functions(settings: Settings) -> list[Metric]:
 @dataclass
 class EvaluationResult:
     experiment_name: str
+    app_id: str
     dataset_items: list[dict[str, Any]]
     records_df: Any
     feedback_cols: list[str]
@@ -106,6 +107,13 @@ def run_evaluation(
         app_name=APP_NAME,
         app_version=exp_name,
         feedbacks=feedbacks,
+        metadata={
+            "chat_model": settings.chat_model,
+            "retrieval_k": settings.retrieval_k,
+            # Populated later by the loop once the keep/reject verdict is known;
+            # surfaces as a column in the TruLens dashboard leaderboard.
+            "decision": "pending",
+        },
     )
 
     print(
@@ -183,6 +191,7 @@ def run_evaluation(
 
     return EvaluationResult(
         experiment_name=exp_name,
+        app_id=tru_graph.app_id,
         dataset_items=items,
         records_df=records_df,
         feedback_cols=feedback_cols,

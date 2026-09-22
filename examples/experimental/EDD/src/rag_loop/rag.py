@@ -1,8 +1,6 @@
-import logging
+from functools import lru_cache
 
 from langchain_core.documents import Document
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_qdrant import QdrantVectorStore
 from langgraph.graph import END
 from langgraph.graph import START
@@ -13,10 +11,8 @@ from typing_extensions import TypedDict
 
 from .config import Settings
 from .config import get_settings
-from .embeddings import get_embeddings
-
-# Silence Google AFC advisory
-logging.getLogger("google_genai.models").setLevel(logging.ERROR)
+from .embeddings import OpenAIEmbeddings
+from .embeddings import _get_client
 
 
 class RAGState(TypedDict, total=False):
@@ -25,12 +21,34 @@ class RAGState(TypedDict, total=False):
     answer: str
 
 
-def _vector_store(settings: Settings) -> QdrantVectorStore:
+@lru_cache(maxsize=None)
+def _vector_store_cached(
+    embedding_model: str,
+    collection_name: str,
+    qdrant_url: str,
+    qdrant_api_key: str,
+    openai_api_key: str,
+) -> QdrantVectorStore:
+    """Reuse a single Qdrant connection per (model, collection, url) tuple.
+
+    from_existing_collection opens a remote connection and does a collection
+    round trip; caching avoids repeating that on every retrieval call.
+    """
     return QdrantVectorStore.from_existing_collection(
-        embedding=get_embeddings(settings),
-        collection_name=settings.collection_name,
-        url=settings.qdrant_url,
-        api_key=settings.qdrant_api_key,
+        embedding=OpenAIEmbeddings(embedding_model, openai_api_key),
+        collection_name=collection_name,
+        url=qdrant_url,
+        api_key=qdrant_api_key,
+    )
+
+
+def _vector_store(settings: Settings) -> QdrantVectorStore:
+    return _vector_store_cached(
+        settings.embedding_model,
+        settings.collection_name,
+        settings.qdrant_url,
+        settings.qdrant_api_key,
+        settings.openai_api_key,
     )
 
 
@@ -59,31 +77,26 @@ def generate_answer(
     question: str, context: list[Document], settings: Settings | None = None
 ) -> str:
     settings = settings or get_settings()
-    prompt = ChatPromptTemplate.from_messages([
-        (
-            "system",
-            "You are an aircraft systems reference assistant. Answer only from the "
-            "supplied context. If the context does not contain the answer, say you do "
-            "not know rather than guessing at a procedure, limitation, or value. Cite "
-            "page numbers when available.\n\n"
-            "Context:\n{context}",
-        ),
-        ("human", "Question: {question}"),
-    ])
-    chat_model = ChatGoogleGenerativeAI(
-        model=settings.chat_model,
-        api_key=settings.gemini_api_key,
-        temperature=0,
-    )
     formatted_context = "\n\n".join(
         f"[page {document.metadata.get('page', '?') + 1}] {document.page_content}"
         for document in context
     )
-    response = (prompt | chat_model).invoke({
-        "context": formatted_context,
-        "question": question,
-    })
-    return response.text
+    system_prompt = (
+        "You are an aircraft systems reference assistant. Answer only from the "
+        "supplied context. If the context does not contain the answer, say you do "
+        "not know rather than guessing at a procedure, limitation, or value. Cite "
+        "page numbers when available.\n\n"
+        f"Context:\n{formatted_context}"
+    )
+    client = _get_client(settings.openai_api_key)
+    response = client.chat.completions.create(
+        model=settings.chat_model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Question: {question}"},
+        ],
+    )
+    return response.choices[0].message.content or ""
 
 
 def build_graph(settings: Settings | None = None):

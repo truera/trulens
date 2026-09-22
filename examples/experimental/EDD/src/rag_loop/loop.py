@@ -5,6 +5,8 @@ from pathlib import Path
 import subprocess
 from typing import Any
 
+from trulens.core import TruSession
+
 from .config import Settings
 from .config import get_settings
 from .evals import run_evaluation
@@ -53,6 +55,31 @@ def run_experiment_loop(
     ]
 
 
+def _record_decision_in_dashboard(
+    app_id: str, verdict: Verdict, settings: Settings
+) -> None:
+    """Persist the keep/reject verdict onto the app so the TruLens dashboard
+    leaderboard shows an 'accepted/rejected' column for each experiment.
+
+    Uses the same database as the evaluation run so the dashboard (which must
+    point at the same TRULENS_DATABASE_URL) can read it. update_app_metadata
+    merges, so the config metadata set at app-creation time is preserved.
+    """
+    accepted = verdict.decision in ("keep", "no_baseline")
+    try:
+        session = TruSession(database_url=settings.database_url)
+        session.connector.db.update_app_metadata(
+            app_id,
+            {
+                "decision": verdict.decision,
+                "accepted": accepted,
+                "verdict_reason": verdict.reason,
+            },
+        )
+    except Exception as exc:  # noqa: BLE001 - dashboard metadata is best-effort
+        print(f"[warn] Could not record decision in dashboard metadata: {exc}")
+
+
 def _git(*args: str, check: bool = True) -> subprocess.CompletedProcess:
     return subprocess.run(
         ["git", *args], capture_output=True, text=True, check=check
@@ -75,6 +102,7 @@ def run_iteration(
     experiments_path: Path = Path("evals/experiments.json"),
     settings: Settings | None = None,
 ) -> Verdict:
+    settings = settings or get_settings()
     experiments = load_experiments(experiments_path)
     entry = next((e for e in experiments if e["name"] == name), None)
     if entry is None:
@@ -84,6 +112,9 @@ def run_iteration(
     save_result(to_result_record(result))
 
     verdict = decide(name, experiments)
+    _record_decision_in_dashboard(
+        result["evaluation"].app_id, verdict, settings
+    )
     entry["result"] = {
         "decision": verdict.decision,
         "reason": verdict.reason,

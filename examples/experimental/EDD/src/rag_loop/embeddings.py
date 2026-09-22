@@ -1,21 +1,33 @@
-from fastembed import TextEmbedding
+from functools import lru_cache
+
 from langchain_core.embeddings import Embeddings
+from openai import OpenAI
 
 from .config import Settings
 
 
-class FastEmbedEmbeddings(Embeddings):
-    """Local, keyless embeddings via FastEmbed (ONNX) — no OpenAI/Gemini call needed."""
+@lru_cache(maxsize=None)
+def _get_client(api_key: str) -> OpenAI:
+    """Reuse a single OpenAI client per API key."""
+    return OpenAI(api_key=api_key or None)
 
-    def __init__(self, model_name: str) -> None:
-        self._model = TextEmbedding(model_name=model_name)
+
+class OpenAIEmbeddings(Embeddings):
+    """Embeddings via OpenAI (e.g. text-embedding-3-small)."""
+
+    def __init__(self, model_name: str, api_key: str = "") -> None:
+        self._model = model_name
+        self._client = _get_client(api_key)
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        return [vector.tolist() for vector in self._model.embed(texts)]
+        response = self._client.embeddings.create(
+            model=self._model, input=texts
+        )
+        return [item.embedding for item in response.data]
 
     def embed_query(self, text: str) -> list[float]:
         return self.embed_documents([text])[0]
 
 
-def get_embeddings(settings: Settings) -> FastEmbedEmbeddings:
-    return FastEmbedEmbeddings(settings.embedding_model)
+def get_embeddings(settings: Settings) -> OpenAIEmbeddings:
+    return OpenAIEmbeddings(settings.embedding_model, settings.openai_api_key)

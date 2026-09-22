@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 from pathlib import Path
 import warnings
 
@@ -8,6 +9,10 @@ from trulens.core import TruSession
 # Suppress UserWarnings from feedback providers and instrumentation
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", module="trulens")
+
+# Silence the optional-package "not present in requirements" warnings emitted
+# during instrumentation (e.g. jsonschema).
+logging.getLogger("trulens.core.utils.imports").setLevel(logging.ERROR)
 
 
 def main() -> None:
