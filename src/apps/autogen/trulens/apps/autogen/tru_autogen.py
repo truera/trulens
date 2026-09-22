@@ -6,6 +6,8 @@ selection a `WORKFLOW_STEP` span, and every LLM call made on an agent's behalf
 a `GENERATION` span.
 """
 
+from __future__ import annotations
+
 from inspect import BoundArguments
 from inspect import Signature
 import json
@@ -77,7 +79,7 @@ def _update_span_name(span_name: str) -> None:
         if current_span is not None and hasattr(current_span, "update_name"):
             current_span.update_name(span_name)
     except Exception:
-        logger.debug("Could not rename span to %s.", span_name, exc_info=True)
+        logger.warning("Could not rename span to %s.", span_name, exc_info=True)
 
 
 def _message_role(message: Any) -> Optional[str]:

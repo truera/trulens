@@ -342,17 +342,29 @@ def _set_span_attributes(
         SpanAttributes.SpanType.TOOL,
         SpanAttributes.SpanType.MCP,
     ):
+
+        def _first_set(*keys: str, default: Any = None) -> Any:
+            """First key present in the resolved attributes.
+
+            Presence rather than truthiness, so an empty tool result is
+            reported as an empty result rather than as a missing one.
+            """
+            for key in keys:
+                if key in resolved_attributes:
+                    return resolved_attributes[key]
+            return default
+
         set_genai_tool_attributes(
             span,
-            # Instrumentation that knows the tool being called reports it
+            # Instrumentation that knows which tool is being called reports it
             # directly; otherwise func_name is the instrumented function.
-            tool_name=resolved_attributes.get(
-                GenAIAttributes.TOOL.NAME, func_name
+            tool_name=_first_set(GenAIAttributes.TOOL.NAME, default=func_name),
+            call_arguments=_first_set(
+                "call_arguments", GenAIAttributes.TOOL.CALL_ARGUMENTS
             ),
-            call_arguments=resolved_attributes.get("call_arguments")
-            or resolved_attributes.get(GenAIAttributes.TOOL.CALL_ARGUMENTS),
-            call_result=resolved_attributes.get("call_result")
-            or resolved_attributes.get(GenAIAttributes.TOOL.CALL_RESULT),
+            call_result=_first_set(
+                "call_result", GenAIAttributes.TOOL.CALL_RESULT
+            ),
         )
 
 

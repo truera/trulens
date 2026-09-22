@@ -22,6 +22,7 @@ from trulens.core.otel.recording import Recording
 from trulens.experimental.otel_tracing.core.session import (
     _set_up_tracer_provider,
 )
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 
@@ -487,6 +488,74 @@ class TestOtelInstrument(unittest.TestCase):
             self.assertEqual(
                 s.attributes[SpanAttributes.SPAN_GROUPS], ("group_a",)
             )
+
+    def test_tool_span_name_defaults_to_the_function(self) -> None:
+        """Instrumentation that reports no tool name keeps the old behaviour.
+
+        This is what every TOOL/MCP span in the repo does today, so the
+        fallback is the path that must not change.
+        """
+
+        @instrument(span_type=SpanAttributes.SpanType.TOOL)
+        def search_the_web(query: str) -> str:
+            return "result"
+
+        search_the_web("hello")
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[GenAIAttributes.TOOL.NAME],
+            "tests.unit.test_otel_instrument.TestOtelInstrument"
+            ".test_tool_span_name_defaults_to_the_function.<locals>"
+            ".search_the_web",
+        )
+
+    def test_tool_span_name_prefers_the_reported_tool(self) -> None:
+        """Instrumentation that knows the tool reports it instead."""
+
+        @instrument(
+            span_type=SpanAttributes.SpanType.TOOL,
+            attributes=lambda ret, exception, *args, **kwargs: {
+                GenAIAttributes.TOOL.NAME: "web_search",
+                GenAIAttributes.TOOL.CALL_ARGUMENTS: '{"query": "hello"}',
+                GenAIAttributes.TOOL.CALL_RESULT: ret,
+            },
+        )
+        def dispatch_tool_call(query: str) -> str:
+            return "result"
+
+        dispatch_tool_call("hello")
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        attributes = spans[0].attributes
+        self.assertEqual(attributes[GenAIAttributes.TOOL.NAME], "web_search")
+        self.assertEqual(
+            attributes[GenAIAttributes.TOOL.CALL_ARGUMENTS],
+            '{"query": "hello"}',
+        )
+        self.assertEqual(attributes[GenAIAttributes.TOOL.CALL_RESULT], "result")
+
+    def test_tool_span_reports_an_empty_result(self) -> None:
+        """An empty result is a result, not a missing one."""
+
+        @instrument(
+            span_type=SpanAttributes.SpanType.TOOL,
+            attributes=lambda ret, exception, *args, **kwargs: {
+                "call_result": ret,
+            },
+        )
+        def find_nothing() -> str:
+            return ""
+
+        find_nothing()
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[GenAIAttributes.TOOL.CALL_RESULT], ""
+        )
 
     def test_generation_span_has_client_span_kind(self) -> None:
         """GENERATION spans should have SpanKind.CLIENT (outbound LLM calls)."""
