@@ -136,9 +136,11 @@ Run the experiment by name. `rag-loop run` executes the pipeline with TruLens tr
 ```sh
 # Run baseline first (always kept as the benchmark)
 rag-loop run baseline
+```
 
 ![Baseline run output](data/results/baseline.png)
 
+```sh
 # Run the candidate experiment
 rag-loop run topk-2
 ```
