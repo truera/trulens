@@ -288,16 +288,24 @@ class SnowflakeEventTableDB(core_db.DB):
     ) -> Iterable[serial_utils.JSONized[app_schema.AppDefinition]]:
         """See [DB.get_apps][trulens.core.database.base.DB.get_apps]."""
         if app_name is None:
-            app_names = self._external_agent_dao._list_agents()["name"].values
+            agents = self._external_agent_dao._list_agents()
+            if agents.empty or "name" not in agents.columns:
+                return
+
+            app_names = agents["name"].values
         else:
             app_names = [app_name]
         for app_name in app_names:
             if self._is_cortex_agent(app_name):
                 agent_versions = ["base"]
             else:
-                agent_versions = self._external_agent_dao.list_agent_versions(
+                versions = self._external_agent_dao.list_agent_versions(
                     app_name
-                )["name"].values
+                )
+                if versions.empty or "name" not in versions.columns:
+                    continue
+
+                agent_versions = versions["name"].values
             for app_version in agent_versions:
                 app_id = (
                     app_schema.AppDefinition._compute_app_id(
