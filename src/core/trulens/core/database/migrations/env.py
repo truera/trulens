@@ -10,19 +10,19 @@ from trulens.core.database.orm import make_orm_for_prefix
 # Gives access to the values within the alembic.ini file
 config = context.config
 
-# Run this block only if Alembic was called from the command-line
-# if config.get_main_option("calling_context", default="CLI") == "CLI":
-# NOTE(piotrm): making this run always so users can configure alembic.ini as
-# they see fit.
-
-# Interpret the `alembic.ini` file for Python logging.
 if config.config_file_name is not None:
     if not os.path.exists(config.config_file_name):
         raise FileNotFoundError(
             f"Alembic config file not found: {config.config_file_name}."
         )
 
-    fileConfig(config.config_file_name)
+    # Interpret `alembic.ini` for Python logging only when alembic is run from
+    # the command line. `alembic_config()` sets `calling_context` to "PYTHON"
+    # when TruSession runs the migrations, and there the logging configuration
+    # belongs to the host application: `fileConfig` would disable every logger
+    # created before it and reset the root logger to WARN with its own handler.
+    if config.get_main_option("calling_context", default="CLI") == "CLI":
+        fileConfig(config.config_file_name)
 
 # Get `sqlalchemy.url` from the environment.
 if config.get_main_option("sqlalchemy.url", None) is None:
