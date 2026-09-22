@@ -1,0 +1,228 @@
+{
+  "name": "topk-2",
+  "change": "retrieval_k 4 -> 2 and change of smaller model",
+  "acceptance": {
+    "compare_against": "baseline",
+    "required_metrics": [
+      "answer_relevance",
+      "groundedness",
+      "context_relevance"
+    ]
+  },
+  "timestamp": "2026-09-22T09:47:24.575888+00:00",
+  "aggregated_scores": {
+    "groundedness": {
+      "mean": 0.6964285714285714,
+      "min": 0.0,
+      "max": 1.0,
+      "std": 0.4252100321353806
+    },
+    "answer_relevance": {
+      "mean": 0.5833333333333333,
+      "min": 0.0,
+      "max": 1.0,
+      "std": 0.4639803635691685
+    },
+    "context_relevance": {
+      "mean": 0.5,
+      "min": 0.0,
+      "max": 0.8333333333333333,
+      "std": 0.3004626062886658
+    }
+  },
+  "experiment_scores": {},
+  "cases": [
+    {
+      "dataset_item_id": 1,
+      "input": "What is the purpose of FADEC and what does it replace in piston-engined aircraft?",
+      "expected_output": "FADEC (Full Authority Digital Engine Control) is used in almost all current-generation jet engines and increasingly in piston engines. It replaces both magnetos in piston-engined aircraft, making magneto maintenance obsolete and eliminating carburetor heat, mixture controls, and engine priming; it controls each engine cylinder independently for optimum fuel injection and spark timing.",
+      "label": 1,
+      "output": "The purpose of FADEC is to control each engine cylinder independently for optimum fuel injection and spark timing, improve fuel efficiency, and provide automatic engine protection. In piston-engined aircraft, FADEC replaces both magnetos.",
+      "scores": {
+        "groundedness": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.6666666666666666,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 2,
+      "input": "What is a turnbuckle used for in a cable-operated flight control system?",
+      "expected_output": "A turnbuckle is used to adjust the length of the control cable.",
+      "label": 1,
+      "output": "A turnbuckle is used to adjust the cable length in a cable-operated flight control system.",
+      "scores": {
+        "groundedness": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.5,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 3,
+      "input": "How does a three-position control valve manage cylinder movement in a hydraulic system?",
+      "expected_output": "In the upper position the valve connects the pressure line to port A, raising the load. In the lower position it connects to port B, lowering the load. In the center position it locks fluid into the cylinder, holding it in position, and dead-ends the line so pump output returns to the tank via the pressure relief.",
+      "label": 1,
+      "output": "A three-position control valve manages cylinder movement by changing its position to connect the pipe pressure line to different ports. When the piston of the valve is in the upper position, the pipe pressure line is connected to port A to raise the load. When the valve is in the lower position, it connects the pipe pressure line to port B to lower the load. When the valve is at the center position, it locks the fluid into the cylinder and dead-ends the fluid line, causing all the pump output fluid to return to the tank via the pressure relief.",
+      "scores": {
+        "groundedness": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.8333333333333333,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 4,
+      "input": "What forms can water contamination take in aviation fuel, and how can entrained water be recognized?",
+      "expected_output": "Water can be present in fuel either dissolved in it or entrained/suspended in it. Entrained water can be detected with the naked eye: finely divided droplets reflect light and, in high concentrations, give the fuel a dull, hazy, or cloudy appearance.",
+      "label": 1,
+      "output": "Water contamination in aviation fuel can take two forms: (1) dissolved in the fuel and (2) entrained or suspended in the fuel. Entrained water can be recognized with the naked eye, as the finely divided droplets reflect light and can give the fuel a dull, hazy, or cloudy appearance.",
+      "scores": {
+        "groundedness": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 0.6666666666666666,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.6666666666666666,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 5,
+      "input": "How often must aircraft transponders be tested according to the maintenance notes?",
+      "expected_output": "All transponders must be tested every 24 calendar months, or during an annual inspection if requested by the owner, and the test must be conducted by an authorized avionics repair facility.",
+      "label": 1,
+      "output": "All transponders must be tested every 24-calendar months, or during an annual inspection, if requested by the owner.",
+      "scores": {
+        "groundedness": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.6666666666666666,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 6,
+      "input": "What methods are used to detect and prevent ice formation on an aircraft?",
+      "expected_output": "Ice detector sensors warn the flight crew of icing conditions via an annunciator light, and on some aircraft automatically activate wing anti-ice (WAI) systems. Ice prevention methods include heating surfaces with hot air, heating by electrical elements, breaking up ice formations with inflatable boots, and chemical application.",
+      "label": 1,
+      "output": "Methods used to detect ice formation on an aircraft include ice detector sensors that warn the flight crew of icing conditions, with an annunciator light alerting the crew. Some aircraft models also have multiple ice detectors that automatically turn on the WAI systems when icing is detected.\n\nTo prevent or control ice formation, several means are used:\n1. Heating surfaces with hot air\n2. Heating by electrical elements\n3. Breaking up ice formations, usually by inflatable boots\n4. Chemical application",
+      "scores": {
+        "groundedness": {
+          "value": 0.5714285714285714,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 1.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.6666666666666666,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 7,
+      "input": "What does ETOPS stand for, and what determines the diversion time limit an operator is approved for?",
+      "expected_output": "ETOPS stands for Extended-range Twin-engine Operational Performance Standards (more recently redefined as Extended Operations). The approved diversion time - commonly 120, 180, or 207 minutes - is set by the regulator based on the operator's maintenance program, engine in-flight shutdown rate, crew training, and the aircraft type's demonstrated systems reliability, and it caps how far the aircraft may fly from an adequate en-route alternate airport.",
+      "label": 0,
+      "output": "I do not know.",
+      "scores": {
+        "groundedness": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    },
+    {
+      "dataset_item_id": 8,
+      "input": "What is V1 in takeoff performance, and why is it not simply a fixed speed for a given aircraft type?",
+      "expected_output": "V1 is the takeoff decision speed: the maximum speed at which the crew can initiate a reject and still stop within the remaining accelerate-stop distance, and equally the minimum speed from which the takeoff can be continued on the remaining engine after a failure. It is not fixed per type because it is recomputed for every departure from runway length and slope, aircraft weight, flap setting, air density, wind component, and runway surface condition - so the same airframe can have a materially different V1 on two different days or runways.",
+      "label": 0,
+      "output": "I do not know.",
+      "scores": {
+        "groundedness": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "answer_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        },
+        "context_relevance": {
+          "value": 0.0,
+          "reason": "",
+          "scoring_failed": false
+        }
+      }
+    }
+  ]
+}

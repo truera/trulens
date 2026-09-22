@@ -21,16 +21,48 @@
     }
   },
   {
-    "name": "topk-6",
-    "change": "retrieval_k 4 -> 6 and change of smaller model",
+    "name": "topk-2",
+    "change": "retrieval_k 4 -> 2 and change of smaller model",
     "chat_model": "gpt-4.1-nano",
-    "retrieval_k": 6,
+    "retrieval_k": 2,
     "acceptance": {
       "compare_against": "baseline",
       "required_metrics": [
         "answer_relevance",
         "groundedness",
         "context_relevance"
+      ]
+    },
+    "result": {
+      "decision": "reject",
+      "reason": "Regressed on: answer_relevance.",
+      "plateaued": false,
+      "flat": false,
+      "comparisons": [
+        {
+          "metric": "answer_relevance",
+          "current": 0.5833333333333333,
+          "baseline": 0.7083333333333333,
+          "delta": -0.125,
+          "direction": "higher",
+          "regressed": true
+        },
+        {
+          "metric": "groundedness",
+          "current": 0.6964285714285714,
+          "baseline": 0.6458333333333333,
+          "delta": 0.0506,
+          "direction": "higher",
+          "regressed": false
+        },
+        {
+          "metric": "context_relevance",
+          "current": 0.5,
+          "baseline": 0.35416666666666663,
+          "delta": 0.1458,
+          "direction": "higher",
+          "regressed": false
+        }
       ]
     }
   }
