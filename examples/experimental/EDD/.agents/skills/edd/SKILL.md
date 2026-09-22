@@ -1,6 +1,6 @@
 ---
 name: edd
-description: Eval-driven development loop for this repo (rag-loop, an aircraft-systems RAG app on LangGraph, Gemini, Qdrant Cloud, and TruLens). Use when the user wants to run an experiment, inspect feedback metrics, or decide keep-or-reject on a config/prompt change.
+description: Eval-driven development loop for this repo (rag-loop, an aircraft-systems RAG app on LangGraph, OpenAI, Qdrant Cloud, and TruLens). Use when the user wants to run an experiment, inspect feedback metrics, or decide keep-or-reject on a config/prompt change.
 ---
 
 # EDD loop for rag-loop with TruLens (aircraft systems)
@@ -9,10 +9,10 @@ Orchestration for this repo's eval loop: which command to run, in what order, an
 vs. what needs judgment. For TruLens evaluation setup, instrumentation, or feedback functions, reference
 TruLens core patterns (`Feedback`, `Selector`, `SpanAttributes`).
 
-Stack: LangGraph orchestrates retrieve → generate; retrieval embeddings are FastEmbed
-(`BAAI/bge-small-en-v1.5` or `jinaai/jina-embeddings-v2-small-en`, local, keyless); generation uses Gemini
-(`gemini-3.1-flash-lite`); TruLens feedback judges use the **RAG Triad** with OpenAI
-(`gpt-4o-mini` or `gpt-5.4-nano`) — a different provider from generation so the judge is independent;
+Stack: LangGraph orchestrates retrieve → generate; retrieval embeddings are OpenAI
+(`text-embedding-3-small`, requires `OPENAI_API_KEY`); generation uses OpenAI
+(`gpt-5.6-luna`); TruLens feedback judges use the **RAG Triad** with OpenAI
+(`gpt-4.1-nano`);
 vector database is Qdrant (`QDRANT_URL`/`QDRANT_API_KEY`). Traces and evaluations are recorded via
 TruLens OpenTelemetry instrumentation and saved in TruLens database.
 
@@ -26,7 +26,6 @@ Two fundamental rules:
 ## Preconditions
 
 Everything except reading/editing files needs `.env` populated:
-- `GEMINI_API_KEY`
 - `OPENAI_API_KEY`
 - `QDRANT_URL`
 - `QDRANT_API_KEY`
@@ -81,8 +80,8 @@ rag-loop run <name>
 
 ```sh
 rag-loop run baseline
-# Then add "topk-6" to experiments.json:
-rag-loop run topk-6
+# Then add "topk-2" to experiments.json:
+rag-loop run topk-2
 ```
 
 For quick sweeps without git commit/revert bookkeeping:

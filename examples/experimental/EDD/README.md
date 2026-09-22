@@ -29,8 +29,8 @@ flowchart LR
 ## Architecture & Stack
 
 - **RAG Orchestration**: [LangGraph](https://github.com/langchain-ai/langgraph) (retrieve → generate state graph).
-- **Generation**: Google Gemini (`gemini-3.1-flash-lite`).
-- **Embeddings**: FastEmbed (`jinaai/jina-embeddings-v2-small-en`, local & keyless).
+- **Generation**: OpenAI (`gpt-5.6-luna`).
+- **Embeddings**: OpenAI (`text-embedding-3-small`, requires `OPENAI_API_KEY`).
 - **Vector Database**: Qdrant Cloud or local Qdrant.
 - **Evaluation & Tracing**: **TruLens** (`trulens-core`, `trulens-feedback`, `trulens-apps-langgraph`, `trulens-providers-openai`).
 
@@ -71,7 +71,7 @@ pip install -e .
 cp .env.example .env
 ```
 
-Fill in `GEMINI_API_KEY`, `OPENAI_API_KEY`, `QDRANT_URL`, and `QDRANT_API_KEY` in `.env`.
+Fill in `OPENAI_API_KEY`, `QDRANT_URL`, and `QDRANT_API_KEY` in `.env`.
 
 3. **Build the search index in Qdrant**:
 
@@ -87,6 +87,8 @@ rag-loop index
 ```sh
 rag-loop ask "what experiments did NASA and Pratt and Whitney execute in 1970s?"
 ```
+
+![Sanity-check query output](data/results/ask.png)
 
 ---
 
@@ -110,10 +112,10 @@ Add a new candidate entry to `evals/experiments.json` isolating **one single var
 
 ```json
 {
-  "name": "topk-6",
-  "change": "retrieval_k 4 -> 6",
-  "chat_model": "gemini-3.1-flash-lite",
-  "retrieval_k": 6,
+  "name": "topk-2",
+  "change": "retrieval_k 4 -> 2",
+  "chat_model": "gpt-4.1-nano",
+  "retrieval_k": 2,
   "acceptance": {
     "compare_against": "baseline",
     "required_metrics": [
@@ -135,16 +137,22 @@ Run the experiment by name. `rag-loop run` executes the pipeline with TruLens tr
 # Run baseline first (always kept as the benchmark)
 rag-loop run baseline
 
+![Baseline run output](data/results/baseline.png)
+
 # Run the candidate experiment
-rag-loop run topk-6
+rag-loop run topk-2
 ```
+
+![topk-2 run output](data/results/topk2.png)
+
+> On the first `rag-loop run` there is no comparison since it is the baseline, but notice that the `topk-2` run shows the comparison against the baseline.
 
 ### 4. Analyze Failures
 
 If an experiment is rejected or produces unexpected results, inspect the lowest-scoring test cases along with the Chain-of-Thought (COT) explanations from the TruLens judges:
 
 ```sh
-rag-loop report topk-6
+rag-loop report topk-2
 ```
 
 ### 5. Check for Plateaus
@@ -162,6 +170,10 @@ Launch the TruLens dashboard to visually explore records, execution traces, span
 ```sh
 rag-loop dashboard
 ```
+
+![TruLens dashboard — evaluations view](data/results/evals.png)
+
+![TruLens dashboard — comparison view](data/results/compare.png)
 
 Open [http://localhost:8501](http://localhost:8501) in your browser.
 
