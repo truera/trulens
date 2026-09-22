@@ -17,13 +17,12 @@ classifiers = [
 ]
 dependencies = [
   "fastapi>=0.115",
-  "fastembed>=0.4",
   "jsonschema>=4.20",
   "langchain-community>=0.3",
-  "langchain-google-genai>=2",
   "langchain-qdrant>=0.2",
   "langchain-text-splitters>=0.3",
   "langgraph>=0.2",
+  "openai>=1.40",
   "pypdfium2>=4.30",
   "python-dotenv>=1",
   "qdrant-client>=1.12",
