@@ -16,7 +16,7 @@ class Settings:
     eval_model: str = "gpt-4.1-nano"
     chunk_size: int = 1024
     chunk_overlap: int = 150
-    retrieval_k: int = 4
+    retrieval_k: int = 3
 
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     qdrant_url: str = os.getenv("QDRANT_URL", "")

@@ -1,3 +1,4 @@
+import threading
 from dataclasses import dataclass
 from dataclasses import replace
 from pathlib import Path
@@ -75,6 +76,28 @@ def get_feedback_functions(settings: Settings) -> list[Metric]:
     return [f_groundedness, f_answer_relevance, f_context_relevance]
 
 
+def _count_completed_feedback(
+    session: TruSession,
+    record_ids: list[str],
+    feedback_names: list[str],
+) -> int:
+    """Count feedback cells that already have a numeric score.
+
+    Used to drive the judge-phase progress bar. Reads are best-effort: if the
+    database is momentarily locked while results are being written, we just
+    report the last known count and let the next tick catch up.
+    """
+    try:
+        df, _ = session.get_records_and_feedback(record_ids=record_ids)
+    except Exception:
+        return 0
+    return sum(
+        int(df[name].notna().sum())
+        for name in feedback_names
+        if name in df.columns
+    )
+
+
 @dataclass
 class EvaluationResult:
     experiment_name: str
@@ -119,9 +142,7 @@ def run_evaluation(
     print(
         f"\n[eval] Running experiment '{exp_name}' over {len(items)} golden items..."
     )
-    print(
-        "[eval] Generating answers and computing TruLens evaluations (takes ~2 minutes)..."
-    )
+    print("[eval] Generating answers for each golden item...")
 
     outputs = []
     with tru_graph as recording:
@@ -131,7 +152,33 @@ def run_evaluation(
 
     print("\n[eval] Awaiting TruLens feedback results from judges...")
     session.force_flush()
-    records_df = recording.retrieve_feedback_results(timeout=300)
+
+    record_ids = [record.record_id for record in recording.records]
+    feedback_names = [feedback.name for feedback in feedbacks]
+    total_evals = len(record_ids) * len(feedback_names)
+
+    retrieval: dict[str, Any] = {}
+
+    def _retrieve() -> None:
+        retrieval["df"] = recording.retrieve_feedback_results(timeout=300)
+
+    worker = threading.Thread(target=_retrieve, daemon=True)
+    worker.start()
+
+    with tqdm(total=total_evals, desc="Scoring with judges", unit="eval") as pbar:
+        while worker.is_alive():
+            worker.join(timeout=1.0)
+            done = min(
+                _count_completed_feedback(session, record_ids, feedback_names),
+                total_evals,
+            )
+            pbar.n = done
+            pbar.refresh()
+        pbar.n = total_evals
+        pbar.refresh()
+
+    worker.join()
+    records_df = retrieval["df"]
     print("[eval] Completed evaluations successfully.\n")
 
     # Extract feedback column names

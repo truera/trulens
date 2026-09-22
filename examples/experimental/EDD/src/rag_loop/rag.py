@@ -84,8 +84,7 @@ def generate_answer(
     system_prompt = (
         "You are an aircraft systems reference assistant. Answer only from the "
         "supplied context. If the context does not contain the answer, say you do "
-        "not know rather than guessing at a procedure, limitation, or value. Cite "
-        "page numbers when available.\n\n"
+        "not know rather than guessing at a procedure, limitation, or value."
         f"Context:\n{formatted_context}"
     )
     client = _get_client(settings.openai_api_key)
@@ -128,5 +127,4 @@ def answer_question(question: str, settings: Settings | None = None) -> dict:
         "question": question,
         "answer": result["answer"],
         "context": [document.page_content for document in result["context"]],
-        "sources": [document.metadata for document in result["context"]],
     }

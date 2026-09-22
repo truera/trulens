@@ -9,25 +9,25 @@
       "context_relevance"
     ]
   },
-  "timestamp": "2026-09-22T09:28:39.754967+00:00",
+  "timestamp": "2026-09-22T09:42:47.529479+00:00",
   "aggregated_scores": {
     "groundedness": {
-      "mean": 0.33125,
-      "min": 0.0,
+      "mean": 0.6458333333333333,
+      "min": 0.16666666666666666,
       "max": 1.0,
-      "std": 0.4099828502510806
+      "std": 0.36502948891531733
     },
     "answer_relevance": {
-      "mean": 1.0,
-      "min": 1.0,
+      "mean": 0.7083333333333333,
+      "min": 0.0,
       "max": 1.0,
-      "std": 0.0
+      "std": 0.4228704818788425
     },
     "context_relevance": {
-      "mean": 0.34375,
+      "mean": 0.35416666666666663,
       "min": 0.0,
       "max": 0.6666666666666666,
-      "std": 0.23362147387506044
+      "std": 0.24206145913796354
     }
   },
   "experiment_scores": {},
@@ -37,7 +37,7 @@
       "input": "What is the purpose of FADEC and what does it replace in piston-engined aircraft?",
       "expected_output": "FADEC (Full Authority Digital Engine Control) is used in almost all current-generation jet engines and increasingly in piston engines. It replaces both magnetos in piston-engined aircraft, making magneto maintenance obsolete and eliminating carburetor heat, mixture controls, and engine priming; it controls each engine cylinder independently for optimum fuel injection and spark timing.",
       "label": 1,
-      "output": "FADEC\u2019s purpose is to automatically control engine operation for optimum efficiency and safe performance. It uses flight and engine inputs to regulate parameters such as fuel flow, stator vane position, bleed-valve position, starting, and engine limitations, reducing the need for pilot monitoring and intervention (page 10).\n\nIn piston-engined aircraft, FADEC replaces both magnetos. It also eliminates the need for carburetor heat, mixture controls, and engine priming (page 11).",
+      "output": "FADEC\u2019s purpose is to automatically control engine operation for optimum efficiency and safety, including fuel flow, spark timing, engine starting, and protection against operating-limit exceedances.\n\nIn piston-engined aircraft, it replaces both magnetos. It also eliminates the need for carburetor heat, mixture controls, and engine priming.",
       "scores": {
         "groundedness": {
           "value": 1.0,
@@ -50,7 +50,7 @@
           "scoring_failed": false
         },
         "context_relevance": {
-          "value": 0.49999999999999994,
+          "value": 0.5833333333333333,
           "reason": "",
           "scoring_failed": false
         }
@@ -61,10 +61,10 @@
       "input": "What is a turnbuckle used for in a cable-operated flight control system?",
       "expected_output": "A turnbuckle is used to adjust the length of the control cable.",
       "label": 1,
-      "output": "A turnbuckle is used to adjust the length\u2014and therefore the tension\u2014of a cable in a cable-operated flight control system. (Page 3)",
+      "output": "A turnbuckle is used to adjust the length of the cable.",
       "scores": {
         "groundedness": {
-          "value": 0.0,
+          "value": 1.0,
           "reason": "",
           "scoring_failed": false
         },
@@ -85,10 +85,10 @@
       "input": "How does a three-position control valve manage cylinder movement in a hydraulic system?",
       "expected_output": "In the upper position the valve connects the pressure line to port A, raising the load. In the lower position it connects to port B, lowering the load. In the center position it locks fluid into the cylinder, holding it in position, and dead-ends the line so pump output returns to the tank via the pressure relief.",
       "label": 1,
-      "output": "A three-position control valve manages cylinder movement as follows (page 4):\n\n1. **Upper position:** Connects the pressure line to port A, raising the load.\n2. **Lower position:** Connects the pressure line to port B, lowering the load.\n3. **Center position:** Locks fluid in the cylinder, holding it in position, while the pump output returns to the tank through the pressure-relief system.",
+      "output": "A three-position control valve manages cylinder movement as follows:\n\n1. **Upper position:** Connects the pressure line to port A, raising the load.\n2. **Lower position:** Connects the pressure line to port B, lowering the load.\n3. **Center position:** Locks fluid in the cylinder to hold its position and dead-ends the pump output, causing excess fluid to return to the tank through the pressure-relief system.",
       "scores": {
         "groundedness": {
-          "value": 0.4,
+          "value": 0.25,
           "reason": "",
           "scoring_failed": false
         },
@@ -109,15 +109,15 @@
       "input": "What forms can water contamination take in aviation fuel, and how can entrained water be recognized?",
       "expected_output": "Water can be present in fuel either dissolved in it or entrained/suspended in it. Entrained water can be detected with the naked eye: finely divided droplets reflect light and, in high concentrations, give the fuel a dull, hazy, or cloudy appearance.",
       "label": 1,
-      "output": "Water contamination in aviation fuel can be present in two forms:\n\n1. **Dissolved in the fuel**\n2. **Entrained or suspended in the fuel** (page 102)\n\nEntrained water can be recognized visually because its finely divided droplets reflect light, giving the fuel a **dull, hazy, or cloudy appearance**. If the cloud disappears at the **bottom**, air is present; if it disappears at the **top**, water is present (page 102).",
+      "output": "Water contamination in aviation fuel can occur in two forms:\n\n1. **Dissolved in the fuel**\n2. **Entrained or suspended in the fuel**\n\nEntrained water can be recognized visually. Its finely divided droplets reflect light, causing the fuel to appear **dull, hazy, or cloudy**.",
       "scores": {
         "groundedness": {
-          "value": 0.0,
+          "value": 0.25,
           "reason": "",
           "scoring_failed": false
         },
         "answer_relevance": {
-          "value": 1.0,
+          "value": 0.6666666666666666,
           "reason": "",
           "scoring_failed": false
         },
@@ -133,10 +133,10 @@
       "input": "How often must aircraft transponders be tested according to the maintenance notes?",
       "expected_output": "All transponders must be tested every 24 calendar months, or during an annual inspection if requested by the owner, and the test must be conducted by an authorized avionics repair facility.",
       "label": 1,
-      "output": "Aircraft transponders must be tested every **24 calendar months**, or during an **annual inspection if requested by the owner**. The test must be conducted by an authorized avionics repair facility. (Page 21)",
+      "output": "Aircraft transponders must be tested every **24 calendar months**, or during an **annual inspection if requested by the owner**. The test must be conducted by an authorized avionics repair facility.",
       "scores": {
         "groundedness": {
-          "value": 1.0,
+          "value": 0.5,
           "reason": "",
           "scoring_failed": false
         },
@@ -157,10 +157,10 @@
       "input": "What methods are used to detect and prevent ice formation on an aircraft?",
       "expected_output": "Ice detector sensors warn the flight crew of icing conditions via an annunciator light, and on some aircraft automatically activate wing anti-ice (WAI) systems. Ice prevention methods include heating surfaces with hot air, heating by electrical elements, breaking up ice formations with inflatable boots, and chemical application.",
       "label": 1,
-      "output": "**Ice detection:**\n- Visual inspection.\n- Ice-detector sensors, usually located on the forward fuselage, which alert the crew with an annunciator light.\n- On some aircraft, the detection system automatically activates wing anti-icing (WAI) systems. (p. 144)\n\n**Ice prevention/control methods:**\n1. Heating surfaces with hot air.\n2. Heating with electrical elements.\n3. Breaking up accumulated ice with inflatable boots.\n4. Applying chemicals. (p. 144)\n\nAnti-icing systems are activated before entering icing conditions to prevent ice from forming, while de-icing systems remove ice after it has accumulated. (p. 144)",
+      "output": "Ice is detected by:\n\n- **Visual inspection**\n- **Ice detector sensors**, usually located on the forward fuselage, which alert the crew with an annunciator light\n- On some aircraft, the detection system **automatically activates wing anti-ice (WAI) systems**\n\nMethods used to prevent or control ice formation include:\n\n1. **Heating surfaces with hot air**\n2. **Electrical heating elements**\n3. **Inflatable boots** that break up ice\n4. **Chemical application**\n\nAnti-icing systems are activated before entering icing conditions and prevent ice from forming by keeping surfaces dry, evaporating impinging water, or preventing it from freezing. De-icing systems remove ice after it has begun to accumulate.",
       "scores": {
         "groundedness": {
-          "value": 0.25,
+          "value": 0.16666666666666666,
           "reason": "",
           "scoring_failed": false
         },
@@ -181,15 +181,15 @@
       "input": "What does ETOPS stand for, and what determines the diversion time limit an operator is approved for?",
       "expected_output": "ETOPS stands for Extended-range Twin-engine Operational Performance Standards (more recently redefined as Extended Operations). The approved diversion time - commonly 120, 180, or 207 minutes - is set by the regulator based on the operator's maintenance program, engine in-flight shutdown rate, crew training, and the aircraft type's demonstrated systems reliability, and it caps how far the aircraft may fly from an adequate en-route alternate airport.",
       "label": 0,
-      "output": "The supplied context does not contain information about what ETOPS stands for or how an operator\u2019s approved diversion time limit is determined.",
+      "output": "The supplied context does not state what ETOPS stands for or what determines an operator\u2019s approved diversion time limit.",
       "scores": {
         "groundedness": {
-          "value": 0.0,
+          "value": 1.0,
           "reason": "",
           "scoring_failed": false
         },
         "answer_relevance": {
-          "value": 1.0,
+          "value": 0.0,
           "reason": "",
           "scoring_failed": false
         },
@@ -205,15 +205,15 @@
       "input": "What is V1 in takeoff performance, and why is it not simply a fixed speed for a given aircraft type?",
       "expected_output": "V1 is the takeoff decision speed: the maximum speed at which the crew can initiate a reject and still stop within the remaining accelerate-stop distance, and equally the minimum speed from which the takeoff can be continued on the remaining engine after a failure. It is not fixed per type because it is recomputed for every departure from runway length and slope, aircraft weight, flap setting, air density, wind component, and runway surface condition - so the same airframe can have a materially different V1 on two different days or runways.",
       "label": 0,
-      "output": "The supplied context does not define **V1** in takeoff performance or explain why it is not a fixed speed for an aircraft type. I do not know from the provided material.",
+      "output": "The supplied context does not define V1 in takeoff performance or explain why it is not a fixed speed for an aircraft type.",
       "scores": {
         "groundedness": {
-          "value": 0.0,
+          "value": 1.0,
           "reason": "",
           "scoring_failed": false
         },
         "answer_relevance": {
-          "value": 1.0,
+          "value": 0.0,
           "reason": "",
           "scoring_failed": false
         },
