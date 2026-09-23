@@ -13,6 +13,9 @@ class TestOtelUtils(TestCase):
         # The disabled-warning is emitted once per process; reset between tests.
         otel_utils._OTEL_DISABLED_WARNING_EMITTED = False
 
+    def tearDown(self) -> None:
+        otel_utils._OTEL_DISABLED_WARNING_EMITTED = False
+
     def test_tracing_enabled_by_default(self) -> None:
         """No environment variable means OTEL tracing is on."""
         with mock.patch.dict(os.environ, {}, clear=True):

@@ -1214,21 +1214,33 @@ class SingletonPerNameMeta(type):
 
     @staticmethod
     def delete_singleton(
-        obj: Type[SingletonPerNameMeta], name: Optional[str] = None
+        obj: Union[Type[Any], Any], name: Optional[str] = None
     ):
         """
         Delete the singleton instance. Can be used for testing to create another
         singleton.
         """
-        cls_name = (
-            getattr(obj.__class__, "__name__")
-            if hasattr(obj.__class__, "__name__")
-            else None
-        )
-        k = cls_name, name
-        if k in SingletonPerNameMeta._singleton_instances:
-            del SingletonPerNameMeta._singleton_instances[k]
-        else:
+        cls = obj if isinstance(obj, type) else obj.__class__
+        target_key_prefix = f"{cls.__module__}.{cls.__name__}"
+
+        deleted = False
+        for k in list(SingletonPerNameMeta._singleton_instances.keys()):
+            if k[0] == target_key_prefix:
+                if name is None or k[1] == name:
+                    inst = SingletonPerNameMeta._singleton_instances[k]
+                    # If the singleton holds an active OTEL exporter (e.g. TruSession),
+                    # disable it to prevent background export threads and telemetry leaks
+                    # across parallel test workers.
+                    if (
+                        hasattr(inst, "experimental_otel_exporter")
+                        and inst.experimental_otel_exporter is not None
+                        and hasattr(inst.experimental_otel_exporter, "disable")
+                    ):
+                        inst.experimental_otel_exporter.disable()
+                    del SingletonPerNameMeta._singleton_instances[k]
+                    deleted = True
+
+        if not deleted:
             logger.warning("Instance %s not found:", obj)
 
 
