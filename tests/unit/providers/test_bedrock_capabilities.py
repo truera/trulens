@@ -151,6 +151,58 @@ def test_anthropic_request_shape():
     assert body["messages"] == [{"role": "user", "content": "hi"}]
 
 
+_CLAUDE_MESSAGES = [
+    {"role": "system", "content": "be terse"},
+    {"role": "user", "content": "hi"},
+]
+
+
+@pytest.mark.optional
+@pytest.mark.parametrize(
+    "model_id,sends_temperature",
+    [
+        ("anthropic.claude-3-haiku-20240307-v1:0", True),
+        ("us.anthropic.claude-sonnet-4-5-20250929-v1:0", True),
+        ("us.anthropic.claude-opus-4-8", False),
+        ("us.anthropic.claude-opus-5", False),
+        ("us.anthropic.claude-opus-5-5", False),
+        ("global.anthropic.claude-opus-5-5", False),
+        ("jp.anthropic.claude-opus-5-5", False),
+        ("au.anthropic.claude-opus-5-5", False),
+    ],
+)
+def test_anthropic_sampling_params(model_id, sends_temperature):
+    """Claude 4.5+ rejects `temperature` together with `top_p`, and Opus 4.7+
+    rejects `temperature` on its own, so `top_p` is never sent and
+    `temperature` only to the models that accept it."""
+    provider = _make_provider(
+        model_id, {"content": [{"type": "text", "text": "claude-ok"}]}
+    )
+    out = provider._create_chat_completion(messages=_CLAUDE_MESSAGES)
+    assert out == "claude-ok"
+    body = json.loads(provider.endpoint.client.calls[0]["body"])
+    assert "top_p" not in body
+    assert ("temperature" in body) is sends_temperature
+    if sends_temperature:
+        assert body["temperature"] == 0
+
+
+@pytest.mark.optional
+def test_anthropic_skips_thinking_block():
+    """Opus 5 and 5.5 can return a `thinking` block before the `text` block."""
+    provider = _make_provider(
+        "us.anthropic.claude-opus-5-5",
+        {
+            "content": [
+                {"type": "thinking", "thinking": "...", "signature": "sig"},
+                {"type": "text", "text": "claude-ok"},
+            ]
+        },
+    )
+    out = provider._create_chat_completion(messages=_CLAUDE_MESSAGES)
+    assert out == "claude-ok"
+
+
 @pytest.mark.optional
 def test_anthropic_requires_messages():
     """The anthropic path is messages-only; a bare prompt is rejected."""
