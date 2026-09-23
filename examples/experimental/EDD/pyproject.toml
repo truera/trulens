@@ -1,0 +1,43 @@
+[build-system]
+build-backend = "hatchling.build"
+
+requires = [
+  "hatchling",
+]
+
+[project]
+name = "rag-loop-trulens"
+version = "0.1.0"
+description = "Eval-driven RAG loop with LangGraph, Qdrant, and TruLens"
+requires-python = ">=3.11"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+  "fastapi>=0.115",
+  "jsonschema>=4.20",
+  "langchain-community>=0.3",
+  "langchain-qdrant>=0.2",
+  "langchain-text-splitters>=0.3",
+  "langgraph>=0.2",
+  "openai>=1.40",
+  "pypdfium2>=4.30",
+  "python-dotenv>=1",
+  "qdrant-client>=1.12",
+  "tqdm>=4.66",
+  "trulens-apps-langgraph>=1.4",
+  "trulens-core>=1.4",
+  "trulens-dashboard>=1.4",
+  "trulens-feedback>=1.4",
+  "trulens-providers-openai>=1.4",
+  "uvicorn>=0.32",
+]
+
+scripts.rag-loop = "rag_loop.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+  "src/rag_loop",
+]
