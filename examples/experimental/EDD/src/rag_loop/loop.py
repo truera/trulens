@@ -125,7 +125,7 @@ def run_iteration(
         ),
         "comparisons": [asdict(c) for c in verdict.comparisons],
     }
-    experiments_path.write_text(json.dumps(experiments, indent=2))
+    experiments_path.write_text(json.dumps(experiments, indent=2) + "\n")
 
     if verdict.decision == "reject":
         _revert(SOURCE_PATHS)

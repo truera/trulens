@@ -27,7 +27,7 @@ def save_result(
 ) -> Path:
     results_dir.mkdir(parents=True, exist_ok=True)
     path = results_dir / f"{record['name']}.json"
-    path.write_text(json.dumps(record, indent=2))
+    path.write_text(json.dumps(record, indent=2) + "\n")
     return path
 
 
