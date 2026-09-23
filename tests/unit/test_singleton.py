@@ -47,8 +47,14 @@ class TestSingletonDeletion(TestCase):
     def test_delete_singleton_with_name(self):
         NamedSingleton(name="alpha")
         NamedSingleton(name="beta")
-        key_a = (f"{NamedSingleton.__module__}.{NamedSingleton.__name__}", "alpha")
-        key_b = (f"{NamedSingleton.__module__}.{NamedSingleton.__name__}", "beta")
+        key_a = (
+            f"{NamedSingleton.__module__}.{NamedSingleton.__name__}",
+            "alpha",
+        )
+        key_b = (
+            f"{NamedSingleton.__module__}.{NamedSingleton.__name__}",
+            "beta",
+        )
         self.assertIn(key_a, SingletonPerNameMeta._singleton_instances)
         self.assertIn(key_b, SingletonPerNameMeta._singleton_instances)
 
