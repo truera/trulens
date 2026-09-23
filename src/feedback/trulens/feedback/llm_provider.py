@@ -274,6 +274,11 @@ class LLMProvider(core_provider.Provider):
 
         if isinstance(parsed_json, list):
             # If a list is returned, average the scores where possible.
+            #
+            # Asymmetric with the scalar path above on purpose: an out-of-range
+            # item is dropped with a warning rather than raised, so one bad
+            # rating does not discard the valid ones. When every item is out of
+            # range the result is the -1.0 sentinel, not a ParseError.
             scores = []
             for item in parsed_json:
                 if isinstance(item, dict) and "score" in item:
