@@ -1719,6 +1719,19 @@ class SQLAlchemyDB(core_db.DB):
         app_name: Optional[types_schema.AppName] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
     ) -> Tuple[pd.DataFrame, List[str]]:
+        # Non-OTel mode is only supported on SQLite and Postgres. The latency
+        # expression below needs julianday() (SQLite) or epoch extraction
+        # (Postgres), and Snowflake does not support non-OTel mode at all.
+        # Fail here with a clear error rather than emitting SQL that
+        # references a function the backend does not have.
+        dialect = self.engine.dialect.name
+        if dialect not in ("sqlite", "postgresql"):
+            raise NotImplementedError(
+                f"Leaderboard aggregates are not supported on the {dialect!r} "
+                "dialect with OTel tracing disabled. Enable OTel tracing "
+                "(the default) to use the leaderboard with this backend."
+            )
+
         # cost_json/perf_json are stored as TEXT (TYPE_JSON = Text).
         # _json_path_expr extracts scalar values from text-encoded JSON at the
         # database level (json_extract on SQLite/MySQL, json_extract_path_text
@@ -1747,7 +1760,7 @@ class SQLAlchemyDB(core_db.DB):
             self.orm.Record.perf_json, "start_time"
         )
         end_str = self._json_path_expr(self.orm.Record.perf_json, "end_time")
-        if self.engine.dialect.name == "postgresql":
+        if dialect == "postgresql":
             latency_expr = sa.func.avg(
                 sa.extract(
                     "epoch",

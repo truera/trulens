@@ -8,6 +8,7 @@ being unsupported on TEXT columns (cost_json, perf_json are TYPE_JSON = Text).
 import datetime
 import json
 import unittest
+from unittest import mock
 
 from tests.test import TruTestCase
 
@@ -229,6 +230,25 @@ class TestLeaderboardPreOtel(TruTestCase):
         self.assertAlmostEqual(
             float(row["Total Cost (Snowflake Credits)"]), 1000.0, places=4
         )
+
+    def test_leaderboard_unsupported_dialect_raises(self):
+        """Non-OTel mode is only supported on SQLite and Postgres.
+
+        Snowflake does not support non-OTel mode at all, and the latency
+        expression needs julianday()/epoch extraction, which no other dialect
+        provides. Assert a clear NotImplementedError rather than letting the
+        backend reject SQL referencing a function it does not have.
+        """
+        tru_session = self._make_session()
+        db = tru_session.connector.db
+
+        dialect_cls = type(db.engine.dialect)
+        with mock.patch.object(dialect_cls, "name", "snowflake"):
+            with self.assertRaises(NotImplementedError) as ctx:
+                db._get_leaderboard_aggregates_pre_otel()
+
+        self.assertIn("snowflake", str(ctx.exception))
+        self.assertIn("OTel tracing", str(ctx.exception))
 
 
 if __name__ == "__main__":
