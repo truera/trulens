@@ -75,8 +75,10 @@ _FAMILY_CASES = [
         "prompt",
     ),
     (
+        # Bedrock Mistral returns the plural "outputs" key, matching the AWS
+        # invoke_model schema (and how litellm and langchain parse it).
         "mistral.mistral-7b-instruct-v0:2",
-        {"output": [{"text": "mistral-ok"}]},
+        {"outputs": [{"text": "mistral-ok", "stop_reason": "stop"}]},
         "mistral-ok",
         "prompt",
     ),
