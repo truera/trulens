@@ -195,7 +195,7 @@ class Bedrock(llm_provider.LLMProvider):
 
         elif base_model_id.startswith("mistral"):
             response_body = json.loads(response.get("body").read()).get(
-                "output"
+                "outputs"
             )[0]["text"]
         elif base_model_id.startswith("meta"):
             response_body = json.loads(response.get("body").read()).get(
