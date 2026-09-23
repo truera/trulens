@@ -1,7 +1,7 @@
-import threading
 from dataclasses import dataclass
 from dataclasses import replace
 from pathlib import Path
+import threading
 from typing import Any
 
 import numpy as np
@@ -165,7 +165,9 @@ def run_evaluation(
     worker = threading.Thread(target=_retrieve, daemon=True)
     worker.start()
 
-    with tqdm(total=total_evals, desc="Scoring with judges", unit="eval") as pbar:
+    with tqdm(
+        total=total_evals, desc="Scoring with judges", unit="eval"
+    ) as pbar:
         while worker.is_alive():
             worker.join(timeout=1.0)
             done = min(
