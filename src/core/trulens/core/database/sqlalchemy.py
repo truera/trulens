@@ -1719,6 +1719,61 @@ class SQLAlchemyDB(core_db.DB):
         app_name: Optional[types_schema.AppName] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
     ) -> Tuple[pd.DataFrame, List[str]]:
+        # Non-OTel mode is only supported on SQLite and Postgres. The latency
+        # expression below needs julianday() (SQLite) or epoch extraction
+        # (Postgres), and Snowflake does not support non-OTel mode at all.
+        # Fail here with a clear error rather than emitting SQL that
+        # references a function the backend does not have.
+        dialect = self.engine.dialect.name
+        if dialect not in ("sqlite", "postgresql"):
+            raise NotImplementedError(
+                f"Leaderboard aggregates are not supported on the {dialect!r} "
+                "dialect with OTel tracing disabled. Enable OTel tracing "
+                "(the default) to use the leaderboard with this backend."
+            )
+
+        # cost_json/perf_json are stored as TEXT (TYPE_JSON = Text).
+        # _json_path_expr extracts scalar values from text-encoded JSON at the
+        # database level (json_extract on SQLite/MySQL, json_extract_path_text
+        # on PostgreSQL) so all aggregation stays in SQL rather than pulling
+        # every raw record into Python.
+        n_tokens_expr = sa.cast(
+            sa.func.coalesce(
+                self._json_path_expr(self.orm.Record.cost_json, "n_tokens"),
+                sa.literal("0"),
+            ),
+            sa.Float,
+        )
+        cost_expr = sa.cast(
+            sa.func.coalesce(
+                self._json_path_expr(self.orm.Record.cost_json, "cost"),
+                sa.literal("0"),
+            ),
+            sa.Float,
+        )
+        currency_expr = self._json_path_expr(
+            self.orm.Record.cost_json, "cost_currency"
+        )
+
+        # Dialect-aware average latency from ISO datetime strings in perf_json.
+        start_str = self._json_path_expr(
+            self.orm.Record.perf_json, "start_time"
+        )
+        end_str = self._json_path_expr(self.orm.Record.perf_json, "end_time")
+        if dialect == "postgresql":
+            latency_expr = sa.func.avg(
+                sa.extract(
+                    "epoch",
+                    sa.cast(end_str, sa.DateTime)
+                    - sa.cast(start_str, sa.DateTime),
+                )
+            )
+        else:
+            latency_expr = sa.func.avg(
+                (sa.func.julianday(end_str) - sa.func.julianday(start_str))
+                * 86400
+            )
+
         with self.session.begin() as session:
             record_stmt = sa.select(
                 self.orm.AppDefinition.app_name.label("app_name"),
@@ -1727,15 +1782,23 @@ class SQLAlchemyDB(core_db.DB):
                 sa.func.count(sa.distinct(self.orm.Record.record_id)).label(
                     "Records"
                 ),
-                sa.func.avg(
-                    self.orm.Record.cost_json["n_tokens"].as_float()
-                ).label("Total Tokens"),
-                sa.func.avg(self.orm.Record.latency).label(
-                    "Average Latency (s)"
-                ),
-                sa.func.sum(self.orm.Record.cost_json["cost"].as_float()).label(
-                    "Total Cost (USD)"
-                ),
+                sa.func.sum(n_tokens_expr).label("Total Tokens"),
+                latency_expr.label("Average Latency (s)"),
+                sa.func.sum(
+                    sa.case(
+                        (currency_expr == sa.literal("Snowflake credits"), 0.0),
+                        else_=cost_expr,
+                    )
+                ).label("Total Cost (USD)"),
+                sa.func.sum(
+                    sa.case(
+                        (
+                            currency_expr == sa.literal("Snowflake credits"),
+                            cost_expr,
+                        ),
+                        else_=0.0,
+                    )
+                ).label("Total Cost (Snowflake Credits)"),
             ).join(self.orm.Record.app)
             if app_name:
                 record_stmt = record_stmt.where(
@@ -1796,12 +1859,25 @@ class SQLAlchemyDB(core_db.DB):
                 "Total Tokens",
                 "Average Latency (s)",
                 "Total Cost (USD)",
+                "Total Cost (Snowflake Credits)",
             ],
         )
         if base_df.empty:
-            return base_df, []
+            empty = pd.DataFrame(
+                columns=[
+                    "app_name",
+                    "app_version",
+                    "app_id",
+                    "Records",
+                    "Total Tokens",
+                    "Average Latency (s)",
+                    "Total Cost (USD)",
+                    "Total Cost (Snowflake Credits)",
+                ]
+            )
+            empty["tags"] = pd.Series(dtype=str)
+            return empty, []
 
-        base_df["Total Cost (Snowflake Credits)"] = 0.0
         base_df["tags"] = ""
 
         feedback_col_names = []
