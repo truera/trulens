@@ -81,6 +81,49 @@ class TestSingletonDeletion(TestCase):
         self.assertIsNot(m1, m2)
         ModelSingleton.delete_singleton(ModelSingleton)
 
+    def test_delete_singleton_does_not_affect_same_named_class_in_other_module(
+        self,
+    ):
+        class ColClassA(metaclass=SingletonPerNameMeta):
+            pass
+
+        class ColClassB(metaclass=SingletonPerNameMeta):
+            pass
+
+        # Simulate two classes with the same __name__ but different modules
+        ColClassA.__name__ = "SharedClassName"
+        ColClassA.__module__ = "module.alpha"
+        ColClassB.__name__ = "SharedClassName"
+        ColClassB.__module__ = "module.beta"
+
+        ColClassA()
+        ColClassB()
+        key_a = ("module.alpha.SharedClassName", None)
+        key_b = ("module.beta.SharedClassName", None)
+        self.assertIn(key_a, SingletonPerNameMeta._singleton_instances)
+        self.assertIn(key_b, SingletonPerNameMeta._singleton_instances)
+
+        # Deleting ColClassA must not touch ColClassB
+        SingletonPerNameMeta.delete_singleton(ColClassA)
+        self.assertNotIn(key_a, SingletonPerNameMeta._singleton_instances)
+        self.assertIn(key_b, SingletonPerNameMeta._singleton_instances)
+
+        SingletonPerNameMeta.delete_singleton(ColClassB)
+        self.assertNotIn(key_b, SingletonPerNameMeta._singleton_instances)
+
+    def test_delete_singleton_disables_otel_exporter(self):
+        class OtelSingleton(metaclass=SingletonPerNameMeta):
+            def __init__(self):
+                self.experimental_otel_exporter = self
+
+            def disable(self):
+                self.disabled = True
+
+        inst = OtelSingleton()
+        inst.disabled = False
+        SingletonPerNameMeta.delete_singleton(OtelSingleton)
+        self.assertTrue(inst.disabled)
+
 
 if __name__ == "__main__":
     unittest.main()

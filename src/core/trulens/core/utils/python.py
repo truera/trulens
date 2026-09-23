@@ -1222,13 +1222,15 @@ class SingletonPerNameMeta(type):
         """
         cls = obj if isinstance(obj, type) else obj.__class__
         target_key_prefix = f"{cls.__module__}.{cls.__name__}"
-        target_name = cls.__name__
 
         deleted = False
         for k in list(SingletonPerNameMeta._singleton_instances.keys()):
-            if k[0] == target_key_prefix or k[0] == target_name:
+            if k[0] == target_key_prefix:
                 if name is None or k[1] == name:
                     inst = SingletonPerNameMeta._singleton_instances[k]
+                    # If the singleton holds an active OTEL exporter (e.g. TruSession),
+                    # disable it to prevent background export threads and telemetry leaks
+                    # across parallel test workers.
                     if (
                         hasattr(inst, "experimental_otel_exporter")
                         and inst.experimental_otel_exporter is not None
