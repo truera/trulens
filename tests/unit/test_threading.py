@@ -1,5 +1,6 @@
 """Tests for the task pool every feedback run goes through."""
 
+from concurrent import futures
 import time
 from unittest import TestCase
 from unittest.mock import MagicMock
@@ -17,7 +18,7 @@ class TestTP(TestCase):
     def test_submit_gives_up_after_the_timeout(self) -> None:
         future = TP().submit(lambda: time.sleep(30), timeout=0.1)
 
-        with self.assertRaises(TimeoutError):
+        with self.assertRaises(futures.TimeoutError):
             future.result(10)
 
 
