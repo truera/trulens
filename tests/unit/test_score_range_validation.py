@@ -1,4 +1,7 @@
-"""Integration tests for score range validation on structured-JSON paths.
+"""Unit tests for score range validation on structured-JSON paths.
+
+No external service is contacted: the provider is mocked at the transport
+boundary, so these run in the ``make test-unit`` sweep that CI executes.
 
 The string-response path already enforces the configured rating scale:
 ``re_configured_rating`` warns on out-of-range matches and raises
