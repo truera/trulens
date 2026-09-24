@@ -379,8 +379,15 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
                     if on_done is not None:
                         try:
                             on_done(temp)
-                        finally:
-                            return temp
+                        except Exception:
+                            # The callback belongs to the caller, so its failure
+                            # must not hide the feedback result, but it should
+                            # not vanish either.
+                            logger.exception(
+                                "Feedback callback %s failed for %s.",
+                                on_done,
+                                ffunc.name,
+                            )
                     return temp
                 finally:
                     if token is not None:

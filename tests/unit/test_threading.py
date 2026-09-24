@@ -1,6 +1,7 @@
 """Tests for the task pool every feedback run goes through."""
 
 from concurrent import futures
+import logging
 import time
 from unittest import TestCase
 from unittest.mock import MagicMock
@@ -51,3 +52,37 @@ class TestFeedbackScheduling(TestCase):
         self.assertEqual(
             [future.result(10) for _, future in scheduled], [result]
         )
+
+    def test_failing_on_done_keeps_the_result_and_is_logged(self) -> None:
+        app = app_schema.AppDefinition(
+            app_name="scheduling_test",
+            app_version="v1",
+            root_class={"name": "App", "module": {"module_name": "app"}},
+            app={},
+        )
+        record = record_schema.Record(app_id=app.app_id, calls=[])
+        result = feedback_schema.FeedbackResult(
+            feedback_result_id="fres", record_id=record.record_id, name="dummy"
+        )
+        feedback_function = MagicMock()
+        feedback_function.name = "dummy"
+        feedback_function.run.return_value = result
+
+        def on_done(_: feedback_schema.FeedbackResult) -> None:
+            raise ValueError("callback failed")
+
+        with self.assertLogs(
+            "trulens.core.schema.app", level=logging.ERROR
+        ) as logs:
+            scheduled = app_schema.AppDefinition._submit_feedback_functions(
+                record=record,
+                feedback_functions=[feedback_function],
+                connector=MagicMock(),
+                app=app,
+                on_done=on_done,
+            )
+            self.assertEqual(
+                [future.result(10) for _, future in scheduled], [result]
+            )
+
+        self.assertIn("callback failed", "\n".join(logs.output))
