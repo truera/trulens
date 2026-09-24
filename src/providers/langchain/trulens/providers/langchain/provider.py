@@ -71,6 +71,7 @@ class Langchain(llm_provider.LLMProvider):
             ("unexpected keyword" in lowered)
             or ("got an unexpected" in lowered)
             or ("does not support" in lowered)
+            or ("doesn't support" in lowered)
             or ("is not allowed" in lowered)
             or ("unknown" in lowered)
         ) and (parameter in lowered)
@@ -125,7 +126,7 @@ class Langchain(llm_provider.LLMProvider):
                         )
                         self._set_capabilities({"temperature": True})
                         return result
-                    except TypeError as exc:
+                    except Exception as exc:
                         if self._is_unsupported_parameter_error(
                             exc, "temperature"
                         ):
@@ -146,7 +147,7 @@ class Langchain(llm_provider.LLMProvider):
                         )
                         self._set_capabilities({"reasoning_effort": True})
                         return result
-                    except TypeError as exc:
+                    except Exception as exc:
                         if self._is_unsupported_parameter_error(
                             exc, "reasoning_effort"
                         ):
@@ -190,7 +191,10 @@ class Langchain(llm_provider.LLMProvider):
                     raise ValueError(
                         "`chain.invoke` did not return a `langchain_core.messages.BaseMessage` as expected!"
                     )
-                predict = predict.content
+                # `.text` extracts only the text blocks from structured
+                # content; when the response starts with a reasoning block
+                # (as GPT-6 Luna does), this skips it and returns the text.
+                predict = predict.text
             elif isinstance(self.endpoint.chain, BaseLLM):
                 if not isinstance(predict, str):
                     raise ValueError(
