@@ -88,6 +88,12 @@ _FAMILY_CASES = [
         "meta-ok",
         "prompt",
     ),
+    (
+        "us.openai.gpt-6-sol",
+        {"choices": [{"message": {"content": "openai-ok"}}]},
+        "openai-ok",
+        "messages",
+    ),
 ]
 
 
@@ -262,3 +268,50 @@ def test_default_model_id_is_amazon_nova():
     assert (
         provider.model_id == Bedrock.DEFAULT_MODEL_ID == "amazon.nova-lite-v1:0"
     )
+
+
+@pytest.mark.optional
+@pytest.mark.parametrize(
+    "model_id",
+    [
+        "us.openai.gpt-6-sol",
+        "us.openai.gpt-6-luna",
+        "us.openai.gpt-6-astra",
+        "global.openai.gpt-6-astra",
+        "us.openai.gpt-5.6-sol",
+        "openai.gpt-oss-120b-1:0",
+    ],
+)
+def test_openai_request_shape(model_id):
+    """OpenAI models get a Chat Completions body with `max_completion_tokens`
+    and no sampling params: GPT-5.6 and GPT-6 reject `max_tokens` and any
+    `temperature` other than the default."""
+    messages = [
+        {"role": "system", "content": "be terse"},
+        {"role": "user", "content": "hi"},
+    ]
+    provider = _make_provider(
+        model_id, {"choices": [{"message": {"content": "openai-ok"}}]}
+    )
+    assert provider._create_chat_completion(messages=messages) == "openai-ok"
+    body = json.loads(provider.endpoint.client.calls[0]["body"])
+    assert body == {"messages": messages, "max_completion_tokens": 4095}
+
+    provider._create_chat_completion(prompt="hi")
+    body = json.loads(provider.endpoint.client.calls[1]["body"])
+    assert body["messages"] == [{"role": "user", "content": "hi"}]
+
+
+@pytest.mark.optional
+def test_openai_drops_inline_reasoning():
+    """gpt-oss returns its reasoning inline before the answer; numbers in it
+    must not reach the score parser."""
+    provider = _make_provider(
+        "openai.gpt-oss-120b-1:0",
+        {
+            "choices": [
+                {"message": {"content": "<reasoning>0 or 3? 3.</reasoning>2"}}
+            ]
+        },
+    )
+    assert provider._create_chat_completion(prompt="hi") == "2"

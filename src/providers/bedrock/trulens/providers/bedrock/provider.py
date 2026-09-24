@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from typing import Any, ClassVar, Dict, Optional, Sequence, Tuple, Type, Union
 
 import pydantic
@@ -176,6 +177,15 @@ class Bedrock(llm_provider.LLMProvider):
                 "top_p": 1,
                 "max_gen_len": 2047,
             })
+
+        elif base_model_id.startswith("openai"):
+            # OpenAI models take the Chat Completions body. GPT-5.6 and GPT-6
+            # reject `max_tokens` and any `temperature` other than the default.
+            body = json.dumps({
+                "messages": messages
+                or [{"role": "user", "content": messages_str}],
+                "max_completion_tokens": 4095,
+            })
         else:
             raise NotImplementedError(
                 f"The Bedrock model selected, `{self.model_id}`, is not yet implemented as a feedback provider"
@@ -232,6 +242,15 @@ class Bedrock(llm_provider.LLMProvider):
                 .get("completions")[0]
                 .get("data")
                 .get("text")
+            )
+        elif base_model_id.startswith("openai"):
+            response_body = json.loads(response.get("body").read())["choices"][
+                0
+            ]["message"]["content"]
+            # gpt-oss puts its reasoning inline; drop it so the score parser
+            # only sees the answer.
+            response_body = re.sub(
+                r"<reasoning>[\s\S]*?</reasoning>\s*", "", response_body
             )
 
         return response_body
