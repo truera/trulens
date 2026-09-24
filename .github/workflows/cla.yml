@@ -16,6 +16,12 @@ name: CLA
 # pull requests from the same account pass without any action. No sign-up, no form,
 # and nothing to do outside GitHub.
 #
+# IF A SIGNATURE IS MISSED: comment `recheck` on the pull request. The action
+# re-reads every comment on the thread, so it will pick up a signature posted
+# earlier, record it, and re-run the failed check. Confirm by looking for the
+# account in signatures/version1/cla.json on the cla-signatures branch — that
+# file, not the comment, is the signature of record.
+#
 # The action is pinned to the v2.6.1 commit. Upstream was archived in March 2026 and
 # is read-only, so the pin cannot drift, but there will be no upstream fixes either.
 # If that becomes a problem, fork it into the truera organization and change the
@@ -37,11 +43,53 @@ jobs:
   cla:
     runs-on: ubuntu-latest
     steps:
+      # The signature phrase is matched twice: here, to decide whether to run the
+      # action at all, and again inside the action to decide whether a comment is
+      # actually a signature. The action normalizes first — it compares
+      # `body.trim().toLowerCase()` against the sign text — so a byte-exact `==`
+      # gate is stricter than the check it guards. GitHub keeps a trailing CRLF on
+      # some comment bodies, which made the gate miss, skipped the step, and left
+      # the job reporting success: the run looked green while the signature was
+      # never recorded, and the contributor saw a red check with no explanation.
+      #
+      # Normalize the same way the action does so the gate cannot be the stricter
+      # of the two. The gate only decides whether to run; the action still makes
+      # the real decision, so a false positive here costs one wasted run.
+      - name: Classify the triggering comment
+        id: trigger
+        if: github.event_name == 'issue_comment'
+        env:
+          # Passed through env, never interpolated into the script: a comment body
+          # is untrusted input and `${{ }}` inside `run:` would be an injection.
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          # Keep in sync with `custom-pr-sign-comment` below.
+          SIGN_TEXT: I have read the CLA Document and I hereby sign the CLA
+        run: |
+          python3 <<'PY'
+          import os
+
+          body = os.environ.get("COMMENT_BODY", "").strip().lower()
+          sign = os.environ["SIGN_TEXT"].strip().lower()
+
+          # The substring fallback keeps this gate looser than the action even if
+          # SIGN_TEXT drifts from custom-pr-sign-comment.
+          if body == sign or sign in body:
+              kind = "sign"
+          elif body == "recheck":
+              kind = "recheck"
+          else:
+              kind = ""
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"kind={kind}\n")
+
+          print(f"Comment classified as: {kind or 'not a CLA command'}")
+          PY
+
       - name: CLA check
         if: >-
-          github.event.comment.body == 'recheck' ||
-          github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA' ||
-          github.event_name == 'pull_request_target'
+          github.event_name == 'pull_request_target' ||
+          (github.event.issue.pull_request && steps.trigger.outputs.kind != '')
         # contributor-assistant/github-action@v2.6.1
         uses: contributor-assistant/github-action@ca4a40a7d1004f18d9960b404b97e5f30a505a08
         env:
