@@ -191,8 +191,9 @@ class Langchain(llm_provider.LLMProvider):
                     raise ValueError(
                         "`chain.invoke` did not return a `langchain_core.messages.BaseMessage` as expected!"
                     )
-                # `.text` joins the text blocks, so reasoning blocks that some
-                # chat models return first are skipped.
+                # `.text` extracts only the text blocks from structured
+                # content; when the response starts with a reasoning block
+                # (as GPT-6 Luna does), this skips it and returns the text.
                 predict = predict.text
             elif isinstance(self.endpoint.chain, BaseLLM):
                 if not isinstance(predict, str):
