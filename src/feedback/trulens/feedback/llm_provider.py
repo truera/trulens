@@ -37,7 +37,7 @@ from trulens.feedback.templates import safety as templates_safety
 
 logger = logging.getLogger(__name__)
 
-REASONING_MODEL_PREFIXES = ("o1", "o3", "o4", "gpt-5", "deepseek-r1")
+REASONING_MODEL_PREFIXES = ("o1", "o3", "o4", "gpt-5", "gpt-6", "deepseek-r1")
 
 
 def _validate_score_range(
@@ -167,11 +167,13 @@ class LLMProvider(core_provider.Provider):
         """Detect reasoning models robustly across providers.
 
         - Handles provider-prefixed ids like "snowflake/o3-mini".
+        - Handles Bedrock ids like "us.openai.gpt-6-sol".
         - Matches known prefixes in REASONING_MODEL_PREFIXES.
         - Also matches generic substrings like "reasoning" or "thinking".
         """
         raw = (self.model_engine or "").lower()
         name = raw.split("/", 1)[1] if "/" in raw else raw
+        name = name.split("openai.", 1)[-1]
         if any(name.startswith(p) for p in REASONING_MODEL_PREFIXES):
             return True
         return ("reasoning" in name) or ("thinking" in name)

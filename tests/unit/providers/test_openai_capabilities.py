@@ -276,6 +276,18 @@ def test_is_reasoning_model_gpt5():
 
 
 @pytest.mark.optional
+def test_is_reasoning_model_bedrock_openai_ids():
+    """Bedrock's OpenAI-compatible endpoints take namespaced ids: bare on
+    bedrock-mantle, profile ids on bedrock-runtime."""
+    from trulens.providers.openai import OpenAI
+
+    assert OpenAI(model_engine="openai.gpt-6-sol")._is_reasoning_model()
+    assert OpenAI(model_engine="us.openai.gpt-6-luna")._is_reasoning_model()
+    assert OpenAI(model_engine="openai.gpt-5.6-sol")._is_reasoning_model()
+    assert not OpenAI(model_engine="openai.gpt-oss-120b")._is_reasoning_model()
+
+
+@pytest.mark.optional
 def test_response_api_backward_compatibility():
     from trulens.providers.openai.endpoint import OpenAIEndpoint
 

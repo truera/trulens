@@ -172,6 +172,30 @@ def test_is_reasoning_model_with_prefixed_name(monkeypatch):
     )
 
 
+@pytest.mark.optional
+@pytest.mark.parametrize(
+    "model_engine,is_reasoning",
+    [
+        ("bedrock/converse/us.openai.gpt-6-sol", True),
+        ("bedrock/converse/global.openai.gpt-6-luna", True),
+        ("bedrock/converse/us.openai.gpt-5.6-sol", True),
+        ("bedrock/converse/openai.gpt-oss-120b-1:0", False),
+    ],
+)
+def test_bedrock_openai_ids_temperature(
+    monkeypatch, model_engine, is_reasoning
+):
+    """Bedrock namespaces OpenAI models ("us.openai.gpt-6-sol"). GPT-5.6 and
+    GPT-6 reject `temperature`, so none is sent; gpt-oss still gets it."""
+    provider, dummy = _make_provider(monkeypatch, model_engine=model_engine)
+    assert provider._is_reasoning_model() is is_reasoning
+
+    provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}]
+    )
+    assert ("temperature" in dummy.calls[0]) is not is_reasoning
+
+
 # --- Tests for litellm routing params (api_base, api_key, etc.) ---
 
 
