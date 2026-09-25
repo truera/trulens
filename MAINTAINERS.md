@@ -15,7 +15,7 @@ Project-wide merge rights, release authority, and direction.
 
 | Name | Affiliation | GitHub |
 | ---- | ----------- | ------ |
-| Alex Issa | Snowflake | A5Wagyu32 |
+| Ali Taha | Snowflake | alimtaha |
 | Daniel Huang | Snowflake | daniel-huang-1230 |
 | Garett Tok Ern Liang | Snowflake | sfc-gh-gtokernliang |
 | Josh Reini | Snowflake | joshreini1 |
