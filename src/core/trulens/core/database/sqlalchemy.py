@@ -786,7 +786,7 @@ class SQLAlchemyDB(core_db.DB):
 
         if status:
             if isinstance(status, feedback_schema.FeedbackResultStatus):
-                status = [status.value]
+                status = [status]
             q = q.filter(
                 self.orm.FeedbackResult.status.in_([s.value for s in status])
             )
