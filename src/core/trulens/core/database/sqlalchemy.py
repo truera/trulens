@@ -1110,7 +1110,9 @@ class SQLAlchemyDB(core_db.DB):
                     offset=offset,
                     limit=limit,
                 )
-                record_ids_sql = sa.select(record_id_subquery.c.record_id)
+                record_ids_sql = sa.select(
+                    record_id_subquery.subquery().c.record_id
+                )
             else:
                 record_ids_sql = record_ids[
                     offset or 0 : (offset or 0) + limit
