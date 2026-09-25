@@ -3,6 +3,7 @@ from concurrent.futures import wait
 import functools
 from inspect import signature
 import logging
+import math
 from typing import (
     Any,
     Dict,
@@ -415,24 +416,13 @@ class HuggingfaceBase(core_provider.Provider):
         Returns:
             float: The likelihood that a PII is contained in the input text.
         """
-        # Initialize a list to store scores for "NAME" entities
         likelihood_scores = self._pii_detection_endpoint(text)
 
-        # Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)
-        sum_individual_probabilities = sum(likelihood_scores)
-
-        # Initialize the total likelihood for at least one name
-        total_likelihood = sum_individual_probabilities
-
-        # Calculate the product of pairwise likelihood scores (P(A and B), P(A and C), ...)
-        for i in range(len(likelihood_scores)):
-            for j in range(i + 1, len(likelihood_scores)):
-                pairwise_likelihood = (
-                    likelihood_scores[i] * likelihood_scores[j]
-                )
-                total_likelihood -= pairwise_likelihood
-
-        score = 1 - total_likelihood
+        # Probability that at least one PII entity is present, as the
+        # complement of none being present: 1 - prod(1 - p_i). This stays in
+        # [0, 1] for any number of entities (the previous truncated
+        # inclusion-exclusion did not) and is 0 when nothing is detected.
+        score = 1 - math.prod(1 - s for s in likelihood_scores)
 
         return score
 
@@ -464,21 +454,9 @@ class HuggingfaceBase(core_provider.Provider):
             self._pii_detection_with_cot_reasons_endpoint(text)
         )
 
-        # Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)
-        sum_individual_probabilities = sum(likelihood_scores)
-
-        # Initialize the total likelihood for at least one name
-        total_likelihood = sum_individual_probabilities
-
-        # Calculate the product of pairwise likelihood scores (P(A and B), P(A and C), ...)
-        for i in range(len(likelihood_scores)):
-            for j in range(i + 1, len(likelihood_scores)):
-                pairwise_likelihood = (
-                    likelihood_scores[i] * likelihood_scores[j]
-                )
-                total_likelihood -= pairwise_likelihood
-
-        score = 1 - total_likelihood
+        # See pii_detection: probability that at least one PII entity is
+        # present, kept within [0, 1] for any number of entities.
+        score = 1 - math.prod(1 - s for s in likelihood_scores)
 
         return score, reasons
 
