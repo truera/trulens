@@ -36,6 +36,18 @@ class GenAIAttributes:
     See: https://opentelemetry.io/docs/specs/semconv/gen-ai/
     """
 
+    class CONVERSATION:
+        """Attributes identifying the conversation a request belongs to."""
+
+        ID = GEN_AI_SCOPE + ".conversation.id"
+        """Identifier of the conversation the span belongs to.
+
+        The GenAI-standard spelling of a conversation identifier. Emitted
+        alongside :attr:`SpanAttributes.CONVERSATION_ID` so spans can be
+        correlated with non-TruLens producers, such as an AI gateway recording
+        the server side of the same requests.
+        """
+
     class OPERATION:
         """Attributes for a GenAI operation."""
 
