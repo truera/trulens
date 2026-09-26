@@ -16,6 +16,8 @@ import logging
 import statistics
 from typing import Any
 
+from trulens.feedback.llm_provider import UNPARSABLE_SCORE
+
 logger = logging.getLogger(__name__)
 
 _BUILTIN_STRATEGIES = frozenset({
@@ -41,6 +43,11 @@ class Jury:
     ``_with_cot_reasons`` convention so per-juror breakdowns flow into
     ``FeedbackCall.meta["reason"]`` and are visible in OTEL spans and the
     dashboard without any UI changes.
+
+    A juror counts as failed when it raises *or* when its judge reply carried
+    no parseable score, which the providers report as
+    :data:`~trulens.feedback.llm_provider.UNPARSABLE_SCORE` (``-1.0``). Either
+    way it gets no vote. Only a jury with no surviving juror raises.
 
     Args:
         jurors: Non-empty list of ``LLMProvider`` instances.
@@ -170,6 +177,19 @@ class Jury:
                     else:
                         score = float(raw)
                         reason = None
+                    if score == UNPARSABLE_SCORE:
+                        # The judge answered without a score a parser could
+                        # find. That is a failure to grade, not a verdict at
+                        # the bottom of the scale, so this juror gets no vote
+                        # just as if it had raised.
+                        logger.warning(
+                            "Juror %r (index %d) returned no parsable "
+                            "score (%s); its vote is dropped.",
+                            self._juror_names[idx],
+                            idx,
+                            UNPARSABLE_SCORE,
+                        )
+                        continue
                     results[idx] = (score, reason)
                 except Exception as exc:  # noqa: BLE001
                     logger.warning(
