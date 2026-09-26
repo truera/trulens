@@ -7,6 +7,7 @@ from typing import (
     Any,
     ClassVar,
     Dict,
+    Iterable,
     List,
     Optional,
     Sequence,
@@ -58,6 +59,27 @@ def _validate_score_range(
             f"{min_score_val}-{max_score_val} rating", str(rating)
         )
     return rating
+
+
+# `generate_score_and_reasons` returns this when it could not parse a score out
+# of the judge's reply, on both the JSON and the text path.
+UNPARSABLE_SCORE = -1.0
+
+
+def _mean_graded_score(scores: Iterable[float]) -> float:
+    """Average the scores a judge actually produced.
+
+    A statement whose judge reply could not be parsed carries
+    `UNPARSABLE_SCORE`. Averaging that in turns a judge failure into a model
+    verdict -- one statement graded at the top of the scale and one failure
+    average to 0.0, which reads as "nothing is grounded". Average only the
+    graded statements, and report the same sentinel when there are none, since
+    `np.mean` of an empty list is NaN rather than a usable feedback value.
+    """
+    graded = [score for score in scores if score != UNPARSABLE_SCORE]
+    if not graded:
+        return UNPARSABLE_SCORE
+    return float(np.mean(graded))
 
 
 # --- Shared capability cache for LLM providers ---
@@ -3477,9 +3499,10 @@ class LLMProvider(core_provider.Provider):
             groundedness_scores[f"statement_{i}"] = score
             reasons_list.append(reason)
 
-        # Calculate the average groundedness score from the scores dictionary
-        average_groundedness_score = float(
-            np.mean(list(groundedness_scores.values()))
+        # Average only the statements the judge actually graded; a judge
+        # failure is reported as UNPARSABLE_SCORE, not as a model verdict.
+        average_groundedness_score = _mean_graded_score(
+            groundedness_scores.values()
         )
 
         return average_groundedness_score, {"reasons": reasons_list}
@@ -3703,9 +3726,10 @@ class LLMProvider(core_provider.Provider):
             groundedness_scores[f"statement_{i}"] = score
             reasons_list.append(reason)
 
-        # Calculate the average groundedness score from the scores dictionary
-        average_groundedness_score = float(
-            np.mean(list(groundedness_scores.values()))
+        # Average only the statements the judge actually graded; a judge
+        # failure is reported as UNPARSABLE_SCORE, not as a model verdict.
+        average_groundedness_score = _mean_graded_score(
+            groundedness_scores.values()
         )
 
         return average_groundedness_score, {"reasons": reasons_list}
