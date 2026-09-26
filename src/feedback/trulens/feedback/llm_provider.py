@@ -516,7 +516,8 @@ class LLMProvider(core_provider.Provider):
                 pass
 
             if "Supporting Evidence" in response:
-                score = -1
+                # None until a "Score:" line is actually parsed below.
+                score = None
                 supporting_evidence = None
                 criteria = None
                 lines = response.split("\n")
@@ -601,7 +602,14 @@ class LLMProvider(core_provider.Provider):
             )
 
         # Normalize score to [0, 1] range
-        score = (score - min_score_val) / (max_score_val - min_score_val)
+        if score is None:
+            # The reply carried supporting evidence but never a "Score:" line,
+            # so nothing was parsed. Return the raw -1.0 failure sentinel
+            # instead of normalizing it into a plausible-looking rating, which
+            # is what the JSON branch above does for an unparseable score.
+            score = -1.0
+        else:
+            score = (score - min_score_val) / (max_score_val - min_score_val)
         return score, reasons
 
     def _determine_output_space(
