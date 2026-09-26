@@ -1,6 +1,6 @@
 {% set name = "trulens-connectors-snowflake" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.14.0" %}
+{% set version = "2.15.0" %}
 
 package:
   name: {{ name|lower }}
