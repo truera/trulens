@@ -11,8 +11,6 @@ import sqlalchemy as sa
 import streamlit as st
 from trulens import core as mod_core
 from trulens import dashboard as mod_dashboard
-from trulens.core import experimental as core_experimental
-from trulens.core import experimental as mod_experimental
 from trulens.core import session as core_session
 from trulens.core.database import base as core_db
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
@@ -116,16 +114,11 @@ def set_page_config(page_title: Optional[str] = None):
     except st.errors.StreamlitSetPageConfigMustBeFirstCommandError:
         pass
 
-    if is_sis_compatibility_enabled():
-        pass
-    else:
-        logo = str(
-            import_utils.static_resource("dashboard", "ux/trulens_logo.svg")
-        )
-        logo_small = str(
-            import_utils.static_resource("dashboard", "ux/trulens_squid.svg")
-        )
-        st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
+    logo = str(import_utils.static_resource("dashboard", "ux/trulens_logo.svg"))
+    logo_small = str(
+        import_utils.static_resource("dashboard", "ux/trulens_squid.svg")
+    )
+    st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
 
     if ST_RECORDS_LIMIT not in st.session_state:
         st.session_state[ST_RECORDS_LIMIT] = dashboard_constants.RECORDS_LIMIT
@@ -165,21 +158,6 @@ def read_query_params_into_session_state(
             st.session_state[param] = value
 
 
-def is_sis_compatibility_enabled() -> bool:
-    """This method returns whether the SIS compatibility feature is enabled.
-    The SiS compatibility feature adapts dashboard components to support Streamlit in Snowflake (SiS).
-    As of 11/13/2024, SiS runs on Python 3.8, Streamlit 1.35.0, and does not support bidirectional custom components.
-
-    In the TruLens dashboard, this flag will replace or disable certain custom components (like Aggrid and the trace viewer).
-
-    Returns:
-        bool: True if the SIS compatibility feature is enabled, False otherwise.
-    """
-    return get_session().experimental_feature(
-        core_experimental.Feature.SIS_COMPATIBILITY
-    )
-
-
 def read_spcs_oauth_token() -> Optional[str]:
     """
     Reads the OAuth token from the file system. This is only available if the
@@ -213,7 +191,6 @@ def get_session() -> core_session.TruSession:
     parser.add_argument(
         "--snowflake-use-account-event-table", action="store_true"
     )
-    parser.add_argument("--sis-compatibility", action="store_true")
     parser.add_argument(
         "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
     )
@@ -279,11 +256,6 @@ def get_session() -> core_session.TruSession:
     else:
         session = core_session.TruSession(
             database_url=args.database_url, database_prefix=args.database_prefix
-        )
-
-    if args.sis_compatibility:
-        session.experimental_enable_feature(
-            mod_experimental.Feature.SIS_COMPATIBILITY
         )
 
     # Store the otel_tracing flag in the session state
