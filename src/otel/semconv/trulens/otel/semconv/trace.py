@@ -51,11 +51,21 @@ class GenAIAttributes:
         TEMPERATURE = GEN_AI_SCOPE + ".request.temperature"
         """Sampling temperature requested."""
 
+        STREAM = GEN_AI_SCOPE + ".request.stream"
+        """Whether the request was made in streaming mode. Conditionally
+        required: only set if and only if the request is streaming (per
+        spec, an unset value is assumed to mean non-streaming)."""
+
     class RESPONSE:
         """Attributes describing the GenAI response."""
 
         MODEL = GEN_AI_SCOPE + ".response.model"
         """Model name that produced the response."""
+
+        TIME_TO_FIRST_CHUNK = GEN_AI_SCOPE + ".response.time_to_first_chunk"
+        """Time to first chunk in a streaming response, in seconds, measured
+        from request issuance to the first chunk being received. Recommended
+        when the request was a streaming request."""
 
     class USAGE:
         """Token usage reported by the GenAI provider."""
@@ -467,7 +477,20 @@ class SpanAttributes:
         """The retrieved contexts."""
 
     class GENERATION:
-        """A generation call to an LLM."""
+        """A generation call to an LLM.
+
+        Streaming mode and time-to-first-chunk are also captured via the
+        canonical OTel GenAI semconv attributes --
+        `GenAIAttributes.REQUEST.STREAM` (bool) and
+        `GenAIAttributes.RESPONSE.TIME_TO_FIRST_CHUNK` (seconds) -- for
+        interoperability with OTel-native tooling. The attributes below
+        predate that convention, remain in active use (e.g. by the
+        dashboard), and stay TruLens-internal (`ai.observability.*` only):
+        the OTel GenAI spec models per-chunk latency/throughput as
+        Histogram metrics (`gen_ai.client.operation.time_per_output_chunk`),
+        not span attributes, and this codebase has no OTel
+        Metrics/MeterProvider pipeline yet.
+        """
 
         base = BASE_SCOPE + ".generation"
 

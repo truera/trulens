@@ -65,7 +65,7 @@ except ImportError:
     # `is_completion` flag instead of a token type.
     TokenType = None
 
-from opentelemetry import trace
+from opentelemetry import trace as otel_trace
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.feedback import endpoint as core_endpoint
@@ -75,6 +75,7 @@ from trulens.core.utils import pace as pace_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 import openai
@@ -329,6 +330,7 @@ class OpenAICostComputer:
         endpoint = OpenAIEndpoint()
         callback = OpenAICallback(endpoint=endpoint)
         model_name = ""
+        streaming_attributes: Dict[str, Any] = {}
 
         # The clock starts here rather than at the call site: by the time cost
         # tracking sees the response the request has been dispatched and, for a
@@ -338,9 +340,14 @@ class OpenAICostComputer:
         is_streaming = isinstance(response, (openai.Stream, openai.AsyncStream))
 
         if hasattr(response, "__iter__") and not hasattr(response, "model"):
-            is_streaming = True
+            streaming_attributes[GenAIAttributes.REQUEST.STREAM] = True
+            request_returned_at = time.monotonic()
             try:
                 first_chunk = next(response)
+                first_chunk_received_at = time.monotonic()
+                streaming_attributes[
+                    GenAIAttributes.RESPONSE.TIME_TO_FIRST_CHUNK
+                ] = first_chunk_received_at - request_returned_at
                 # Pulling the first chunk is what blocks on the model, so this
                 # is the moment the first token arrived.
                 first_token_time = time.perf_counter()
@@ -369,12 +376,14 @@ class OpenAICostComputer:
         if is_streaming or hasattr(response, "choices"):
             ret[SpanAttributes.GENERATION.IS_STREAMING] = is_streaming
 
+        ret.update(streaming_attributes)
+
         if is_streaming:
             # Nothing has been generated yet, so the cost values above are all
             # zero. Hand the still-open span to an updater which corrects them
             # as the caller consumes the stream.
             StreamingSpanUpdater(
-                span=trace.get_current_span(),
+                span=otel_trace.get_current_span(),
                 callback=callback,
                 request_start=request_start,
                 first_token_time=first_token_time,
@@ -928,3 +937,4 @@ def prepend_first_chunk(stream, first_chunk):
 
     stream._iterator = new_iter()
     return stream
+
