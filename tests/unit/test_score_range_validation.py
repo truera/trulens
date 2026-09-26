@@ -150,3 +150,35 @@ def test_generate_score_and_reasons_unparseable_sentinel_not_normalized():
 
     assert not math.isnan(score)
     assert score == -1.0
+
+
+def test_generate_score_and_reasons_text_without_score_line_keeps_sentinel():
+    """Regression: the same leak on the text fallback. A reply that carries
+    supporting evidence but no "Score:" line leaves the -1 sentinel in place,
+    and normalizing it turned a parse failure into a plausible -0.1 rating on a
+    0-10 scale. The JSON path above was fixed for exactly this; the text branch
+    was not."""
+    response = "Criteria: c\nSupporting Evidence: cut off before the score"
+
+    score, _ = MockLLMProvider(response).generate_score_and_reasons(
+        system_prompt="System prompt.",
+        min_score_val=_MIN,
+        max_score_val=_MAX,
+    )
+
+    assert not math.isnan(score)
+    assert score == -1.0
+
+
+def test_generate_score_and_reasons_text_with_score_line_still_normalizes():
+    """The ordinary text path must keep normalizing, so the sentinel change
+    above cannot be satisfied by skipping normalization altogether."""
+    response = "Criteria: c\nSupporting Evidence: e\nScore: 7"
+
+    score, _ = MockLLMProvider(response).generate_score_and_reasons(
+        system_prompt="System prompt.",
+        min_score_val=_MIN,
+        max_score_val=_MAX,
+    )
+
+    assert score == pytest.approx(0.7)
