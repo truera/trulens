@@ -329,6 +329,7 @@ class LLMProvider(core_provider.Provider):
 
         if isinstance(response, feedback_output_schemas.BaseFeedbackResponse):
             score = response.score
+            _validate_score_range(score, min_score_val, max_score_val)
         elif isinstance(response, str):
             score = feedback_generated.re_configured_rating(
                 response,
@@ -435,6 +436,7 @@ class LLMProvider(core_provider.Provider):
             score = response.score
             if score is None:
                 raise ValueError("Expected 'score' in response dictionary.")
+            _validate_score_range(score, min_score_val, max_score_val)
             criteria = response.criteria
             supporting_evidence = response.supporting_evidence
 
@@ -477,6 +479,7 @@ class LLMProvider(core_provider.Provider):
                     ref, feedback_output_schemas.ChainOfThoughtResponse
                 ):
                     score = ref.score
+                    _validate_score_range(score, min_score_val, max_score_val)
                     criteria = ref.criteria
                     supporting_evidence = ref.supporting_evidence
                     reasons = {
@@ -499,6 +502,11 @@ class LLMProvider(core_provider.Provider):
                             and "score" in ref_json
                         ):
                             score_val = float(ref_json["score"])
+                            _validate_score_range(
+                                score_val,
+                                min_score_val,
+                                max_score_val,
+                            )
                             reasons = {
                                 "reason": (
                                     f"{criteria_field}: {ref_json['criteria']}\n"
