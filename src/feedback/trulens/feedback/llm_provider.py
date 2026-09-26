@@ -2728,12 +2728,23 @@ class LLMProvider(core_provider.Provider):
 
         assert self.endpoint is not None, "Endpoint is not set."
 
+        # An empty response agrees with nothing, so score it directly instead
+        # of asking a judge: the prompt below would carry the question, the
+        # expected answer and the instructions but no response at all, and
+        # whatever integer came back would be reported as the agreement of an
+        # empty answer.
+        if not response.strip():
+            return "0"
+
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             prompt=(
                 templates_quality.AGREEMENT_SYSTEM % (prompt, check_response)
             )
-            + response,
+            # Label and delimit the response. Appended bare it runs straight
+            # into the template's trailing "give the integer score and nothing
+            # more", so the judge cannot tell the answer from the instruction.
+            + f"\nThe response to grade is:\n{response}\n",
         )
 
     def _generate_key_points(
