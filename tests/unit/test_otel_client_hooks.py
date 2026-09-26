@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import timedelta
 from datetime import timezone
 import json
@@ -11,6 +12,7 @@ from opentelemetry.sdk.trace.export import SpanExportResult
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
+from opentelemetry.trace import format_trace_id
 import pytest
 from trulens.core.enums import Mode
 from trulens.core.otel.client_hooks import journal
@@ -1093,3 +1095,199 @@ def test_run_coordinator_skips_destination_without_connector():
 
     assert coordinator.ensure_run(_cursor_identity()) is None
     assert coordinator.complete_turn(_cursor_identity()) is False
+
+
+_INHERITED_TRACE_ID = "07f8c88f000f3854aedaf55fa46a8b71"
+_INHERITED_SPAN_ID = "e9e48039ccad0456"
+_INHERITED_TRACEPARENT = f"00-{_INHERITED_TRACE_ID}-{_INHERITED_SPAN_ID}-01"
+
+
+def _claude_turn(traceparent=None):
+    """A complete Claude Code turn, optionally carrying inherited context."""
+
+    policy = privacy.CapturePolicy()
+    events = [
+        policy.apply(parsers.parse_claude(_claude("UserPromptSubmit"))),
+        policy.apply(
+            parsers.parse_claude(
+                _claude("PreToolUse", tool_name="Read", operation_id="tool-1")
+            )
+        ),
+        policy.apply(
+            parsers.parse_claude(
+                _claude("PostToolUse", tool_name="Read", operation_id="tool-1")
+            )
+        ),
+        policy.apply(parsers.parse_claude(_claude("Stop"))),
+    ]
+    if traceparent is None:
+        return events
+    return [replace(event, traceparent=traceparent) for event in events]
+
+
+def _root_of(spans):
+    return next(
+        span
+        for span in spans
+        if span.attributes[SpanAttributes.SPAN_TYPE]
+        == SpanAttributes.SpanType.RECORD_ROOT.value
+    )
+
+
+def test_assembler_adopts_trace_context_inherited_from_the_agent():
+    spans = tracing.TraceAssembler().assemble(
+        _claude_turn(_INHERITED_TRACEPARENT)
+    )
+
+    root = _root_of(spans)
+    assert format_trace_id(root.context.trace_id) == _INHERITED_TRACE_ID
+    assert root.parent is not None
+    assert root.parent.span_id == int(_INHERITED_SPAN_ID, 16)
+    assert root.parent.is_remote
+
+
+def test_assembler_puts_every_span_of_the_turn_in_the_inherited_trace():
+    spans = tracing.TraceAssembler().assemble(
+        _claude_turn(_INHERITED_TRACEPARENT)
+    )
+
+    assert len(spans) > 1
+    assert {format_trace_id(span.context.trace_id) for span in spans} == {
+        _INHERITED_TRACE_ID
+    }
+
+
+def test_assembler_parents_only_the_root_outside_the_batch():
+    spans = tracing.TraceAssembler().assemble(
+        _claude_turn(_INHERITED_TRACEPARENT)
+    )
+
+    root = _root_of(spans)
+    local_ids = {span.context.span_id for span in spans}
+    for span in spans:
+        if span is root:
+            continue
+        assert span.parent is not None
+        assert span.parent.span_id in local_ids
+        assert not span.parent.is_remote
+
+
+def test_assembler_keeps_its_own_trace_without_inherited_context():
+    spans = tracing.TraceAssembler().assemble(_claude_turn())
+
+    root = _root_of(spans)
+    assert root.parent is None
+    assert format_trace_id(root.context.trace_id) != _INHERITED_TRACE_ID
+
+
+def test_assembler_falls_back_when_inherited_context_does_not_parse():
+    for value in (
+        "not-a-traceparent",
+        f"00-{'0' * 32}-{_INHERITED_SPAN_ID}-01",
+        f"00-{_INHERITED_TRACE_ID}-{'0' * 16}-01",
+    ):
+        spans = tracing.TraceAssembler().assemble(_claude_turn(value))
+
+        root = _root_of(spans)
+        assert root.parent is None
+        assert format_trace_id(root.context.trace_id) != _INHERITED_TRACE_ID
+
+
+def test_assembler_uses_the_earliest_inherited_context_in_a_turn():
+    # Hooks fire across a turn and only some run under an active span, so the
+    # earliest usable context wins and the turn does not get split.
+    later = f"00-{'f' * 32}-{'a' * 16}-01"
+    events = _claude_turn(later)
+    events[0] = replace(events[0], traceparent=_INHERITED_TRACEPARENT)
+
+    root = _root_of(tracing.TraceAssembler().assemble(events))
+
+    assert format_trace_id(root.context.trace_id) == _INHERITED_TRACE_ID
+
+
+def test_assembler_skips_unusable_context_in_favor_of_a_later_valid_one():
+    events = _claude_turn(_INHERITED_TRACEPARENT)
+    events[0] = replace(events[0], traceparent="not-a-traceparent")
+
+    root = _root_of(tracing.TraceAssembler().assemble(events))
+
+    assert format_trace_id(root.context.trace_id) == _INHERITED_TRACE_ID
+
+
+def test_assembler_adoption_is_stable_across_retries():
+    events = _claude_turn(_INHERITED_TRACEPARENT)
+
+    first = tracing.TraceAssembler().assemble(events)
+    second = tracing.TraceAssembler().assemble(events)
+
+    assert [span.context.trace_id for span in first] == [
+        span.context.trace_id for span in second
+    ]
+    assert [span.context.span_id for span in first] == [
+        span.context.span_id for span in second
+    ]
+
+
+def test_assembler_emits_genai_conversation_id_for_external_correlation():
+    spans = tracing.TraceAssembler().assemble(_claude_turn())
+
+    root = _root_of(spans)
+    assert root.attributes[GenAIAttributes.CONVERSATION.ID] == "session-1"
+    assert root.attributes[SpanAttributes.CONVERSATION_ID] == "session-1"
+
+
+def test_service_captures_trace_context_from_the_hook_environment(
+    tmp_path: Path,
+):
+    event_journal = journal.EventJournal(tmp_path)
+    hook_service = service.HookService(journal=event_journal)
+
+    turn_id, _ = hook_service.ingest(
+        "claude",
+        _claude("PreToolUse", tool_name="Read"),
+        environ={
+            "TRACEPARENT": _INHERITED_TRACEPARENT,
+            "TRACESTATE": "vendor=1",
+        },
+    )
+
+    stored = event_journal.get_turn("claude-code", "session-1", turn_id)
+    assert [event.traceparent for event in stored] == [_INHERITED_TRACEPARENT]
+    assert [event.tracestate for event in stored] == ["vendor=1"]
+
+
+def test_service_records_no_trace_context_when_the_agent_exports_none(
+    tmp_path: Path,
+):
+    event_journal = journal.EventJournal(tmp_path)
+    hook_service = service.HookService(journal=event_journal)
+
+    turn_id, _ = hook_service.ingest(
+        "claude", _claude("PreToolUse", tool_name="Read"), environ={}
+    )
+
+    stored = event_journal.get_turn("claude-code", "session-1", turn_id)
+    assert [event.traceparent for event in stored] == [None]
+    assert [event.tracestate for event in stored] == [None]
+
+
+def test_assembler_stamps_an_instrumentation_scope_on_every_span():
+    # Spans are built as completed ReadableSpans rather than through a Tracer,
+    # so the scope has to be set explicitly or consumers get an empty one.
+    spans = tracing.TraceAssembler().assemble(_claude_turn())
+
+    assert spans
+    for span in spans:
+        assert span.instrumentation_scope is not None
+        assert span.instrumentation_scope.name == "trulens.client_hooks"
+        assert span.instrumentation_scope.version
+
+
+def test_instrumentation_scope_is_stamped_on_adopted_traces_too():
+    spans = tracing.TraceAssembler().assemble(
+        _claude_turn(_INHERITED_TRACEPARENT)
+    )
+
+    assert {span.instrumentation_scope.name for span in spans} == {
+        "trulens.client_hooks"
+    }
