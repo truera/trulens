@@ -103,7 +103,7 @@ jobs:
           branch: cla-signatures
           # Maintainers and bots are exempt. Bots cannot comment a signature, and
           # Snowflake employees contribute under their employment agreement.
-          allowlist: bot*,dependabot[bot],github-actions[bot],A5Wagyu32,daniel-huang-1230,joshreini1,sfc-gh-*
+          allowlist: bot*,dependabot[bot],github-actions[bot],alimtaha,daniel-huang-1230,joshreini1,sfc-gh-*
           # Left unlocked after merge. The signature of record is the JSON file, not
           # the comment, so locking the conversation only stops people replying to
           # their own merged pull request.
