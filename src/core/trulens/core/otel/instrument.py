@@ -80,6 +80,7 @@ from trulens.otel.semconv.constants import (
     TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
 )
 from trulens.otel.semconv.constants import TRULENS_SPAN_END_CALLBACKS
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 import wrapt
@@ -341,12 +342,29 @@ def _set_span_attributes(
         SpanAttributes.SpanType.TOOL,
         SpanAttributes.SpanType.MCP,
     ):
+
+        def _first_set(*keys: str, default: Any = None) -> Any:
+            """First key present in the resolved attributes.
+
+            Presence rather than truthiness, so an empty tool result is
+            reported as an empty result rather than as a missing one.
+            """
+            for key in keys:
+                if key in resolved_attributes:
+                    return resolved_attributes[key]
+            return default
+
         set_genai_tool_attributes(
             span,
-            # func_name is the instrumented function / tool name.
-            tool_name=func_name,
-            call_arguments=resolved_attributes.get("call_arguments"),
-            call_result=resolved_attributes.get("call_result"),
+            # Instrumentation that knows which tool is being called reports it
+            # directly; otherwise func_name is the instrumented function.
+            tool_name=_first_set(GenAIAttributes.TOOL.NAME, default=func_name),
+            call_arguments=_first_set(
+                "call_arguments", GenAIAttributes.TOOL.CALL_ARGUMENTS
+            ),
+            call_result=_first_set(
+                "call_result", GenAIAttributes.TOOL.CALL_RESULT
+            ),
         )
 
 

@@ -93,6 +93,7 @@ plugins:
             - src/feedback
             - src/dashboard
             - src/benchmark
+            - src/apps/autogen
             - src/apps/langchain
             - src/apps/langgraph
             - src/apps/llamaindex
@@ -263,6 +264,7 @@ nav:
     - Instrumentation:
         - component_guides/instrumentation/index.md
         # Titles set inside notebooks and will be overridden if provided here.
+        - component_guides/instrumentation/autogen.md
         - component_guides/instrumentation/langchain.md
         - component_guides/instrumentation/langgraph.md
         - component_guides/instrumentation/llama_index.md

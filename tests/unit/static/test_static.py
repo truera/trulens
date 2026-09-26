@@ -131,6 +131,14 @@ class TestStatic(TestCase):
                     )
 
     @pytest.mark.optional
+    def test_instrumentation_autogen(self):
+        """Check that the autogen instrumentation is up to date."""
+
+        from trulens.apps.autogen import AutoGenInstrument
+
+        self._test_instrumentation(AutoGenInstrument())
+
+    @pytest.mark.optional
     def test_instrumentation_langchain(self):
         """Check that the langchain instrumentation is up to date."""
 

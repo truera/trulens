@@ -556,6 +556,17 @@ class TruSession(
                 *args, app=app, connector=self.connector, **kwargs
             )
 
+        elif app.__module__.startswith("autogen"):
+            with import_utils.OptionalImports(
+                messages=optional_utils.REQUIREMENT_APPS_AUTOGEN
+            ):
+                from trulens.apps.autogen import tru_autogen
+
+            print(f"{text_utils.UNICODE_SQUID} Instrumenting AutoGen app.")
+            return tru_autogen.TruAutoGen(
+                *args, app=app, connector=self.connector, **kwargs
+            )
+
         elif app.__module__.startswith("nemoguardrails"):
             with import_utils.OptionalImports(
                 messages=optional_utils.REQUIREMENT_APPS_NEMO
