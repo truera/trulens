@@ -339,6 +339,200 @@ def test_claude_stop_uses_only_current_turn_and_skips_bad_transcript_lines(
     assert event.output_tokens == 4
 
 
+def test_cursor_stop_recovers_usage_from_transcript(tmp_path):
+    """Cursor's hook payloads never carry token usage on any event (unlike
+    `model`, present directly on the payload, and response text, present on
+    `afterAgentResponse` via the existing `text` field alias) - this
+    exercises the transcript-based backfill on the terminal `stop` event.
+    """
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        "\n".join(
+            json.dumps(entry)
+            for entry in (
+                {
+                    "type": "user",
+                    "message": {"role": "user", "content": "hello"},
+                },
+                {
+                    "type": "assistant",
+                    "message": {
+                        "id": "message-1",
+                        "content": [{"type": "text", "text": "working"}],
+                        "usage": {"input_tokens": 10, "output_tokens": 4},
+                    },
+                },
+                {
+                    "type": "assistant",
+                    "message": {
+                        "id": "message-2",
+                        "content": [{"type": "text", "text": "done"}],
+                        "usage": {"input_tokens": 5, "output_tokens": 3},
+                    },
+                },
+            )
+        )
+    )
+    clients.register_client(cursor_spec)
+
+    event = parsers.parse(
+        "cursor",
+        {
+            "conversation_id": "conversation-1",
+            "hook_event_name": "stop",
+            "model": "claude-sonnet-4-5",
+            "transcript_path": str(transcript),
+        },
+    )
+
+    # model comes through unchanged from the payload - no override needed.
+    assert event.model == "claude-sonnet-4-5"
+    assert event.input_tokens == 15
+    assert event.output_tokens == 7
+
+
+def test_cursor_stop_uses_only_current_turn_and_skips_bad_transcript_lines(
+    tmp_path,
+):
+    """Mirrors test_claude_stop_uses_only_current_turn_and_skips_bad_transcript_lines
+    above: a human-prompt entry resets the running token count, so only usage
+    from assistant messages after the most recent prompt is counted, and
+    malformed lines/values are skipped rather than raising."""
+    transcript = tmp_path / "session.jsonl"
+    entries = [
+        {
+            "type": "user",
+            "message": {"role": "user", "content": "first"},
+        },
+        {
+            "type": "assistant",
+            "message": {
+                "id": "old-message",
+                "content": [{"type": "text", "text": "old answer"}],
+                "usage": {"input_tokens": 100, "output_tokens": 50},
+            },
+        },
+        {
+            "type": "user",
+            "message": {"role": "user", "content": "second"},
+        },
+        None,
+        {
+            "type": "assistant",
+            "message": {
+                "id": "new-message",
+                "content": [{"type": "text", "text": "draft"}],
+                "usage": {"input_tokens": "bad", "output_tokens": 2},
+            },
+        },
+        {
+            "type": "assistant",
+            "message": {
+                "id": "malformed-message",
+                "content": None,
+                "usage": {"input_tokens": 2, "output_tokens": 1},
+            },
+        },
+        {
+            "type": "assistant",
+            "message": {
+                "id": "final-message",
+                "content": [{"type": "text", "text": "final answer"}],
+                "usage": {"input_tokens": 7, "output_tokens": 3},
+            },
+        },
+    ]
+    transcript.write_text(
+        "\n".join([json.dumps(entries[0]), "not-json"])
+        + "\n"
+        + "\n".join(json.dumps(entry) for entry in entries[1:])
+    )
+    clients.register_client(cursor_spec)
+
+    event = parsers.parse(
+        "cursor",
+        {
+            "conversation_id": "conversation-1",
+            "hook_event_name": "stop",
+            "transcript_path": str(transcript),
+        },
+    )
+
+    # 100/50 (old-message, before the "second" prompt reset) are excluded.
+    # "bad" input_tokens (new-message) is treated as 0 by _usage_value, but
+    # its valid output_tokens=2 still counts. Remaining input: 0 (new-message)
+    # + 2 (malformed-message) + 7 (final-message) = 9. Remaining output:
+    # 2 (new-message) + 1 (malformed-message) + 3 (final-message) = 6.
+    assert event.input_tokens == 9
+    assert event.output_tokens == 6
+
+
+def test_cursor_stop_missing_transcript_path_leaves_tokens_unset(tmp_path):
+    """No transcript_path in the payload -> extract_overrides returns {}
+    rather than raising."""
+    clients.register_client(cursor_spec)
+
+    event = parsers.parse(
+        "cursor",
+        {
+            "conversation_id": "conversation-1",
+            "hook_event_name": "stop",
+        },
+    )
+
+    assert event.input_tokens is None
+    assert event.output_tokens is None
+
+
+def test_cursor_stop_missing_transcript_file_leaves_tokens_unset(tmp_path):
+    """transcript_path pointing at a file that doesn't exist -> OSError is
+    caught, extract_overrides returns {} rather than raising."""
+    clients.register_client(cursor_spec)
+
+    event = parsers.parse(
+        "cursor",
+        {
+            "conversation_id": "conversation-1",
+            "hook_event_name": "stop",
+            "transcript_path": str(tmp_path / "does-not-exist.jsonl"),
+        },
+    )
+
+    assert event.input_tokens is None
+    assert event.output_tokens is None
+
+
+def test_cursor_non_stop_event_does_not_read_transcript(tmp_path):
+    """The transcript override only activates on `stop`; other events (even
+    ones carrying a transcript_path) pass through unaffected."""
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        json.dumps({
+            "type": "assistant",
+            "message": {
+                "id": "message-1",
+                "content": [{"type": "text", "text": "working"}],
+                "usage": {"input_tokens": 10, "output_tokens": 4},
+            },
+        })
+    )
+    clients.register_client(cursor_spec)
+
+    event = parsers.parse(
+        "cursor",
+        {
+            "conversation_id": "conversation-1",
+            "hook_event_name": "afterAgentResponse",
+            "text": "final answer",
+            "transcript_path": str(transcript),
+        },
+    )
+
+    assert event.response == "final answer"
+    assert event.input_tokens is None
+    assert event.output_tokens is None
+
+
 def test_plugin_parse_rejects_missing_conversation_identity():
     clients.register_client(cursor_spec)
     with pytest.raises(ValueError, match="missing a conversation ID"):
