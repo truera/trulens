@@ -6,6 +6,11 @@ import time
 import unittest
 from unittest import mock
 
+import pytest
+
+pytest.importorskip("openai")
+pytest.importorskip("trulens.providers.openai")
+
 import openai
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
 from openai.types.chat.chat_completion_chunk import Choice

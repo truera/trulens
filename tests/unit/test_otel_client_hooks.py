@@ -1251,7 +1251,8 @@ def test_service_captures_trace_context_from_the_hook_environment(
         },
     )
 
-    stored = event_journal.get_turn("claude-code", "session-1", turn_id)
+    client = parsers.parse("claude", _claude("PreToolUse")).client
+    stored = event_journal.get_turn(client, "session-1", turn_id)
     assert [event.traceparent for event in stored] == [_INHERITED_TRACEPARENT]
     assert [event.tracestate for event in stored] == ["vendor=1"]
 
@@ -1266,7 +1267,8 @@ def test_service_records_no_trace_context_when_the_agent_exports_none(
         "claude", _claude("PreToolUse", tool_name="Read"), environ={}
     )
 
-    stored = event_journal.get_turn("claude-code", "session-1", turn_id)
+    client = parsers.parse("claude", _claude("PreToolUse")).client
+    stored = event_journal.get_turn(client, "session-1", turn_id)
     assert [event.traceparent for event in stored] == [None]
     assert [event.tracestate for event in stored] == [None]
 

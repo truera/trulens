@@ -52,6 +52,22 @@ def _dcg(scores: list[float]) -> float:
     return sum(score / np.log2(i + 2) for i, score in enumerate(scores))
 
 
+def _validate_relevance_scores(
+    retrieved_context_chunks: list[str],
+    relevance_scores: list[float] | None,
+) -> None:
+    """Require one score per retrieved chunk when scores are supplied."""
+    if relevance_scores is not None and len(relevance_scores) != len(
+        retrieved_context_chunks
+    ):
+        raise ValueError(
+            "relevance_scores must have the same length as "
+            "retrieved_context_chunks; "
+            f"got {len(retrieved_context_chunks)} chunks and "
+            f"{len(relevance_scores)} scores."
+        )
+
+
 # TODEP
 class GroundTruthAgreement(
     pyschema_utils.WithClassInfo, serial_utils.SerialModel
@@ -332,7 +348,11 @@ class GroundTruthAgreement(
 
         Returns:
             float: Computed NDCG@k score.
+
+        Raises:
+            ValueError: If supplied relevance scores and chunks differ in length.
         """
+        _validate_relevance_scores(retrieved_context_chunks, relevance_scores)
         # Step 1: Find the ground truth context chunks for the given query
         ground_truth_context_chunks_and_scores = (
             self._find_golden_context_chunks_and_scores(query)
@@ -415,7 +435,11 @@ class GroundTruthAgreement(
 
         Returns:
             float: Computed Precision@k score.
+
+        Raises:
+            ValueError: If supplied relevance scores and chunks differ in length.
         """
+        _validate_relevance_scores(retrieved_context_chunks, relevance_scores)
         ground_truth_context_chunks = (
             self._find_golden_context_chunks_and_scores(query)
         )
@@ -475,7 +499,11 @@ class GroundTruthAgreement(
 
         Returns:
             float: Computed Recall@k score.
+
+        Raises:
+            ValueError: If supplied relevance scores and chunks differ in length.
         """
+        _validate_relevance_scores(retrieved_context_chunks, relevance_scores)
         ground_truth_context_chunks = (
             self._find_golden_context_chunks_and_scores(query)
         )
@@ -530,10 +558,15 @@ class GroundTruthAgreement(
         Args:
             query (str): The input query string.
             retrieved_context_chunks (List[str]): List of retrieved context chunks.
+            relevance_scores: Optional relevance score for each retrieved chunk.
 
         Returns:
             float: Computed MRR score.
+
+        Raises:
+            ValueError: If supplied relevance scores and chunks differ in length.
         """
+        _validate_relevance_scores(retrieved_context_chunks, relevance_scores)
         ground_truth_context_chunks = (
             self._find_golden_context_chunks_and_scores(query)
         )
