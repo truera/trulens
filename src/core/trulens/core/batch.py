@@ -189,9 +189,12 @@ class BatchEvaluator:
 
         if column_map:
             for row in rows:
-                for src, dst in column_map.items():
-                    if src in row:
-                        row[dst] = row[src]
+                # Read every source before any destination overwrites it.
+                row.update({
+                    dst: row[src]
+                    for src, dst in column_map.items()
+                    if src in row
+                })
 
         return rows
 
@@ -352,7 +355,8 @@ class BatchEvaluator:
             column_map: Optional mapping from dataset column name to the column
                 name referenced by the selectors, applied before evaluation.
                 For example, ``{"user_question": "query"}`` makes a
-                ``user_question`` column available as ``query``.
+                ``user_question`` column available as ``query``. All sources
+                are read from the original row before assigning destinations.
 
         Returns:
             A pandas DataFrame with one row per input row. The original columns
