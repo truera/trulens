@@ -8,10 +8,14 @@ SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 PYTEST := poetry run pytest --rootdir=. -s -r fex --durations=0
 PYTEST_ISOLATED := poetry run pytest --rootdir=. -s -r fex --durations=0 -n auto --dist=loadscope
-POETRY_DIRS := $(shell find . \
-	-not -path "./dist/*" \
-	-maxdepth 4 \
-	-name "*pyproject.toml" \
+# The projects this repository publishes: the root trulens package and every
+# package under src/. This used to search the whole tree, which also matched
+# examples that carry their own pyproject.toml, such as
+# examples/experimental/EDD. upload-all then built the example and passed it to
+# twine with the release, and bump-version-% set it to the release version.
+POETRY_DIRS := . $(shell find ./src \
+	-maxdepth 3 \
+	-name "pyproject.toml" \
 	-exec dirname {} \;)
 CONDA_BUILD_DIRS := $(shell find . \
 	-maxdepth 4 \
