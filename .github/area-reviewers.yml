@@ -56,7 +56,7 @@ areas:
       - src/feedback/
       - src/core/trulens/core/feedback/
       - src/core/trulens/core/metric/
-    reviewers: [Payal2000]
+    reviewers: [Payal2000, feiiiiii5]
 
   - name: Feedback templates
     paths:
