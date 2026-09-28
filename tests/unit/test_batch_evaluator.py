@@ -242,6 +242,56 @@ def test_duplicate_metric_names_are_disambiguated():
     assert res["overlap_1"].iloc[0] == pytest.approx(1.0)
 
 
+@pytest.mark.parametrize(
+    "names, expected_names",
+    [
+        (["score", "score", "score_1"], ["score", "score_1", "score_1_1"]),
+        (["score_1", "score", "score"], ["score_1", "score", "score_2"]),
+        (["score", "score_latency"], ["score", "score_latency_1"]),
+        (["score_latency", "score"], ["score_latency", "score_1"]),
+        (["score", "score_explanation"], ["score", "score_explanation_1"]),
+        (["score_explanation", "score"], ["score_explanation", "score_1"]),
+    ],
+)
+def test_result_column_collisions_preserve_every_metric(names, expected_names):
+    metrics = [
+        Metric(
+            name=name,
+            implementation=word_overlap,
+            selectors={
+                "query": Selector.from_column("q"),
+                "answer": Selector.from_column(f"a{i}"),
+            },
+        )
+        for i, name in enumerate(names)
+    ]
+    row = {"q": "fox runs", "a0": "fox runs", "a1": "fox", "a2": "wolf"}
+    res = BatchEvaluator(metrics=metrics, max_workers=1).evaluate([row])
+
+    assert len(res.columns) == len(row) + 3 * len(metrics)
+    for name, score, overlap in zip(
+        expected_names, [1.0, 0.5, 0.0], [["fox", "runs"], ["fox"], []]
+    ):
+        assert res[name].iloc[0] == score
+        assert res[f"{name}_explanation"].iloc[0] == {"overlap": overlap}
+        assert res[f"{name}_latency"].iloc[0] >= 0
+
+
+@pytest.mark.parametrize(
+    "column", ["overlap", "overlap_explanation", "overlap_latency"]
+)
+def test_result_columns_preserve_dataset_columns(column):
+    row = {"q": "fox", "a": "fox", column: "original"}
+    ev = BatchEvaluator(metrics=[_overlap_metric()], max_workers=1)
+
+    res = ev.evaluate([row])
+
+    assert res[column].iloc[0] == "original"
+    assert res["overlap_1"].iloc[0] == 1.0
+    assert res["overlap_1_explanation"].iloc[0] == {"overlap": ["fox"]}
+    assert res["overlap_1_latency"].iloc[0] >= 0
+
+
 # --- parallel vs serial equivalence -------------------------------------------
 
 
