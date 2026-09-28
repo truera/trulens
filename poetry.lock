@@ -12213,7 +12213,7 @@ reference = "pypi-public"
 
 [[package]]
 name = "trulens-apps-autogen"
-version = "2.14.0"
+version = "2.15.0"
 description = "Library to systematically track and evaluate AutoGen (AG2) multi-agent applications."
 optional = false
 python-versions = "^3.10"

@@ -12,6 +12,7 @@ from inspect import BoundArguments
 from inspect import Signature
 import json
 import logging
+import os
 from typing import (
     Any,
     Callable,
@@ -48,12 +49,37 @@ except ImportError:  # pragma: no cover - depends on the autogen build
 
 logger = logging.getLogger(__name__)
 
-MAX_INSTRUMENTED_MESSAGES = 50
-"""Most recent messages kept when serializing a conversation history.
+DEFAULT_MAX_INSTRUMENTED_MESSAGES = 500
+"""Most recent messages kept by default when serializing a conversation history.
 
 A long-running group chat replays its whole history on every turn, so keeping
-all of it would grow each span quadratically in the number of turns.
+all of it would grow each span quadratically in the number of turns. The
+default is high enough that ordinary conversations are recorded in full and
+only a runaway chat gets trimmed.
+
+Override with the `TRULENS_AUTOGEN_MAX_INSTRUMENTED_MESSAGES` environment
+variable; `0` or less keeps every message.
 """
+
+
+def _max_instrumented_messages() -> Optional[int]:
+    """Message cap in effect, or `None` when history is kept in full."""
+
+    configured = os.environ.get("TRULENS_AUTOGEN_MAX_INSTRUMENTED_MESSAGES")
+    if configured is None:
+        return DEFAULT_MAX_INSTRUMENTED_MESSAGES
+
+    try:
+        limit = int(configured)
+    except ValueError:
+        logger.warning(
+            "Ignoring TRULENS_AUTOGEN_MAX_INSTRUMENTED_MESSAGES=%r:"
+            " not an integer.",
+            configured,
+        )
+        return DEFAULT_MAX_INSTRUMENTED_MESSAGES
+
+    return limit if limit > 0 else None
 
 
 def _to_text(value: Any) -> Optional[str]:
@@ -144,12 +170,16 @@ def _serialize_messages(messages: Any) -> Optional[str]:
     if not history:
         return None
 
+    limit = _max_instrumented_messages()
+    if limit is not None:
+        history = history[-limit:]
+
     return _to_text([
         {
             "role": _message_role(message),
             "content": _message_content(message),
         }
-        for message in history[-MAX_INSTRUMENTED_MESSAGES:]
+        for message in history
     ])
 
 
@@ -544,18 +574,19 @@ class TruAutoGen(core_app.App):
         pointed at agent replies rather than at the conversation as a whole.
 
         ```python
-        from trulens.core import Feedback
-        from trulens.core.feedback.selector import Selector
+        from trulens.core import Metric
+        from trulens.core import Selector
         from trulens.otel.semconv.trace import SpanAttributes
 
-        f_coherence = (
-            Feedback(provider.coherence_with_cot_reasons, name="Coherence")
-            .on({
+        f_coherence = Metric(
+            implementation=provider.coherence_with_cot_reasons,
+            name="Coherence",
+            selectors={
                 "text": Selector(
                     span_type=SpanAttributes.SpanType.AGENT,
                     span_attribute=SpanAttributes.AGENT.OUTPUT_MESSAGE,
                 ),
-            })
+            },
         )
         ```
 

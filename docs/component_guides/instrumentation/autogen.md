@@ -88,18 +88,20 @@ averaged into the final answer.
 !!! example "Score every agent reply"
 
     ```python
-    from trulens.core import Feedback
-    from trulens.core.feedback.selector import Selector
+    from trulens.core import Metric
+    from trulens.core import Selector
     from trulens.otel.semconv.trace import SpanAttributes
 
-    f_coherence = Feedback(
-        provider.coherence_with_cot_reasons, name="Agent Coherence"
-    ).on({
-        "text": Selector(
-            span_type=SpanAttributes.SpanType.AGENT,
-            span_attribute=SpanAttributes.AGENT.OUTPUT_MESSAGE,
-        ),
-    })
+    f_coherence = Metric(
+        implementation=provider.coherence_with_cot_reasons,
+        name="Agent Coherence",
+        selectors={
+            "text": Selector(
+                span_type=SpanAttributes.SpanType.AGENT,
+                span_attribute=SpanAttributes.AGENT.OUTPUT_MESSAGE,
+            ),
+        },
+    )
     ```
 
 The attributes available on an `AGENT` span are `AGENT.NAME`,
@@ -111,6 +113,11 @@ history the agent was given for that turn), `AGENT.INPUT_MESSAGE` and
 the selected agent as `WORKFLOW.AGENT_NAME`. Tool spans use the OpenTelemetry
 GenAI convention: `gen_ai.tool.name`, `gen_ai.tool.call.arguments`, and
 `gen_ai.tool.call.result`.
+
+`AGENT.INPUT_MESSAGES` keeps the 500 most recent messages, because a group chat
+replays its whole history on every turn. Set
+`TRULENS_AUTOGEN_MAX_INSTRUMENTED_MESSAGES` to change that, or to `0` to keep
+every message.
 
 For a full walkthrough, see the
 [Evaluate AutoGen Group Chat Quality](../../cookbook/frameworks/autogen/autogen_group_chat_quality.ipynb)

@@ -8,8 +8,11 @@ selection -- is exercised without any network access.
 
 import asyncio
 import inspect
+import json
+import os
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Tuple
+from unittest import mock
 
 import pandas as pd
 import pytest
@@ -25,6 +28,7 @@ try:
     from autogen import GroupChatManager
     from trulens.apps.autogen import AutoGenInstrument
     from trulens.apps.autogen import TruAutoGen
+    from trulens.apps.autogen import tru_autogen as tru_autogen_module
 except Exception:
     pass
 
@@ -638,6 +642,90 @@ class TestOtelTruAutoGen(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
 
         self.assertIn(ConversableAgent, AutoGenInstrument.Default.CLASSES())
         self.assertIn(GroupChat, AutoGenInstrument.Default.CLASSES())
+
+    def test_long_message_history_is_capped(self) -> None:
+        """A history longer than the cap keeps only its most recent messages."""
+
+        cap = tru_autogen_module.DEFAULT_MAX_INSTRUMENTED_MESSAGES
+        history = [
+            {"role": "user", "content": f"message {index}"}
+            for index in range(cap + 10)
+        ]
+
+        serialized = json.loads(tru_autogen_module._serialize_messages(history))
+
+        self.assertEqual(cap, len(serialized))
+        self.assertEqual("message 10", serialized[0]["content"])
+        self.assertEqual(
+            f"message {len(history) - 1}", serialized[-1]["content"]
+        )
+
+    def test_message_cap_is_configurable(self) -> None:
+        """`TRULENS_AUTOGEN_MAX_INSTRUMENTED_MESSAGES` sets the cap."""
+
+        assistant = _canned_agent("assistant", "A reply.")
+        user = _user_proxy("user")
+        # Let the user proxy answer so that the history grows past one message.
+        user.register_reply(
+            [ConversableAgent, None],
+            lambda self, messages=None, sender=None, config=None: (
+                True,
+                "Tell me more.",
+            ),
+        )
+
+        tru_recorder = TruAutoGen(
+            user,
+            app_name="capped_history",
+            app_version="v1",
+            main_method=user.initiate_chat,
+        )
+
+        with mock.patch.dict(
+            os.environ, {"TRULENS_AUTOGEN_MAX_INSTRUMENTED_MESSAGES": "1"}
+        ):
+            with tru_recorder:
+                user.initiate_chat(
+                    assistant, message="Why is the sky blue?", max_turns=2
+                )
+
+        histories = [
+            json.loads(attributes[SpanAttributes.AGENT.INPUT_MESSAGES])
+            for attributes in self._attributes_of_type(
+                self._spans(), SpanAttributes.SpanType.AGENT
+            )
+        ]
+
+        self.assertTrue(histories)
+        # Without the cap the assistant's second turn would carry three
+        # messages; with it every turn is trimmed to the latest one.
+        for history in histories:
+            self.assertEqual(1, len(history))
+
+    def test_message_cap_accepts_zero_and_ignores_junk(self) -> None:
+        """`0` keeps the whole history; an unparsable value is ignored."""
+
+        history = [
+            {"role": "user", "content": f"message {index}"}
+            for index in range(5)
+        ]
+
+        with mock.patch.dict(
+            os.environ, {"TRULENS_AUTOGEN_MAX_INSTRUMENTED_MESSAGES": "0"}
+        ):
+            self.assertIsNone(tru_autogen_module._max_instrumented_messages())
+            serialized = json.loads(
+                tru_autogen_module._serialize_messages(history)
+            )
+        self.assertEqual(5, len(serialized))
+
+        with mock.patch.dict(
+            os.environ, {"TRULENS_AUTOGEN_MAX_INSTRUMENTED_MESSAGES": "lots"}
+        ):
+            self.assertEqual(
+                tru_autogen_module.DEFAULT_MAX_INSTRUMENTED_MESSAGES,
+                tru_autogen_module._max_instrumented_messages(),
+            )
 
     def test_session_auto_detection(self) -> None:
         """`TruSession.App` recognizes an AutoGen agent."""
