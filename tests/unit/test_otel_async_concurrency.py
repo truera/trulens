@@ -87,6 +87,14 @@ class _TestApp:
 
 
 class TestOtelAsyncConcurrency(unittest.TestCase):
+    def _assert_cancellation_propagated(self, propagated, original) -> None:
+        self.assertIsInstance(propagated, asyncio.CancelledError)
+        self.assertIsInstance(original, asyncio.CancelledError)
+        # Python 3.10 Task.__await__ wraps cancellation in a new exception
+        # whose context is the original; later versions preserve identity.
+        if propagated is not original:
+            self.assertIs(propagated.__context__, original)
+
     @classmethod
     def setUpClass(cls) -> None:
         instrument.enable_all_instrumentation()
@@ -534,7 +542,9 @@ class TestOtelAsyncConcurrency(unittest.TestCase):
         self.assertEqual(child_parent.span_id, parent_context.span_id)
         self.assertEqual(child_context.trace_id, parent_context.trace_id)
         self.assertIsInstance(result.caught_exception, asyncio.CancelledError)
-        self.assertIs(result.caught_exception, result.child_cancelled_error)
+        self._assert_cancellation_propagated(
+            result.caught_exception, result.child_cancelled_error
+        )
         self.assertEqual(
             result.parent_span_id_after_cancellation, parent_context.span_id
         )
@@ -648,7 +658,9 @@ class TestOtelAsyncConcurrency(unittest.TestCase):
         self.assertEqual(child_parent.span_id, parent_context.span_id)
         self.assertEqual(child_context.trace_id, parent_context.trace_id)
         self.assertIsInstance(result.caught_exception, asyncio.CancelledError)
-        self.assertIs(result.caught_exception, result.child_cancelled_error)
+        self._assert_cancellation_propagated(
+            result.caught_exception, result.child_cancelled_error
+        )
         self.assertIsNotNone(child.end_time)
         self.assertIn(SpanAttributes.CALL.FUNCTION, child_attributes)
         self.assertNotIn(SpanAttributes.CALL.RETURN, child_attributes)
@@ -776,7 +788,9 @@ class TestOtelAsyncConcurrency(unittest.TestCase):
 
         self.assertEqual(len(child_cancelled_errors), 1)
         self.assertEqual(len(propagated_cancelled_errors), 1)
-        self.assertIs(propagated_cancelled_errors[0], child_cancelled_errors[0])
+        self._assert_cancellation_propagated(
+            propagated_cancelled_errors[0], child_cancelled_errors[0]
+        )
         self.assertIsNotNone(child_parent)
         assert child_parent is not None
         self.assertEqual(child_parent.span_id, parent_context.span_id)

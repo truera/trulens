@@ -77,6 +77,15 @@ env-tests-optional: env env-tests
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
 		unstructured
+	# Hosted CI runners have no GPU; keep the installed torch version but use
+	# its CPU wheel so importing it does not load bundled CUDA libraries.
+	@if [ "$(USE_CPU_TORCH)" = "true" ]; then \
+		torch_version=$$(poetry run python -c \
+			'import importlib.metadata as m; print(m.version("torch").split("+")[0])') && \
+		poetry run python -m pip install --force-reinstall --no-deps \
+			--index-url https://download.pytorch.org/whl/cpu \
+			"torch==$${torch_version}+cpu"; \
+	fi
 
 
 env-tests-snowflake: env-tests-optional
