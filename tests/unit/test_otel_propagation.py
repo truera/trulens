@@ -76,6 +76,95 @@ class TestInjectTraceContext(_TracingTestCase):
 
         self.assertEqual("Bearer test", headers["authorization"])
 
+
+_TRACE_ID = "07f8c88f000f3854aedaf55fa46a8b71"
+_SPAN_ID = "e9e48039ccad0456"
+_TRACEPARENT = f"00-{_TRACE_ID}-{_SPAN_ID}-01"
+
+
+class TestExtractTraceContext(_TracingTestCase):
+    def test_extracts_a_remote_context(self) -> None:
+        context = propagation.extract_trace_context({
+            "traceparent": _TRACEPARENT
+        })
+
+        self.assertIsNotNone(context)
+        self.assertEqual(_TRACE_ID, format_trace_id(context.trace_id))
+        self.assertEqual(int(_SPAN_ID, 16), context.span_id)
+
+    def test_marks_the_context_remote_so_it_can_parent_local_spans(
+        self,
+    ) -> None:
+        context = propagation.extract_trace_context({
+            "traceparent": _TRACEPARENT
+        })
+
+        self.assertTrue(context.is_remote)
+
+    def test_carries_the_sampled_flag_through(self) -> None:
+        sampled = propagation.extract_trace_context({
+            "traceparent": _TRACEPARENT
+        })
+        unsampled = propagation.extract_trace_context({
+            "traceparent": f"00-{_TRACE_ID}-{_SPAN_ID}-00"
+        })
+
+        self.assertTrue(sampled.trace_flags.sampled)
+        self.assertFalse(unsampled.trace_flags.sampled)
+
+    def test_returns_none_for_an_empty_carrier(self) -> None:
+        self.assertIsNone(propagation.extract_trace_context({}))
+
+    def test_returns_none_for_malformed_values(self) -> None:
+        for value in (
+            "not-a-traceparent",
+            f"00-{_TRACE_ID}",
+            f"00-07f8c88f-{_SPAN_ID}-01",
+            "",
+        ):
+            with self.subTest(traceparent=value):
+                self.assertIsNone(
+                    propagation.extract_trace_context({"traceparent": value})
+                )
+
+    def test_returns_none_for_all_zero_ids(self) -> None:
+        for value in (
+            f"00-{'0' * 32}-{_SPAN_ID}-01",
+            f"00-{_TRACE_ID}-{'0' * 16}-01",
+        ):
+            with self.subTest(traceparent=value):
+                self.assertIsNone(
+                    propagation.extract_trace_context({"traceparent": value})
+                )
+
+    def test_ignores_an_uppercase_key(self) -> None:
+        # Environment variable names have to be lowercased by the caller,
+        # because the W3C propagator only looks for the lowercase header name.
+        self.assertIsNone(
+            propagation.extract_trace_context({"TRACEPARENT": _TRACEPARENT})
+        )
+
+    def test_does_not_fall_through_to_the_ambient_span(self) -> None:
+        # Extraction reads the carrier and nothing else. A carrier with no
+        # usable context must not report the locally active span as inherited.
+        with self.tracer.start_as_current_span("local"):
+            self.assertIsNone(propagation.extract_trace_context({}))
+
+    def test_extracts_nothing_when_propagation_is_disabled(self) -> None:
+        from opentelemetry.propagate import get_global_textmap
+
+        self.assertIsNotNone(
+            propagation.extract_trace_context({"traceparent": _TRACEPARENT})
+        )
+
+        original = get_global_textmap()
+        set_global_textmap(_NoOpPropagator())
+        self.addCleanup(set_global_textmap, original)
+
+        self.assertIsNone(
+            propagation.extract_trace_context({"traceparent": _TRACEPARENT})
+        )
+
     def test_reports_no_injection_when_propagator_writes_nothing(self) -> None:
         # A valid span context is not enough on its own: with a no-op
         # propagator installed the header mapping stays untouched, and the

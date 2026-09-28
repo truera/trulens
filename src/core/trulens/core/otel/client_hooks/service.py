@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 import logging
 import os
 from typing import Any, Mapping, Optional, Tuple
@@ -56,11 +57,34 @@ class HookService:
         return self.session
 
     def ingest(
-        self, client: str, payload: Mapping[str, Any]
+        self,
+        client: str,
+        payload: Mapping[str, Any],
+        *,
+        environ: Optional[Mapping[str, str]] = None,
     ) -> Tuple[str, bool]:
-        """Normalize and durably journal one hook payload without exporting."""
+        """Normalize and durably journal one hook payload without exporting.
+
+        Any trace context the agent exported to this process is captured here,
+        while the hook is still running, because export happens later and often
+        from a different process that no longer has that environment.
+
+        Args:
+            client: Name of the coding-agent client the payload came from.
+            payload: The raw hook payload.
+            environ: Environment to read trace context from. Defaults to this
+                process's environment.
+
+        Returns:
+            The journal's `(turn_id, complete)` result for the appended event.
+        """
 
         event = self.capture_policy.apply(parsers.parse(client, payload))
+        traceparent, tracestate = tracing.environ_trace_context(environ)
+        if traceparent is not None:
+            event = replace(
+                event, traceparent=traceparent, tracestate=tracestate
+            )
         return self.journal.append(event)
 
     def flush(self) -> bool:

@@ -1,4 +1,4 @@
-"""W3C trace context propagation for outbound HTTP requests.
+"""W3C trace context propagation across process and HTTP boundaries.
 
 TruLens instruments the caller, but the LLM provider runs on the other side of
 an HTTP call. Nothing carries the active span's context across that boundary,
@@ -6,13 +6,21 @@ so the provider's server span starts a trace of its own and the two ends are
 correlated only by timing. The helpers here put the active span's W3C trace
 context on the outbound request headers, so the provider's span becomes a child
 of the caller's span and both ends land in one trace.
+
+The same boundary problem runs the other way. TruLens is sometimes the callee:
+a coding agent exports a trace context to the processes it spawns, and spans
+built in one of those processes belong in the trace the agent already started.
+`extract_trace_context` reads a context back out of a carrier for that case.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, MutableMapping, Optional
+from typing import TYPE_CHECKING, Any, Mapping, MutableMapping, Optional
 
+from opentelemetry.context import Context
+from opentelemetry.propagate import extract
 from opentelemetry.propagate import inject
+from opentelemetry.trace import SpanContext
 from opentelemetry.trace import get_current_span
 
 if TYPE_CHECKING:
@@ -46,6 +54,40 @@ def inject_trace_context(headers: MutableMapping[str, str]) -> bool:
 
     headers.update(injected)
     return True
+
+
+def extract_trace_context(
+    carrier: Mapping[str, str],
+) -> Optional[SpanContext]:
+    """Extract a remote span context from `carrier`.
+
+    The counterpart to `inject_trace_context`. Uses the globally configured
+    propagators, so turning propagation off globally turns extraction off with
+    it, and a carrier that does not parse yields None rather than raising.
+
+    Args:
+        carrier: Header-style mapping to read from, for example
+            `{"traceparent": "00-<trace>-<span>-01"}`. Keys are matched the way
+            the configured propagators expect them, which for W3C means
+            lowercase, so environment variable names have to be lowercased
+            before they are passed in.
+
+    Returns:
+        The remote `SpanContext` when the carrier holds a valid one, otherwise
+        None. The result carries `is_remote=True`, so it can be used directly as
+        a parent for locally built spans.
+    """
+
+    # Extract against an empty root context rather than the ambient one. With
+    # the default context, a carrier holding nothing usable would fall through
+    # to whatever span happens to be active here, and report an inherited
+    # context that was never actually inherited.
+    span_context = get_current_span(
+        extract(carrier, context=Context())
+    ).get_span_context()
+    if not span_context.is_valid:
+        return None
+    return span_context
 
 
 def tracing_transport(inner: Optional[Any] = None) -> Any:
