@@ -50,6 +50,23 @@ class TestIRMetricDuplicateChunks(unittest.TestCase):
         a = _agreement([{"text": "A"}, {"text": "B"}])
         self.assertAlmostEqual(a.ndcg_at_k("q", ["A", "B"], k=2), 1.0)
 
+    def test_ndcg_at_k_perfect_with_duplicate_golden_chunk(self):
+        # The golden set counts each distinct chunk once, so retrieving A first is
+        # a perfect ranking even when the same chunk is annotated twice.
+        a = _agreement([
+            {"text": "A", "expect_score": 1},
+            {"text": "A", "expect_score": 1},
+        ])
+        self.assertAlmostEqual(a.ndcg_at_k("q", ["A", "A"], k=2), 1.0)
+
+    def test_ndcg_at_k_perfect_with_partly_duplicated_golden_chunks(self):
+        # A repeated chunk is one golden chunk, scored once, by its first annotation.
+        a = _agreement([
+            {"text": "A", "expect_score": 1},
+            {"text": "A", "expect_score": 0.5},
+        ])
+        self.assertAlmostEqual(a.ndcg_at_k("q", ["A", "X"], k=2), 1.0)
+
 
 if __name__ == "__main__":
     unittest.main()
