@@ -410,7 +410,17 @@ class GroundTruthAgreement(
             # gains across tied y_score values, distorting the score when
             # several retrieved chunks share the same (zero) relevance.
             dcg = _dcg(rel_scores[:k])
-            ideal_dcg = _dcg(sorted(golden_scores, reverse=True)[:k])
+            # The ideal DCG ranks the same golden set the numerator credits above,
+            # and that set counts each distinct chunk once. A chunk annotated twice
+            # would otherwise sit in the denominator twice, capping a retriever that
+            # ranks it first below 1.0. Keep the first annotation's score, the one
+            # the numerator reads through golden_chunks.index().
+            distinct_golden_scores: dict[str, float] = {}
+            for chunk, score in zip(golden_chunks, golden_scores):
+                distinct_golden_scores.setdefault(chunk, score)
+            ideal_dcg = _dcg(
+                sorted(distinct_golden_scores.values(), reverse=True)[:k]
+            )
             # ideal_dcg of 0 means the golden set annotates nothing relevant,
             # so nDCG has no denominator. Undefined, not a measured zero.
             return dcg / ideal_dcg if ideal_dcg > 0 else np.nan
