@@ -59,6 +59,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from dataclasses import field
 import logging
+import math
 
 logger = logging.getLogger(__name__)
 
@@ -354,8 +355,9 @@ class FewShotOptimizer:
         Returns
         -------
         float or None
-            Evaluation metric score, or ``None`` if fewer than two eval samples
-            produced valid predictions.
+            Evaluation metric score, or ``None`` if too few eval samples
+            produced valid predictions for the selected metric. Non-finite
+            predictions are skipped along with their ground-truth labels.
         """
         predicted: list[float] = []
         ground_truth: list[float] = []
@@ -369,7 +371,15 @@ class FewShotOptimizer:
             try:
                 score = self.feedback_fn(**kwargs, examples=examples)
                 if score is not None:
-                    predicted.append(float(score))
+                    score = float(score)
+                    if not math.isfinite(score):
+                        logger.warning(
+                            "feedback_fn returned a non-finite score for "
+                            "kwargs=%r — skipping.",
+                            kwargs,
+                        )
+                        continue
+                    predicted.append(score)
                     ground_truth.append(gt_score)
             except Exception:
                 logger.warning(
