@@ -779,7 +779,17 @@ class LLMProvider(core_provider.Provider):
             "RELEVANCE:", templates_base.COT_REASONS_TEMPLATE
         )
         # Use default COT prompt only if no criteria AND no additional_instructions
-        if criteria is None and additional_instructions is None:
+        # AND the requested scale is the one that prompt hardcodes. It says "on a
+        # scale of 0 to 3" in prose, so on any other scale the judge answers
+        # 0-3 and the reply is then normalized against a scale it was never
+        # shown: a fully relevant context came back as 0.3 on 0-10, and a "3"
+        # was read as an out-of-range "3" on 0-1.
+        if (
+            criteria is None
+            and additional_instructions is None
+            and (min_score_val, max_score_val)
+            == templates_base.OutputSpace.LIKERT_0_3.value
+        ):
             system_prompt = templates_rag.ContextRelevance.default_cot_prompt
         else:
             output_space = self._determine_output_space(
