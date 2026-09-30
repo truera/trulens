@@ -338,3 +338,71 @@ def test_feedback_raises_on_empty_scores(monkeypatch):
 
     with pytest.raises(RuntimeError):
         provider.positive_sentiment(text="some text")
+
+
+@pytest.mark.optional
+def test_pii_detection_stays_within_unit_interval(monkeypatch):
+    """Several high-confidence entities must not push the score past 1.0."""
+    from trulens.providers.huggingface.provider import Dummy
+
+    provider = Dummy()
+    monkeypatch.setattr(
+        provider,
+        "_pii_detection_endpoint",
+        lambda text: [0.99, 0.99, 0.99, 0.99],
+    )
+
+    score = provider.pii_detection(text="Alice, Bob, carol@x.com, 555-0100")
+
+    assert 0.0 <= score <= 1.0
+    # Four near-certain entities means at-least-one is essentially certain.
+    assert score == pytest.approx(1.0, abs=1e-6)
+
+
+@pytest.mark.optional
+def test_pii_detection_single_entity_is_not_inverted(monkeypatch):
+    """One entity at 0.99 should read as ~0.99 likely, not ~0.01."""
+    from trulens.providers.huggingface.provider import Dummy
+
+    provider = Dummy()
+    monkeypatch.setattr(
+        provider, "_pii_detection_endpoint", lambda text: [0.99]
+    )
+
+    score = provider.pii_detection(text="Alice")
+
+    assert score == pytest.approx(0.99)
+
+
+@pytest.mark.optional
+def test_pii_detection_no_entities_is_zero(monkeypatch):
+    """No detected entities means zero likelihood of PII, not one."""
+    from trulens.providers.huggingface.provider import Dummy
+
+    provider = Dummy()
+    monkeypatch.setattr(provider, "_pii_detection_endpoint", lambda text: [])
+
+    score = provider.pii_detection(text="the sky is blue")
+
+    assert score == 0.0
+
+
+@pytest.mark.optional
+def test_pii_detection_with_cot_reasons_stays_within_unit_interval(monkeypatch):
+    """The reasons variant keeps the same bound and passes reasons through."""
+    from trulens.providers.huggingface.provider import Dummy
+
+    provider = Dummy()
+    monkeypatch.setattr(
+        provider,
+        "_pii_detection_with_cot_reasons_endpoint",
+        lambda text: ([0.99, 0.99, 0.99, 0.99], ["NAME detected: Alice"]),
+    )
+
+    score, reasons = provider.pii_detection_with_cot_reasons(
+        text="Alice, Bob, carol@x.com, 555-0100"
+    )
+
+    assert 0.0 <= score <= 1.0
+    assert score == pytest.approx(1.0, abs=1e-6)
+    assert list(reasons) == ["NAME detected: Alice"]

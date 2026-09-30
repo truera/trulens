@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import inspect
 import statistics
+from typing import ClassVar
 import unittest
 from unittest.mock import MagicMock
 
+from trulens.feedback import llm_provider
 from trulens.feedback.jury import Jury
+from trulens.feedback.llm_provider import UNPARSABLE_SCORE
 
 # ---------------------------------------------------------------------------
 # Mock helpers
@@ -30,6 +33,17 @@ def _make_failing_provider(model_engine: str):
     return provider
 
 
+def _make_unparsable_provider(model_engine: str):
+    """Mock provider whose judge reply carried no parseable score.
+
+    A judge that answers without a score does not raise:
+    ``llm_provider.generate_score_and_reasons`` reports the failure with the
+    ``UNPARSABLE_SCORE`` sentinel, so the juror returns a value like any
+    working one.
+    """
+    return _make_provider(model_engine, UNPARSABLE_SCORE)
+
+
 def _make_cot_provider(model_engine: str, score: float, reason: str):
     """Create a mock provider whose relevance() returns (score, {"reason": reason})."""
     provider = MagicMock()
@@ -39,6 +53,54 @@ def _make_cot_provider(model_engine: str, score: float, reason: str):
         {"reason": reason},
     )
     return provider
+
+
+# ---------------------------------------------------------------------------
+# Real-provider shim — the sentinel is a state the providers themselves
+# produce, so these tests reach it through an actual judge reply instead of a
+# hand-written return value. Same transport-boundary mock as
+# tests/unit/test_score_range_validation.py and
+# tests/unit/test_groundedness_score_aggregation.py.
+# ---------------------------------------------------------------------------
+
+# Parsed by the real text parser into the top of the 0-10 scale.
+_TOP_OF_SCALE_REPLY = (
+    "Criteria: relevant\nSupporting Evidence: answers it\nScore: 10"
+)
+
+# States evidence but never a score, so generate_score_and_reasons reports
+# UNPARSABLE_SCORE instead of raising or inventing a rating.
+_UNPARSABLE_REPLY = (
+    "Criteria: relevant\nSupporting Evidence: cut off before the score"
+)
+
+
+class _MockEndpoint:
+    def run_in_pace(self, func, *args, **kwargs):
+        return func(*args, **kwargs)
+
+
+class _CannedReplyProvider(llm_provider.LLMProvider):
+    """A real judge with a fixed reply, run through the real parsers."""
+
+    model_config: ClassVar[dict[str, str]] = {"extra": "allow"}
+
+    def __init__(self, reply: str, model_engine: str = "mock-model"):
+        super().__init__(endpoint=None, model_engine=model_engine)
+        object.__setattr__(self, "endpoint", _MockEndpoint())
+        object.__setattr__(self, "_reply", reply)
+
+    def _is_reasoning_model(self) -> bool:
+        return False
+
+    def _create_chat_completion(
+        self,
+        prompt: str | None = None,
+        messages: list | None = None,
+        response_format=None,
+        **kwargs,
+    ):
+        return self._reply
 
 
 # ---------------------------------------------------------------------------
@@ -224,6 +286,171 @@ class TestJuryErrorHandling(unittest.TestCase):
         j.__signature__ = inspect.signature(_mock_relevance)
         with self.assertRaises(ValueError):
             j(prompt="x", response="y")
+
+
+class TestJuryUnparsableScoreSentinel(unittest.TestCase):
+    """A juror whose judge reply parsed to nothing did not produce a score.
+
+    ``llm_provider`` reports that with the ``UNPARSABLE_SCORE`` sentinel
+    (-1.0) instead of raising, so the jury has to discard it the same way it
+    discards a juror that raised: see the ``weights`` note in the ``Jury``
+    docstring and "tolerates individual failures" in
+    docs/component_guides/evaluation/llm_judge_alignment.md.
+    """
+
+    def _sig(self, provider):
+        provider.relevance.__signature__ = inspect.signature(_mock_relevance)
+        return provider
+
+    def _call(self, jury) -> float:
+        score, _ = jury(prompt="x", response="y")
+        return score
+
+    def _real_jury(self, replies: list[str], aggregation="mean"):
+        jurors = [
+            _CannedReplyProvider(reply, model_engine=f"judge-{i}")
+            for i, reply in enumerate(replies)
+        ]
+        return jurors, Jury(
+            jurors,
+            method="relevance_with_cot_reasons",
+            aggregation=aggregation,
+        )
+
+    def _evaluate(self, jury) -> tuple[float, dict]:
+        return jury(
+            prompt="What is TruLens?",
+            response="An evaluation library.",
+            min_score_val=0,
+            max_score_val=10,
+        )
+
+    def test_sentinel_dropped_from_mean(self):
+        jurors = [
+            self._sig(_make_provider("m0", 1.0)),
+            self._sig(_make_provider("m1", 1.0)),
+            self._sig(_make_unparsable_provider("m2")),
+        ]
+        j = Jury(jurors, method="relevance", aggregation="mean")
+        j.__signature__ = inspect.signature(_mock_relevance)
+        # Aggregate the two graded jurors; the failure is not a dissent.
+        self.assertAlmostEqual(self._call(j), 1.0)
+
+    def test_sentinel_weight_redistributed_in_weighted_mean(self):
+        # juror[2] fails with weight 0.5, so surviving weights 0.2/0.3 are
+        # renormalised: (1.0*0.2 + 0.5*0.3) / 0.5 == 0.7
+        jurors = [
+            self._sig(_make_provider("m0", 1.0)),
+            self._sig(_make_provider("m1", 0.5)),
+            self._sig(_make_unparsable_provider("m2")),
+        ]
+        j = Jury(
+            jurors,
+            method="relevance",
+            aggregation="weighted_mean",
+            weights=[0.2, 0.3, 0.5],
+        )
+        j.__signature__ = inspect.signature(_mock_relevance)
+        self.assertAlmostEqual(self._call(j), 0.7)
+
+    def test_sentinel_dropped_from_majority_vote(self):
+        # Only one juror graded; it voted positive, so the panel did too.
+        jurors = [
+            self._sig(_make_provider("m0", 0.6)),
+            self._sig(_make_unparsable_provider("m1")),
+            self._sig(_make_unparsable_provider("m2")),
+        ]
+        j = Jury(jurors, method="relevance", aggregation="majority_vote")
+        j.__signature__ = inspect.signature(_mock_relevance)
+        self.assertAlmostEqual(self._call(j), 1.0)
+
+    def test_sentinel_carried_in_cot_tuple_is_dropped(self):
+        # *_with_cot_reasons methods report the sentinel as (score, meta).
+        jurors = [
+            self._sig(_make_cot_provider("m0", 0.8, "Supporting Evidence: ok")),
+            self._sig(_make_cot_provider("m1", 0.8, "Supporting Evidence: ok")),
+            self._sig(_make_cot_provider("m2", UNPARSABLE_SCORE, "no score")),
+        ]
+        j = Jury(jurors, method="relevance", aggregation="mean")
+        j.__signature__ = inspect.signature(_mock_relevance)
+        self.assertAlmostEqual(self._call(j), 0.8)
+
+    def test_sentinel_juror_is_reported_as_warning(self):
+        jurors = [
+            self._sig(_make_provider("graded", 0.8)),
+            self._sig(_make_unparsable_provider("ungraded")),
+        ]
+        j = Jury(jurors, method="relevance")
+        j.__signature__ = inspect.signature(_mock_relevance)
+        with self.assertLogs("trulens.feedback.jury", level="WARNING") as logs:
+            self.assertAlmostEqual(self._call(j), 0.8)
+        self.assertTrue(
+            any("ungraded" in msg for msg in logs.output),
+            msg=logs.output,
+        )
+
+    def test_all_jurors_sentinel_raises_like_all_failures(self):
+        # Matches test_all_jurors_fail_raises: no graded vote is a jury error,
+        # not a -1.0 verdict.
+        jurors = [
+            self._sig(_make_unparsable_provider("m0")),
+            self._sig(_make_unparsable_provider("m1")),
+        ]
+        j = Jury(jurors, method="relevance")
+        j.__signature__ = inspect.signature(_mock_relevance)
+        with self.assertRaises(RuntimeError):
+            j(prompt="x", response="y")
+
+    def test_raising_juror_still_dropped_next_to_sentinel(self):
+        # Control: a juror that raises keeps its existing handling.
+        jurors = [
+            self._sig(_make_provider("graded", 0.8)),
+            self._sig(_make_failing_provider("crashed")),
+            self._sig(_make_unparsable_provider("ungraded")),
+        ]
+        j = Jury(jurors, method="relevance")
+        j.__signature__ = inspect.signature(_mock_relevance)
+        self.assertAlmostEqual(self._call(j), 0.8)
+
+    def test_bottom_of_scale_is_not_a_failure(self):
+        # 0.0 is a real verdict; only the sentinel value means "no score".
+        jurors = [
+            self._sig(_make_provider("m0", 0.0)),
+            self._sig(_make_provider("m1", 1.0)),
+        ]
+        j = Jury(jurors, method="relevance", aggregation="mean")
+        j.__signature__ = inspect.signature(_mock_relevance)
+        self.assertAlmostEqual(self._call(j), 0.5)
+
+    def test_real_judge_without_a_score_sends_the_sentinel_not_an_error(self):
+        """Precondition for the two tests below: an unparsable reply comes out
+        of the provider as the sentinel, it does not raise."""
+        jurors, _ = self._real_jury([_UNPARSABLE_REPLY])
+        score, reasons = jurors[0].relevance_with_cot_reasons(
+            prompt="What is TruLens?",
+            response="An evaluation library.",
+            min_score_val=0,
+            max_score_val=10,
+        )
+        self.assertEqual(score, UNPARSABLE_SCORE)
+        self.assertIsInstance(reasons, dict)
+
+    def test_real_jury_drops_the_unscored_judge(self):
+        _, j = self._real_jury([
+            _TOP_OF_SCALE_REPLY,
+            _TOP_OF_SCALE_REPLY,
+            _UNPARSABLE_REPLY,
+        ])
+        score, meta = self._evaluate(j)
+        # Two judges graded at the top of the scale; the third one failed to
+        # grade, which is not a dissenting 0.
+        self.assertAlmostEqual(score, 1.0)
+        self.assertNotIn("judge-2", meta["reason"])
+
+    def test_real_jury_with_no_graded_judge_raises(self):
+        _, j = self._real_jury([_UNPARSABLE_REPLY, _UNPARSABLE_REPLY])
+        with self.assertRaises(RuntimeError):
+            self._evaluate(j)
 
 
 class TestJuryReturnFormat(unittest.TestCase):

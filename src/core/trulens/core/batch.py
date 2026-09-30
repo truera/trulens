@@ -51,6 +51,7 @@ import time
 from typing import (
     Any,
     Dict,
+    Iterable,
     List,
     Mapping,
     Optional,
@@ -143,23 +144,30 @@ class BatchEvaluator:
                     "argument."
                 )
 
-    def _unique_metric_names(self) -> List[str]:
-        """Return metric names, disambiguating duplicates by suffixing an index.
+    def _unique_metric_names(
+        self, existing_columns: Iterable[str] = ()
+    ) -> List[str]:
+        """Return metric names whose result columns do not collide.
 
         The first occurrence of a name keeps the bare name; subsequent
         duplicates get `_1`, `_2`, ... suffixes (e.g. two metrics named
         `overlap` produce columns `overlap` and `overlap_1`). This keeps the
-        common case of unique names free of suffixes.
+        common case of unique names free of suffixes. All three result columns
+        must also be distinct from dataset columns and earlier metric columns.
         """
         names: List[str] = []
+        used_columns = set(existing_columns)
         seen: Dict[str, int] = {}
         for metric in self.metrics:
-            name = metric.name
-            if name in seen:
-                seen[name] += 1
-                name = f"{name}_{seen[metric.name]}"
-            else:
-                seen[name] = 0
+            suffix = seen.get(metric.name, 0)
+            while True:
+                name = f"{metric.name}_{suffix}" if suffix else metric.name
+                columns = {name, f"{name}_explanation", f"{name}_latency"}
+                if not used_columns.intersection(columns):
+                    break
+                suffix += 1
+            seen[metric.name] = suffix + 1
+            used_columns.update(columns)
             names.append(name)
         return names
 
@@ -189,9 +197,12 @@ class BatchEvaluator:
 
         if column_map:
             for row in rows:
-                for src, dst in column_map.items():
-                    if src in row:
-                        row[dst] = row[src]
+                # Read every source before any destination overwrites it.
+                row.update({
+                    dst: row[src]
+                    for src, dst in column_map.items()
+                    if src in row
+                })
 
         return rows
 
@@ -352,7 +363,8 @@ class BatchEvaluator:
             column_map: Optional mapping from dataset column name to the column
                 name referenced by the selectors, applied before evaluation.
                 For example, ``{"user_question": "query"}`` makes a
-                ``user_question`` column available as ``query``.
+                ``user_question`` column available as ``query``. All sources
+                are read from the original row before assigning destinations.
 
         Returns:
             A pandas DataFrame with one row per input row. The original columns
@@ -360,7 +372,8 @@ class BatchEvaluator:
             ``M`` (the score), ``M_explanation`` (metadata/reasons), and
             ``M_latency`` (evaluation time in seconds). If multiple metrics
             share a name, the first keeps the bare name and subsequent ones
-            are suffixed ``_1``, ``_2``, and so on.
+            are suffixed ``_1``, ``_2``, and so on. Suffixes also avoid collisions
+            with dataset columns and other metrics' explanation/latency columns.
 
         Note:
             The results exist only in the returned DataFrame; nothing is
@@ -369,7 +382,9 @@ class BatchEvaluator:
             persist evaluations of pre-collected data.
         """
         rows = self._normalize_rows(data, column_map=column_map)
-        metric_names = self._unique_metric_names()
+        metric_names = self._unique_metric_names(
+            column for row in rows for column in row
+        )
 
         # Pre-allocate the result grid so out-of-order completion is fine.
         n_rows = len(rows)

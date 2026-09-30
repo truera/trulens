@@ -2,6 +2,7 @@
 import json
 from typing import Any, Dict, List
 
+import pydantic
 import pytest
 
 
@@ -75,8 +76,10 @@ _FAMILY_CASES = [
         "prompt",
     ),
     (
+        # Bedrock Mistral returns the plural "outputs" key, matching the AWS
+        # invoke_model schema (and how litellm and langchain parse it).
         "mistral.mistral-7b-instruct-v0:2",
-        {"output": [{"text": "mistral-ok"}]},
+        {"outputs": [{"text": "mistral-ok", "stop_reason": "stop"}]},
         "mistral-ok",
         "prompt",
     ),
@@ -85,6 +88,12 @@ _FAMILY_CASES = [
         {"generation": "meta-ok"},
         "meta-ok",
         "prompt",
+    ),
+    (
+        "us.openai.gpt-6-sol",
+        {"choices": [{"message": {"content": "openai-ok"}}]},
+        "openai-ok",
+        "messages",
     ),
 ]
 
@@ -111,6 +120,34 @@ def test_model_family_request_and_response(
     assert calls[0]["contentType"] == "application/json"
     body = json.loads(calls[0]["body"])
     assert body_key in body
+
+
+@pytest.mark.optional
+def test_response_format_is_disclosed_not_silently_dropped(caplog):
+    """response_format can't be honored by the hand-rolled per-family
+    InvokeModel bodies here (no JSON-schema mechanism wired up for any of
+    them), so it must be disclosed the same way the LangChain provider
+    discloses the same "unsupported" situation, not silently ignored."""
+    import logging
+
+    class _Schema(pydantic.BaseModel):
+        score: float
+
+    provider = _make_provider(
+        "amazon.nova-lite-v1:0",
+        {"output": {"message": {"content": [{"text": "nova-ok"}]}}},
+    )
+
+    with caplog.at_level(logging.DEBUG):
+        out = provider._create_chat_completion(
+            messages=[{"role": "user", "content": "hi"}],
+            response_format=_Schema,
+        )
+
+    assert out == "nova-ok"
+    assert any(
+        "response_format" in record.getMessage() for record in caplog.records
+    )
 
 
 @pytest.mark.optional
@@ -147,6 +184,58 @@ def test_anthropic_request_shape():
     assert body["anthropic_version"] == "bedrock-2023-05-31"
     assert body["system"] == "be terse"
     assert body["messages"] == [{"role": "user", "content": "hi"}]
+
+
+_CLAUDE_MESSAGES = [
+    {"role": "system", "content": "be terse"},
+    {"role": "user", "content": "hi"},
+]
+
+
+@pytest.mark.optional
+@pytest.mark.parametrize(
+    "model_id,sends_temperature",
+    [
+        ("anthropic.claude-3-haiku-20240307-v1:0", True),
+        ("us.anthropic.claude-sonnet-4-5-20250929-v1:0", True),
+        ("us.anthropic.claude-opus-4-8", False),
+        ("us.anthropic.claude-opus-5", False),
+        ("us.anthropic.claude-opus-5-5", False),
+        ("global.anthropic.claude-opus-5-5", False),
+        ("jp.anthropic.claude-opus-5-5", False),
+        ("au.anthropic.claude-opus-5-5", False),
+    ],
+)
+def test_anthropic_sampling_params(model_id, sends_temperature):
+    """Claude 4.5+ rejects `temperature` together with `top_p`, and Opus 4.7+
+    rejects `temperature` on its own, so `top_p` is never sent and
+    `temperature` only to the models that accept it."""
+    provider = _make_provider(
+        model_id, {"content": [{"type": "text", "text": "claude-ok"}]}
+    )
+    out = provider._create_chat_completion(messages=_CLAUDE_MESSAGES)
+    assert out == "claude-ok"
+    body = json.loads(provider.endpoint.client.calls[0]["body"])
+    assert "top_p" not in body
+    assert ("temperature" in body) is sends_temperature
+    if sends_temperature:
+        assert body["temperature"] == 0
+
+
+@pytest.mark.optional
+def test_anthropic_skips_thinking_block():
+    """Opus 5 and 5.5 can return a `thinking` block before the `text` block."""
+    provider = _make_provider(
+        "us.anthropic.claude-opus-5-5",
+        {
+            "content": [
+                {"type": "thinking", "thinking": "...", "signature": "sig"},
+                {"type": "text", "text": "claude-ok"},
+            ]
+        },
+    )
+    out = provider._create_chat_completion(messages=_CLAUDE_MESSAGES)
+    assert out == "claude-ok"
 
 
 @pytest.mark.optional
@@ -208,3 +297,50 @@ def test_default_model_id_is_amazon_nova():
     assert (
         provider.model_id == Bedrock.DEFAULT_MODEL_ID == "amazon.nova-lite-v1:0"
     )
+
+
+@pytest.mark.optional
+@pytest.mark.parametrize(
+    "model_id",
+    [
+        "us.openai.gpt-6-sol",
+        "us.openai.gpt-6-luna",
+        "us.openai.gpt-6-astra",
+        "global.openai.gpt-6-astra",
+        "us.openai.gpt-5.6-sol",
+        "openai.gpt-oss-120b-1:0",
+    ],
+)
+def test_openai_request_shape(model_id):
+    """OpenAI models get a Chat Completions body with `max_completion_tokens`
+    and no sampling params: GPT-5.6 and GPT-6 reject `max_tokens` and any
+    `temperature` other than the default."""
+    messages = [
+        {"role": "system", "content": "be terse"},
+        {"role": "user", "content": "hi"},
+    ]
+    provider = _make_provider(
+        model_id, {"choices": [{"message": {"content": "openai-ok"}}]}
+    )
+    assert provider._create_chat_completion(messages=messages) == "openai-ok"
+    body = json.loads(provider.endpoint.client.calls[0]["body"])
+    assert body == {"messages": messages, "max_completion_tokens": 4095}
+
+    provider._create_chat_completion(prompt="hi")
+    body = json.loads(provider.endpoint.client.calls[1]["body"])
+    assert body["messages"] == [{"role": "user", "content": "hi"}]
+
+
+@pytest.mark.optional
+def test_openai_drops_inline_reasoning():
+    """gpt-oss returns its reasoning inline before the answer; numbers in it
+    must not reach the score parser."""
+    provider = _make_provider(
+        "openai.gpt-oss-120b-1:0",
+        {
+            "choices": [
+                {"message": {"content": "<reasoning>0 or 3? 3.</reasoning>2"}}
+            ]
+        },
+    )
+    assert provider._create_chat_completion(prompt="hi") == "2"

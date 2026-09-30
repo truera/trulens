@@ -42,6 +42,7 @@ optional_mods = dict(
     openai=[
         "trulens.providers.openai.provider",
         "trulens.providers.openai.endpoint",
+        "trulens.providers.orcarouter.provider",
     ],
 )
 

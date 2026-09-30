@@ -56,7 +56,7 @@ areas:
       - src/feedback/
       - src/core/trulens/core/feedback/
       - src/core/trulens/core/metric/
-    reviewers: [Payal2000]
+    reviewers: [Payal2000, feiiiiii5]
 
   - name: Feedback templates
     paths:
@@ -108,6 +108,19 @@ areas:
       - src/core/trulens/core/sampling.py
     reviewers: []
     # reviewers: [<handle>]
+
+  - name: Dashboard
+    paths:
+      - src/dashboard/trulens/dashboard/
+    exclude:
+      - src/dashboard/trulens/dashboard/components/record_viewer/dist/
+      - src/dashboard/trulens/dashboard/components/record_viewer_otel/dist/
+    reviewers: [connectsudhindra-gif]
+
+  - name: Ollama provider
+    paths:
+      - src/providers/ollama/
+    reviewers: [connectsudhindra-gif]
 
   - name: Providers
     # All provider integrations except Cortex. Scoped as one area because the

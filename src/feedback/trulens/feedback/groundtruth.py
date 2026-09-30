@@ -52,6 +52,22 @@ def _dcg(scores: list[float]) -> float:
     return sum(score / np.log2(i + 2) for i, score in enumerate(scores))
 
 
+def _validate_relevance_scores(
+    retrieved_context_chunks: list[str],
+    relevance_scores: list[float] | None,
+) -> None:
+    """Require one score per retrieved chunk when scores are supplied."""
+    if relevance_scores is not None and len(relevance_scores) != len(
+        retrieved_context_chunks
+    ):
+        raise ValueError(
+            "relevance_scores must have the same length as "
+            "retrieved_context_chunks; "
+            f"got {len(retrieved_context_chunks)} chunks and "
+            f"{len(relevance_scores)} scores."
+        )
+
+
 # TODEP
 class GroundTruthAgreement(
     pyschema_utils.WithClassInfo, serial_utils.SerialModel
@@ -332,7 +348,11 @@ class GroundTruthAgreement(
 
         Returns:
             float: Computed NDCG@k score.
+
+        Raises:
+            ValueError: If supplied relevance scores and chunks differ in length.
         """
+        _validate_relevance_scores(retrieved_context_chunks, relevance_scores)
         # Step 1: Find the ground truth context chunks for the given query
         ground_truth_context_chunks_and_scores = (
             self._find_golden_context_chunks_and_scores(query)
@@ -390,7 +410,17 @@ class GroundTruthAgreement(
             # gains across tied y_score values, distorting the score when
             # several retrieved chunks share the same (zero) relevance.
             dcg = _dcg(rel_scores[:k])
-            ideal_dcg = _dcg(sorted(golden_scores, reverse=True)[:k])
+            # The ideal DCG ranks the same golden set the numerator credits above,
+            # and that set counts each distinct chunk once. A chunk annotated twice
+            # would otherwise sit in the denominator twice, capping a retriever that
+            # ranks it first below 1.0. Keep the first annotation's score, the one
+            # the numerator reads through golden_chunks.index().
+            distinct_golden_scores: dict[str, float] = {}
+            for chunk, score in zip(golden_chunks, golden_scores):
+                distinct_golden_scores.setdefault(chunk, score)
+            ideal_dcg = _dcg(
+                sorted(distinct_golden_scores.values(), reverse=True)[:k]
+            )
             # ideal_dcg of 0 means the golden set annotates nothing relevant,
             # so nDCG has no denominator. Undefined, not a measured zero.
             return dcg / ideal_dcg if ideal_dcg > 0 else np.nan
@@ -415,7 +445,11 @@ class GroundTruthAgreement(
 
         Returns:
             float: Computed Precision@k score.
+
+        Raises:
+            ValueError: If supplied relevance scores and chunks differ in length.
         """
+        _validate_relevance_scores(retrieved_context_chunks, relevance_scores)
         ground_truth_context_chunks = (
             self._find_golden_context_chunks_and_scores(query)
         )
@@ -475,7 +509,11 @@ class GroundTruthAgreement(
 
         Returns:
             float: Computed Recall@k score.
+
+        Raises:
+            ValueError: If supplied relevance scores and chunks differ in length.
         """
+        _validate_relevance_scores(retrieved_context_chunks, relevance_scores)
         ground_truth_context_chunks = (
             self._find_golden_context_chunks_and_scores(query)
         )
@@ -530,10 +568,15 @@ class GroundTruthAgreement(
         Args:
             query (str): The input query string.
             retrieved_context_chunks (List[str]): List of retrieved context chunks.
+            relevance_scores: Optional relevance score for each retrieved chunk.
 
         Returns:
             float: Computed MRR score.
+
+        Raises:
+            ValueError: If supplied relevance scores and chunks differ in length.
         """
+        _validate_relevance_scores(retrieved_context_chunks, relevance_scores)
         ground_truth_context_chunks = (
             self._find_golden_context_chunks_and_scores(query)
         )
@@ -1018,6 +1061,22 @@ class GroundTruthAggregator(
 
         setattr(self, name, lambda scores: func(scores, self))
 
+    def _check_length(self, scores: list) -> None:
+        """Refuse a score list that does not line up with the labels.
+
+        recall and precision walk the two lists with zip, which stops at the
+        shorter one. A score list that lost a row somewhere upstream is then
+        scored against the wrong labels for every row after the gap, and the
+        result is an ordinary-looking number. brier_score, ece and
+        cohens_kappa already refuse this; this makes the classification
+        metrics do the same.
+        """
+        if len(scores) != len(self.true_labels):
+            raise ValueError(
+                "The length of true_labels and scores must be the same; "
+                f"got {len(self.true_labels)} labels and {len(scores)} scores."
+            )
+
     def auc(self, scores: list[float]) -> float:
         """
         Calculate the area under the ROC curve. Can be used for meta-evaluation.
@@ -1158,15 +1217,10 @@ class GroundTruthAggregator(
         - float: The recall score.
         """
 
-        try:
-            if isinstance(scores[0], list):
-                scores = [score for score, _ in scores]
-        except Exception as e:  # noqa: BLE001
-            import traceback
+        if isinstance(scores[0], list):
+            scores = [score for score, _ in scores]
+        self._check_length(scores)
 
-            traceback.print_exc()
-            logger.error(f"scores processing failed in Recall aggregator: {e}")
-            print(f"scores processing failed in Recall aggregator: {e}")
         # Convert scores to binary predictions based on the threshold
         predictions = [1 if score >= threshold else 0 for score in scores]
 
@@ -1206,6 +1260,7 @@ class GroundTruthAggregator(
         """
         if isinstance(scores[0], list):
             scores = [score for score, _ in scores]
+        self._check_length(scores)
 
         # Convert scores to binary predictions based on the threshold
         predictions = [1 if score >= threshold else 0 for score in scores]

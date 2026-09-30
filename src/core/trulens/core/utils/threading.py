@@ -127,7 +127,7 @@ class TP(metaclass=python_utils.SingletonPerNameMeta):  # "thread processing"
         self.timedout_tasks = 0
         self.failed_tasks = 0
 
-    def _run_with_timeout(
+    def submit(
         self,
         func: Callable[[A], T],
         *args: Any,
@@ -156,6 +156,55 @@ class TP(metaclass=python_utils.SingletonPerNameMeta):  # "thread processing"
         # deadlocks. Alternatively just raise an exception in those cases.
 
         return self._submit(func, *args, timeout=timeout, **kwargs)
+
+    def _run_with_timeout(
+        self,
+        func: Callable[[A], T],
+        *args: Any,
+        timeout: Optional[float] = None,
+        **kwargs: Any,
+    ) -> T:
+        """Run a task in the task pool and wait for it.
+
+        Args:
+            func: Function to run.
+
+            *args: Positional arguments to pass to the function.
+
+            timeout: How long to wait for the task to complete before giving up.
+
+            **kwargs: Keyword arguments to pass to the function.
+        """
+
+        if timeout is None:
+            timeout = TP.DEBUG_TIMEOUT
+
+        fut: Future[T] = self.thread_pool.submit(func, *args, **kwargs)
+
+        try:
+            res: T = fut.result(timeout=timeout)
+            return res
+
+        except futures.TimeoutError as e:
+            logger.error(
+                "Run of %s in %s timed out after %s second(s).\n%s",
+                func.__name__,
+                threading.current_thread(),
+                timeout,
+                python_utils.code_line(func),
+            )
+
+            raise e
+
+        except Exception as e:
+            logger.warning(
+                "Run of %s in %s failed with: %s",
+                func.__name__,
+                threading.current_thread(),
+                e,
+            )
+
+            raise e
 
     def _submit(
         self,

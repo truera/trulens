@@ -5,21 +5,40 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import timedelta
 import hashlib
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _package_version
 import json
+import os
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import Event
 from opentelemetry.sdk.trace import ReadableSpan
+from opentelemetry.sdk.util.instrumentation import InstrumentationScope
 from opentelemetry.trace import Status
 from opentelemetry.trace import StatusCode
 from trulens.core.otel.client_hooks import models
+from trulens.core.otel.propagation import extract_trace_context
 from trulens.otel.semconv.trace import ErrorAttributes
 from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import GenAIEvents
 from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
+
+try:
+    _TRULENS_VERSION = _package_version("trulens-core")
+except PackageNotFoundError:
+    _TRULENS_VERSION = "unknown"
+
+# Turn spans are built as completed ReadableSpans rather than through a Tracer,
+# and nothing else stamps an instrumentation scope on a span, so without this
+# they arrive with an empty scope. Consumers then have no scope name to filter
+# these spans by, which matters most when they share a trace with other
+# producers that do set one.
+_INSTRUMENTATION_SCOPE = InstrumentationScope(
+    "trulens.client_hooks", _TRULENS_VERSION
+)
 
 
 def _otel_id(seed: str, bits: int) -> int:
@@ -31,6 +50,66 @@ def _otel_id(seed: str, bits: int) -> int:
         hashlib.sha256(seed.encode()).digest()[:size], byteorder="big"
     )
     return value or 1
+
+
+def environ_trace_context(
+    environ: Optional[Mapping[str, str]] = None,
+) -> Tuple[Optional[str], Optional[str]]:
+    """Read the W3C trace context the surrounding process exported, if any.
+
+    A coding agent that propagates trace context sets `TRACEPARENT`, and
+    sometimes `TRACESTATE`, on the processes it spawns. That is how a hook
+    invocation learns which span it was spawned under, since the payload on
+    stdin carries no trace context of its own.
+
+    The values are returned as read and validated later, when spans are
+    assembled, so a value that does not parse stays visible in the journal
+    instead of being dropped at capture time.
+
+    Args:
+        environ: Environment mapping to read. Defaults to `os.environ`.
+
+    Returns:
+        The `(traceparent, tracestate)` pair, with None for anything absent.
+        `tracestate` is only returned alongside a `traceparent`, since it
+        carries no meaning on its own.
+    """
+
+    source = os.environ if environ is None else environ
+    traceparent = source.get("TRACEPARENT") or None
+    if traceparent is None:
+        return None, None
+    return traceparent, source.get("TRACESTATE") or None
+
+
+def inherited_span_context(
+    events: Iterable[models.HookEvent],
+) -> Optional[trace.SpanContext]:
+    """Return the remote span context a turn's events were spawned under.
+
+    Hooks fire repeatedly across one turn, and only some of them run while the
+    agent holds an active span, so the events carry the context unevenly. The
+    earliest one that parses wins, which puts assembled spans under the
+    outermost span the agent had open rather than under a later, narrower one.
+
+    Args:
+        events: The turn's events, in any order.
+
+    Returns:
+        A remote `SpanContext` when at least one event carries a valid
+        `traceparent`, otherwise None.
+    """
+
+    for event in sorted(events, key=lambda event: event.observed_at):
+        if not event.traceparent:
+            continue
+        carrier = {"traceparent": event.traceparent}
+        if event.tracestate:
+            carrier["tracestate"] = event.tracestate
+        span_context = extract_trace_context(carrier)
+        if span_context is not None:
+            return span_context
+    return None
 
 
 def _json(value: Any) -> str:
@@ -198,7 +277,16 @@ class TraceAssembler:
         app_version = identity.app_version
         run_name = identity.run_name
         record_id = identity.record_id
-        trace_id = _otel_id(f"trace:{record_id}", 128)
+        # When the agent handed this turn's hooks a trace context, adopt its
+        # trace so these spans land beside the agent's own spans and whatever
+        # the gateway recorded for the same requests. Without one, the turn
+        # keeps its self-rooted trace derived from the record id.
+        inherited = inherited_span_context(events)
+        trace_id = (
+            inherited.trace_id
+            if inherited is not None
+            else _otel_id(f"trace:{record_id}", 128)
+        )
         agent_span_id = _otel_id(f"agent:{record_id}", 64)
         root_span_id = _otel_id(f"root:{record_id}", 64)
         response_span_id = _otel_id(f"response:{record_id}", 64)
@@ -207,6 +295,10 @@ class TraceAssembler:
             ResourceAttributes.APP_VERSION: app_version,
             SpanAttributes.RECORD_ID: record_id,
             SpanAttributes.CONVERSATION_ID: first.conversation_id,
+            # The GenAI-standard spelling of the same value, so these spans can
+            # be joined to producers outside TruLens that record the server side
+            # of the same conversation.
+            GenAIAttributes.CONVERSATION.ID: first.conversation_id,
             SpanAttributes.INPUT_ID: turn_id,
             SpanAttributes.RUN_NAME: run_name,
             SpanAttributes.INPUT_RECORDS_COUNT: identity.input_records_count,
@@ -290,6 +382,7 @@ class TraceAssembler:
                 trace_id=trace_id,
                 span_id=root_span_id,
                 parent_id=None,
+                parent_context=inherited,
                 attributes=root_attributes,
                 start_time=_nanoseconds(first),
                 end_time=max(_nanoseconds(last), _duration_end(last)),
@@ -503,6 +596,7 @@ class TraceAssembler:
         kind: trace.SpanKind = trace.SpanKind.INTERNAL,
         event_attributes: Optional[Mapping[str, Any]] = None,
         status_description: Optional[str] = None,
+        parent_context: Optional[trace.SpanContext] = None,
     ) -> ReadableSpan:
         context = trace.SpanContext(
             trace_id=trace_id,
@@ -510,8 +604,11 @@ class TraceAssembler:
             is_remote=False,
             trace_flags=trace.TraceFlags.SAMPLED,
         )
-        parent = None
-        if parent_id is not None:
+        # A remote parent arrives as a fully formed context and is used as is,
+        # so its is_remote flag and trace flags survive. Parents inside this
+        # batch are built from a local span id instead.
+        parent = parent_context
+        if parent is None and parent_id is not None:
             parent = trace.SpanContext(
                 trace_id=trace_id,
                 span_id=parent_id,
@@ -522,6 +619,7 @@ class TraceAssembler:
             name=name,
             context=context,
             parent=parent,
+            instrumentation_scope=_INSTRUMENTATION_SCOPE,
             resource=Resource.create({
                 "service.name": attributes.get(
                     ResourceAttributes.APP_NAME, "trulens-client-hooks"

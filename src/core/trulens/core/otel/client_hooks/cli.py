@@ -240,9 +240,28 @@ def _parser() -> argparse.ArgumentParser:
 
 def _validate() -> int:
     destination = os.environ.get("TRULENS_DESTINATION", "local").lower()
-    if destination not in {"local", "database", "snowflake", "otlp"}:
+    if destination not in {
+        "local",
+        "database",
+        "snowflake",
+        "otlp",
+        "ai_gateway",
+    }:
         sys.stderr.write(
-            "TRULENS_DESTINATION must be local, database, snowflake, or otlp.\n"
+            "TRULENS_DESTINATION must be local, database, snowflake, otlp, or "
+            "ai_gateway.\n"
+        )
+        return 1
+    if destination == "ai_gateway" and not (
+        os.environ.get("TRULENS_AI_GATEWAY_URL")
+        and (
+            os.environ.get("TRULENS_AI_GATEWAY_PAT_FILE")
+            or os.environ.get("TRULENS_AI_GATEWAY_TOKEN")
+        )
+    ):
+        sys.stderr.write(
+            "AI Gateway export requires TRULENS_AI_GATEWAY_URL and "
+            "TRULENS_AI_GATEWAY_PAT_FILE or TRULENS_AI_GATEWAY_TOKEN.\n"
         )
         return 1
     if destination == "database" and not os.environ.get("TRULENS_DATABASE_URL"):

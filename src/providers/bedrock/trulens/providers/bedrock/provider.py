@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from typing import Any, ClassVar, Dict, Optional, Sequence, Tuple, Type, Union
 
 import pydantic
@@ -7,6 +8,16 @@ from trulens.feedback import llm_provider
 from trulens.providers.bedrock import endpoint as bedrock_endpoint
 
 logger = logging.getLogger(__name__)
+
+# Claude models that reject `temperature` with a 400 ("`temperature` is
+# deprecated for this model."), matched after the region prefix is stripped.
+_CLAUDE_NO_TEMPERATURE_PREFIXES = (
+    "anthropic.claude-opus-4-7",
+    "anthropic.claude-opus-4-8",
+    "anthropic.claude-opus-5",
+    "anthropic.claude-sonnet-5",
+    "anthropic.claude-fable-5",
+)
 
 
 class Bedrock(llm_provider.LLMProvider):
@@ -64,6 +75,18 @@ class Bedrock(llm_provider.LLMProvider):
     ) -> str:
         assert self.endpoint is not None
 
+        # Bedrock's raw InvokeModel request/response shapes below are
+        # hand-rolled per model family (Nova, Titan, Anthropic, Cohere, AI21,
+        # Mistral, Meta) and none of them wire up a JSON-schema mechanism, so
+        # response_format can't be honored here. Disclose this the same way
+        # the LangChain provider does for the same "can't support structured
+        # outputs" situation, rather than silently dropping it.
+        if response_format is not None:
+            logger.debug(
+                "Ignoring response_format in Bedrock provider; not supported "
+                "by the InvokeModel request bodies used here."
+            )
+
         if messages:
             messages_str = " ".join([
                 f"{message['role']}: {message['content']}"
@@ -78,7 +101,15 @@ class Bedrock(llm_provider.LLMProvider):
         # region (e.g. "us.amazon.nova-lite-v1:0"). Strip the prefix so the
         # family routing below matches the same way it does for on-demand ids.
         base_model_id = self.model_id
-        for region_prefix in ("us.", "eu.", "apac.", "us-gov."):
+        for region_prefix in (
+            "us.",
+            "eu.",
+            "apac.",
+            "jp.",
+            "au.",
+            "us-gov.",
+            "global.",
+        ):
             if base_model_id.startswith(region_prefix):
                 base_model_id = base_model_id[len(region_prefix) :]
                 break
@@ -117,14 +148,17 @@ class Bedrock(llm_provider.LLMProvider):
                 system_prompt = messages[0]["content"]
             _messages = messages[1:] if len(messages) > 1 else []
 
-            body = json.dumps({
+            anthropic_body = {
                 "system": system_prompt,
                 "messages": _messages,
-                "temperature": 0,
-                "top_p": 1,
                 "max_tokens": 4095,
                 "anthropic_version": "bedrock-2023-05-31",
-            })
+            }
+            # Claude 4.5+ rejects `temperature` together with `top_p`, so only
+            # `temperature` is sent, and not to the models that reject it.
+            if not base_model_id.startswith(_CLAUDE_NO_TEMPERATURE_PREFIXES):
+                anthropic_body["temperature"] = 0
+            body = json.dumps(anthropic_body)
         elif base_model_id.startswith("cohere"):
             body = json.dumps({
                 "prompt": messages_str,
@@ -155,6 +189,15 @@ class Bedrock(llm_provider.LLMProvider):
                 "top_p": 1,
                 "max_gen_len": 2047,
             })
+
+        elif base_model_id.startswith("openai"):
+            # OpenAI models take the Chat Completions body. GPT-5.6 and GPT-6
+            # reject `max_tokens` and any `temperature` other than the default.
+            body = json.dumps({
+                "messages": messages
+                or [{"role": "user", "content": messages_str}],
+                "max_completion_tokens": 4095,
+            })
         else:
             raise NotImplementedError(
                 f"The Bedrock model selected, `{self.model_id}`, is not yet implemented as a feedback provider"
@@ -184,9 +227,12 @@ class Bedrock(llm_provider.LLMProvider):
             )[0]["outputText"]
 
         elif base_model_id.startswith("anthropic"):
-            response_body = json.loads(response.get("body").read()).get(
-                "content"
-            )[0]["text"]
+            # Claude can return a `thinking` block before the `text` block.
+            response_body = next(
+                block["text"]
+                for block in json.loads(response.get("body").read())["content"]
+                if "text" in block
+            )
 
         elif base_model_id.startswith("cohere"):
             response_body = json.loads(response.get("body").read()).get(
@@ -195,7 +241,7 @@ class Bedrock(llm_provider.LLMProvider):
 
         elif base_model_id.startswith("mistral"):
             response_body = json.loads(response.get("body").read()).get(
-                "output"
+                "outputs"
             )[0]["text"]
         elif base_model_id.startswith("meta"):
             response_body = json.loads(response.get("body").read()).get(
@@ -208,6 +254,15 @@ class Bedrock(llm_provider.LLMProvider):
                 .get("completions")[0]
                 .get("data")
                 .get("text")
+            )
+        elif base_model_id.startswith("openai"):
+            response_body = json.loads(response.get("body").read())["choices"][
+                0
+            ]["message"]["content"]
+            # gpt-oss puts its reasoning inline; drop it so the score parser
+            # only sees the answer.
+            response_body = re.sub(
+                r"<reasoning>[\s\S]*?</reasoning>\s*", "", response_body
             )
 
         return response_body

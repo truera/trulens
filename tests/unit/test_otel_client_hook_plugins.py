@@ -3,6 +3,11 @@
 import json
 
 import pytest
+
+pytest.importorskip("trulens.apps.claude")
+pytest.importorskip("trulens.apps.cursor")
+pytest.importorskip("trulens.apps.opencode")
+
 from trulens.apps.claude import client_spec as claude_spec
 from trulens.apps.cursor import client_spec as cursor_spec
 from trulens.apps.opencode import client_spec as opencode_spec

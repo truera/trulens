@@ -7,6 +7,7 @@ from typing import (
     Any,
     ClassVar,
     Dict,
+    Iterable,
     List,
     Optional,
     Sequence,
@@ -37,7 +38,7 @@ from trulens.feedback.templates import safety as templates_safety
 
 logger = logging.getLogger(__name__)
 
-REASONING_MODEL_PREFIXES = ("o1", "o3", "o4", "gpt-5", "deepseek-r1")
+REASONING_MODEL_PREFIXES = ("o1", "o3", "o4", "gpt-5", "gpt-6", "deepseek-r1")
 
 
 def _validate_score_range(
@@ -58,6 +59,27 @@ def _validate_score_range(
             f"{min_score_val}-{max_score_val} rating", str(rating)
         )
     return rating
+
+
+# `generate_score_and_reasons` returns this when it could not parse a score out
+# of the judge's reply, on both the JSON and the text path.
+UNPARSABLE_SCORE = -1.0
+
+
+def _mean_graded_score(scores: Iterable[float]) -> float:
+    """Average the scores a judge actually produced.
+
+    A statement whose judge reply could not be parsed carries
+    `UNPARSABLE_SCORE`. Averaging that in turns a judge failure into a model
+    verdict -- one statement graded at the top of the scale and one failure
+    average to 0.0, which reads as "nothing is grounded". Average only the
+    graded statements, and report the same sentinel when there are none, since
+    `np.mean` of an empty list is NaN rather than a usable feedback value.
+    """
+    graded = [score for score in scores if score != UNPARSABLE_SCORE]
+    if not graded:
+        return UNPARSABLE_SCORE
+    return float(np.mean(graded))
 
 
 # --- Shared capability cache for LLM providers ---
@@ -167,11 +189,13 @@ class LLMProvider(core_provider.Provider):
         """Detect reasoning models robustly across providers.
 
         - Handles provider-prefixed ids like "snowflake/o3-mini".
+        - Handles Bedrock ids like "us.openai.gpt-6-sol".
         - Matches known prefixes in REASONING_MODEL_PREFIXES.
         - Also matches generic substrings like "reasoning" or "thinking".
         """
         raw = (self.model_engine or "").lower()
         name = raw.split("/", 1)[1] if "/" in raw else raw
+        name = name.split("openai.", 1)[-1]
         if any(name.startswith(p) for p in REASONING_MODEL_PREFIXES):
             return True
         return ("reasoning" in name) or ("thinking" in name)
@@ -274,6 +298,11 @@ class LLMProvider(core_provider.Provider):
 
         if isinstance(parsed_json, list):
             # If a list is returned, average the scores where possible.
+            #
+            # Asymmetric with the scalar path above on purpose: an out-of-range
+            # item is dropped with a warning rather than raised, so one bad
+            # rating does not discard the valid ones. When every item is out of
+            # range the result is the -1.0 sentinel, not a ParseError.
             scores = []
             for item in parsed_json:
                 if isinstance(item, dict) and "score" in item:
@@ -300,6 +329,7 @@ class LLMProvider(core_provider.Provider):
 
         if isinstance(response, feedback_output_schemas.BaseFeedbackResponse):
             score = response.score
+            _validate_score_range(score, min_score_val, max_score_val)
         elif isinstance(response, str):
             score = feedback_generated.re_configured_rating(
                 response,
@@ -406,6 +436,7 @@ class LLMProvider(core_provider.Provider):
             score = response.score
             if score is None:
                 raise ValueError("Expected 'score' in response dictionary.")
+            _validate_score_range(score, min_score_val, max_score_val)
             criteria = response.criteria
             supporting_evidence = response.supporting_evidence
 
@@ -448,6 +479,7 @@ class LLMProvider(core_provider.Provider):
                     ref, feedback_output_schemas.ChainOfThoughtResponse
                 ):
                     score = ref.score
+                    _validate_score_range(score, min_score_val, max_score_val)
                     criteria = ref.criteria
                     supporting_evidence = ref.supporting_evidence
                     reasons = {
@@ -470,6 +502,11 @@ class LLMProvider(core_provider.Provider):
                             and "score" in ref_json
                         ):
                             score_val = float(ref_json["score"])
+                            _validate_score_range(
+                                score_val,
+                                min_score_val,
+                                max_score_val,
+                            )
                             reasons = {
                                 "reason": (
                                     f"{criteria_field}: {ref_json['criteria']}\n"
@@ -487,7 +524,8 @@ class LLMProvider(core_provider.Provider):
                 pass
 
             if "Supporting Evidence" in response:
-                score = -1
+                # None until a "Score:" line is actually parsed below.
+                score = None
                 supporting_evidence = None
                 criteria = None
                 lines = response.split("\n")
@@ -572,7 +610,14 @@ class LLMProvider(core_provider.Provider):
             )
 
         # Normalize score to [0, 1] range
-        score = (score - min_score_val) / (max_score_val - min_score_val)
+        if score is None:
+            # The reply carried supporting evidence but never a "Score:" line,
+            # so nothing was parsed. Return the raw -1.0 failure sentinel
+            # instead of normalizing it into a plausible-looking rating, which
+            # is what the JSON branch above does for an unparseable score.
+            score = -1.0
+        else:
+            score = (score - min_score_val) / (max_score_val - min_score_val)
         return score, reasons
 
     def _determine_output_space(
@@ -742,7 +787,17 @@ class LLMProvider(core_provider.Provider):
             "RELEVANCE:", templates_base.COT_REASONS_TEMPLATE
         )
         # Use default COT prompt only if no criteria AND no additional_instructions
-        if criteria is None and additional_instructions is None:
+        # AND the requested scale is the one that prompt hardcodes. It says "on a
+        # scale of 0 to 3" in prose, so on any other scale the judge answers
+        # 0-3 and the reply is then normalized against a scale it was never
+        # shown: a fully relevant context came back as 0.3 on 0-10, and a "3"
+        # was read as an out-of-range "3" on 0-1.
+        if (
+            criteria is None
+            and additional_instructions is None
+            and (min_score_val, max_score_val)
+            == templates_base.OutputSpace.LIKERT_0_3.value
+        ):
             system_prompt = templates_rag.ContextRelevance.default_cot_prompt
         else:
             output_space = self._determine_output_space(
@@ -2721,12 +2776,23 @@ class LLMProvider(core_provider.Provider):
 
         assert self.endpoint is not None, "Endpoint is not set."
 
+        # An empty response agrees with nothing, so score it directly instead
+        # of asking a judge: the prompt below would carry the question, the
+        # expected answer and the instructions but no response at all, and
+        # whatever integer came back would be reported as the agreement of an
+        # empty answer.
+        if not response.strip():
+            return "0"
+
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             prompt=(
                 templates_quality.AGREEMENT_SYSTEM % (prompt, check_response)
             )
-            + response,
+            # Label and delimit the response. Appended bare it runs straight
+            # into the template's trailing "give the integer score and nothing
+            # more", so the judge cannot tell the answer from the instruction.
+            + f"\nThe response to grade is:\n{response}\n",
         )
 
     def _generate_key_points(
@@ -3459,9 +3525,10 @@ class LLMProvider(core_provider.Provider):
             groundedness_scores[f"statement_{i}"] = score
             reasons_list.append(reason)
 
-        # Calculate the average groundedness score from the scores dictionary
-        average_groundedness_score = float(
-            np.mean(list(groundedness_scores.values()))
+        # Average only the statements the judge actually graded; a judge
+        # failure is reported as UNPARSABLE_SCORE, not as a model verdict.
+        average_groundedness_score = _mean_graded_score(
+            groundedness_scores.values()
         )
 
         return average_groundedness_score, {"reasons": reasons_list}
@@ -3685,9 +3752,10 @@ class LLMProvider(core_provider.Provider):
             groundedness_scores[f"statement_{i}"] = score
             reasons_list.append(reason)
 
-        # Calculate the average groundedness score from the scores dictionary
-        average_groundedness_score = float(
-            np.mean(list(groundedness_scores.values()))
+        # Average only the statements the judge actually graded; a judge
+        # failure is reported as UNPARSABLE_SCORE, not as a model verdict.
+        average_groundedness_score = _mean_graded_score(
+            groundedness_scores.values()
         )
 
         return average_groundedness_score, {"reasons": reasons_list}

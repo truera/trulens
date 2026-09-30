@@ -1,5 +1,5 @@
 # pyright: reportMissingImports=false, reportMissingModuleSource=false
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 import pytest
 
@@ -36,7 +36,13 @@ class _DummyChatModel:
     simulating unsupported params via TypeError.
     """
 
-    def __init__(self, *, fail_on_params: Optional[Dict[str, bool]] = None):
+    def __init__(
+        self,
+        *,
+        fail_on_params: Optional[Dict[str, bool]] = None,
+        make_error: Optional[Callable[[str], Exception]] = None,
+        content: Any = "ok",
+    ):
         from langchain_core.language_models.chat_models import BaseChatModel
         from langchain_core.messages import AIMessage
         from langchain_core.outputs import ChatGeneration
@@ -46,6 +52,8 @@ class _DummyChatModel:
         class _Impl(BaseChatModel):  # type: ignore[misc]
             _fail_on_params: Dict[str, bool] = PrivateAttr(default_factory=dict)
             _calls: list[Dict[str, Any]] = PrivateAttr(default_factory=list)
+            _make_error: Any = PrivateAttr(default=None)
+            _content: Any = PrivateAttr(default="ok")
 
             def __init__(
                 self, fail_on_params: Optional[Dict[str, bool]] = None
@@ -65,12 +73,16 @@ class _DummyChatModel:
                 self._calls.append(dict(kwargs))
                 for param, should_fail in self._fail_on_params.items():
                     if should_fail and param in kwargs:
+                        if self._make_error is not None:
+                            raise self._make_error(param)
                         raise TypeError(f"{param} is not allowed")
 
-                gen = ChatGeneration(message=AIMessage(content="ok"))
+                gen = ChatGeneration(message=AIMessage(content=self._content))
                 return ChatResult(generations=[gen])
 
         self.impl = _Impl(fail_on_params=fail_on_params)
+        self.impl._make_error = make_error
+        self.impl._content = content
 
     @property
     def instance(self):
@@ -86,6 +98,7 @@ def _make_provider(
     *,
     model_engine: str = "",
     fail_on: Optional[Dict[str, bool]] = None,
+    **dummy_kwargs: Any,
 ):
     if not _has_langchain_core():
         pytest.skip(
@@ -96,7 +109,7 @@ def _make_provider(
         Langchain,  # type: ignore[import-not-found]
     )
 
-    dummy_chat = _DummyChatModel(fail_on_params=fail_on or {})
+    dummy_chat = _DummyChatModel(fail_on_params=fail_on or {}, **dummy_kwargs)
     provider = Langchain(chain=dummy_chat.instance, model_engine=model_engine)
     return provider, dummy_chat
 
@@ -129,6 +142,52 @@ def test_temperature_fallback_and_cached(monkeypatch):
     calls2 = dummy_chat.calls
     assert len(calls2) == 1
     assert "temperature" not in calls2[0]
+
+
+class _ValidationException(Exception):
+    """Stands in for botocore's ClientError, which is not a TypeError."""
+
+
+@pytest.mark.optional
+def test_temperature_fallback_on_bedrock_validation_error(monkeypatch):
+    """ChatBedrockConverse raises a ClientError, not a TypeError, and Bedrock
+    words it "doesn't support" (seen with OpenAI GPT-6 models)."""
+    provider, dummy_chat = _make_provider(
+        monkeypatch,
+        fail_on={"temperature": True},
+        make_error=lambda p: _ValidationException(
+            f"This model doesn't support the {p} field. Remove {p} and try again."
+        ),
+    )
+
+    out = provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}]
+    )
+    assert out == "ok"
+    assert "temperature" in dummy_chat.calls[0]
+    assert "temperature" not in dummy_chat.calls[1]
+    assert provider._get_capabilities() == {"temperature": False}
+
+
+@pytest.mark.optional
+def test_reasoning_block_before_text(monkeypatch):
+    """Reasoning chat models can return a reasoning block before the text
+    block, so `content` is a list; only the text is returned."""
+    provider, _ = _make_provider(
+        monkeypatch,
+        content=[
+            {
+                "type": "reasoning_content",
+                "reasoning_content": {"redacted_content": b"rsn_"},
+            },
+            {"type": "text", "text": "2"},
+        ],
+    )
+
+    out = provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}]
+    )
+    assert out == "2"
 
 
 @pytest.mark.optional
@@ -252,3 +311,43 @@ def test_is_reasoning_model_detection():
         )._is_reasoning_model()
         is False
     )
+
+
+@pytest.mark.optional
+def test_convert_message_maps_system_role_to_system_message():
+    if not _has_langchain_core():
+        pytest.skip(
+            "langchain_core not installed; skipping optional LangChain provider tests."
+        )
+
+    from langchain_core.messages import AIMessage
+    from langchain_core.messages import HumanMessage
+    from langchain_core.messages import SystemMessage
+    from trulens.providers.langchain.provider import (
+        _convert_message,  # type: ignore[import-not-found]
+    )
+
+    # Every feedback call is built as [{"role": "system", ...}, {"role":
+    # "user", ...}] (see LLMProvider.generate_score); the judge's rubric must
+    # survive as a system instruction, not be relabeled as a prior AI turn.
+    system_result = _convert_message({
+        "role": "system",
+        "content": "You are a strict judge.",
+    })
+    assert isinstance(system_result, SystemMessage)
+    assert system_result.content == "You are a strict judge."
+
+    user_result = _convert_message({
+        "role": "user",
+        "content": "Score this.",
+    })
+    assert isinstance(user_result, HumanMessage)
+
+    no_role_result = _convert_message({"content": "Score this."})
+    assert isinstance(no_role_result, HumanMessage)
+
+    assistant_result = _convert_message({
+        "role": "assistant",
+        "content": "8/10",
+    })
+    assert isinstance(assistant_result, AIMessage)

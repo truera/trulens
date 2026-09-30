@@ -155,6 +155,38 @@ def test_column_map_renames_columns():
     assert res["overlap"].iloc[0] == pytest.approx(1.0)
 
 
+@pytest.mark.parametrize("as_dataframe", [False, True])
+@pytest.mark.parametrize(
+    "column_map",
+    [{"q": "a", "a": "q"}, {"a": "q", "q": "a"}],
+)
+def test_column_map_swap_reads_original_values(column_map, as_dataframe):
+    rows = [{"q": "fox", "a": "wolf"}]
+    data = pd.DataFrame(rows) if as_dataframe else rows
+    ev = BatchEvaluator(metrics=[_overlap_metric()], max_workers=1)
+
+    res = ev.evaluate(data, column_map=column_map)
+
+    assert res["q"].iloc[0] == "wolf"
+    assert res["a"].iloc[0] == "fox"
+    assert res["overlap"].iloc[0] == 0.0
+    original = data.to_dict("records") if as_dataframe else data
+    assert original == [{"q": "fox", "a": "wolf"}]
+
+
+def test_column_map_chain_reads_dataset_sources():
+    ev = BatchEvaluator(metrics=[_overlap_metric()], max_workers=1)
+    res = ev.evaluate(
+        [{"source": "fox", "q": "wolf"}],
+        column_map={"source": "q", "q": "a"},
+    )
+
+    assert res["source"].iloc[0] == "fox"
+    assert res["q"].iloc[0] == "fox"
+    assert res["a"].iloc[0] == "wolf"
+    assert res["overlap"].iloc[0] == 0.0
+
+
 # --- list-valued columns / collect_list semantics -----------------------------
 
 
@@ -240,6 +272,56 @@ def test_duplicate_metric_names_are_disambiguated():
     assert "overlap_1" in res.columns
     assert res["overlap"].iloc[0] == pytest.approx(1.0)
     assert res["overlap_1"].iloc[0] == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize(
+    "names, expected_names",
+    [
+        (["score", "score", "score_1"], ["score", "score_1", "score_1_1"]),
+        (["score_1", "score", "score"], ["score_1", "score", "score_2"]),
+        (["score", "score_latency"], ["score", "score_latency_1"]),
+        (["score_latency", "score"], ["score_latency", "score_1"]),
+        (["score", "score_explanation"], ["score", "score_explanation_1"]),
+        (["score_explanation", "score"], ["score_explanation", "score_1"]),
+    ],
+)
+def test_result_column_collisions_preserve_every_metric(names, expected_names):
+    metrics = [
+        Metric(
+            name=name,
+            implementation=word_overlap,
+            selectors={
+                "query": Selector.from_column("q"),
+                "answer": Selector.from_column(f"a{i}"),
+            },
+        )
+        for i, name in enumerate(names)
+    ]
+    row = {"q": "fox runs", "a0": "fox runs", "a1": "fox", "a2": "wolf"}
+    res = BatchEvaluator(metrics=metrics, max_workers=1).evaluate([row])
+
+    assert len(res.columns) == len(row) + 3 * len(metrics)
+    for name, score, overlap in zip(
+        expected_names, [1.0, 0.5, 0.0], [["fox", "runs"], ["fox"], []]
+    ):
+        assert res[name].iloc[0] == score
+        assert res[f"{name}_explanation"].iloc[0] == {"overlap": overlap}
+        assert res[f"{name}_latency"].iloc[0] >= 0
+
+
+@pytest.mark.parametrize(
+    "column", ["overlap", "overlap_explanation", "overlap_latency"]
+)
+def test_result_columns_preserve_dataset_columns(column):
+    row = {"q": "fox", "a": "fox", column: "original"}
+    ev = BatchEvaluator(metrics=[_overlap_metric()], max_workers=1)
+
+    res = ev.evaluate([row])
+
+    assert res[column].iloc[0] == "original"
+    assert res["overlap_1"].iloc[0] == 1.0
+    assert res["overlap_1_explanation"].iloc[0] == {"overlap": ["fox"]}
+    assert res["overlap_1_latency"].iloc[0] >= 0
 
 
 # --- parallel vs serial equivalence -------------------------------------------

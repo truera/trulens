@@ -100,12 +100,17 @@ thread identifier. The mapping is:
 | `SpanAttributes.RUN_NAME` | The same native conversation or session ID |
 | `SpanAttributes.INPUT_ID` | Correlated native turn ID |
 | `SpanAttributes.RECORD_ID` | `<client>:<conversation-id>:<turn-id>` |
-| OpenTelemetry trace ID | Deterministically derived from `RECORD_ID` |
+| OpenTelemetry trace ID | The agent's trace when it exports one, otherwise derived from `RECORD_ID` |
 
 The native conversation fields are Cursor `conversation_id`, Claude Code
 `session_id`, and OpenCode `sessionID`. A conversation therefore maps to one
 TruLens conversation and, for destinations that support runs, one run. Each user
 prompt within it maps to a distinct turn and `RECORD_ROOT` span.
+
+The conversation ID is also emitted as `gen_ai.conversation.id`, the GenAI
+semantic convention spelling. Producers outside TruLens use that name, so it is
+what correlates these spans with, for example, an AI gateway recording the server
+side of the same requests.
 
 The durable journal correlates prompt, tool, edit, shell, MCP, subagent,
 response, and terminal events into that turn. TruLens uses a native turn ID when
@@ -118,6 +123,40 @@ ID.
 Identity is deterministic across retries. Re-exporting the same journalled turn
 reuses its run name, record ID, input ID, and trace ID instead of creating a new
 record.
+
+### Inherited trace context
+
+An agent that propagates W3C trace context sets `TRACEPARENT` on the processes
+it spawns, which is how a hook invocation learns the span it was spawned under.
+The payload on stdin carries no trace context, so the environment is the only
+channel.
+
+When a turn's events carry a usable `TRACEPARENT`, TruLens adopts that trace
+instead of deriving one from `RECORD_ID`, and parents the turn's `RECORD_ROOT`
+to the inherited span. Hook spans then land in the trace the agent already
+started, beside the agent's own spans and whatever recorded the server side of
+the same requests. Without one, the turn keeps its self-derived trace and a
+parentless root, which is the previous behavior.
+
+| Client | Inherited trace context |
+| --- | --- |
+| Claude Code | Yes, with `CLAUDE_CODE_PROPAGATE_TRACEPARENT=1` |
+| Cursor | No, it has no native OpenTelemetry to propagate from |
+| OpenCode | No, the plugin runs in-process and does not export one |
+
+Notes on the Claude Code case:
+
+- `UserPromptSubmit`, `PreToolUse`, `PostToolUse` and `Stop` carry the context.
+  `SessionStart` and `SessionEnd` do not, because they run outside an active
+  span. A turn only needs one event with the context to adopt it.
+- The earliest usable context in a turn wins, so the turn is parented to the
+  outermost span the agent had open rather than a later, narrower one.
+- Adoption requires the agent's own export to be configured, since propagation
+  is what puts the same trace ID on its outbound inference requests.
+
+Extraction uses the globally configured OpenTelemetry propagators, so
+`OTEL_PROPAGATORS=none` turns adoption off and restores self-derived traces. A
+malformed or all-zero `TRACEPARENT` is ignored the same way.
 
 ## Run lifecycle
 
@@ -181,8 +220,11 @@ Agent span
 ```
 
 Existing input/output and trace-level selectors work without client-specific
-logic. Coding-agent-only metadata such as client name, native hook event, editor
-version, workspace, and diff is defined centrally in `trulens-otel-semconv`.
+logic. When the turn inherits trace context, this tree is parented to the
+agent's span rather than starting a trace of its own; the shape is otherwise
+unchanged. Coding-agent-only metadata such as client name, native hook event,
+editor version, workspace, and diff is defined centrally in
+`trulens-otel-semconv`.
 See [Evaluate the Traces](../../blog/posts/instrument_coding_agents.md) for how
 post-hoc metrics would run on those records.
 
@@ -191,6 +233,10 @@ messages, token usage, and tool execution. TruLens record/evaluation fields and
 coding-agent/MCP concepts without an OTEL equivalent remain under the
 `ai.observability.*` namespace. Custom data is not emitted into reserved OTEL
 namespaces.
+
+Every span carries the instrumentation scope `trulens.client_hooks`, versioned
+with the installed `trulens-core`. Filter on that scope name to select hook spans
+specifically, which matters when they share a trace with other producers.
 
 ## Validate and inspect
 
