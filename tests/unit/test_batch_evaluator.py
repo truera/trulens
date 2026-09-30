@@ -443,7 +443,6 @@ def test_custom_agg_failure_yields_nan_with_error_in_explanation():
     assert explanation["scores"] == [1.0, 0.0]
 
 
-
 # --- Sentinel (UNPARSABLE_SCORE) handling ---
 
 

@@ -327,6 +327,7 @@ class BatchEvaluator:
                 a silent `NaN`.
         """
         from trulens.feedback.llm_provider import UNPARSABLE_SCORE
+
         parsable = [s for s in scores if s != UNPARSABLE_SCORE]
         if not parsable:
             n = len(scores)
