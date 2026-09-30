@@ -66,7 +66,6 @@ from trulens.core.feedback.selector import Selector
 from trulens.core.metric.metric import Metric
 from trulens.core.metric.metric import SkipEval
 from trulens.core.utils import threading as threading_utils
-from trulens.feedback.llm_provider import UNPARSABLE_SCORE
 
 logger = logging.getLogger(__name__)
 
@@ -327,6 +326,7 @@ class BatchEvaluator:
                 per-item evaluation and should fail loudly rather than yield
                 a silent `NaN`.
         """
+        from trulens.feedback.llm_provider import UNPARSABLE_SCORE
         parsable = [s for s in scores if s != UNPARSABLE_SCORE]
         if not parsable:
             n = len(scores)
