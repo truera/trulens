@@ -66,6 +66,7 @@ from trulens.core.feedback.selector import Selector
 from trulens.core.metric.metric import Metric
 from trulens.core.metric.metric import SkipEval
 from trulens.core.utils import threading as threading_utils
+from trulens.feedback.llm_provider import UNPARSABLE_SCORE
 
 logger = logging.getLogger(__name__)
 
@@ -326,6 +327,26 @@ class BatchEvaluator:
                 per-item evaluation and should fail loudly rather than yield
                 a silent `NaN`.
         """
+        parsable = [s for s in scores if s != UNPARSABLE_SCORE]
+        if not parsable:
+            n = len(scores)
+            return UNPARSABLE_SCORE, (
+                f"All {n} score(s) for metric {metric.name!r} were "
+                f"unparsable (sentinel {UNPARSABLE_SCORE}); no valid score "
+                "to aggregate."
+            )
+        if len(parsable) < len(scores):
+            n_dropped = len(scores) - len(parsable)
+            logger.warning(
+                "Metric %r: dropping %d unparsable score(s) (sentinel %s) "
+                "before aggregation; %d valid score(s) remain.",
+                metric.name,
+                n_dropped,
+                UNPARSABLE_SCORE,
+                len(parsable),
+            )
+        scores = parsable
+
         if len(scores) == 1:
             return scores[0], None
         agg = metric.agg if metric.agg is not None else np.mean
