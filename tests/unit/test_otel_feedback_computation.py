@@ -755,12 +755,17 @@ class TestOtelFeedbackComputation(OtelTestCase):
             ],
         )
 
-    def test_aggregation_sums_child_costs_on_eval_root(self) -> None:
-        # Each child evaluation reports its own cost; the EVAL_ROOT span must
-        # carry their total rather than the last child's cost.
-        def product(a: float, b: float) -> float:
-            return a * b
+    def _compute_product_with_child_costs(
+        self, product: Callable[[float, float], float]
+    ) -> dict:
+        """Evaluate `product` over `[2, 3] x [5, 7]` with a cost per child.
 
+        Each child evaluation reports `a * b` tokens and `a * b * 1e-6` of
+        cost, of which one token is a completion token.
+
+        Returns:
+            The attributes of the EVAL_ROOT span.
+        """
         f_product = Metric(
             implementation=product,
             name="product",
@@ -806,15 +811,28 @@ class TestOtelFeedbackComputation(OtelTestCase):
             "track_all_costs_tally",
             track_all_costs_tally,
         ):
-            tru_app.compute_feedbacks()
+            tru_app.compute_feedbacks(
+                raise_error_on_no_feedbacks_computed=False
+            )
         TruSession().force_flush()
 
-        events = self._get_events()
-        eval_root = events.iloc[1]["record_attributes"]
-        self.assertEqual(
-            SpanAttributes.SpanType.EVAL_ROOT,
-            eval_root[SpanAttributes.SPAN_TYPE],
-        )
+        eval_roots = [
+            attributes
+            for attributes in self._get_events()["record_attributes"]
+            if attributes.get(SpanAttributes.SPAN_TYPE)
+            == SpanAttributes.SpanType.EVAL_ROOT
+        ]
+        self.assertEqual(1, len(eval_roots))
+        return eval_roots[0]
+
+    def test_aggregation_sums_child_costs_on_eval_root(self) -> None:
+        # Each child evaluation reports its own cost; the EVAL_ROOT span must
+        # carry their total rather than the last child's cost.
+        def product(a: float, b: float) -> float:
+            return a * b
+
+        eval_root = self._compute_product_with_child_costs(product)
+
         child_tokens = [2 * 5, 2 * 7, 3 * 5, 3 * 7]
         self.assertAlmostEqual(
             sum(child_tokens) * 1e-6, eval_root[SpanAttributes.COST.COST]
@@ -825,6 +843,36 @@ class TestOtelFeedbackComputation(OtelTestCase):
         self.assertEqual(
             sum(child_tokens) - len(child_tokens),
             eval_root[SpanAttributes.COST.NUM_PROMPT_TOKENS],
+        )
+        self.assertEqual(
+            len(child_tokens),
+            eval_root[SpanAttributes.COST.NUM_COMPLETION_TOKENS],
+        )
+
+    def test_aggregation_keeps_completed_child_costs_when_a_child_raises(
+        self,
+    ) -> None:
+        # The third child (3 x 5) raises, which fails the whole evaluation.
+        # The EVAL_ROOT span must still carry the cost of the two children
+        # that completed before it.
+        def product(a: float, b: float) -> float:
+            if a * b == 15:
+                raise ValueError("child evaluation failed")
+            return a * b
+
+        eval_root = self._compute_product_with_child_costs(product)
+
+        self.assertIn(
+            "child evaluation failed",
+            eval_root[SpanAttributes.EVAL_ROOT.ERROR],
+        )
+        self.assertNotIn(SpanAttributes.EVAL_ROOT.SCORE, eval_root)
+        child_tokens = [2 * 5, 2 * 7]
+        self.assertAlmostEqual(
+            sum(child_tokens) * 1e-6, eval_root[SpanAttributes.COST.COST]
+        )
+        self.assertEqual(
+            sum(child_tokens), eval_root[SpanAttributes.COST.NUM_TOKENS]
         )
         self.assertEqual(
             len(child_tokens),
