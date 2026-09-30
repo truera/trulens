@@ -5,6 +5,7 @@ Tests for OTEL Feedback Computation.
 import gc
 import time
 from typing import Callable, List, Tuple
+from unittest import mock
 import weakref
 
 import numpy as np
@@ -12,10 +13,12 @@ import pandas as pd
 import pytest
 from trulens.apps.app import TruApp
 from trulens.core import Metric
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import Selector
 from trulens.core.feedback.selector import Trace
 from trulens.core.otel.instrument import instrument
+from trulens.core.schema import base as base_schema
 from trulens.core.session import TruSession
 from trulens.feedback.computer import MinimalSpanInfo
 from trulens.feedback.computer import RecordGraphNode
@@ -750,6 +753,82 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 ]
                 for _, curr in events.iloc[2:].iterrows()
             ],
+        )
+
+    def test_aggregation_sums_child_costs_on_eval_root(self) -> None:
+        # Each child evaluation reports its own cost; the EVAL_ROOT span must
+        # carry their total rather than the last child's cost.
+        def product(a: float, b: float) -> float:
+            return a * b
+
+        f_product = Metric(
+            implementation=product,
+            name="product",
+            selectors={
+                "a": Selector(
+                    span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                    function_attribute="xs",
+                    collect_list=False,
+                ),
+                "b": Selector(
+                    span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                    function_attribute="ys",
+                    collect_list=False,
+                ),
+            },
+        )
+
+        def track_all_costs_tally(func, **kwargs):
+            score = func(**kwargs)
+            tokens = int(kwargs["a"] * kwargs["b"])
+            cost = base_schema.Cost(
+                cost=tokens * 1e-6,
+                n_tokens=tokens,
+                n_prompt_tokens=tokens - 1,
+                n_completion_tokens=1,
+            )
+            return score, lambda: cost
+
+        class _App:
+            @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
+            def invoke(self, xs: List[int], ys: List[int]) -> float:
+                return 0.0
+
+        app = _App()
+        tru_app = TruApp(
+            app, app_name="Simple App", app_version="v1", feedbacks=[f_product]
+        )
+        with tru_app:
+            app.invoke([2, 3], [5, 7])
+        TruSession().force_flush()
+        with mock.patch.object(
+            core_endpoint.Endpoint,
+            "track_all_costs_tally",
+            track_all_costs_tally,
+        ):
+            tru_app.compute_feedbacks()
+        TruSession().force_flush()
+
+        events = self._get_events()
+        eval_root = events.iloc[1]["record_attributes"]
+        self.assertEqual(
+            SpanAttributes.SpanType.EVAL_ROOT,
+            eval_root[SpanAttributes.SPAN_TYPE],
+        )
+        child_tokens = [2 * 5, 2 * 7, 3 * 5, 3 * 7]
+        self.assertAlmostEqual(
+            sum(child_tokens) * 1e-6, eval_root[SpanAttributes.COST.COST]
+        )
+        self.assertEqual(
+            sum(child_tokens), eval_root[SpanAttributes.COST.NUM_TOKENS]
+        )
+        self.assertEqual(
+            sum(child_tokens) - len(child_tokens),
+            eval_root[SpanAttributes.COST.NUM_PROMPT_TOKENS],
+        )
+        self.assertEqual(
+            len(child_tokens),
+            eval_root[SpanAttributes.COST.NUM_COMPLETION_TOKENS],
         )
 
     def test_compute_feedbacks_on_events(self) -> None:
