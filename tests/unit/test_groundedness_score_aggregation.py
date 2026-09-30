@@ -16,6 +16,7 @@ import json
 import math
 from typing import ClassVar, Optional, Union
 
+from pydantic import ConfigDict
 import pytest
 from trulens.core.feedback import feedback as core_feedback
 from trulens.feedback import llm_provider
@@ -130,7 +131,7 @@ class _AnswerabilityStubProvider(llm_provider.LLMProvider):
     what ``generate_score`` returns when it cannot parse a score.
     """
 
-    model_config: ClassVar[dict[str, str]] = {"extra": "allow"}
+    model_config = ConfigDict(extra="allow")
 
     def __init__(self, answerability_reply: Union[int, str] = "N/A"):
         super().__init__(endpoint=None, model_engine="mock-model")
