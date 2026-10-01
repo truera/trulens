@@ -313,6 +313,20 @@ class BatchEvaluator:
     ) -> Tuple[Any, Optional[str]]:
         """Aggregate one or more metric scores using the metric's aggregator.
 
+        Before aggregating, scores equal to `UNPARSABLE_SCORE` (-1.0) are
+        filtered out. This sentinel value is returned by LLM providers when
+        their response contains no parseable score (e.g. the model refused to
+        answer or the output did not match the expected format). Excluding
+        sentinels ensures that a single judge failure does not dilute the
+        aggregate of the remaining valid scores — for example,
+        ``[1.0, 1.0, -1.0]`` aggregates to ``1.0``, not ``0.33``.
+
+        If *every* score is a sentinel (i.e. all judges failed to produce a
+        parseable score), no valid aggregate can be formed. In that case the
+        method returns `UNPARSABLE_SCORE` itself paired with an error string
+        describing how many scores were unparseable, so the failure is visible
+        in the result row rather than silently producing a misleading number.
+
         Returns:
             A tuple of (aggregate, error). `error` is `None` on success. If a
             user-configured aggregator raises, the aggregate is `float("nan")`
