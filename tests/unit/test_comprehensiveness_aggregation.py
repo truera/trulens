@@ -12,7 +12,7 @@ No external service is contacted: the provider is stubbed at the
 uses, so the real aggregation runs.
 """
 
-from typing import ClassVar, List, Optional
+from typing import ClassVar, List
 
 import pytest
 from trulens.feedback import llm_provider
@@ -38,9 +38,9 @@ class _StubProvider(llm_provider.LLMProvider):
 
     def __init__(self, reply: str | List[str]):
         super().__init__(endpoint=None, model_engine="mock-model")
-        object.__setattr__(self, "endpoint", _MockEndpoint())
-        object.__setattr__(self, "_reply", reply)
-        object.__setattr__(self, "_calls", 0)
+        self.endpoint = _MockEndpoint()
+        self._reply = reply
+        self._calls = 0
 
     def _is_reasoning_model(self) -> bool:
         return False
@@ -50,7 +50,7 @@ class _StubProvider(llm_provider.LLMProvider):
             reply = self._reply[min(self._calls, len(self._reply) - 1)]
         else:
             reply = self._reply
-        object.__setattr__(self, "_calls", self._calls + 1)
+        self._calls += 1
         return reply
 
     def _generate_key_points(self, source: str, **kwargs: object) -> str:
@@ -110,6 +110,3 @@ def test_comprehensiveness_normalizes_by_the_requested_scale():
     zero_of_three, _ = _comprehensiveness("0: absent", max_score_val=3)
     assert zero_of_one == pytest.approx(0.0)
     assert zero_of_three == pytest.approx(0.0)
-
-
-_ = Optional
