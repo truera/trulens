@@ -50,7 +50,7 @@ import math
 import statistics
 from typing import Any
 
-from trulens.feedback.llm_provider import UNPARSABLE_SCORE
+from trulens.feedback import llm_provider
 
 logger = logging.getLogger(__name__)
 
@@ -158,16 +158,18 @@ class SelfConsistency:
         deviation, flip rate, and entropy are embedded in the reason string
         so they appear in OTEL spans and the dashboard automatically.
         """
-        scores: list[float] = []
-        reasons: list[str | None] = []
+        # results[idx] = (score, reason) keyed by submission index so the
+        # reason string labels trials in submission order, not completion order.
+        results: dict[int, tuple[float, str | None]] = {}
 
         with ThreadPoolExecutor(max_workers=self._max_workers) as executor:
-            futures = [
-                executor.submit(self._call_trial, args, dict(kwargs))
-                for _ in range(self._n)
-            ]
+            future_to_idx = {
+                executor.submit(self._call_trial, args, dict(kwargs)): idx
+                for idx in range(self._n)
+            }
 
-            for future in as_completed(futures):
+            for future in as_completed(future_to_idx):
+                idx = future_to_idx[future]
                 try:
                     raw = future.result()
                     if isinstance(raw, tuple):
@@ -181,17 +183,16 @@ class SelfConsistency:
                     else:
                         score = float(raw)
                         reason = None
-                    if score == UNPARSABLE_SCORE:
+                    if score == llm_provider.UNPARSABLE_SCORE:
                         logger.warning(
                             "SelfConsistency(%r, n=%d): a trial returned no "
                             "parsable score (%s); it is dropped.",
                             self._method,
                             self._n,
-                            UNPARSABLE_SCORE,
+                            llm_provider.UNPARSABLE_SCORE,
                         )
                         continue
-                    scores.append(score)
-                    reasons.append(reason)
+                    results[idx] = (score, reason)
                 except Exception as exc:  # noqa: BLE001
                     logger.warning(
                         "SelfConsistency(%r, n=%d): a trial failed: %s",
@@ -200,11 +201,14 @@ class SelfConsistency:
                         exc,
                     )
 
-        if not scores:
+        if not results:
             raise RuntimeError(
                 f"All {self._n} trials of SelfConsistency({self._method!r}) "
                 "failed to produce a score."
             )
+
+        ordered_idxs = sorted(results.keys())
+        scores = [results[idx][0] for idx in ordered_idxs]
 
         agg_score = self._aggregate(scores)
         std_dev = statistics.stdev(scores) if len(scores) > 1 else 0.0
@@ -218,10 +222,11 @@ class SelfConsistency:
             f"entropy={entropy:.3f}",
             f"  trials={[f'{s:.3f}' for s in scores]}",
         ]
-        for i, r in enumerate(reasons):
+        for idx in ordered_idxs:
+            _, r = results[idx]
             if r:
                 for line in r.splitlines():
-                    lines.append(f"  trial {i + 1}: {line}")
+                    lines.append(f"  trial {idx + 1}: {line}")
 
         return agg_score, {"reason": "\n".join(lines)}
 

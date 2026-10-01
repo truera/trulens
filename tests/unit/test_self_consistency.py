@@ -7,8 +7,10 @@ import statistics
 import unittest
 from unittest.mock import MagicMock
 
-from trulens.feedback.llm_provider import UNPARSABLE_SCORE
+from trulens.feedback import llm_provider
 from trulens.feedback.self_consistency import SelfConsistency
+
+UNPARSABLE_SCORE = llm_provider.UNPARSABLE_SCORE
 
 # ---------------------------------------------------------------------------
 # Mock helpers
