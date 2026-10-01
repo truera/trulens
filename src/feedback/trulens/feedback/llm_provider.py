@@ -3711,6 +3711,17 @@ class LLMProvider(core_provider.Provider):
             abstention_score = evaluate_abstention(hypothesis)
             if abstention_score > 0.5:
                 answerability_score = evaluate_answerability(question, source)
+                if answerability_score == UNPARSABLE_SCORE:
+                    # The answerability judge produced no parsable score. Below
+                    # the threshold that is indistinguishable from a verdict of
+                    # not-answerable, which would credit the statement with a
+                    # perfect score the judge never gave. Report it as
+                    # ungraded and let _mean_graded_score skip the average.
+                    return (
+                        index,
+                        UNPARSABLE_SCORE,
+                        {"reason": "Answerability score was not parsable"},
+                    )
                 if answerability_score > 0.5:
                     return index, 0.0, {"reason": "Answerable abstention"}
                 else:

@@ -14,8 +14,9 @@ judge actually graded.
 
 import json
 import math
-from typing import ClassVar, Optional
+from typing import ClassVar, Optional, Union
 
+from pydantic import ConfigDict
 import pytest
 from trulens.core.feedback import feedback as core_feedback
 from trulens.feedback import llm_provider
@@ -116,6 +117,112 @@ def test_groundedness_consider_answerability_ignores_unparsable_statement_score(
 
     assert not math.isnan(score)
     assert score == pytest.approx(1.0)
+
+
+class _AnswerabilityStubProvider(llm_provider.LLMProvider):
+    """Grades the abstention classifier high and answers the answerability
+    classifier with a reply that carries no usable score.
+
+    ``groundedness_measure_with_cot_reasons_consider_answerability`` first
+    asks the abstention classifier whether the statement is an abstention and
+    then, for the ones that are, asks the answerability classifier whether the
+    source contains the answer. This stub keeps the first call at the top of its
+    0-1 scale and makes the second one come back as the -1.0 sentinel, which is
+    what ``generate_score`` returns when it cannot parse a score.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    def __init__(self, answerability_reply: Union[int, str] = "N/A"):
+        super().__init__(endpoint=None, model_engine="mock-model")
+        object.__setattr__(self, "endpoint", _MockEndpoint())
+        # `answerability_reply` is what the answerability classifier is handed
+        # back, so a test can exercise either of the two verdicts the branch
+        # turns into a score, or the reply that carries no usable score.
+        object.__setattr__(self, "_answerability_reply", answerability_reply)
+
+    def _is_reasoning_model(self) -> bool:
+        return False
+
+    def _create_chat_completion(
+        self,
+        prompt: str | None = None,
+        messages: list | None = None,
+        response_format=None,
+        **kwargs,
+    ):
+        if response_format is None:
+            return _STATEMENT
+
+        cot = {"criteria": "c", "supporting_evidence": "e"}
+        text = " ".join(m["content"] for m in messages or [])
+        if "ABSTENTION classifier" in text:
+            # 0-1 scale, and an abstention is the top of it.
+            return json.dumps({**cot, "score": 1})
+        if "ANSWERABILITY classifier" in text:
+            return json.dumps({**cot, "score": self._answerability_reply})
+        return json.dumps({**cot, "score": _MAX_SCORE})
+
+
+def test_consider_answerability_does_not_credit_unparsable_verdict():
+    """Regression: an answerability reply with no parsable score came back as
+    -1.0, which is not above 0.5, so the statement was labelled an unanswerable
+    abstention and given a perfect 1.0 groundedness score. The judge never said
+    that. A judge failure is reported as ungraded instead."""
+    provider = _AnswerabilityStubProvider()
+
+    score, meta = (
+        provider.groundedness_measure_with_cot_reasons_consider_answerability(
+            source="src",
+            statement=_STATEMENT,
+            question="Is the statement grounded?",
+            groundedness_configs=_configs(),
+            max_score_val=_MAX_SCORE,
+        )
+    )
+
+    assert score == -1.0
+    # The failure stays visible in the metadata rather than only in the log.
+    # These branches report a bare "reason", like their two siblings.
+    assert meta["reasons"] == [
+        {"reason": "Answerability score was not parsable"}
+    ]
+
+
+def test_consider_answerability_still_credits_unanswerable_abstention():
+    """Guard against a fix that drops the branch: a real verdict of "the source
+    does not contain the answer" is still what earns a perfect score."""
+    provider = _AnswerabilityStubProvider(answerability_reply=0)
+
+    score, _ = (
+        provider.groundedness_measure_with_cot_reasons_consider_answerability(
+            source="src",
+            statement=_STATEMENT,
+            question="Is the statement grounded?",
+            groundedness_configs=_configs(),
+            max_score_val=_MAX_SCORE,
+        )
+    )
+
+    assert score == pytest.approx(1.0)
+
+
+def test_consider_answerability_still_penalises_answerable_abstention():
+    """And the other verdict still scores zero, so the two branches are still
+    told apart by the judge's answer rather than by whether it parsed."""
+    provider = _AnswerabilityStubProvider(answerability_reply=1)
+
+    score, _ = (
+        provider.groundedness_measure_with_cot_reasons_consider_answerability(
+            source="src",
+            statement=_STATEMENT,
+            question="Is the statement grounded?",
+            groundedness_configs=_configs(),
+            max_score_val=_MAX_SCORE,
+        )
+    )
+
+    assert score == pytest.approx(0.0)
 
 
 def test_groundedness_reports_sentinel_when_no_statement_is_graded():

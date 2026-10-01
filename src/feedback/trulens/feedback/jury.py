@@ -16,7 +16,7 @@ import logging
 import statistics
 from typing import Any
 
-from trulens.feedback.llm_provider import UNPARSABLE_SCORE
+from trulens.feedback import llm_provider
 
 logger = logging.getLogger(__name__)
 
@@ -177,7 +177,7 @@ class Jury:
                     else:
                         score = float(raw)
                         reason = None
-                    if score == UNPARSABLE_SCORE:
+                    if score == llm_provider.UNPARSABLE_SCORE:
                         # The judge answered without a score a parser could
                         # find. That is a failure to grade, not a verdict at
                         # the bottom of the scale, so this juror gets no vote
@@ -187,7 +187,7 @@ class Jury:
                             "score (%s); its vote is dropped.",
                             self._juror_names[idx],
                             idx,
-                            UNPARSABLE_SCORE,
+                            llm_provider.UNPARSABLE_SCORE,
                         )
                         continue
                     results[idx] = (score, reason)

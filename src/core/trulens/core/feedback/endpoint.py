@@ -644,7 +644,12 @@ class Endpoint(
             return __func(*args, **kwargs), []
 
         # Check to see if this call is within another _track_costs call:
-        endpoints = dict(Endpoint._context_endpoints.get())  # copy
+        # Copy the dict and the lists it holds. A shallow copy would share the
+        # parent's lists, so appends would leak into ancestors and inflate counts.
+        endpoints = {
+            callback_class: list(pairs)
+            for callback_class, pairs in Endpoint._context_endpoints.get().items()
+        }
 
         # Collect any new endpoints requested of us.
         with_endpoints = with_endpoints or []
