@@ -238,9 +238,12 @@ class Metric(feedback_schema.FeedbackDefinition):
             examples: User-supplied examples for this metric.
             criteria: Criteria for the metric evaluation.
             additional_instructions: Custom instructions for the metric.
-            min_score_val: Minimum score value (default: None).
-            max_score_val: Maximum score value (default: None).
-            temperature: Temperature parameter for LLM-based metrics (default: None).
+            min_score_val: Minimum score value (default: None, so the
+                implementation's own default is used).
+            max_score_val: Maximum score value (default: None, so the
+                implementation's own default is used).
+            temperature: Temperature parameter for LLM-based metrics (default:
+                None, so the implementation's own default is used).
             groundedness_configs: Optional groundedness configuration.
             enable_trace_compression: Whether to compress trace data.
             metric_type: Implementation identifier (e.g., "relevance", "groundedness").
@@ -608,9 +611,15 @@ class Metric(feedback_schema.FeedbackDefinition):
 
         kwargs = {**field_kwargs, **self.implementation_kwargs, **kwargs}
 
-        # Filter out unexpected keyword arguments
+        # Filter out unexpected keyword arguments and skip None values so
+        # that None consistently means "use the implementation default"
+        # across all layers.
         sig = signature(self.imp)
-        valid_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
+        valid_kwargs = {
+            k: v
+            for k, v in kwargs.items()
+            if k in sig.parameters and v is not None
+        }
         return self.imp(*args, **valid_kwargs)
 
     def aggregate(

@@ -76,9 +76,12 @@ class Feedback(Metric):
             examples: User-supplied examples for this feedback function.
             criteria: Criteria for the feedback evaluation.
             additional_instructions: Custom instructions for the feedback function.
-            min_score_val: Minimum score value (default: None).
-            max_score_val: Maximum score value (default: None).
-            temperature: Temperature parameter for LLM-based feedback (default: None).
+            min_score_val: Minimum score value (default: None, so the
+                implementation's own default is used).
+            max_score_val: Maximum score value (default: None, so the
+                implementation's own default is used).
+            temperature: Temperature parameter for LLM-based feedback (default:
+                None, so the implementation's own default is used).
             groundedness_configs: Optional groundedness configuration.
             enable_trace_compression: Whether to compress trace data.
             **kwargs: Additional arguments passed to parent class.
