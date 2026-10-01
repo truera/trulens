@@ -10,6 +10,7 @@ from trulens.feedback.llm_provider import LLMProvider
 from trulens.feedback.optimize import FewShotOptimizer
 from trulens.feedback.optimize import OptimizeResult
 from trulens.feedback.schema_validator import SchemaValidator
+from trulens.feedback.self_consistency import SelfConsistency
 
 with import_utils.OptionalImports(
     messages=import_utils.format_import_errors(
@@ -32,4 +33,5 @@ __all__ = [
     "LLMProvider",
     "OptimizeResult",
     "SchemaValidator",
+    "SelfConsistency",
 ]
