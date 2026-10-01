@@ -61,9 +61,9 @@ class Feedback(Metric):
         examples: Optional[List[Tuple]] = None,
         criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: Optional[int] = None,
+        max_score_val: Optional[int] = None,
+        temperature: Optional[float] = None,
         groundedness_configs: Optional[GroundednessConfigs] = None,
         enable_trace_compression: Optional[bool] = None,
         **kwargs: Any,
@@ -76,9 +76,9 @@ class Feedback(Metric):
             examples: User-supplied examples for this feedback function.
             criteria: Criteria for the feedback evaluation.
             additional_instructions: Custom instructions for the feedback function.
-            min_score_val: Minimum score value (default: 0).
-            max_score_val: Maximum score value (default: 3).
-            temperature: Temperature parameter for LLM-based feedback (default: 0.0).
+            min_score_val: Minimum score value (default: None).
+            max_score_val: Maximum score value (default: None).
+            temperature: Temperature parameter for LLM-based feedback (default: None).
             groundedness_configs: Optional groundedness configuration.
             enable_trace_compression: Whether to compress trace data.
             **kwargs: Additional arguments passed to parent class.
