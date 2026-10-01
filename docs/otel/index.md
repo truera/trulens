@@ -96,6 +96,76 @@ backward compatibility.
 Call `session.force_flush()` before process exit when the application needs to
 wait for pending trace and metric exports.
 
+### Metric results as `gen_ai.evaluation.result` events
+
+Each metric result is also written as an OTEL GenAI
+[`gen_ai.evaluation.result`](https://github.com/open-telemetry/semantic-conventions/blob/v1.39.0/docs/gen-ai/gen-ai-events.md)
+span event, so tools that read the GenAI conventions can read _TruLens_ scores
+without a _TruLens_-specific mapping. No configuration is needed. The event is
+attached to the `EVAL_ROOT` span of the result, just before that span ends.
+That span links to the evaluated span through `source_span_contexts`. The
+existing `EVAL_ROOT` and `EVAL` spans and their `ai.observability.*` attributes
+are unchanged.
+
+| Event attribute | Value |
+|---|---|
+| `gen_ai.evaluation.name` | The metric name (`ai.observability.eval_root.metric_name`). |
+| `gen_ai.evaluation.score.value` | The score written to `ai.observability.eval_root.score`. Not set when the evaluation fails. |
+| `gen_ai.evaluation.explanation` | The judge's reason (an `explanation`, `explanations`, `reason`, or `reasons` metadata key). Not set when the score is aggregated over several sub-evaluations. |
+| `error.type` | The exception class name, when the evaluation fails. |
+
+`gen_ai.evaluation.score.label` is not set, because _TruLens_ scores are
+numeric. Like the rest of `gen_ai.*`, the event is at Development stability in
+the OTEL specification.
+
+The event is stored with its span in every destination: the _TruLens_ database
+(under `record["events"]`), the _Snowflake_ span proto, and OTLP exports.
+
+Metrics read the app's spans from the _TruLens_ database, so to see metric
+results in an OTLP backend such as _Jaeger_, keep the default database exporter
+and add an OTLP span processor to the tracer provider. For example, start
+_Jaeger_, which accepts OTLP gRPC on port `4317`:
+
+```shell
+docker run --rm -p 16686:16686 -p 4317:4317 jaegertracing/jaeger:latest
+```
+
+Then add the processor after the session is created:
+
+```python
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+    OTLPSpanExporter,
+)
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from trulens.core import TruSession
+
+session = TruSession()
+trace.get_tracer_provider().add_span_processor(
+    BatchSpanProcessor(OTLPSpanExporter(endpoint="http://localhost:4317"))
+)
+
+# ... record the app with `tru_app` and compute its metrics as usual ...
+tru_app.compute_feedbacks()
+session.force_flush()
+```
+
+In the _Jaeger_ UI at `http://localhost:16686`, open the trace and select an
+`EVAL_ROOT` span. Its span events (listed as logs in some _Jaeger_ versions)
+include one `gen_ai.evaluation.result` event:
+
+```text
+EVAL_ROOT
+  ai.observability.span_type = "eval_root"
+  ai.observability.eval_root.metric_name = "Groundedness"
+  ai.observability.eval_root.score = 0.99
+
+  EVENT gen_ai.evaluation.result
+    ATTRIBUTE gen_ai.evaluation.name = "Groundedness"
+    ATTRIBUTE gen_ai.evaluation.score.value = 0.99
+    ATTRIBUTE gen_ai.evaluation.explanation = "<judge's reason>"
+```
+
 ## Span type taxonomy
 
 TruLens defines a set of span types that describe the role of each span in a trace.
