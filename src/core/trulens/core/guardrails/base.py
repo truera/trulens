@@ -244,10 +244,36 @@ class block_input:
 class block_output:
     """Provides a decorator to block output based on a given feedback and threshold.
 
+    Also supports streaming (generator/async generator) functions: the
+    feedback is periodically re-evaluated against the *accumulated* output
+    so far as chunks arrive, every `check_every_n_chunks` chunks, so an
+    unsafe response can be cut off partway through rather than only being
+    caught (uselessly, since it would already be fully streamed to the
+    caller by then) after the whole thing has been generated.
+
+    !!! warning "Streaming guardrails can only block *future* chunks"
+        Once a chunk has been yielded it can't be un-sent -- if a violation
+        is detected at checkpoint N, chunks 1..N (whatever text they made
+        up) have already reached the caller. Lower `check_every_n_chunks`
+        catches problems earlier at the cost of more (typically
+        LLM-judge-backed) feedback calls during the stream; there's no
+        setting that guarantees zero unsafe output ever reaches the caller
+        for a true token-by-token stream. A final check also runs once the
+        stream ends (covering any tail shorter than `check_every_n_chunks`)
+        purely for the GUARDRAIL span's record -- by then nothing can be
+        blocked, since everything has already been yielded.
+
     Args:
         feedback: The feedback object to use for blocking. It must only take a single argument.
         threshold: The minimum feedback value required for a context to be included.
-        return_value: The value to return if the input is blocked. Defaults to None.
+        return_value: The value to return (or, for a streaming function,
+            yield once in place of further chunks) if the output is
+            blocked. Defaults to None.
+        check_every_n_chunks: For streaming (generator) functions only: how
+            often, in number of chunks yielded by the wrapped function, to
+            re-evaluate the feedback against the accumulated output so far.
+            Defaults to 20. Ignored for non-streaming functions, which are
+            only ever checked once, against the complete output.
 
     Example:
         ```python
@@ -277,6 +303,26 @@ class block_output:
                 )
                 return completion
         ```
+
+        Streaming example:
+        ```python
+        class safe_streaming_chat_app:
+            @instrument(span_type=SpanAttributes.SpanType.GENERATION)
+            @block_output(
+                feedback=feedback,
+                threshold=0.5,
+                return_value="[response withheld]",
+                check_every_n_chunks=10,
+            )
+            def chat(self, question: str):
+                for chunk in oai_client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    stream=True,
+                    messages=[{"role": "user", "content": question}],
+                ):
+                    if chunk.choices and chunk.choices[0].delta.content:
+                        yield chunk.choices[0].delta.content
+        ```
     """
 
     def __init__(
@@ -284,40 +330,96 @@ class block_output:
         feedback: core_metric.Metric,
         threshold: float,
         return_value: Optional[str] = None,
+        check_every_n_chunks: int = 20,
     ):
         self.feedback = feedback
         self.threshold = threshold
         self.return_value = return_value
+        self.check_every_n_chunks = check_every_n_chunks
+
+    def _evaluate(self, text) -> tuple:
+        """Evaluate feedback against `text`; returns (result, blocked)."""
+        result = self.feedback(text)
+        if not isinstance(result, float):
+            raise ValueError(
+                "`block_output` can only be used with feedback functions that return a float."
+            )
+        blocked = (
+            self.feedback.higher_is_better and result < self.threshold
+        ) or (not self.feedback.higher_is_better and result > self.threshold)
+        return result, blocked
+
+    def _check(self, guardrail_name: str, text) -> bool:
+        """Run one guardrail check in its own span; returns whether blocked."""
+        with _guardrail_span(guardrail_name, self.threshold) as span:
+            result, blocked = self._evaluate(text)
+            span.set_attribute(SpanAttributes.GUARDRAIL.SCORE, result)
+            span.set_attribute(SpanAttributes.GUARDRAIL.PASSED, not blocked)
+        return blocked
 
     def __call__(self, func):
         sig = inspect.signature(func)
+        guardrail_name = getattr(self.feedback, "name", func.__name__)
+
+        if inspect.isasyncgenfunction(func):
+
+            async def async_gen_wrapper(*args, **kwargs):
+                accumulated = []
+                since_last_check = 0
+                async for chunk in func(*args, **kwargs):
+                    accumulated.append(chunk)
+                    since_last_check += 1
+                    yield chunk
+                    if since_last_check >= self.check_every_n_chunks:
+                        since_last_check = 0
+                        if self._check(
+                            guardrail_name, "".join(map(str, accumulated))
+                        ):
+                            if self.return_value is not None:
+                                yield self.return_value
+                            return
+                if since_last_check:
+                    # Tail shorter than a full checkpoint: still recorded
+                    # for observability, but nothing left to block.
+                    self._check(guardrail_name, "".join(map(str, accumulated)))
+
+            async_gen_wrapper.__name__ = func.__name__
+            async_gen_wrapper.__doc__ = func.__doc__
+            async_gen_wrapper.__signature__ = sig
+            return async_gen_wrapper
+
+        if inspect.isgeneratorfunction(func):
+
+            def gen_wrapper(*args, **kwargs):
+                accumulated = []
+                since_last_check = 0
+                for chunk in func(*args, **kwargs):
+                    accumulated.append(chunk)
+                    since_last_check += 1
+                    yield chunk
+                    if since_last_check >= self.check_every_n_chunks:
+                        since_last_check = 0
+                        if self._check(
+                            guardrail_name, "".join(map(str, accumulated))
+                        ):
+                            if self.return_value is not None:
+                                yield self.return_value
+                            return
+                if since_last_check:
+                    self._check(guardrail_name, "".join(map(str, accumulated)))
+
+            gen_wrapper.__name__ = func.__name__
+            gen_wrapper.__doc__ = func.__doc__
+            gen_wrapper.__signature__ = sig
+            return gen_wrapper
 
         def wrapper(*args, **kwargs):
-            guardrail_name = getattr(self.feedback, "name", func.__name__)
-
             # Run the decorated function first; the guardrail span wraps only
             # the feedback evaluation so its duration reflects the check, not
             # the application logic.
             output = func(*args, **kwargs)
-            with _guardrail_span(guardrail_name, self.threshold) as span:
-                result = self.feedback(output)
-                if not isinstance(result, float):
-                    raise ValueError(
-                        "`block_output` can only be used with feedback functions that return a float."
-                    )
-                blocked = (
-                    self.feedback.higher_is_better and result < self.threshold
-                ) or (
-                    not self.feedback.higher_is_better
-                    and result > self.threshold
-                )
-                span.set_attribute(SpanAttributes.GUARDRAIL.SCORE, result)
-                span.set_attribute(SpanAttributes.GUARDRAIL.PASSED, not blocked)
-
-            if blocked:
-                return self.return_value
-            else:
-                return output
+            blocked = self._check(guardrail_name, output)
+            return self.return_value if blocked else output
 
         # note: the following information is manually written to the wrapper because @functools.wraps(func) causes breaking of the method.
         wrapper.__name__ = func.__name__
