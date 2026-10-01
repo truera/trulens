@@ -644,11 +644,8 @@ class Endpoint(
             return __func(*args, **kwargs), []
 
         # Check to see if this call is within another _track_costs call:
-        # Copy the dict *and* the lists it holds. A shallow copy would leave
-        # every scope sharing its parent's lists, so the appends below would
-        # land in the parent too and each nested scope would leave a callback
-        # behind in its ancestors. Every later request is then dispatched to
-        # all of those, and each one counts itself again.
+        # Copy the dict and the lists it holds. A shallow copy would share the
+        # parent's lists, so appends would leak into ancestors and inflate counts.
         endpoints = {
             callback_class: list(pairs)
             for callback_class, pairs in Endpoint._context_endpoints.get().items()

@@ -61,7 +61,8 @@ class TestNestedCostScopes:
         assert seen["before"] == 1
         assert seen["after"] == 1, (
             "the inner scope grew the parent's callback list, so the parent "
-            "counts this and every later request more than once"
+            "counts this and every later request more than once; revert the "
+            "deep-copy fix at endpoint.py:647"
         )
         assert seen["same_list"], (
             "the list object is expected to be the parent's own, since the "
