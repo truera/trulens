@@ -2976,7 +2976,13 @@ class LLMProvider(core_provider.Provider):
                 ) / (max_score_val - min_score_val)
                 scores.append(score)
 
-        score = sum(scores) / len(scores) if scores else 0
+        # Average only the key points the judge actually graded. A judge reply
+        # with no text leaves `assessment` empty and that key point out of
+        # `scores`, so a run where every reply was empty used to report 0.0,
+        # which this method's own docstring defines as "not comprehensive".
+        # Report the same sentinel `_mean_graded_score` reports instead, so a
+        # judge failure is never read as a verdict at the bottom of the scale.
+        score = _mean_graded_score(scores)
         return score, {"reasons": reasons}
 
     @deprecation_utils.method_renamed("comprehensiveness_with_cot_reasons")
