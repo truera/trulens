@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import inspect
+import itertools
+import math
 import statistics
+import threading
 from typing import ClassVar
 import unittest
 from unittest.mock import MagicMock
@@ -509,8 +512,9 @@ class TestJuryReturnFormat(unittest.TestCase):
         j.__signature__ = inspect.signature(_mock_relevance)
         _, meta = j(prompt="x", response="y")
         lines = meta["reason"].splitlines()
-        # Header + one juror score line, no indented reason lines
-        self.assertEqual(len(lines), 2)
+        # Header + reliability line + one juror score line, no indented
+        # reason lines
+        self.assertEqual(len(lines), 3)
 
     def test_tuple_result_score_extracted_correctly(self):
         p = _make_cot_provider("gpt-4o", 0.7, "ok")
@@ -629,6 +633,185 @@ class TestJuryDuplicateNames(unittest.TestCase):
         _, meta = j(prompt="x", response="y")
         self.assertIn("gpt-4o-mini[0]", meta["reason"])
         self.assertIn("gpt-4o-mini[1]", meta["reason"])
+
+
+def _make_sequence_provider(model_engine: str, scores: list[float]):
+    """Mock provider whose relevance() returns *scores* in turn.
+
+    Trials run in parallel threads, so the counter is lock-guarded. Which
+    trial gets which score is not fixed, but the set of scores is, and the
+    reliability summary depends only on that set.
+    """
+    provider = MagicMock()
+    provider.model_engine = model_engine
+    lock = threading.Lock()
+    calls = itertools.count()
+
+    def _relevance(prompt, response, **kw):
+        with lock:
+            i = next(calls)
+        return scores[i % len(scores)]
+
+    provider.relevance.side_effect = _relevance
+    provider.relevance.__signature__ = inspect.signature(_mock_relevance)
+    return provider
+
+
+class TestJuryRepeated(unittest.TestCase):
+    """Jury.repeated runs one judge n_trials times."""
+
+    def test_rejects_non_positive_trials(self):
+        p = _make_sequence_provider("gpt-4o-mini", [0.5])
+        with self.assertRaises(ValueError):
+            Jury.repeated(p, method="relevance", n_trials=0)
+
+    def test_rejects_missing_method(self):
+        p = _make_sequence_provider("gpt-4o-mini", [0.5])
+        p.relevance = None
+        with self.assertRaises(AttributeError):
+            Jury.repeated(p, method="relevance")
+
+    def test_runs_the_judge_n_trials_times(self):
+        p = _make_sequence_provider("gpt-4o-mini", [0.5])
+        j = Jury.repeated(p, method="relevance", n_trials=4)
+        j(prompt="x", response="y")
+        self.assertEqual(p.relevance.call_count, 4)
+
+    def test_default_aggregation_is_mean(self):
+        p = _make_sequence_provider("gpt-4o-mini", [0.2, 0.4, 0.6, 0.8, 1.0])
+        j = Jury.repeated(p, method="relevance")
+        score, _ = j(prompt="x", response="y")
+        self.assertAlmostEqual(score, 0.6)
+
+    def test_aggregation_option_passed_through(self):
+        p = _make_sequence_provider("gpt-4o-mini", [0.1, 0.2, 0.9])
+        j = Jury.repeated(
+            p, method="relevance", n_trials=3, aggregation="median"
+        )
+        score, _ = j(prompt="x", response="y")
+        self.assertAlmostEqual(score, 0.2)
+
+    def test_trials_labeled_by_index(self):
+        p = _make_sequence_provider("gpt-4o-mini", [0.7])
+        j = Jury.repeated(p, method="relevance", n_trials=3)
+        _, meta = j(prompt="x", response="y")
+        for i in range(3):
+            self.assertIn(f"gpt-4o-mini[{i}]", meta["reason"])
+
+    def test_exposes_wrapped_signature(self):
+        p = _make_sequence_provider("gpt-4o-mini", [0.7])
+        j = Jury.repeated(p, method="relevance", n_trials=2)
+        self.assertEqual(
+            list(j.__signature__.parameters), ["prompt", "response"]
+        )
+
+    def test_temperature_reaches_every_trial(self):
+        # Metric(implementation=jury, temperature=0.7) forwards temperature
+        # as a keyword argument; each trial must see it.
+        p = _make_sequence_provider("gpt-4o-mini", [0.7])
+        j = Jury.repeated(p, method="relevance", n_trials=3)
+        j(prompt="x", response="y", temperature=0.7)
+        for call in p.relevance.call_args_list:
+            self.assertEqual(call.kwargs.get("temperature"), 0.7)
+
+
+class TestJuryReliability(unittest.TestCase):
+    """Every Jury result carries flat reliability.* metadata."""
+
+    def _panel(self, scores, **kw):
+        providers = []
+        for i, s in enumerate(scores):
+            p = _make_provider(f"m{i}", s)
+            p.relevance.__signature__ = inspect.signature(_mock_relevance)
+            providers.append(p)
+        return Jury(providers, method="relevance", **kw)
+
+    def test_unanimous_scores_are_fully_stable(self):
+        p = _make_sequence_provider("gpt-4o-mini", [0.9])
+        _, meta = Jury.repeated(p, method="relevance", n_trials=5)(
+            prompt="x", response="y"
+        )
+        self.assertEqual(meta["reliability.n_scores"], 5)
+        self.assertEqual(meta["reliability.flip_rate"], 0.0)
+        self.assertEqual(meta["reliability.outcome_entropy"], 0.0)
+        self.assertEqual(meta["reliability.score_std"], 0.0)
+
+    def test_even_split_is_maximally_unstable(self):
+        p = _make_sequence_provider("gpt-4o-mini", [0.0, 1.0])
+        _, meta = Jury.repeated(p, method="relevance", n_trials=4)(
+            prompt="x", response="y"
+        )
+        self.assertAlmostEqual(meta["reliability.flip_rate"], 0.5)
+        self.assertAlmostEqual(meta["reliability.outcome_entropy"], 1.0)
+        self.assertAlmostEqual(meta["reliability.score_std"], 0.5)
+
+    def test_minority_share_is_the_flip_rate(self):
+        _, meta = self._panel([0.9, 0.8, 0.7, 0.6, 0.1])(
+            prompt="x", response="y"
+        )
+        self.assertAlmostEqual(meta["reliability.flip_rate"], 0.2)
+        expected_entropy = -(0.8 * math.log2(0.8) + 0.2 * math.log2(0.2))
+        self.assertAlmostEqual(
+            meta["reliability.outcome_entropy"], expected_entropy
+        )
+
+    def test_threshold_sets_the_pass_fail_split(self):
+        scores = [0.55, 0.65, 0.75]
+        _, at_half = self._panel(scores)(prompt="x", response="y")
+        _, at_point_seven = self._panel(scores, threshold=0.7)(
+            prompt="x", response="y"
+        )
+        self.assertEqual(at_half["reliability.flip_rate"], 0.0)
+        self.assertAlmostEqual(at_point_seven["reliability.flip_rate"], 1 / 3)
+
+    def test_scores_listed_in_juror_order(self):
+        _, meta = self._panel([0.3, 0.9, 0.6])(prompt="x", response="y")
+        self.assertEqual(meta["reliability.scores"], [0.3, 0.9, 0.6])
+
+    def test_n_scores_counts_only_jurors_that_scored(self):
+        ok = _make_provider("ok", 0.8)
+        raises = _make_failing_provider("raises")
+        unparsable = _make_unparsable_provider("unparsable")
+        for p in (ok, raises, unparsable):
+            p.relevance.__signature__ = inspect.signature(_mock_relevance)
+        _, meta = Jury([ok, raises, unparsable], method="relevance")(
+            prompt="x", response="y"
+        )
+        self.assertEqual(meta["reliability.n_scores"], 1)
+        self.assertEqual(meta["reliability.scores"], [0.8])
+
+    def test_keys_are_flat_and_typed(self):
+        # Nested dicts would collapse into one JSON string on the eval span;
+        # flat keys keep their types.
+        _, meta = self._panel([0.4, 0.8])(prompt="x", response="y")
+        reliability = {
+            k: v for k, v in meta.items() if k.startswith("reliability.")
+        }
+        self.assertEqual(
+            set(reliability),
+            {
+                "reliability.n_scores",
+                "reliability.scores",
+                "reliability.score_std",
+                "reliability.flip_rate",
+                "reliability.outcome_entropy",
+            },
+        )
+        self.assertIsInstance(reliability["reliability.n_scores"], int)
+        self.assertIsInstance(reliability["reliability.scores"], list)
+        for key in (
+            "reliability.score_std",
+            "reliability.flip_rate",
+            "reliability.outcome_entropy",
+        ):
+            self.assertIsInstance(reliability[key], float)
+
+    def test_reason_carries_a_reliability_line(self):
+        _, meta = self._panel([0.0, 1.0])(prompt="x", response="y")
+        self.assertIn(
+            "Reliability: 2 scores, std 0.500, flip rate 0.500, entropy 1.000",
+            meta["reason"].splitlines(),
+        )
 
 
 if __name__ == "__main__":

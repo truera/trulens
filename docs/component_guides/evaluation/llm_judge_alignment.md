@@ -552,6 +552,31 @@ large judge and reduced intra-model bias in several studied settings
 hypothesis, not a guarantee: validate both the aggregate and individual jurors
 against the same human labels before deploying the panel.
 
+A single judge is also noisy on its own: given identical inputs at non-zero
+temperature, it does not always return the same verdict
+([arXiv:2606.13685](https://arxiv.org/abs/2606.13685)).
+[`Jury.repeated`][trulens.feedback.jury.Jury.repeated] runs one judge several
+times and aggregates the trials. Judge methods and `Metric` default to
+`temperature=0.0`, so set the temperature on the `Metric` to sample distinct
+verdicts:
+
+```python
+from trulens.core import Metric
+from trulens.feedback import Jury
+
+judge = Jury.repeated(judge_a, method="relevance", n_trials=5)
+metric = (
+    Metric(implementation=judge, name="Relevance (5 trials)", temperature=0.7)
+    .on_input()
+    .on_output()
+)
+```
+
+Every `Jury` result, repeated or mixed, also records `reliability.n_scores`,
+`reliability.scores`, `reliability.score_std`, `reliability.flip_rate`, and
+`reliability.outcome_entropy` as eval span metadata. A high flip rate means a
+pass/fail gate built on one draw would often change on re-run.
+
 !!! warning "Limit claims to represented data"
 
     Do not claim one judge is best outside the domains, slices, languages, and
