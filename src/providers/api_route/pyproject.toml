@@ -21,4 +21,3 @@ trulens-providers-openai = { version = "^2.0.0" }
 [tool.poetry.group.dev.dependencies]
 trulens-providers-openai = { path = "../openai" }
 pytest = ">=7"
-
