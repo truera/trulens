@@ -144,6 +144,15 @@ class GenAIEvents:
     RETRIEVAL_DOCUMENTS = GEN_AI_SCOPE + ".retrieval.documents"
     """Span event emitted for retrieved documents content."""
 
+    EVALUATION_RESULT = GEN_AI_SCOPE + ".evaluation.result"
+    """Span event emitted for the result of one metric (feedback) evaluation.
+
+    TruLens adds it to the EVAL_ROOT span of each metric result. Defined in
+    OTEL GenAI semantic conventions v1.39.0 and later, at Development
+    stability. See
+    https://github.com/open-telemetry/semantic-conventions/blob/v1.39.0/docs/gen-ai/gen-ai-events.md
+    """
+
     # Backward-compatible event name aliases
     PROMPT = CLIENT_INFERENCE_OPERATION_DETAILS
     CHOICE = CLIENT_INFERENCE_OPERATION_DETAILS
@@ -166,6 +175,21 @@ class GenAIEvents:
 
         DOCUMENTS = GEN_AI_SCOPE + ".retrieval.documents"
         """Retrieved documents attribute in a retrieval event."""
+
+        EVALUATION_NAME = GEN_AI_SCOPE + ".evaluation.name"
+        """Metric name attribute in a ``gen_ai.evaluation.result`` event."""
+
+        EVALUATION_SCORE_VALUE = GEN_AI_SCOPE + ".evaluation.score.value"
+        """Numeric score attribute in a ``gen_ai.evaluation.result`` event."""
+
+        EVALUATION_SCORE_LABEL = GEN_AI_SCOPE + ".evaluation.score.label"
+        """Human-readable score label in a ``gen_ai.evaluation.result`` event.
+
+        TruLens scores are numeric, so TruLens does not set this attribute.
+        """
+
+        EVALUATION_EXPLANATION = GEN_AI_SCOPE + ".evaluation.explanation"
+        """Free-form score explanation in a ``gen_ai.evaluation.result`` event."""
 
         # Backward-compatible attribute key aliases
         PROMPT_TEXT = GEN_AI_SCOPE + ".input.messages"
