@@ -110,9 +110,9 @@ are unchanged.
 | Event attribute | Value |
 |---|---|
 | `gen_ai.evaluation.name` | The metric name (`ai.observability.eval_root.metric_name`). |
-| `gen_ai.evaluation.score.value` | The score written to `ai.observability.eval_root.score`. Not set when the evaluation fails. |
-| `gen_ai.evaluation.explanation` | The judge's reason (an `explanation`, `explanations`, `reason`, or `reasons` metadata key). Not set when the score is aggregated over several sub-evaluations. |
-| `error.type` | The exception class name, when the evaluation fails. |
+| `gen_ai.evaluation.score.value` | The score written to `ai.observability.eval_root.score`. Not set when the evaluation fails or the score is not a number. |
+| `gen_ai.evaluation.explanation` | The judge's reason (an `explanation`, `explanations`, `reason`, or `reasons` metadata key), converted the same way as `ai.observability.eval.explanation`. Not set when the score is aggregated over several sub-evaluations. |
+| `error.type` | The exception class name, when the evaluation fails. `non_numeric_score` when a custom aggregator returns a score that is not a number. |
 
 `gen_ai.evaluation.score.label` is not set, because _TruLens_ scores are
 numeric. Like the rest of `gen_ai.*`, the event is at Development stability in

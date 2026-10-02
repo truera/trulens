@@ -4,7 +4,6 @@ from collections import defaultdict
 import contextvars
 from dataclasses import dataclass
 import itertools
-import json
 import logging
 import numbers
 from typing import (
@@ -20,6 +19,7 @@ from typing import (
 from opentelemetry import trace
 from opentelemetry.trace import INVALID_SPAN_ID
 from opentelemetry.trace.span import Span
+from opentelemetry.util.types import AttributeValue
 import pandas as pd
 from trulens.core.database.base import DB
 from trulens.core.feedback import endpoint as core_endpoint
@@ -35,6 +35,9 @@ except ImportError:
     from trulens.core.feedback.feedback import Feedback as Metric
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
+from trulens.experimental.otel_tracing.core.span import (
+    _convert_to_valid_span_attribute_type,
+)
 from trulens.experimental.otel_tracing.core.span import (
     set_function_call_attributes,
 )
@@ -52,6 +55,10 @@ _logger = logging.getLogger(__name__)
 
 
 _EXPLANATION_KEYS = ["explanation", "explanations", "reason", "reasons"]
+
+NON_NUMERIC_SCORE_ERROR_TYPE = "non_numeric_score"
+"""`error.type` of a `gen_ai.evaluation.result` event whose score is not a
+number, for example when a custom feedback aggregator returns a non-number."""
 
 
 # If we could just have `opentelemetry.sdk.trace.ReadableSpan` it would be
@@ -1037,7 +1044,7 @@ def _add_evaluation_result_event(
     eval_root_span: Span,
     feedback_name: str,
     score: Optional[float] = None,
-    explanation: Optional[str] = None,
+    explanation: Optional[AttributeValue] = None,
     error: Optional[BaseException] = None,
 ) -> None:
     """Add an OTEL GenAI `gen_ai.evaluation.result` event to an EVAL_ROOT span.
@@ -1052,7 +1059,8 @@ def _add_evaluation_result_event(
         eval_root_span: The EVAL_ROOT span of the metric result.
         feedback_name: Name of the metric.
         score: The score written to the EVAL_ROOT span. Omitted on failure
-            or when it is not a number.
+            or when it is not a number. A non-number score sets `error.type`
+            to `NON_NUMERIC_SCORE_ERROR_TYPE`.
         explanation: The judge's explanation of the score, if there is one.
         error: The exception that made the evaluation fail, if any.
     """
@@ -1061,6 +1069,10 @@ def _add_evaluation_result_event(
         attributes[GenAIEvents.EventAttributes.EVALUATION_SCORE_VALUE] = float(
             score
         )
+    elif error is None:
+        # A custom aggregator can return a non-number. Mark the event so a
+        # consumer can tell this case apart from a lost result.
+        attributes[ErrorAttributes.TYPE] = NON_NUMERIC_SCORE_ERROR_TYPE
     if explanation is not None:
         attributes[GenAIEvents.EventAttributes.EVALUATION_EXPLANATION] = (
             explanation
@@ -1072,7 +1084,9 @@ def _add_evaluation_result_event(
     )
 
 
-def _explanation_from_metadata(metadata: Dict[str, Any]) -> Optional[str]:
+def _explanation_from_metadata(
+    metadata: Dict[str, Any],
+) -> Optional[AttributeValue]:
     """Get the judge's explanation from feedback function metadata.
 
     Uses the same keys and precedence as the `EVAL.EXPLANATION` span
@@ -1082,20 +1096,14 @@ def _explanation_from_metadata(metadata: Dict[str, Any]) -> Optional[str]:
         metadata: Metadata returned by the feedback function.
 
     Returns:
-        The explanation as a string, or None if there is none.
+        The explanation, converted the same way as the `EVAL.EXPLANATION`
+        span attribute, or None if there is none.
     """
     explanation = None
     for k, v in metadata.items():
         if k in _EXPLANATION_KEYS and v is not None:
-            explanation = v if isinstance(v, str) else _stringify(v)
+            explanation = _convert_to_valid_span_attribute_type(v)
     return explanation
-
-
-def _stringify(value: Any) -> str:
-    try:
-        return json.dumps(value)
-    except Exception:
-        return str(value)
 
 
 def _call_feedback_function_under_eval_span(
@@ -1104,7 +1112,7 @@ def _call_feedback_function_under_eval_span(
     eval_root_span: Span,
     is_only_child: bool,
     eval_child_idx: int,
-) -> Tuple[float, Optional[str]]:
+) -> Tuple[float, Optional[AttributeValue]]:
     """
     Call a feedback function with the provided kwargs and return the score.
 

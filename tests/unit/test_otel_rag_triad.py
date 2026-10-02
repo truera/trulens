@@ -1,7 +1,6 @@
 from typing import List
 
 import numpy as np
-from opentelemetry import trace
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
@@ -15,6 +14,10 @@ from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.exporter import (
     utils as exporter_utils,
 )
+from trulens.experimental.otel_tracing.core.session import (
+    _set_up_tracer_provider,
+)
+from trulens.feedback.computer import NON_NUMERIC_SCORE_ERROR_TYPE
 from trulens.otel.semconv.trace import ErrorAttributes
 from trulens.otel.semconv.trace import GenAIEvents
 from trulens.otel.semconv.trace import SpanAttributes
@@ -220,16 +223,51 @@ def _evaluation_result_events(events) -> List[dict]:
     ]
 
 
+def _create_single_metric_app(app_name: str, metric: Metric) -> TruApp:
+    app = _RAGApp()
+    tru_app = TruApp(
+        app,
+        app_name=app_name,
+        app_version="v1",
+        feedbacks=[metric],
+    )
+    tru_app.stop_evaluator()
+    with tru_app:
+        app.query("Who is the cutest baby in the world?")
+    TruSession().force_flush()
+    return tru_app
+
+
+class _BadStr:
+    """Object whose `__str__` raises, like a broken judge result."""
+
+    def __str__(self) -> str:
+        raise RuntimeError("boom")
+
+
 @pytest.mark.optional
 class TestOtelEvaluationResultEvent(OtelTestCase):
+    exporter: InMemorySpanExporter
+    span_processor: SimpleSpanProcessor
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        # Capture the spans as the SDK hands them to any exporter, next to the
+        # TruLens database exporter that the session already uses. The SDK
+        # cannot remove a span processor, so add one for the whole class.
+        cls.exporter = InMemorySpanExporter()
+        cls.span_processor = SimpleSpanProcessor(cls.exporter)
+        _set_up_tracer_provider().add_span_processor(cls.span_processor)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.span_processor.shutdown()
+        super().tearDownClass()
+
     def setUp(self) -> None:
         super().setUp()
-        # Capture the spans as the SDK hands them to any exporter, next to the
-        # TruLens database exporter that the session already uses.
-        self.exporter = InMemorySpanExporter()
-        trace.get_tracer_provider().add_span_processor(
-            SimpleSpanProcessor(self.exporter)
-        )
+        self.exporter.clear()
 
     def _finished_eval_root_spans(self) -> list:
         return [
@@ -408,26 +446,17 @@ class TestOtelEvaluationResultEvent(OtelTestCase):
         def failing_metric(prompt: str, response: str) -> float:
             raise ValueError("judge unavailable")
 
-        app = _RAGApp()
-        tru_app = TruApp(
-            app,
-            app_name="RAG Failing Metric App",
-            app_version="v1",
-            feedbacks=[
-                Metric(
-                    implementation=failing_metric,
-                    name="Answer Relevance",
-                    selectors={
-                        "prompt": Selector.select_record_input(),
-                        "response": Selector.select_record_output(),
-                    },
-                )
-            ],
+        tru_app = _create_single_metric_app(
+            "RAG Failing Metric App",
+            Metric(
+                implementation=failing_metric,
+                name="Answer Relevance",
+                selectors={
+                    "prompt": Selector.select_record_input(),
+                    "response": Selector.select_record_output(),
+                },
+            ),
         )
-        tru_app.stop_evaluator()
-        with tru_app:
-            app.query("Who is the cutest baby in the world?")
-        TruSession().force_flush()
         tru_app.compute_feedbacks(raise_error_on_no_feedbacks_computed=False)
         TruSession().force_flush()
 
@@ -445,3 +474,75 @@ class TestOtelEvaluationResultEvent(OtelTestCase):
         self.assertEqual("ValueError", attributes[ErrorAttributes.TYPE])
         self.assertNotIn(_EVENT_ATTRIBUTES.EVALUATION_SCORE_VALUE, attributes)
         self.assertNotIn(_EVENT_ATTRIBUTES.EVALUATION_EXPLANATION, attributes)
+
+    def _single_event_attributes(self) -> dict:
+        eval_roots = self._finished_eval_root_spans()
+        self.assertEqual(1, len(eval_roots))
+        self.assertNotIn(
+            SpanAttributes.EVAL_ROOT.ERROR, eval_roots[0].attributes
+        )
+        events = _evaluation_result_events(
+            {"name": e.name, "attributes": dict(e.attributes)}
+            for e in eval_roots[0].events
+        )
+        self.assertEqual(1, len(events))
+        return events[0]["attributes"]
+
+    def test_explanation_with_broken_str_does_not_fail_metric(self) -> None:
+        def metric_with_bad_reason(prompt: str, response: str):
+            return 0.7, {"reason": _BadStr()}
+
+        tru_app = _create_single_metric_app(
+            "RAG Bad Reason App",
+            Metric(
+                implementation=metric_with_bad_reason,
+                name="Answer Relevance",
+                selectors={
+                    "prompt": Selector.select_record_input(),
+                    "response": Selector.select_record_output(),
+                },
+            ),
+        )
+        tru_app.compute_feedbacks()
+        TruSession().force_flush()
+
+        for span in self.exporter.get_finished_spans():
+            self.assertNotIn(SpanAttributes.EVAL.ERROR, span.attributes)
+        attributes = self._single_event_attributes()
+        self.assertEqual(
+            0.7, attributes[_EVENT_ATTRIBUTES.EVALUATION_SCORE_VALUE]
+        )
+        self.assertEqual(
+            "<_BadStr>", attributes[_EVENT_ATTRIBUTES.EVALUATION_EXPLANATION]
+        )
+        self.assertNotIn(ErrorAttributes.TYPE, attributes)
+
+    def test_non_numeric_aggregate_sets_error_type(self) -> None:
+        context_relevance_results = [0.25, 1, 0.75, 0]
+
+        def mock_context_relevance(question: str, context: str) -> float:
+            return context_relevance_results.pop(0)
+
+        tru_app = _create_single_metric_app(
+            "RAG Non Numeric Aggregate App",
+            Metric(
+                implementation=mock_context_relevance,
+                name="Context Relevance",
+                agg=lambda scores: "not a number",
+                selectors={
+                    "question": Selector.select_record_input(),
+                    "context": Selector.select_context(collect_list=False),
+                },
+            ),
+        )
+        tru_app.compute_feedbacks(raise_error_on_no_feedbacks_computed=False)
+        TruSession().force_flush()
+
+        attributes = self._single_event_attributes()
+        self.assertEqual(
+            "Context Relevance", attributes[_EVENT_ATTRIBUTES.EVALUATION_NAME]
+        )
+        self.assertEqual(
+            NON_NUMERIC_SCORE_ERROR_TYPE, attributes[ErrorAttributes.TYPE]
+        )
+        self.assertNotIn(_EVENT_ATTRIBUTES.EVALUATION_SCORE_VALUE, attributes)
