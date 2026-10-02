@@ -217,9 +217,9 @@ class Metric(feedback_schema.FeedbackDefinition):
         examples: Optional[List[Tuple]] = None,
         criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: Optional[int] = None,
+        max_score_val: Optional[int] = None,
+        temperature: Optional[float] = None,
         groundedness_configs: Optional[GroundednessConfigs] = None,
         enable_trace_compression: Optional[bool] = None,
         metric_type: Optional[str] = None,
@@ -238,9 +238,12 @@ class Metric(feedback_schema.FeedbackDefinition):
             examples: User-supplied examples for this metric.
             criteria: Criteria for the metric evaluation.
             additional_instructions: Custom instructions for the metric.
-            min_score_val: Minimum score value (default: 0).
-            max_score_val: Maximum score value (default: 3).
-            temperature: Temperature parameter for LLM-based metrics (default: 0.0).
+            min_score_val: Minimum score value (default: None, so the
+                implementation's own default is used).
+            max_score_val: Maximum score value (default: None, so the
+                implementation's own default is used).
+            temperature: Temperature parameter for LLM-based metrics (default:
+                None, so the implementation's own default is used).
             groundedness_configs: Optional groundedness configuration.
             enable_trace_compression: Whether to compress trace data.
             metric_type: Implementation identifier (e.g., "relevance", "groundedness").
@@ -591,27 +594,32 @@ class Metric(feedback_schema.FeedbackDefinition):
             raise ValueError(
                 f"Metric arguments cannot be both selected and bound: {sorted(overlap)}"
             )
-        kwargs = {**self.implementation_kwargs, **kwargs}
-        if self.examples is not None:
-            kwargs["examples"] = self.examples
-        if self.criteria is not None:
-            kwargs["criteria"] = self.criteria
-        if self.additional_instructions is not None:
-            kwargs["additional_instructions"] = self.additional_instructions
-        if self.min_score_val is not None:
-            kwargs["min_score_val"] = self.min_score_val
-        if self.max_score_val is not None:
-            kwargs["max_score_val"] = self.max_score_val
-        if self.temperature is not None:
-            kwargs["temperature"] = self.temperature
-        if self.groundedness_configs is not None:
-            kwargs["groundedness_configs"] = self.groundedness_configs
-        if self.enable_trace_compression is not None:
-            kwargs["enable_trace_compression"] = self.enable_trace_compression
+        field_kwargs = {}
+        for attr in (
+            "examples",
+            "criteria",
+            "additional_instructions",
+            "min_score_val",
+            "max_score_val",
+            "temperature",
+            "groundedness_configs",
+            "enable_trace_compression",
+        ):
+            val = getattr(self, attr, None)
+            if val is not None:
+                field_kwargs[attr] = val
 
-        # Filter out unexpected keyword arguments
+        kwargs = {**field_kwargs, **self.implementation_kwargs, **kwargs}
+
+        # Filter out unexpected keyword arguments and skip None values so
+        # that None consistently means "use the implementation default"
+        # across all layers.
         sig = signature(self.imp)
-        valid_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
+        valid_kwargs = {
+            k: v
+            for k, v in kwargs.items()
+            if k in sig.parameters and v is not None
+        }
         return self.imp(*args, **valid_kwargs)
 
     def aggregate(
