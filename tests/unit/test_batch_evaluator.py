@@ -5,6 +5,7 @@ import pytest
 from trulens.core import BatchEvaluator
 from trulens.core import Metric
 from trulens.core import Selector
+from trulens.feedback.llm_provider import UNPARSABLE_SCORE
 
 # --- Metric implementations used across tests (module-level so they serialize) ---
 
@@ -440,3 +441,65 @@ def test_custom_agg_failure_yields_nan_with_error_in_explanation():
     assert "ValueError: boom" in explanation["error"]
     # The raw per-item scores remain inspectable despite the failure.
     assert explanation["scores"] == [1.0, 0.0]
+
+
+# --- Sentinel (UNPARSABLE_SCORE) handling ---
+
+
+def sentinel_metric(text: str) -> float:
+    """Always return the unparsable-score sentinel, as a failed judge would."""
+    return UNPARSABLE_SCORE
+
+
+def mixed_sentinel_metric(text: str) -> float:
+    """Return a valid score for 'good' inputs, sentinel for everything else."""
+    return 1.0 if text == "good" else UNPARSABLE_SCORE
+
+
+def test_all_sentinel_scores_return_sentinel_not_average():
+    """When every per-combination score is UNPARSABLE_SCORE the aggregate must
+    also be UNPARSABLE_SCORE, not a plausible average like 0.0 or -0.33."""
+    metric = Metric(
+        name="judge",
+        implementation=sentinel_metric,
+        selectors={
+            "text": Selector.from_column("texts", collect_list=False),
+        },
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+    res = ev.evaluate([{"texts": ["a", "b", "c"]}])
+
+    assert res["judge"].iloc[0] == UNPARSABLE_SCORE
+    explanation = res["judge_explanation"].iloc[0]
+    assert "unparsable" in explanation["error"].lower()
+
+
+def test_sentinel_excluded_from_average_of_mixed_scores():
+    """A mix of valid scores and UNPARSABLE_SCORE sentinels must average only
+    the valid scores; e.g. [1.0, 1.0, -1.0] should yield 1.0, not 0.33."""
+    metric = Metric(
+        name="judge",
+        implementation=mixed_sentinel_metric,
+        selectors={
+            "text": Selector.from_column("texts", collect_list=False),
+        },
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+    # Two "good" rows produce 1.0; one other row produces UNPARSABLE_SCORE.
+    res = ev.evaluate([{"texts": ["good", "good", "bad"]}])
+
+    assert res["judge"].iloc[0] == pytest.approx(1.0)
+
+
+def test_single_sentinel_score_propagates_unchanged():
+    """A metric that returns UNPARSABLE_SCORE for a scalar column (one score,
+    no aggregation needed) must pass the sentinel through as-is."""
+    metric = Metric(
+        name="judge",
+        implementation=sentinel_metric,
+        selectors={"text": Selector.from_column("text")},
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+    res = ev.evaluate([{"text": "anything"}])
+
+    assert res["judge"].iloc[0] == UNPARSABLE_SCORE
