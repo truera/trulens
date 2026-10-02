@@ -152,8 +152,8 @@ f_conversation_coherence = Metric(
 ```
 
 The conversation-level metrics are `coherence_across_turns`,
-`conversation_helpfulness`, `topic_adherence`, and `agent_goal_accuracy`. Each
-one has a matching `_with_cot_reasons` variant.
+`conversation_helpfulness`, `topic_adherence`, `agent_goal_accuracy`, and
+the deterministic `conversation_repetition` (no LLM calls). Each of the LLM-based ones has a matching `_with_cot_reasons` variant.
 
 ## Attach both metrics to an app
 
