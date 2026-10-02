@@ -709,7 +709,9 @@ class TestJuryHeterogeneousMethods(unittest.TestCase):
         """Juror 0 should call relevance, juror 1 should call coherence."""
         p0 = _make_multi_method_provider("m0", relevance=1.0, coherence=0.0)
         p1 = _make_multi_method_provider("m1", relevance=0.0, coherence=1.0)
-        j = Jury([p0, p1], method=["relevance", "coherence"], aggregation="mean")
+        j = Jury(
+            [p0, p1], method=["relevance", "coherence"], aggregation="mean"
+        )
         j.__signature__ = inspect.signature(_mock_relevance)
         score, _ = j(prompt="x", response="y")
         # mean([1.0, 1.0]) = 1.0 — would be 0.5 if methods were swapped
@@ -800,3 +802,4 @@ class TestJuryHeterogeneousMethods(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+    
