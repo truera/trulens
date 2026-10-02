@@ -1,15 +1,21 @@
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = ["poetry-core"]
+requires = [
+  "poetry-core",
+]
 
 [tool.poetry]
 name = "trulens-providers-api-route"
 version = "2.15.0"
 description = "API Route gateway integration for TruLens feedback evaluation."
-authors = ["Snowflake Inc. <ml-observability-wg-dl@snowflake.com>"]
+authors = [
+  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
+]
 license = "MIT"
 readme = "README.md"
-packages = [{ include = "trulens" }]
+packages = [
+  { include = "trulens" },
+]
 homepage = "https://trulens.org/"
 documentation = "https://trulens.org/getting_started/"
 repository = "https://github.com/truera/trulens"
