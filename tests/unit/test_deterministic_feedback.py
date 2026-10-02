@@ -75,14 +75,21 @@ class TestConversationRepetition:
         assert score < 0.5
         assert meta["num_assistant_turns"] == 2
 
-    def test_no_assistant_turns_scores_one(self):
+    def test_no_assistant_turns_returns_none(self):
         score, meta = conversation_repetition([{"input": "hi"}])
-        assert score == 1.0
+        assert score is None
         assert meta["num_assistant_turns"] == 0
 
-    def test_empty_conversation_scores_one(self):
-        score, _ = conversation_repetition([])
-        assert score == 1.0
+    def test_empty_conversation_returns_none(self):
+        score, meta = conversation_repetition([])
+        assert score is None
+        assert meta["num_assistant_turns"] == 0
+
+    def test_transcript_without_assistant_turns_returns_none(self):
+        transcript = "USER: hi\nUSER: hello"
+        score, meta = conversation_repetition(transcript)
+        assert score is None
+        assert meta["num_assistant_turns"] == 0
 
     def test_custom_fallback_phrases(self):
         records = _records([
