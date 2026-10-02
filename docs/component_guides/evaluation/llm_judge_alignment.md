@@ -573,9 +573,20 @@ metric = (
 ```
 
 Every `Jury` result, repeated or mixed, also records `reliability.n_scores`,
-`reliability.scores`, `reliability.score_std`, `reliability.flip_rate`, and
-`reliability.outcome_entropy` as eval span metadata. A high flip rate means a
-pass/fail gate built on one draw would often change on re-run.
+`reliability.scores`, `reliability.score_std`, `reliability.flip_rate`,
+`reliability.outcome_entropy`, and `reliability.temperature` as eval span
+metadata. `reliability.flip_rate` is the share of trials that disagree with
+the majority pass/fail verdict, from 0.0 (unanimous) to 0.5 (an even split).
+
+!!! warning "Sample the trials"
+
+    At temperature 0 a repeated judge is not sampled, so its reliability
+    numbers reflect only nondeterminism in the serving stack. Some judges
+    still flip at temperature 0, so a nonzero flip rate is a real signal, but
+    a flip rate of 0 does not show the judge is stable. `Jury.repeated` logs a
+    warning in that case. The same study found about 11 trials are needed for
+    a majority verdict to match a 50-trial reference with 95 percent
+    probability; the default of 5 trades some of that for cost.
 
 !!! warning "Limit claims to represented data"
 

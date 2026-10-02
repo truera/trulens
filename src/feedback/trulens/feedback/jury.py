@@ -61,11 +61,14 @@ class Jury:
     - ``reliability.n_scores``: jurors that returned a score.
     - ``reliability.scores``: those scores, in juror order.
     - ``reliability.score_std``: population standard deviation of the scores.
-    - ``reliability.flip_rate``: share of scores on the minority side of
-      *threshold*, i.e. how often a pass/fail gate built on one juror would
-      disagree with the majority.
+    - ``reliability.flip_rate``: share of scores that disagree with the
+      majority pass/fail verdict at *threshold*, ``1 - max(counts) / n``. This
+      is the flip rate defined in arXiv:2606.13685, from 0.0 (unanimous) to
+      0.5 (even split).
     - ``reliability.outcome_entropy``: entropy in bits of the pass/fail split,
       from 0.0 (unanimous) to 1.0 (even split).
+    - ``reliability.temperature``: the ``temperature`` passed to the jurors,
+      or ``None`` when none was passed.
 
     A juror counts as failed when it raises *or* when its judge reply carried
     no parseable score, which the providers report as
@@ -163,6 +166,11 @@ class Jury:
         self.__signature__ = inspect.signature(getattr(jurors[0], method))
         self.__name__ = f"jury_{method}"
 
+        # Set by ``repeated``: every juror is the same judge, so trials only
+        # differ when they are sampled.
+        self._repeated = False
+        self._warned_unsampled = False
+
     @classmethod
     def repeated(
         cls,
@@ -179,8 +187,18 @@ class Jury:
         Repeating a single judge measures its run-to-run variance, which a
         single draw hides. Judge methods and ``Metric`` both default to
         ``temperature=0.0``; set a non-zero temperature on the ``Metric`` to
-        sample distinct verdicts, and it is passed to every trial. Trials are
-        labeled ``model[0]``, ``model[1]``, ... in the reason text.
+        sample distinct verdicts, and it is passed to every trial. At
+        temperature 0 the trials are not sampled, so ``reliability.*`` then
+        reflects only nondeterminism in the serving stack. A nonzero flip
+        rate is still a real signal, but a zero does not show the judge is
+        stable, and the jury logs a warning once. ``reliability.temperature``
+        records the temperature the trials ran at.
+
+        With ``n_trials >= 2`` the trials are labeled ``model[0]``,
+        ``model[1]``, ... in the reason text. arXiv:2606.13685 found about 11
+        trials are needed for a majority verdict to match a 50-trial
+        reference with 95 percent probability, so raise ``n_trials`` when the
+        verdict matters more than the cost.
 
         Example::
 
@@ -197,13 +215,15 @@ class Jury:
         """
         if n_trials < 1:
             raise ValueError(f"n_trials must be >= 1, got {n_trials}.")
-        return cls(
+        jury = cls(
             jurors=[judge] * n_trials,
             method=method,
             aggregation=aggregation,
             threshold=threshold,
             max_workers=max_workers,
         )
+        jury._repeated = True
+        return jury
 
     # ------------------------------------------------------------------
     # Public interface
@@ -214,11 +234,33 @@ class Jury:
     ) -> tuple[float, dict[str, Any]]:
         """Evaluate the same arguments in parallel across all jurors.
 
-        Always returns ``(score, {"reason": ...})``, matching the
-        ``_with_cot_reasons`` convention. Per-juror scores and any CoT
-        explanations are embedded in the reason string so they appear in
-        OTEL spans and the dashboard automatically.
+        Always returns ``(score, {"reason": ..., "reliability.*": ...})``,
+        matching the ``_with_cot_reasons`` convention. Per-juror scores and
+        any CoT explanations are embedded in the reason string so they appear
+        in OTEL spans and the dashboard automatically. The ``reliability.*``
+        keys are described on the class.
         """
+        temperature = kwargs.get("temperature")
+        if temperature is not None:
+            temperature = float(temperature)
+        if (
+            self._repeated
+            and len(self._jurors) > 1
+            and not temperature
+            and not self._warned_unsampled
+        ):
+            self._warned_unsampled = True
+            logger.warning(
+                "Jury %r repeats one judge %d times at temperature %s, so "
+                "the trials are not sampled and reliability.* reflects only "
+                "serving nondeterminism. A flip rate of 0 here does not show "
+                "the judge is stable. Set a non-zero temperature on the "
+                "Metric to sample the trials.",
+                self.__name__,
+                len(self._jurors),
+                temperature,
+            )
+
         results: dict[int, tuple[float, str | None]] = {}
 
         with ThreadPoolExecutor(max_workers=self._max_workers) as executor:
@@ -277,6 +319,7 @@ class Jury:
         reliability = _reliability_summary(
             [scores_by_idx[idx] for idx in ordered_idxs], self._threshold
         )
+        reliability["reliability.temperature"] = temperature
 
         lines = [
             f"Aggregation: {self._aggregation} → {agg_score:.3f}",
@@ -361,8 +404,8 @@ def _reliability_summary(
     """Reliability signals over the surviving juror scores.
 
     ``flip_rate`` and ``outcome_entropy`` use the pass/fail view of the scores
-    (each binarised at *threshold*), so they describe how often a pass/fail
-    gate built on one juror would change between jurors or re-runs.
+    (each binarised at *threshold*). ``flip_rate`` is the share of scores
+    that disagree with the majority verdict, as defined in arXiv:2606.13685.
     """
     n = len(scores)
     n_pass = sum(1 for s in scores if s >= threshold)

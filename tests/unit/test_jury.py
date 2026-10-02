@@ -726,10 +726,10 @@ class TestJuryReliability(unittest.TestCase):
             providers.append(p)
         return Jury(providers, method="relevance", **kw)
 
-    def test_unanimous_scores_are_fully_stable(self):
+    def test_unanimous_sampled_trials_report_zero_dispersion(self):
         p = _make_sequence_provider("gpt-4o-mini", [0.9])
         _, meta = Jury.repeated(p, method="relevance", n_trials=5)(
-            prompt="x", response="y"
+            prompt="x", response="y", temperature=0.7
         )
         self.assertEqual(meta["reliability.n_scores"], 5)
         self.assertEqual(meta["reliability.flip_rate"], 0.0)
@@ -795,8 +795,10 @@ class TestJuryReliability(unittest.TestCase):
                 "reliability.score_std",
                 "reliability.flip_rate",
                 "reliability.outcome_entropy",
+                "reliability.temperature",
             },
         )
+        self.assertIsNone(reliability["reliability.temperature"])
         self.assertIsInstance(reliability["reliability.n_scores"], int)
         self.assertIsInstance(reliability["reliability.scores"], list)
         for key in (
@@ -812,6 +814,54 @@ class TestJuryReliability(unittest.TestCase):
             "Reliability: 2 scores, std 0.500, flip rate 0.500, entropy 1.000",
             meta["reason"].splitlines(),
         )
+
+
+class TestJuryTemperature(unittest.TestCase):
+    """A repeated judge only samples its trials at non-zero temperature."""
+
+    _LOGGER = "trulens.feedback.jury"
+
+    def test_temperature_recorded_as_float(self):
+        p = _make_sequence_provider("gpt-4o-mini", [0.7])
+        _, meta = Jury.repeated(p, method="relevance", n_trials=2)(
+            prompt="x", response="y", temperature=1
+        )
+        self.assertEqual(meta["reliability.temperature"], 1.0)
+        self.assertIsInstance(meta["reliability.temperature"], float)
+
+    def test_repeated_at_temperature_zero_warns_once(self):
+        # Metric passes temperature=0.0 by default, so this is the case a
+        # caller hits without opting in to sampling.
+        p = _make_sequence_provider("gpt-4o-mini", [0.8])
+        j = Jury.repeated(p, method="relevance", n_trials=5)
+        with self.assertLogs(self._LOGGER, level="WARNING") as logs:
+            j(prompt="x", response="y", temperature=0.0)
+            j(prompt="x", response="y", temperature=0.0)
+        self.assertEqual(len(logs.records), 1)
+        self.assertIn("not sampled", logs.output[0])
+
+    def test_repeated_without_temperature_warns(self):
+        # A judge method that takes no temperature cannot be sampled either.
+        p = _make_sequence_provider("gpt-4o-mini", [0.8])
+        j = Jury.repeated(p, method="relevance", n_trials=3)
+        with self.assertLogs(self._LOGGER, level="WARNING"):
+            _, meta = j(prompt="x", response="y")
+        self.assertIsNone(meta["reliability.temperature"])
+
+    def test_repeated_at_sampling_temperature_does_not_warn(self):
+        p = _make_sequence_provider("gpt-4o-mini", [0.8])
+        j = Jury.repeated(p, method="relevance", n_trials=3)
+        with self.assertNoLogs(self._LOGGER, level="WARNING"):
+            j(prompt="x", response="y", temperature=0.7)
+
+    def test_mixed_panel_at_temperature_zero_does_not_warn(self):
+        # Different judges can disagree at temperature 0, so the numbers mean
+        # something without sampling.
+        p1 = _make_sequence_provider("gpt-4o-mini", [0.8])
+        p2 = _make_sequence_provider("gemini-flash", [0.3])
+        j = Jury([p1, p2], method="relevance")
+        with self.assertNoLogs(self._LOGGER, level="WARNING"):
+            j(prompt="x", response="y", temperature=0.0)
 
 
 if __name__ == "__main__":
