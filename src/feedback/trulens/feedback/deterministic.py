@@ -58,16 +58,17 @@ def _assistant_text(record: Any) -> Optional[str]:
 
 
 def _assistant_turns_from_transcript(transcript: str) -> List[str]:
-    """Extract assistant utterances from a transcript string."""
-    turns = [
+    """Extract assistant utterances from a transcript string.
+
+    Returns an empty list when no `assistant:` line is present, so a
+    transcript with only user turns agrees with the records path on
+    "no assistant turns" instead of being scored as one turn.
+    """
+    return [
         match.group(1)
         for line in transcript.splitlines()
         if (match := _ASSISTANT_LINE_RE.match(line)) and match.group(1)
     ]
-    if turns:
-        return turns
-    stripped = transcript.strip()
-    return [stripped] if stripped else []
 
 
 def _assistant_turns(records: List[Any] | str) -> List[str]:
@@ -155,7 +156,7 @@ def conversation_repetition(
     records: List[Any] | str,
     fallback_phrases: Optional[Sequence[str]] = None,
     ngram_orders: Sequence[int] = (2, 3, 4),
-) -> Tuple[float, Dict[str, Any]]:
+) -> Tuple[Optional[float], Dict[str, Any]]:
     """Score how repetitious the assistant's replies are (deterministic).
 
     For each assistant turn this computes four signals -- n-gram repetition
@@ -163,6 +164,11 @@ def conversation_repetition(
     use of a known fallback phrase, and low lexical diversity -- combines
     them into a per-turn repetition score, and returns `1 -` the worst
     turn's score. No LLM calls are made.
+
+    When the conversation contains no assistant turns to judge, the score
+    is `None` rather than the maximum `1.0`, so that "no data" stays out
+    of any average over conversations; `meta` still reports
+    `num_assistant_turns` as 0.
 
     Example:
         ```python
@@ -185,16 +191,27 @@ def conversation_repetition(
             signal.
 
     Returns:
-        Tuple[float, Dict[str, Any]]: A tuple of the conversation score
-            between 0.0 (fully repetitious) and 1.0 (no repetition), and a
-            meta dict with the per-turn signal breakdown, the worst turn,
-            and the number of assistant turns.
+        Tuple[Optional[float], Dict[str, Any]]: A tuple of the
+            conversation score between 0.0 (fully repetitious) and 1.0
+            (no repetition) -- or `None` when there is nothing to
+            measure -- and a meta dict with the per-turn signal
+            breakdown, the worst turn, and the number of assistant turns.
     """
     phrases = tuple(
         phrase.lower()
         for phrase in (fallback_phrases or DEFAULT_FALLBACK_PHRASES)
     )
     replies = _assistant_turns(records)
+
+    if not replies:
+        return (
+            None,
+            {
+                "turns": {},
+                "worst_turn": None,
+                "num_assistant_turns": 0,
+            },
+        )
 
     turns: Dict[int, Dict[str, Any]] = {}
     prev_tokens: Optional[List[str]] = None
