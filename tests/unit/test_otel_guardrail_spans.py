@@ -23,6 +23,11 @@ _criminality = Feedback(
     name="criminality",
     higher_is_better=False,
 )
+_unparsable = Feedback(
+    lambda text: -1.0,
+    name="unparsable judge",
+    higher_is_better=False,
+)
 
 
 def _collect_guardrail_spans(events):
@@ -99,6 +104,43 @@ class TestGuardrailSpans(OtelTestCase):
         )
         TruSession().force_flush()
         return result
+
+    def test_unparsable_input_does_not_emit_passing_span(self):
+        """An input judge failure neither invokes the app nor reports a pass."""
+
+        class App:
+            called = False
+
+            @instrument()
+            @block_input(_unparsable, 0.5, keyword_for_prompt="question")
+            def chat(self, question):
+                self.called = True
+                return "response"
+
+        app = App()
+        with self.assertRaisesRegex(ValueError, "unparsable"):
+            self._run_app(app, "chat", "question")
+        self.assertFalse(app.called)
+        TruSession().force_flush()
+        spans = _collect_guardrail_spans(self._get_events())
+        self.assertEqual(len(spans), 1)
+        self.assertNotIn(SpanAttributes.GUARDRAIL.PASSED, spans[0])
+
+    def test_unparsable_output_does_not_emit_passing_span(self):
+        """An output judge failure must not be recorded as a passing verdict."""
+
+        class App:
+            @instrument()
+            @block_output(_unparsable, 0.5)
+            def chat(self, question):
+                return "response"
+
+        with self.assertRaisesRegex(ValueError, "unparsable"):
+            self._run_app(App(), "chat", "question")
+        TruSession().force_flush()
+        spans = _collect_guardrail_spans(self._get_events())
+        self.assertEqual(len(spans), 1)
+        self.assertNotIn(SpanAttributes.GUARDRAIL.PASSED, spans[0])
 
     def test_context_filter_guardrail_spans(self):
         """context_filter emits one GUARDRAIL span per context with correct attrs."""

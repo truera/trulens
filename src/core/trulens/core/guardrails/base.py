@@ -2,6 +2,7 @@ from concurrent.futures import as_completed
 from contextlib import contextmanager
 import inspect
 import logging
+import math
 from typing import Optional
 
 from opentelemetry import trace as otel_trace
@@ -14,6 +15,17 @@ from trulens.experimental.otel_tracing.core.span import (
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
+
+
+def _validate_feedback_score(score: float) -> None:
+    """Reject failed evaluations before applying a guardrail threshold."""
+    # -1.0 is the LLM provider's unparsable-score sentinel. Do not import the
+    # optional trulens-feedback package to recognize it in core guardrails.
+    if not math.isfinite(score) or score == -1.0:
+        raise ValueError(
+            "Guardrail feedback must return a finite score, not an "
+            f"unparsable-score sentinel (-1.0); got {score!r}."
+        )
 
 
 @contextmanager
@@ -33,6 +45,9 @@ def _guardrail_span(name: str, threshold: float):
 
 class context_filter:
     """Provides a decorator to filter contexts based on a given feedback and threshold.
+
+    A non-finite or unparsable (-1.0) feedback score raises `ValueError`
+    instead of being compared with the threshold.
 
     Args:
         feedback: The feedback object to use for filtering.
@@ -101,6 +116,7 @@ class context_filter:
                     raise ValueError(
                         "`context_filter` can only be used with feedback functions that return a float."
                     )
+                _validate_feedback_score(result)
                 passed = (
                     self.feedback.higher_is_better and result > self.threshold
                 ) or (
@@ -142,6 +158,9 @@ class context_filter:
 
 class block_input:
     """Provides a decorator to block input based on a given feedback and threshold.
+
+    A non-finite or unparsable (-1.0) feedback score raises `ValueError`
+    before the decorated function is called.
 
     Args:
         feedback: The feedback object to use for blocking.
@@ -220,6 +239,7 @@ class block_input:
                     raise ValueError(
                         "`block_input` can only be used with feedback functions that return a float."
                     )
+                _validate_feedback_score(result)
                 blocked = (
                     self.feedback.higher_is_better and result < self.threshold
                 ) or (
@@ -243,6 +263,9 @@ class block_input:
 
 class block_output:
     """Provides a decorator to block output based on a given feedback and threshold.
+
+    A non-finite or unparsable (-1.0) feedback score raises `ValueError`
+    instead of returning the decorated function's output.
 
     Args:
         feedback: The feedback object to use for blocking. It must only take a single argument.
@@ -305,6 +328,7 @@ class block_output:
                     raise ValueError(
                         "`block_output` can only be used with feedback functions that return a float."
                     )
+                _validate_feedback_score(result)
                 blocked = (
                     self.feedback.higher_is_better and result < self.threshold
                 ) or (
