@@ -13,6 +13,7 @@ __all__ = [
     "CoherenceAcrossTurns",
     "ConversationHelpfulness",
     "TopicAdherence",
+    "UserFrustration",
     "conversation_to_prompt",
 ]
 
@@ -139,5 +140,61 @@ class CoherenceAcrossTurns(Semantics, CriteriaOutputSpaceMixin):
         3: Flawless flow, context retention, and logical consistency.
 
         Respond ONLY with a single integer score from {LIKERT_0_3_PROMPT}.
+        """
+    )
+
+
+class UserFrustration(Semantics, CriteriaOutputSpaceMixin):
+    """Evaluates the user's frustration across a multi-turn conversation.
+
+    Unlike the other conversation judges, the score is driven primarily by the
+    USER's turns (the assistant turns are read only as context). It looks for
+    repeated requests, corrections of the assistant, explicit statements of
+    error or dissatisfaction, and abandonment. The 0-3 Likert output is
+    normalized to 0.0 (user gave up / repeatedly corrected) through 1.0 (no
+    signs of frustration).
+    """
+
+    criteria: ClassVar[str] = (
+        "Does the user show frustration across the conversation, such as "
+        "repeated requests, corrections, complaints, or giving up?"
+    )
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+
+    system_prompt: ClassVar[str] = cleandoc(
+        f"""
+        You are evaluating the USER'S FRUSTRATION across a multi-turn
+        conversation between a User and an AI Assistant. Focus primarily on
+        the USER's turns; use the assistant's turns only as context.
+
+        Look for these signals in the user's utterances:
+        - Repeated requests (asking for the same thing again because it was
+          not done correctly).
+        - Corrections of the assistant (e.g. "no, I meant...", "that's
+          wrong", "not what I asked").
+        - Explicit statements of error or dissatisfaction (e.g. "this
+          doesn't work", "you're not understanding", "I'm frustrated").
+        - Abandonment (the user gives up, stops, or expresses that they will
+          do it themselves).
+
+        Score how WELL the conversation went FOR THE USER on a scale from
+        0 to 3:
+        0: Severe frustration - the user gave up or repeatedly corrected the
+           assistant.
+        1: Substantial frustration - multiple corrections or repeated
+           requests.
+        2: Minor friction - an isolated correction or clarification, but the
+           conversation recovered.
+        3: No frustration - no corrections, repeats, or complaints (e.g. the
+           conversation ends with thanks).
+
+        Respond ONLY with a single integer score from {LIKERT_0_3_PROMPT}.
+        """
+    )
+    user_prompt_template: ClassVar[str] = cleandoc(
+        """
+        Conversation Transcript:
+        {transcript}
         """
     )

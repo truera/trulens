@@ -4518,13 +4518,16 @@ class LLMProvider(core_provider.Provider):
         user_prompt = templates_conversation.ConversationHelpfulness.user_prompt_template.format(
             transcript=transcript
         )
-        return self.generate_score(
+        # Reverse normalization: template scores 0=severe frustration, 3=no frustration
+        # We want 1.0=high frustration, 0.0=no frustration (intuitive for "User Frustration" metric)
+        raw_score = self.generate_score(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             min_score_val=0,
             max_score_val=3,
             temperature=temperature,
         )
+        return 1.0 - raw_score
 
     def conversation_helpfulness_with_cot_reasons(
         self,
@@ -4572,13 +4575,16 @@ class LLMProvider(core_provider.Provider):
             )
             + templates_base.COT_REASONS_TEMPLATE
         )
-        return self.generate_score_and_reasons(
+        # Reverse normalization: template scores 0=severe frustration, 3=no frustration
+        # We want 1.0=high frustration, 0.0=no frustration (intuitive for "User Frustration" metric)
+        raw_score, reasons = self.generate_score_and_reasons(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             min_score_val=0,
             max_score_val=3,
             temperature=temperature,
         )
+        return 1.0 - raw_score, reasons
 
     def topic_adherence(
         self,
@@ -4683,6 +4689,124 @@ class LLMProvider(core_provider.Provider):
             max_score_val=3,
             temperature=temperature,
         )
+
+    def user_frustration(
+        self,
+        records: Union[List[Any], str],
+        temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
+    ) -> float:
+        """
+        Uses chat completion model. A function that completes a template to
+        evaluate the user's frustration across a multi-turn conversation. The
+        judge reads the user's turns (with the assistant turns as context) and
+        looks for repeated requests, corrections, complaints, or abandonment.
+
+        Example:
+            ```python
+            from trulens.core import Metric
+            feedback = Metric(
+                implementation=provider.user_frustration,
+                name="User Frustration",
+                additional_instructions=additional_instructions,
+            ).on_conversation()
+            ```
+
+        Args:
+            records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+
+        Returns:
+            float: A value between 0.0 (no signs of frustration) and 1.0 (the
+                user gave up or repeatedly corrected the assistant).
+        """
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=templates_conversation.UserFrustration.system_prompt,
+            additional_instructions=additional_instructions,
+        )
+        user_prompt = templates_conversation.UserFrustration.user_prompt_template.format(
+            transcript=transcript
+        )
+        # Reverse normalization: template scores 0=severe frustration, 3=no frustration
+        # We want 1.0=high frustration, 0.0=no frustration (intuitive for "User Frustration" metric)
+        raw_score = self.generate_score(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=0,
+            max_score_val=3,
+            temperature=temperature,
+        )
+        return 1.0 - raw_score
+
+    def user_frustration_with_cot_reasons(
+        self,
+        records: Union[List[Any], str],
+        temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
+    ) -> Tuple[float, Dict]:
+        """
+        Uses chat completion model. A function that completes a template to
+        evaluate the user's frustration across a multi-turn conversation. Also
+        uses chain of thought methodology and emits the reasons. The judge
+        reads the user's turns (with the assistant turns as context) and looks
+        for repeated requests, corrections, complaints, or abandonment.
+
+        Example:
+            ```python
+            from trulens.core import Metric
+            feedback = Metric(
+                implementation=provider.user_frustration_with_cot_reasons,
+                name="User Frustration",
+                additional_instructions=additional_instructions,
+            ).on_conversation()
+            ```
+
+        Args:
+            records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (no signs
+                of frustration) and 1.0 (the user gave up or repeatedly
+                corrected the assistant) and a dictionary containing the
+                reasons for the evaluation.
+        """
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=templates_conversation.UserFrustration.system_prompt,
+            additional_instructions=additional_instructions,
+        )
+        user_prompt = (
+            templates_conversation.UserFrustration.user_prompt_template.format(
+                transcript=transcript
+            )
+            + templates_base.COT_REASONS_TEMPLATE
+        )
+        # Reverse normalization: template scores 0=severe frustration, 3=no frustration
+        # We want 1.0=high frustration, 0.0=no frustration (intuitive for "User Frustration" metric)
+        raw_score, reasons = self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=0,
+            max_score_val=3,
+            temperature=temperature,
+        )
+        return 1.0 - raw_score, reasons
 
     def agent_goal_accuracy(
         self,
