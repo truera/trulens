@@ -4518,13 +4518,16 @@ class LLMProvider(core_provider.Provider):
         user_prompt = templates_conversation.ConversationHelpfulness.user_prompt_template.format(
             transcript=transcript
         )
-        return self.generate_score(
+        # Reverse normalization: template scores 0=severe frustration, 3=no frustration
+        # We want 1.0=high frustration, 0.0=no frustration (intuitive for "User Frustration" metric)
+        raw_score = self.generate_score(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             min_score_val=0,
             max_score_val=3,
             temperature=temperature,
         )
+        return 1.0 - raw_score
 
     def conversation_helpfulness_with_cot_reasons(
         self,
@@ -4572,13 +4575,16 @@ class LLMProvider(core_provider.Provider):
             )
             + templates_base.COT_REASONS_TEMPLATE
         )
-        return self.generate_score_and_reasons(
+        # Reverse normalization: template scores 0=severe frustration, 3=no frustration
+        # We want 1.0=high frustration, 0.0=no frustration (intuitive for "User Frustration" metric)
+        raw_score, reasons = self.generate_score_and_reasons(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             min_score_val=0,
             max_score_val=3,
             temperature=temperature,
         )
+        return 1.0 - raw_score, reasons
 
     def topic_adherence(
         self,
@@ -4713,8 +4719,8 @@ class LLMProvider(core_provider.Provider):
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
 
         Returns:
-            float: A value between 0.0 (the user gave up or repeatedly
-                corrected the assistant) and 1.0 (no signs of frustration).
+            float: A value between 0.0 (no signs of frustration) and 1.0 (the
+                user gave up or repeatedly corrected the assistant).
         """
         from trulens.feedback.templates import (
             conversation as templates_conversation,
@@ -4729,13 +4735,16 @@ class LLMProvider(core_provider.Provider):
         user_prompt = templates_conversation.UserFrustration.user_prompt_template.format(
             transcript=transcript
         )
-        return self.generate_score(
+        # Reverse normalization: template scores 0=severe frustration, 3=no frustration
+        # We want 1.0=high frustration, 0.0=no frustration (intuitive for "User Frustration" metric)
+        raw_score = self.generate_score(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             min_score_val=0,
             max_score_val=3,
             temperature=temperature,
         )
+        return 1.0 - raw_score
 
     def user_frustration_with_cot_reasons(
         self,
@@ -4767,9 +4776,9 @@ class LLMProvider(core_provider.Provider):
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
 
         Returns:
-            Tuple[float, Dict]: A tuple containing a value between 0.0 (the
-                user gave up or repeatedly corrected the assistant) and 1.0
-                (no signs of frustration) and a dictionary containing the
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (no signs
+                of frustration) and 1.0 (the user gave up or repeatedly
+                corrected the assistant) and a dictionary containing the
                 reasons for the evaluation.
         """
         from trulens.feedback.templates import (
@@ -4788,13 +4797,16 @@ class LLMProvider(core_provider.Provider):
             )
             + templates_base.COT_REASONS_TEMPLATE
         )
-        return self.generate_score_and_reasons(
+        # Reverse normalization: template scores 0=severe frustration, 3=no frustration
+        # We want 1.0=high frustration, 0.0=no frustration (intuitive for "User Frustration" metric)
+        raw_score, reasons = self.generate_score_and_reasons(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             min_score_val=0,
             max_score_val=3,
             temperature=temperature,
         )
+        return 1.0 - raw_score, reasons
 
     def agent_goal_accuracy(
         self,

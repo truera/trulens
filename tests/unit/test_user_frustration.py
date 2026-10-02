@@ -1,126 +1,133 @@
-"""Unit tests for the user frustration conversation metric."""
+"""Unit tests for user_frustration conversation metric."""
 
-from unittest import mock
+from typing import Dict, Optional, Tuple
+from unittest import TestCase
 
+from trulens.core import Metric
 from trulens.feedback import llm_provider
 from trulens.feedback.templates import conversation as templates_conversation
 
-_RECORDS = [
-    {"input": "What is my account balance?", "output": "You have no balance."},
-    {"input": "That is wrong, check again.", "output": "It still shows zero."},
-    {"input": "What is my account balance?", "output": "Zero."},
-]
 
-_SATISFIED_RECORDS = [
-    {"input": "Thanks, that solved it!", "output": "Glad I could help."},
-]
+class MockLLMProvider(llm_provider.LLMProvider):
+    """Mock LLM provider that returns configurable scores."""
 
+    model_config = {"extra": "allow"}
 
-def test_user_frustration_template_is_registered() -> None:
-    assert "UserFrustration" in templates_conversation.__all__
-    template = templates_conversation.UserFrustration
-    # 0-3 Likert, normalized to a 0.0-1.0 score by the provider.
-    assert template.output_space == "LIKERT_0_3"
-    assert "0 to 3" in template.output_space_prompt
-    # Judge is driven by the user's turns and recognizes each signal.
-    system_prompt = template.system_prompt
-    for signal in (
-        "Repeated requests",
-        "Corrections",
-        "dissatisfaction",
-        "Abandonment",
-    ):
-        assert signal in system_prompt
+    last_system_prompt: Optional[str] = None
+    last_user_prompt: Optional[str] = None
+    last_temperature: Optional[float] = None
+    mock_score_response: str = "Score: 2\nReason: Test reason"
 
-
-def test_user_frustration_uses_score_arguments() -> None:
-    provider = mock.create_autospec(llm_provider.LLMProvider, instance=True)
-    provider.generate_score.return_value = 0.0
-
-    # A user who corrects and repeats a request is scored below 0.5.
-    assert (
-        llm_provider.LLMProvider.user_frustration(provider, _RECORDS) == 0.0
-    )
-    provider.generate_score.assert_called_once_with(
-        system_prompt=mock.ANY,
-        user_prompt=mock.ANY,
-        min_score_val=0,
-        max_score_val=3,
-        temperature=0.0,
-    )
-
-
-def test_user_frustration_cot_returns_reasons() -> None:
-    provider = mock.create_autospec(llm_provider.LLMProvider, instance=True)
-    provider.generate_score_and_reasons.return_value = (
-        0.0,
-        {"reason": "repeated request at turn 3"},
-    )
-
-    score, reasons = llm_provider.LLMProvider.user_frustration_with_cot_reasons(
-        provider, _RECORDS
-    )
-    assert score == 0.0
-    assert reasons == {"reason": "repeated request at turn 3"}
-    provider.generate_score_and_reasons.assert_called_once_with(
-        system_prompt=mock.ANY,
-        user_prompt=mock.ANY,
-        min_score_val=0,
-        max_score_val=3,
-        temperature=0.0,
-    )
-
-
-def test_user_frustration_satisfied_conversation_scores_high() -> None:
-    provider = mock.create_autospec(llm_provider.LLMProvider, instance=True)
-    provider.generate_score.return_value = 1.0
-
-    # A conversation ending in thanks with no corrections scores 1.0.
-    assert (
-        llm_provider.LLMProvider.user_frustration(
-            provider, _SATISFIED_RECORDS
+    def __init__(self, **kwargs):
+        super().__init__(
+            endpoint=None,
+            model_engine="mock-model",
+            **kwargs,
         )
-        == 1.0
-    )
+
+    def _create_chat_completion(
+        self,
+        prompt: Optional[str] = None,
+        messages: Optional[list] = None,
+        **kwargs,
+    ) -> str:
+        """Return configurable mock response."""
+        if messages:
+            for msg in messages:
+                if msg.get("role") == "system":
+                    self.last_system_prompt = msg.get("content", "")
+                elif msg.get("role") == "user":
+                    self.last_user_prompt = msg.get("content", "")
+        elif prompt:
+            self.last_system_prompt = prompt
+        return self.mock_score_response
 
 
-def test_user_frustration_transcript_passes_user_turns() -> None:
-    provider = mock.create_autospec(llm_provider.LLMProvider, instance=True)
-    provider.generate_score.return_value = 1.0
+class TestUserFrustration(TestCase):
+    """Test user_frustration metric with real generate_score mapping."""
 
-    llm_provider.LLMProvider.user_frustration(provider, _RECORDS)
-
-    kwargs = provider.generate_score.call_args.kwargs
-    # Both the corrected and repeated user turns are present in the prompt.
-    assert "That is wrong, check again." in kwargs["user_prompt"]
-    # user_prompt is built from the shared user prompt template.
-    assert kwargs["user_prompt"].startswith("Conversation Transcript:")
-
-
-def test_user_frustration_forwards_positional_temperature() -> None:
-    provider = mock.create_autospec(llm_provider.LLMProvider, instance=True)
-    provider.generate_score_and_reasons.return_value = (1.0, {"reason": "ok"})
-
-    llm_provider.LLMProvider.user_frustration_with_cot_reasons(
-        provider, _RECORDS, 0.7
-    )
-
-    kwargs = provider.generate_score_and_reasons.call_args.kwargs
-    assert kwargs["temperature"] == 0.7
-
-
-def test_user_frustration_keeps_keyword_additional_instructions() -> None:
-    provider = mock.create_autospec(llm_provider.LLMProvider, instance=True)
-    provider.generate_score.return_value = 1.0
-    extra = "Treat sarcasm as frustration."
-
-    llm_provider.LLMProvider.user_frustration(
-        provider, _RECORDS, additional_instructions=extra
-    )
-
-    assert (
-        provider._build_criteria_with_instructions.call_args.kwargs[
-            "additional_instructions"
+    def setUp(self):
+        self.provider = MockLLMProvider()
+        self.sample_conversation = [
+            {"input": "What is my balance?", "output": "You have $100."},
+            {"input": "That's wrong, check again.", "output": "You have $0."},
+            {"input": "What is my balance?", "output": "You have $0."},
         ]
-        == extra
-    )
+
+    def test_template_registered(self):
+        """UserFrustration template exists and is properly configured."""
+        self.assertTrue(hasattr(templates_conversation, "UserFrustration"))
+        self.assertEqual(
+            templates_conversation.UserFrustration.output_space, "LIKERT_0_3"
+        )
+        self.assertIn("UserFrustration", templates_conversation.__all__)
+
+    def test_score_mapping_severe_frustration(self):
+        """Template raw score 0 (severe frustration) → normalized 1.0 (high frustration)."""
+        self.provider.mock_score_response = "Score: 0\nReason: User gave up"
+        score = self.provider.user_frustration(self.sample_conversation)
+        # Template: 0=severe frustration → reversed to 1.0 (high frustration score)
+        self.assertAlmostEqual(score, 1.0, places=2)
+
+    def test_score_mapping_no_frustration(self):
+        """Template raw score 3 (no frustration) → normalized 0.0 (low frustration)."""
+        self.provider.mock_score_response = "Score: 3\nReason: User satisfied"
+        score = self.provider.user_frustration(self.sample_conversation)
+        # Template: 3=no frustration → reversed to 0.0 (low frustration score)
+        self.assertAlmostEqual(score, 0.0, places=2)
+
+    def test_score_mapping_mild_frustration(self):
+        """Template raw score 2 (mild frustration) → normalized ~0.33."""
+        self.provider.mock_score_response = "Score: 2\nReason: Minor issue"
+        score = self.provider.user_frustration(self.sample_conversation)
+        # Template: 2=mild frustration → reversed to ~0.33
+        self.assertAlmostEqual(score, 1.0 / 3.0, places=2)
+
+    def test_temperature_forwarding(self):
+        """Temperature parameter is passed to generate_score."""
+        self.provider.user_frustration(self.sample_conversation, temperature=0.7)
+        self.assertEqual(self.provider.last_temperature, 0.7)
+
+    def test_user_turns_in_prompt(self):
+        """User turns are included in the prompt sent to LLM."""
+        self.provider.user_frustration(self.sample_conversation)
+        self.assertIsNotNone(self.provider.last_user_prompt)
+        self.assertIn("What is my balance?", self.provider.last_user_prompt)
+        self.assertIn("That's wrong", self.provider.last_user_prompt)
+
+    def test_additional_instructions_forwarded(self):
+        """additional_instructions are appended to system prompt."""
+        custom = "Pay special attention to sarcasm."
+        self.provider.user_frustration(
+            self.sample_conversation, additional_instructions=custom
+        )
+        self.assertIsNotNone(self.provider.last_system_prompt)
+        self.assertIn(custom, self.provider.last_system_prompt)
+
+    def test_with_cot_reasons(self):
+        """user_frustration_with_cot_reasons returns score and reasons."""
+        self.provider.mock_score_response = "Score: 1\nReason: User frustrated"
+        score, reasons = self.provider.user_frustration_with_cot_reasons(
+            self.sample_conversation
+        )
+        # Template: 1=moderate frustration → reversed to ~0.67
+        self.assertAlmostEqual(score, 2.0 / 3.0, places=2)
+        self.assertIsInstance(reasons, dict)
+        # COT template should be appended to user prompt
+        self.assertIn("COT REASONS", self.provider.last_user_prompt)
+
+    def test_metric_wrapper(self):
+        """Metric wrapper correctly invokes user_frustration."""
+        self.provider.mock_score_response = "Score: 0\nReason: Gave up"
+        metric = Metric(
+            implementation=self.provider.user_frustration,
+            name="User Frustration",
+        )
+        # Metric should be callable on conversation
+        result = metric.evaluate(self.sample_conversation)
+        self.assertAlmostEqual(result, 1.0, places=2)
+
+
+if __name__ == "__main__":
+    import unittest
+    unittest.main()
