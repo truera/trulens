@@ -9,9 +9,7 @@ from trulens.core.metric import metric as core_metric
     "score", [-1.0, float("nan"), float("inf"), -float("inf")]
 )
 @pytest.mark.parametrize("higher_is_better", [False, True])
-@pytest.mark.parametrize(
-    "kind", ["block_input", "block_output", "context_filter"]
-)
+@pytest.mark.parametrize("kind", ["block_input", "block_output"])
 def test_invalid_feedback_score_raises(score, higher_is_better, kind):
     """Reject judge failures in either direction before returning any result."""
     calls = []
@@ -35,6 +33,32 @@ def test_invalid_feedback_score_raises(score, higher_is_better, kind):
         assert calls == []
     else:
         assert calls == ["query"]
+
+
+@pytest.mark.parametrize(
+    "score", [-1.0, float("nan"), float("inf"), -float("inf")]
+)
+@pytest.mark.parametrize("higher_is_better", [False, True])
+def test_context_filter_drops_only_invalid_context(
+    score, higher_is_better, caplog
+):
+    """A failed judge for the middle context preserves other passing results."""
+
+    def judge(query, context):
+        if context == "invalid":
+            return score
+        return 1.0 if higher_is_better else 0.0
+
+    feedback = core_metric.Metric(
+        implementation=judge, higher_is_better=higher_is_better
+    )
+
+    @guardrails_base.context_filter(feedback, 0.5, "query")
+    def retrieve(query):
+        return ["first", "invalid", "last"]
+
+    assert sorted(retrieve("query")) == ["first", "last"]
+    assert "invalid guardrail score" in caplog.text
 
 
 @pytest.mark.parametrize("score", [0.0, 0.5, 1.0])

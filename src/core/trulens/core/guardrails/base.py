@@ -7,6 +7,7 @@ from typing import Optional
 
 from opentelemetry import trace as otel_trace
 from trulens.core.metric import metric as core_metric
+from trulens.core.utils import constants as constants_utils
 from trulens.core.utils import threading as threading_utils
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import (
@@ -19,12 +20,11 @@ logger = logging.getLogger(__name__)
 
 def _validate_feedback_score(score: float) -> None:
     """Reject failed evaluations before applying a guardrail threshold."""
-    # -1.0 is the LLM provider's unparsable-score sentinel. Do not import the
-    # optional trulens-feedback package to recognize it in core guardrails.
-    if not math.isfinite(score) or score == -1.0:
+    if not math.isfinite(score) or score == constants_utils.UNPARSABLE_SCORE:
         raise ValueError(
             "Guardrail feedback must return a finite score, not an "
-            f"unparsable-score sentinel (-1.0); got {score!r}."
+            f"unparsable-score sentinel ({constants_utils.UNPARSABLE_SCORE}); "
+            f"got {score!r}."
         )
 
 
@@ -46,13 +46,15 @@ def _guardrail_span(name: str, threshold: float):
 class context_filter:
     """Provides a decorator to filter contexts based on a given feedback and threshold.
 
-    A non-finite or unparsable (-1.0) feedback score raises `ValueError`
-    instead of being compared with the threshold.
+    A non-finite or unparsable (-1.0) feedback score excludes only the affected
+    context and logs a warning. Other contexts are evaluated normally.
 
     Args:
         feedback: The feedback object to use for filtering.
 
-        threshold: The minimum feedback value required for a context to be included.
+        threshold: A context's score must be strictly above this value when
+            `higher_is_better` is True, or strictly below it otherwise.
+            Scores equal to the threshold are excluded.
 
         keyword_for_prompt: Keyword argument to decorator to use for prompt.
 
@@ -116,7 +118,14 @@ class context_filter:
                     raise ValueError(
                         "`context_filter` can only be used with feedback functions that return a float."
                     )
-                _validate_feedback_score(result)
+                try:
+                    _validate_feedback_score(result)
+                except ValueError:
+                    logger.warning(
+                        "Excluding context with invalid guardrail score %r.",
+                        result,
+                    )
+                    return result, False
                 passed = (
                     self.feedback.higher_is_better and result > self.threshold
                 ) or (
