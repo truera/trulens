@@ -11,10 +11,11 @@ try:
     from trulens.connectors.snowflake.dao.enums import ObjectType
     from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDao
     from trulens.connectors.snowflake.dao.sql_utils import escape_quotes
-
-
 except Exception:
-    pass
+    # Not installed on Python versions the connector does not support (3.14+).
+    ObjectType = None
+    ExternalAgentDao = None
+    escape_quotes = None
 
 try:
     from trulens.connectors.snowflake.snowflake_event_table_db import (
@@ -28,9 +29,7 @@ except Exception:
 class TestExternalAgentDao(unittest.TestCase):
     def setUp(self):
         if ExternalAgentDao is None:
-            self.skipTest(
-                "ExternalAgentDao is not available because optional tests are disabled."
-            )
+            self.skipTest("trulens-connectors-snowflake is not installed.")
         self.sf_session = MagicMock()
 
         # Dummy SQL execution: simulate that execute_query returns a list of rows,
