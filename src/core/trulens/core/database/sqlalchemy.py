@@ -50,6 +50,7 @@ from trulens.core.schema import prompt as prompt_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.schema.event import Event
+from trulens.core.utils import constants as constants_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
@@ -58,20 +59,6 @@ from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
-
-
-def _unparsable_score() -> float:
-    """The sentinel score stored when a judge produced no parseable score.
-
-    Imported lazily and by module because
-    `trulens.feedback.llm_provider` imports from `trulens.core`, so a
-    module-level import here would be circular. [BatchEvaluator][
-    trulens.core.batch.BatchEvaluator] filters the same sentinel out before
-    aggregating; see `_aggregate_scores` in `trulens.core.batch`.
-    """
-    from trulens.feedback import llm_provider as feedback_llm_provider
-
-    return feedback_llm_provider.UNPARSABLE_SCORE
 
 
 # Imported for backward compatibility. The Snowflake-specific Alembic impl is
@@ -890,12 +877,16 @@ class SQLAlchemyDB(core_db.DB):
         """Average *score_col*, ignoring rows holding the unparsable sentinel.
 
         A judge that returns nothing parseable stores
-        [UNPARSABLE_SCORE][trulens.feedback.llm_provider.UNPARSABLE_SCORE]
+        [UNPARSABLE_SCORE][trulens.core.utils.constants.UNPARSABLE_SCORE]
         (-1.0) as its result. Averaging that in disguises a judge failure as a
         mediocre metric: three stored scores of `1.0, 1.0, -1.0` reported
         `0.33` instead of `1.0`. `BatchEvaluator._aggregate_scores` filters the
         same sentinel out before aggregating; the leaderboard aggregates need
         the same treatment so both surfaces agree.
+
+        The value comes from `trulens.core.utils.constants` rather than from
+        `trulens.feedback.llm_provider` because `trulens.feedback` is optional
+        and `trulens.core` installs without it.
 
         Only the sentinel is filtered. A genuine negative score, such as `-0.5`
         for a penalty metric, is still averaged in.
@@ -912,7 +903,7 @@ class SQLAlchemyDB(core_db.DB):
             A SQLAlchemy column expression yielding the average of the parsable
             scores, or the sentinel when there are none.
         """
-        unparsable = _unparsable_score()
+        unparsable = constants_utils.UNPARSABLE_SCORE
         # AVG ignores NULLs, so mapping the sentinel to NULL excludes just
         # those rows while leaving every other score to be averaged.
         parsable = sa.case((score_col != unparsable, score_col))
