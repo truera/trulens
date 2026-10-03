@@ -189,9 +189,7 @@ class Jury:
 
         self.__signature__ = inspect.signature(getattr(jurors[0], methods[0]))
         self.__name__ = (
-            f"jury_{method}"
-            if isinstance(method, str)
-            else "jury_mixed"
+            f"jury_{method}" if isinstance(method, str) else "jury_mixed"
         )
 
     # ------------------------------------------------------------------
