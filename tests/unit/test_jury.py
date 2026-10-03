@@ -555,12 +555,12 @@ class TestJuryReturnFormat(unittest.TestCase):
                 super().__init__(*args, **kwargs)
                 self.seen_custom_instructions = []
 
-            def _call_juror(self, idx, juror, args, kwargs):
+            def _call_juror(self, juror, args, kwargs, *, idx):
                 self.seen_custom_instructions.append(
                     kwargs.get("custom_instructions")
                 )
                 kwargs.pop("custom_instructions", None)
-                return super()._call_juror(idx, juror, args, kwargs)
+                return super()._call_juror(juror, args, kwargs, idx=idx)
 
         p1 = _make_provider("gpt-4o-mini", 0.6)
         p1.relevance.__signature__ = inspect.signature(
@@ -680,6 +680,20 @@ class TestJuryHeterogeneousMethods(unittest.TestCase):
         with self.assertRaises(AttributeError):
             Jury([good, bad], method=["relevance", "coherence"])
 
+    def test_incompatible_method_signatures_raises(self):
+        """Methods with different parameter names must be rejected at
+        construction time, not silently misrouted at call time."""
+
+        def _mock_text_method(text: str) -> float: ...
+
+        p0 = _make_multi_method_provider("m0", relevance=0.8)
+        p1 = MagicMock()
+        p1.model_engine = "m1"
+        # coherence takes ``text``, not ``prompt``/``response``
+        p1.coherence.__signature__ = inspect.signature(_mock_text_method)
+        with self.assertRaises(ValueError):
+            Jury([p0, p1], method=["relevance", "coherence"])
+
     def test_dunder_name_is_jury_mixed_for_list(self):
         p0 = _make_multi_method_provider("m0", relevance=0.8, coherence=0.6)
         p1 = _make_multi_method_provider("m1", relevance=0.8, coherence=0.6)
@@ -710,7 +724,9 @@ class TestJuryHeterogeneousMethods(unittest.TestCase):
         p0 = _make_multi_method_provider("m0", relevance=1.0, coherence=0.0)
         p1 = _make_multi_method_provider("m1", relevance=0.0, coherence=1.0)
         j = Jury(
-            [p0, p1], method=["relevance", "coherence"], aggregation="mean"
+            [p0, p1],
+            method=["relevance", "coherence"],
+            aggregation="mean",
         )
         j.__signature__ = inspect.signature(_mock_relevance)
         score, _ = j(prompt="x", response="y")

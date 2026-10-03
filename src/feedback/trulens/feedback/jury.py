@@ -177,6 +177,28 @@ class Jury:
                     f"Juror {type(juror).__name__!r} at index {i} has no callable method {m!r}."
                 )
 
+        # Validate that all methods share the same parameter names so that
+        # __call__'s *args/**kwargs are forwarded correctly to every juror.
+        # Return annotations are intentionally excluded — relevance and
+        # relevance_with_cot_reasons differ there but are still compatible.
+        ref_params = list(
+            inspect.signature(
+                getattr(jurors[0], methods[0])
+            ).parameters.keys()
+        )
+        for i, (juror, m) in enumerate(zip(jurors, methods)):
+            params = list(
+                inspect.signature(getattr(juror, m)).parameters.keys()
+            )
+            if params != ref_params:
+                raise ValueError(
+                    f"Method {m!r} on juror {type(juror).__name__!r} "
+                    f"at index {i} has parameters {params!r} but the "
+                    f"reference method {methods[0]!r} has {ref_params!r}. "
+                    "All methods in a Jury must share the same parameter "
+                    "names."
+                )
+
         self._jurors = jurors
         self._methods: list[str] = methods
         self._aggregation = aggregation
@@ -189,7 +211,9 @@ class Jury:
 
         self.__signature__ = inspect.signature(getattr(jurors[0], methods[0]))
         self.__name__ = (
-            f"jury_{method}" if isinstance(method, str) else "jury_mixed"
+            f"jury_{methods[0]}"
+            if len(set(methods)) == 1
+            else "jury_mixed"
         )
 
     # ------------------------------------------------------------------
@@ -211,7 +235,7 @@ class Jury:
         with ThreadPoolExecutor(max_workers=self._max_workers) as executor:
             future_to_idx = {
                 executor.submit(
-                    self._call_juror, idx, juror, args, dict(kwargs)
+                    self._call_juror, juror, args, dict(kwargs), idx=idx
                 ): idx
                 for idx, juror in enumerate(self._jurors)
             }
@@ -278,10 +302,11 @@ class Jury:
 
     def _call_juror(
         self,
-        idx: int,
         juror: Any,
         args: tuple[Any, ...],
         kwargs: dict[str, Any],
+        *,
+        idx: int,
     ) -> Any:
         return getattr(juror, self._methods[idx])(*args, **kwargs)
 
