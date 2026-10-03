@@ -182,9 +182,7 @@ class Jury:
         # Return annotations are intentionally excluded — relevance and
         # relevance_with_cot_reasons differ there but are still compatible.
         ref_params = list(
-            inspect.signature(
-                getattr(jurors[0], methods[0])
-            ).parameters.keys()
+            inspect.signature(getattr(jurors[0], methods[0])).parameters.keys()
         )
         for i, (juror, m) in enumerate(zip(jurors, methods)):
             params = list(
@@ -211,9 +209,7 @@ class Jury:
 
         self.__signature__ = inspect.signature(getattr(jurors[0], methods[0]))
         self.__name__ = (
-            f"jury_{methods[0]}"
-            if len(set(methods)) == 1
-            else "jury_mixed"
+            f"jury_{methods[0]}" if len(set(methods)) == 1 else "jury_mixed"
         )
 
     # ------------------------------------------------------------------
