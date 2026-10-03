@@ -98,14 +98,32 @@ class Jury:
         from trulens.core import Metric
         from trulens.feedback.jury import Jury
         from trulens.providers.openai import OpenAI
+        from trulens.providers.litellm import LiteLLM
 
-        judge = OpenAI(model_engine="gpt-4o-mini")
+        # All methods in the list must share the same call signature
+        # because Jury forwards the same arguments to every juror.
+        # relevance and relevance_with_cot_reasons both accept
+        # (prompt, response, ...) so they are safe to mix; methods
+        # with a different first argument (e.g. coherence, which takes
+        # ``text``) cannot be combined with relevance in one Jury.
         jury = Jury(
-            jurors=[judge, judge, judge],
-            method=["relevance", "coherence", "conciseness"],
+            jurors=[
+                OpenAI(model_engine="gpt-4o-mini"),
+                OpenAI(model_engine="gpt-4.1-mini"),
+                LiteLLM(model_engine="anthropic/claude-3-haiku-20240307"),
+            ],
+            method=[
+                "relevance",
+                "relevance_with_cot_reasons",
+                "relevance",
+            ],
             aggregation="mean",
         )
-        m = Metric(implementation=jury, name="Composite Quality").on_input().on_output()
+        m = (
+            Metric(implementation=jury, name="Composite Relevance")
+            .on_input()
+            .on_output()
+        )
     """
 
     def __init__(
@@ -284,8 +302,7 @@ class Jury:
         ]
         if heterogeneous:
             names = [
-                f"{name}/{method}"
-                for name, method in zip(names, self._methods)
+                f"{name}/{method}" for name, method in zip(names, self._methods)
             ]
         return names
 

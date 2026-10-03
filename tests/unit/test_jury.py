@@ -799,7 +799,41 @@ class TestJuryHeterogeneousMethods(unittest.TestCase):
         # No "/relevance" suffix — plain model-engine names only.
         self.assertNotIn("/relevance", meta["reason"])
 
+    def test_documented_call_shape_prompt_response(self):
+        """Regression: methods with matching (prompt, response) signatures
+        can be mixed; every juror must receive both arguments correctly.
+
+        This exercises the call shape documented in the heterogeneous
+        example — relevance and relevance_with_cot_reasons both accept
+        (prompt, response), so combining them must not leave any argument
+        unset.
+        """
+        p0 = _make_multi_method_provider("m0", relevance=0.8)
+        # relevance_with_cot_reasons returns (score, {"reason": ...})
+        p1 = MagicMock()
+        p1.model_engine = "m1"
+        p1.relevance_with_cot_reasons.side_effect = (
+            lambda prompt, response, **kw: (0.6, {"reason": "ok"})
+        )
+        p1.relevance_with_cot_reasons.__signature__ = inspect.signature(
+            _mock_relevance
+        )
+        j = Jury(
+            [p0, p1],
+            method=["relevance", "relevance_with_cot_reasons"],
+            aggregation="mean",
+        )
+        j.__signature__ = inspect.signature(_mock_relevance)
+        score, meta = j(prompt="What is TruLens?", response="An eval lib.")
+        self.assertAlmostEqual(score, statistics.mean([0.8, 0.6]))
+        # Both jurors must have been called with the correct arguments.
+        p0.relevance.assert_called_once_with(
+            prompt="What is TruLens?", response="An eval lib."
+        )
+        p1.relevance_with_cot_reasons.assert_called_once_with(
+            prompt="What is TruLens?", response="An eval lib."
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
-    
