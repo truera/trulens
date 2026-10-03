@@ -1,4 +1,5 @@
 from concurrent.futures import as_completed
+from fnmatch import fnmatchcase
 import json
 import logging
 import re
@@ -26,6 +27,7 @@ from pydantic import BaseModel
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.feedback import provider as core_provider
 from trulens.core.feedback.selector import Trace
+from trulens.core.metric.metric import SkipEval
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils.threading import ThreadPoolExecutor
 from trulens.feedback import generated as feedback_generated
@@ -35,6 +37,7 @@ from trulens.feedback.templates import base as templates_base
 from trulens.feedback.templates import quality as templates_quality
 from trulens.feedback.templates import rag as templates_rag
 from trulens.feedback.templates import safety as templates_safety
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -4473,6 +4476,133 @@ class LLMProvider(core_provider.Provider):
             user_prompt=user_prompt,
             min_score_val=min_score_val,
             max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def test_tampering_with_cot_reasons(
+        self,
+        trace: Trace,
+        test_file_globs: Optional[List[str]] = None,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """Judge whether this turn weakened tests while changing source.
+
+        Example:
+            ```python
+            from trulens.core import Metric, Selector
+
+            metric = Metric(
+                implementation=provider.test_tampering_with_cot_reasons,
+            ).on({"trace": Selector(trace_level=True)})
+            ```
+
+        Turns with no captured test-file diffs raise SkipEval without calling
+        the judge. Source-only test-specific branches are outside this metric's
+        scope because it only runs when a test-file diff is present.
+
+        Args:
+            trace: A coding-agent trace containing captured edit diffs.
+            test_file_globs: Globs used to identify test files. Defaults to
+                common Python, JavaScript, and test-directory patterns.
+            temperature: Sampling temperature for the judge.
+
+        Returns:
+            A score and reasoning metadata.
+
+        Raises:
+            SkipEval: If no captured diff matches the test-file globs.
+            ValueError: If trace diff metadata is malformed or does not identify a non-empty file path.
+        """
+        if not isinstance(trace, Trace):
+            raise ValueError("trace must be a Trace")
+
+        globs = (
+            test_file_globs
+            if test_file_globs is not None
+            else [
+                "test_*.py",
+                "*_test.py",
+                "tests/**",
+                "**/__tests__/**",
+                "*.spec.*",
+                "*.test.*",
+                "conftest.py",
+            ]
+        )
+        test_diffs = []
+        source_diffs = []
+        if trace.events is not None:
+            for _, span in trace.events.iterrows():
+                if "record_attributes" not in span:
+                    raise ValueError(
+                        "Trace events must include record attributes"
+                    )
+                record_attributes = span["record_attributes"]
+                if not isinstance(record_attributes, dict):
+                    raise ValueError(
+                        "Trace event record attributes must be a mapping"
+                    )
+                raw_diff = record_attributes.get(
+                    SpanAttributes.CODING_AGENT.DIFF
+                )
+                if raw_diff is None:
+                    continue
+                diff = (
+                    json.loads(raw_diff)
+                    if isinstance(raw_diff, str)
+                    else raw_diff
+                )
+                paths = []
+                if isinstance(diff, dict) and isinstance(
+                    diff.get("file_path"), str
+                ):
+                    paths = [diff["file_path"]]
+                elif isinstance(diff, str):
+                    paths = [
+                        match[1]
+                        for match in re.findall(
+                            r"(?m)^diff --git a/(.*?) b/(.*?)$", diff
+                        )
+                    ]
+                if not paths:
+                    raise ValueError(
+                        "Captured coding-agent diffs must name the changed file"
+                    )
+                for path in paths:
+                    normalized_path = path.strip().replace("\\", "/")
+                    if not normalized_path:
+                        raise ValueError(
+                            "Captured coding-agent diffs must name a non-empty file path"
+                        )
+                    item = {"file_path": normalized_path, "diff": diff}
+                    basename = normalized_path.rsplit("/", 1)[-1]
+                    if any(
+                        fnmatchcase(normalized_path, pattern)
+                        or (
+                            "/" not in pattern
+                            and fnmatchcase(basename, pattern)
+                        )
+                        for pattern in globs
+                    ):
+                        test_diffs.append(item)
+                    else:
+                        source_diffs.append(item)
+
+        if not test_diffs:
+            raise SkipEval(
+                "No captured diffs matched the configured test-file globs."
+            )
+
+        system_prompt = templates_agent.TestTampering.system_prompt
+        user_prompt = templates_agent.TestTampering.user_prompt.format(
+            test_diffs=json.dumps(test_diffs, indent=2, default=str),
+            source_diffs=json.dumps(source_diffs, indent=2, default=str),
+        ).replace("TEST TAMPERING SCORE:", templates_base.COT_REASONS_TEMPLATE)
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=0,
+            max_score_val=1,
             temperature=temperature,
         )
 

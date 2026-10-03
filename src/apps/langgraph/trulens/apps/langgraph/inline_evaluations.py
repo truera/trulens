@@ -9,6 +9,7 @@ try:
 except ImportError:
     # Backwards compatibility with trulens-core < 2.5.0
     from trulens.core.feedback.feedback import Feedback as Metric
+from trulens.core.metric import SkipEval
 from trulens.feedback.computer import _call_feedback_function
 from trulens.otel.semconv.constants import TRULENS_SPAN_END_CALLBACKS
 from trulens.otel.semconv.trace import SpanAttributes
@@ -55,6 +56,7 @@ class inline_evaluation:
                             f"{span_name} with attributes {span_attributes}"
                         )
 
+                feedback_result: Any
                 if self._emit_spans:
                     # Get necessary attributes from the original span.
                     app_name = span_attributes.get(SpanAttributes.RUN_NAME, "")
@@ -81,7 +83,10 @@ class inline_evaluation:
                     )
                 else:
                     # Call the feedback function without creating spans
-                    feedback_result = self._feedback(**feedback_args)
+                    try:
+                        feedback_result = self._feedback(**feedback_args)
+                    except SkipEval as e:
+                        feedback_result = f"Skipped: {e}"
 
                 # Add feedback result to state messages
                 state = self._get_state_arg(func, instance, args, kwargs)
