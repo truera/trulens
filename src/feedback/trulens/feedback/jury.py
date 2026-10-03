@@ -53,6 +53,15 @@ class Jury:
         jurors: Non-empty list of ``LLMProvider`` instances.
         method: Name of the feedback method to call on each juror, e.g.
             ``"relevance"`` or ``"groundedness_measure_with_cot_reasons"``.
+            Accepts either a single method name (all jurors call the same
+            method) or a list of method names of the same length as *jurors*
+            (``jurors[i]`` calls ``method[i]``). The heterogeneous form lets
+            you mix evaluation dimensions — for example one juror scores
+            relevance while another scores groundedness — and still aggregate
+            into a single composite score.  The ``__signature__`` of the
+            ``Jury`` instance is always taken from the first juror's first
+            method, so all methods in the list must share the same call
+            signature.
         aggregation: How to combine individual juror scores. Accepts a
             strategy name (``"mean"``, ``"median"``, ``"trimmed_mean"``,
             ``"majority_vote"``, ``"weighted_mean"``) or any
@@ -66,7 +75,7 @@ class Jury:
         max_workers: Maximum parallel threads. Defaults to
             ``len(jurors)``.
 
-    Example::
+    Example — homogeneous (all jurors call ``"relevance"``)::
 
         from trulens.core import Metric
         from trulens.feedback.jury import Jury
@@ -83,12 +92,44 @@ class Jury:
             aggregation="median",
         )
         m = Metric(implementation=jury, name="Jury Relevance").on_input().on_output()
+
+    Example — heterogeneous (each juror calls a different method)::
+
+        from trulens.core import Metric
+        from trulens.feedback.jury import Jury
+        from trulens.providers.openai import OpenAI
+        from trulens.providers.litellm import LiteLLM
+
+        # All methods in the list must share the same call signature
+        # because Jury forwards the same arguments to every juror.
+        # relevance and relevance_with_cot_reasons both accept
+        # (prompt, response, ...) so they are safe to mix; methods
+        # with a different first argument (e.g. coherence, which takes
+        # ``text``) cannot be combined with relevance in one Jury.
+        jury = Jury(
+            jurors=[
+                OpenAI(model_engine="gpt-4o-mini"),
+                OpenAI(model_engine="gpt-4.1-mini"),
+                LiteLLM(model_engine="anthropic/claude-3-haiku-20240307"),
+            ],
+            method=[
+                "relevance",
+                "relevance_with_cot_reasons",
+                "relevance",
+            ],
+            aggregation="mean",
+        )
+        m = (
+            Metric(implementation=jury, name="Composite Relevance")
+            .on_input()
+            .on_output()
+        )
     """
 
     def __init__(
         self,
         jurors: list[Any],
-        method: str,
+        method: str | list[str],
         aggregation: str | Callable[[list[float]], float] = "mean",
         *,
         weights: list[float] | None = None,
@@ -117,16 +158,47 @@ class Jury:
                     f"len(weights)={len(weights)} must equal len(jurors)={len(jurors)}."
                 )
 
-        # Validate ALL jurors have the method.
-        for i, juror in enumerate(jurors):
-            bound = getattr(juror, method, None)
+        # Normalise method to a per-juror list.
+        if isinstance(method, str):
+            methods: list[str] = [method] * len(jurors)
+        else:
+            methods = list(method)
+            if len(methods) != len(jurors):
+                raise ValueError(
+                    f"len(method)={len(methods)} must equal len(jurors)={len(jurors)} "
+                    "when method is a list."
+                )
+
+        # Validate that every juror has its assigned method.
+        for i, (juror, m) in enumerate(zip(jurors, methods)):
+            bound = getattr(juror, m, None)
             if bound is None or not callable(bound):
                 raise AttributeError(
-                    f"Juror {type(juror).__name__!r} at index {i} has no callable method {method!r}."
+                    f"Juror {type(juror).__name__!r} at index {i} has no callable method {m!r}."
+                )
+
+        # Validate that all methods share the same parameter names so that
+        # __call__'s *args/**kwargs are forwarded correctly to every juror.
+        # Return annotations are intentionally excluded — relevance and
+        # relevance_with_cot_reasons differ there but are still compatible.
+        ref_params = list(
+            inspect.signature(getattr(jurors[0], methods[0])).parameters.keys()
+        )
+        for i, (juror, m) in enumerate(zip(jurors, methods)):
+            params = list(
+                inspect.signature(getattr(juror, m)).parameters.keys()
+            )
+            if params != ref_params:
+                raise ValueError(
+                    f"Method {m!r} on juror {type(juror).__name__!r} "
+                    f"at index {i} has parameters {params!r} but the "
+                    f"reference method {methods[0]!r} has {ref_params!r}. "
+                    "All methods in a Jury must share the same parameter "
+                    "names."
                 )
 
         self._jurors = jurors
-        self._method = method
+        self._methods: list[str] = methods
         self._aggregation = aggregation
         self._weights = weights
         self._threshold = threshold
@@ -135,8 +207,10 @@ class Jury:
         # Precompute once in __init__ (O(n)) instead of rebuilding per __call__ (O(n²)).
         self._juror_names: list[str] = self._build_juror_names()
 
-        self.__signature__ = inspect.signature(getattr(jurors[0], method))
-        self.__name__ = f"jury_{method}"
+        self.__signature__ = inspect.signature(getattr(jurors[0], methods[0]))
+        self.__name__ = (
+            f"jury_{methods[0]}" if len(set(methods)) == 1 else "jury_mixed"
+        )
 
     # ------------------------------------------------------------------
     # Public interface
@@ -157,7 +231,7 @@ class Jury:
         with ThreadPoolExecutor(max_workers=self._max_workers) as executor:
             future_to_idx = {
                 executor.submit(
-                    self._call_juror, juror, args, dict(kwargs)
+                    self._call_juror, juror, args, dict(kwargs), idx=idx
                 ): idx
                 for idx, juror in enumerate(self._jurors)
             }
@@ -223,19 +297,33 @@ class Jury:
     # ------------------------------------------------------------------
 
     def _call_juror(
-        self, juror: Any, args: tuple[Any, ...], kwargs: dict[str, Any]
+        self,
+        juror: Any,
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
+        *,
+        idx: int,
     ) -> Any:
-        return getattr(juror, self._method)(*args, **kwargs)
+        return getattr(juror, self._methods[idx])(*args, **kwargs)
 
     def _build_juror_names(self) -> list[str]:
         bases = [
             str(getattr(j, "model_engine", None) or type(j).__name__)
             for j in self._jurors
         ]
-        return [
+        # When methods differ across jurors, append the method name so the
+        # reason string makes clear which evaluation dimension each score came
+        # from (e.g. "gpt-4o-mini/relevance" vs "gpt-4o-mini/coherence").
+        heterogeneous = len(set(self._methods)) > 1
+        names = [
             f"{base}[{i}]" if bases.count(base) > 1 else base
             for i, base in enumerate(bases)
         ]
+        if heterogeneous:
+            names = [
+                f"{name}/{method}" for name, method in zip(names, self._methods)
+            ]
+        return names
 
     def _aggregate(self, scores_by_idx: dict[int, float]) -> float:
         ordered = sorted(scores_by_idx.items())

@@ -555,12 +555,12 @@ class TestJuryReturnFormat(unittest.TestCase):
                 super().__init__(*args, **kwargs)
                 self.seen_custom_instructions = []
 
-            def _call_juror(self, juror, args, kwargs):
+            def _call_juror(self, juror, args, kwargs, *, idx):
                 self.seen_custom_instructions.append(
                     kwargs.get("custom_instructions")
                 )
                 kwargs.pop("custom_instructions", None)
-                return super()._call_juror(juror, args, kwargs)
+                return super()._call_juror(juror, args, kwargs, idx=idx)
 
         p1 = _make_provider("gpt-4o-mini", 0.6)
         p1.relevance.__signature__ = inspect.signature(
@@ -629,6 +629,226 @@ class TestJuryDuplicateNames(unittest.TestCase):
         _, meta = j(prompt="x", response="y")
         self.assertIn("gpt-4o-mini[0]", meta["reason"])
         self.assertIn("gpt-4o-mini[1]", meta["reason"])
+
+
+# ---------------------------------------------------------------------------
+# Heterogeneous method support
+# ---------------------------------------------------------------------------
+
+
+def _make_multi_method_provider(model_engine: str, **method_scores: float):
+    """Create a mock provider with multiple methods, each returning a score.
+
+    Args:
+        model_engine: The model engine name.
+        **method_scores: Keyword arguments where each key is a method name
+            and each value is the score that method returns.
+    """
+    provider = MagicMock()
+    provider.model_engine = model_engine
+    for method_name, score in method_scores.items():
+        method_mock = getattr(provider, method_name)
+        method_mock.side_effect = lambda prompt, response, _s=score, **kw: _s
+        method_mock.__signature__ = inspect.signature(_mock_relevance)
+    return provider
+
+
+class TestJuryHeterogeneousMethods(unittest.TestCase):
+    """Tests for Jury with a per-juror list of method names."""
+
+    def _sig(self, provider, method="relevance"):
+        getattr(provider, method).__signature__ = inspect.signature(
+            _mock_relevance
+        )
+        return provider
+
+    # ------------------------------------------------------------------
+    # Construction
+    # ------------------------------------------------------------------
+
+    def test_method_list_wrong_length_raises(self):
+        p1 = _make_provider("m0", 0.8)
+        p2 = _make_provider("m1", 0.6)
+        with self.assertRaises(ValueError):
+            Jury([p1, p2], method=["relevance"])  # 1 method, 2 jurors
+
+    def test_method_list_juror_missing_method_raises(self):
+        good = _make_provider("m0", 0.8)
+        good.relevance.__signature__ = inspect.signature(_mock_relevance)
+        # bad has no "coherence" attribute
+        bad = MagicMock(spec=["model_engine", "relevance"])
+        with self.assertRaises(AttributeError):
+            Jury([good, bad], method=["relevance", "coherence"])
+
+    def test_incompatible_method_signatures_raises(self):
+        """Methods with different parameter names must be rejected at
+        construction time, not silently misrouted at call time."""
+
+        def _mock_text_method(text: str) -> float: ...
+
+        p0 = _make_multi_method_provider("m0", relevance=0.8)
+        p1 = MagicMock()
+        p1.model_engine = "m1"
+        # coherence takes ``text``, not ``prompt``/``response``
+        p1.coherence.__signature__ = inspect.signature(_mock_text_method)
+        with self.assertRaises(ValueError):
+            Jury([p0, p1], method=["relevance", "coherence"])
+
+    def test_dunder_name_is_jury_mixed_for_list(self):
+        p0 = _make_multi_method_provider("m0", relevance=0.8, coherence=0.6)
+        p1 = _make_multi_method_provider("m1", relevance=0.8, coherence=0.6)
+        j = Jury([p0, p1], method=["relevance", "coherence"])
+        j.__signature__ = inspect.signature(_mock_relevance)
+        self.assertEqual(j.__name__, "jury_mixed")
+
+    def test_dunder_name_is_jury_method_for_string(self):
+        p = _make_provider("m0", 0.8)
+        p.relevance.__signature__ = inspect.signature(_mock_relevance)
+        j = Jury([p], method="relevance")
+        self.assertEqual(j.__name__, "jury_relevance")
+
+    def test_signature_taken_from_first_juror_first_method(self):
+        p0 = _make_multi_method_provider("m0", relevance=0.8, coherence=0.6)
+        p1 = _make_multi_method_provider("m1", relevance=0.8, coherence=0.6)
+        j = Jury([p0, p1], method=["relevance", "coherence"])
+        sig = inspect.signature(j)
+        self.assertIn("prompt", sig.parameters)
+        self.assertIn("response", sig.parameters)
+
+    # ------------------------------------------------------------------
+    # Dispatch — each juror calls its assigned method
+    # ------------------------------------------------------------------
+
+    def test_each_juror_calls_its_assigned_method(self):
+        """Juror 0 should call relevance, juror 1 should call coherence."""
+        p0 = _make_multi_method_provider("m0", relevance=1.0, coherence=0.0)
+        p1 = _make_multi_method_provider("m1", relevance=0.0, coherence=1.0)
+        j = Jury(
+            [p0, p1],
+            method=["relevance", "coherence"],
+            aggregation="mean",
+        )
+        j.__signature__ = inspect.signature(_mock_relevance)
+        score, _ = j(prompt="x", response="y")
+        # mean([1.0, 1.0]) = 1.0 — would be 0.5 if methods were swapped
+        self.assertAlmostEqual(score, 1.0)
+        p0.relevance.assert_called_once()
+        p0.coherence.assert_not_called()
+        p1.coherence.assert_called_once()
+        p1.relevance.assert_not_called()
+
+    def test_heterogeneous_mean_aggregation(self):
+        p0 = _make_multi_method_provider("m0", relevance=0.6)
+        p1 = _make_multi_method_provider("m1", coherence=0.8)
+        p2 = _make_multi_method_provider("m2", conciseness=1.0)
+        j = Jury(
+            [p0, p1, p2],
+            method=["relevance", "coherence", "conciseness"],
+            aggregation="mean",
+        )
+        j.__signature__ = inspect.signature(_mock_relevance)
+        score, _ = j(prompt="x", response="y")
+        self.assertAlmostEqual(score, statistics.mean([0.6, 0.8, 1.0]))
+
+    def test_homogeneous_string_method_still_works(self):
+        """Passing a plain string should behave exactly as before."""
+        p0 = _make_provider("m0", 0.7)
+        p0.relevance.__signature__ = inspect.signature(_mock_relevance)
+        p1 = _make_provider("m1", 0.9)
+        p1.relevance.__signature__ = inspect.signature(_mock_relevance)
+        j = Jury([p0, p1], method="relevance", aggregation="mean")
+        j.__signature__ = inspect.signature(_mock_relevance)
+        score, _ = j(prompt="x", response="y")
+        self.assertAlmostEqual(score, statistics.mean([0.7, 0.9]))
+
+    # ------------------------------------------------------------------
+    # Failure handling — behaves the same as homogeneous mode
+    # ------------------------------------------------------------------
+
+    def test_one_heterogeneous_juror_fails_aggregates_rest(self):
+        good = _make_multi_method_provider("good", relevance=0.8)
+        bad = MagicMock()
+        bad.model_engine = "bad"
+        bad.coherence.side_effect = RuntimeError("unavailable")
+        bad.coherence.__signature__ = inspect.signature(_mock_relevance)
+        j = Jury([good, bad], method=["relevance", "coherence"])
+        j.__signature__ = inspect.signature(_mock_relevance)
+        score, _ = j(prompt="x", response="y")
+        self.assertAlmostEqual(score, 0.8)
+
+    def test_all_heterogeneous_jurors_fail_raises(self):
+        p0 = MagicMock()
+        p0.model_engine = "m0"
+        p0.relevance.side_effect = RuntimeError("fail")
+        p0.relevance.__signature__ = inspect.signature(_mock_relevance)
+        p1 = MagicMock()
+        p1.model_engine = "m1"
+        p1.coherence.side_effect = RuntimeError("fail")
+        p1.coherence.__signature__ = inspect.signature(_mock_relevance)
+        j = Jury([p0, p1], method=["relevance", "coherence"])
+        j.__signature__ = inspect.signature(_mock_relevance)
+        with self.assertRaises(RuntimeError):
+            j(prompt="x", response="y")
+
+    # ------------------------------------------------------------------
+    # Reason string — method names visible when heterogeneous
+    # ------------------------------------------------------------------
+
+    def test_reason_string_contains_method_names_when_heterogeneous(self):
+        p0 = _make_multi_method_provider("judge", relevance=0.8)
+        p1 = _make_multi_method_provider("judge", coherence=0.6)
+        j = Jury([p0, p1], method=["relevance", "coherence"])
+        j.__signature__ = inspect.signature(_mock_relevance)
+        _, meta = j(prompt="x", response="y")
+        # Both dimension names must appear so users know what each score means.
+        self.assertIn("relevance", meta["reason"])
+        self.assertIn("coherence", meta["reason"])
+
+    def test_reason_string_no_method_suffix_when_homogeneous(self):
+        p0 = _make_provider("gpt-4o", 0.8)
+        p0.relevance.__signature__ = inspect.signature(_mock_relevance)
+        p1 = _make_provider("claude", 0.6)
+        p1.relevance.__signature__ = inspect.signature(_mock_relevance)
+        j = Jury([p0, p1], method="relevance")
+        j.__signature__ = inspect.signature(_mock_relevance)
+        _, meta = j(prompt="x", response="y")
+        # No "/relevance" suffix — plain model-engine names only.
+        self.assertNotIn("/relevance", meta["reason"])
+
+    def test_documented_call_shape_prompt_response(self):
+        """Regression: methods with matching (prompt, response) signatures
+        can be mixed; every juror must receive both arguments correctly.
+
+        This exercises the call shape documented in the heterogeneous
+        example — relevance and relevance_with_cot_reasons both accept
+        (prompt, response), so combining them must not leave any argument
+        unset.
+        """
+        p0 = _make_multi_method_provider("m0", relevance=0.8)
+        # relevance_with_cot_reasons returns (score, {"reason": ...})
+        p1 = MagicMock()
+        p1.model_engine = "m1"
+        p1.relevance_with_cot_reasons.side_effect = (
+            lambda prompt, response, **kw: (0.6, {"reason": "ok"})
+        )
+        p1.relevance_with_cot_reasons.__signature__ = inspect.signature(
+            _mock_relevance
+        )
+        j = Jury(
+            [p0, p1],
+            method=["relevance", "relevance_with_cot_reasons"],
+            aggregation="mean",
+        )
+        j.__signature__ = inspect.signature(_mock_relevance)
+        score, meta = j(prompt="What is TruLens?", response="An eval lib.")
+        self.assertAlmostEqual(score, statistics.mean([0.8, 0.6]))
+        # Both jurors must have been called with the correct arguments.
+        p0.relevance.assert_called_once_with(
+            prompt="What is TruLens?", response="An eval lib."
+        )
+        p1.relevance_with_cot_reasons.assert_called_once_with(
+            prompt="What is TruLens?", response="An eval lib."
+        )
 
 
 if __name__ == "__main__":
