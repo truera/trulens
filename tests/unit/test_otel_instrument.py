@@ -370,6 +370,79 @@ class TestOtelInstrument(unittest.TestCase):
         spans = self.exporter.get_finished_spans()
         self.assertEqual(len(spans), 1)
 
+    def test_attribute_mapped_to_defaulted_argument(self) -> None:
+        top_k_key = f"{SpanAttributes.UNKNOWN.base}.top_k"
+
+        @instrument(attributes={top_k_key: "top_k"})
+        def retrieve(query: str, top_k: int = 3) -> list[str]:
+            return [query] * top_k
+
+        # Not passed: the default is recorded.
+        self.assertEqual(retrieve("q"), ["q", "q", "q"])
+        # Passed by keyword or position: the passed value wins.
+        self.assertEqual(retrieve("q", top_k=1), ["q"])
+        self.assertEqual(retrieve("q", 2), ["q", "q"])
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 3)
+        self.assertEqual(
+            [span.attributes[top_k_key] for span in spans], [3, 1, 2]
+        )
+
+    def test_async_attribute_mapped_to_defaulted_argument(self) -> None:
+        top_k_key = f"{SpanAttributes.UNKNOWN.base}.top_k"
+
+        @instrument(attributes={top_k_key: "top_k"})
+        async def retrieve(query: str, top_k: int = 3) -> list[str]:
+            await asyncio.sleep(0.00001)
+            return [query] * top_k
+
+        self.assertEqual(asyncio.run(retrieve("q")), ["q", "q", "q"])
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].attributes[top_k_key], 3)
+
+    def test_attribute_mapped_to_unknown_name_is_skipped(self) -> None:
+        query_key = f"{SpanAttributes.UNKNOWN.base}.query"
+        typo_key = f"{SpanAttributes.UNKNOWN.base}.top_k"
+
+        @instrument(attributes={query_key: "query", typo_key: "topk"})
+        def retrieve(query: str, top_k: int = 3) -> list[str]:
+            return [query] * top_k
+
+        with self.assertLogs(
+            "trulens.core.otel.instrument", level="WARNING"
+        ) as logs:
+            result = retrieve("q")
+
+        self.assertEqual(result, ["q", "q", "q"])
+        self.assertTrue(
+            any(typo_key in line and "topk" in line for line in logs.output)
+        )
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].attributes[query_key], "q")
+        self.assertNotIn(typo_key, spans[0].attributes)
+
+    def test_user_exception_still_propagates(self) -> None:
+        @instrument(
+            attributes={
+                f"{SpanAttributes.UNKNOWN.base}.top_k": "top_k",
+                f"{SpanAttributes.UNKNOWN.base}.typo": "topk",
+            }
+        )
+        def retrieve(query: str, top_k: int = 3) -> list[str]:
+            raise ValueError("retriever is down")
+
+        with self.assertRaisesRegex(ValueError, "retriever is down"):
+            retrieve("q")
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.top_k"], 3
+        )
+
     def test_span_group_three_hops_get_distinct_groups(self) -> None:
         """Three sequential span_group blocks produce three spans
         with distinct group labels — the core per-hop localization

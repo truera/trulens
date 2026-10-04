@@ -225,6 +225,14 @@ def _resolve_attributes(
         value_string_to_value = all_kwargs.copy()
         value_string_to_value["return"] = ret
         for k, v in attributes.items():
+            if v not in value_string_to_value:
+                logger.warning(
+                    "Skipping span attribute %r: %r is not an argument of "
+                    "the instrumented function or 'return'.",
+                    k,
+                    v,
+                )
+                continue
             resolved[k] = value_string_to_value[v]
         return resolved
     return attributes.copy()
@@ -256,6 +264,12 @@ def _set_span_attributes(
     # callable.
     sig = inspect.signature(func)
     bound_args = sig.bind_partial(*args, **kwargs).arguments
+    # Fill in parameters the caller left at their defaults so attributes
+    # mapped to them resolve. Unlike `BoundArguments.apply_defaults`, this
+    # does not add empty `*args`/`**kwargs` placeholders.
+    for name, param in sig.parameters.items():
+        if name not in bound_args and param.default is not param.empty:
+            bound_args[name] = param.default
     all_kwargs = {**kwargs, **bound_args}
     if not only_set_user_defined_attributes:
         # Set general span attributes.
