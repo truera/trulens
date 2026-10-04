@@ -1020,6 +1020,9 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                             "total_cost": 0.0,
                             "cost_currency": "USD",  # Initialize to USD, calculated below
                             "direction": None,
+                            # Internal: input key -> (timestamp, score) of the
+                            # latest EVAL_ROOT for that input. Not returned.
+                            "_input_scores": {},
                         }
 
                     # Update feedback result
@@ -1036,23 +1039,6 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                         record_attributes.get(SpanAttributes.SPAN_TYPE)
                         == SpanAttributes.SpanType.EVAL_ROOT.value
                     ):
-                        # A record and metric can have several EVAL_ROOT spans
-                        # when the metric is re-evaluated. Keep the latest one by
-                        # timestamp so the reported score is deterministic rather
-                        # than whichever span happens to be iterated last.
-                        prev_ts = feedback_result.get("_score_ts")
-                        if prev_ts is None or event.start_timestamp >= prev_ts:
-                            feedback_result["_score_ts"] = event.start_timestamp
-                            # NOTE: EVAL_ROOT.SCORE should provide the mean score of all related EVAL spans
-                            feedback_result["mean_score"] = eval_root_score
-                            # TODO(SNOW-2112879): HIGHER_IS_BETTER has not been populated in the OTEL spans yet
-                            feedback_result["direction"] = (
-                                record_attributes.get(
-                                    SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER,
-                                    None,
-                                )
-                            )
-                        # Add call data for EVAL_ROOT spans
                         args_span_id = self._extract_namespaced_attributes(
                             record_attributes,
                             SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID,
@@ -1063,7 +1049,40 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                                 SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE,
                             )
                         )
+                        # A record and metric can have several EVAL_ROOT spans:
+                        # one per distinct input when the selector matches
+                        # several spans, and more when an input is
+                        # re-evaluated. Keep the latest EVAL_ROOT per input by
+                        # timestamp so a re-evaluated score is deterministic,
+                        # and report the mean over inputs (computed below).
+                        input_key = self._eval_root_input_key(
+                            record_attributes,
+                            args_span_id,
+                            args_span_attribute,
+                        )
+                        input_scores = feedback_result["_input_scores"]
+                        prev_input = input_scores.get(input_key)
+                        if (
+                            prev_input is None
+                            or event.start_timestamp >= prev_input[0]
+                        ):
+                            # NOTE: EVAL_ROOT.SCORE should provide the mean score of all related EVAL spans
+                            input_scores[input_key] = (
+                                event.start_timestamp,
+                                eval_root_score,
+                            )
+                        prev_ts = feedback_result.get("_score_ts")
+                        if prev_ts is None or event.start_timestamp >= prev_ts:
+                            feedback_result["_score_ts"] = event.start_timestamp
+                            # TODO(SNOW-2112879): HIGHER_IS_BETTER has not been populated in the OTEL spans yet
+                            feedback_result["direction"] = (
+                                record_attributes.get(
+                                    SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER,
+                                    None,
+                                )
+                            )
 
+                        # Add call data for EVAL_ROOT spans
                         call_data = {
                             "span_type": record_attributes.get(
                                 SpanAttributes.SPAN_TYPE
@@ -1190,9 +1209,23 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             for feedback_name, feedback_result in record_data[
                 "feedback_results"
             ].items():
-                # Drop the internal latest-score timestamp used only to pick the
-                # most recent EVAL_ROOT; it is not part of the public schema.
+                # Drop the internal timestamp used only to pick the direction of
+                # the most recent EVAL_ROOT; it is not part of the public schema.
                 feedback_result.pop("_score_ts", None)
+                # The record's score is the mean of the latest score of each
+                # evaluated input. Inputs whose latest score is missing are
+                # left out; with no scored input the score stays None.
+                input_scores = [
+                    score
+                    for _, score in feedback_result.pop(
+                        "_input_scores", {}
+                    ).values()
+                    if score is not None
+                ]
+                if input_scores:
+                    feedback_result["mean_score"] = sum(input_scores) / len(
+                        input_scores
+                    )
                 # NOTE: we use the mean score as the feedback result
                 record_row[feedback_name] = feedback_result["mean_score"]
 
@@ -1218,6 +1251,50 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 df[col] = None
 
         return df, feedback_col_names
+
+    @staticmethod
+    def _eval_root_input_key(
+        record_attributes: Dict[str, Any],
+        args_span_id: Dict[str, Any],
+        args_span_attribute: Dict[str, Any],
+    ) -> Tuple[Any, ...]:
+        """Identify the input an EVAL_ROOT span evaluated.
+
+        Uses the same identity the feedback computer uses to skip inputs it
+        has already evaluated: the span group plus, for each argument, the id
+        of the span and the span attribute that supplied it. EVAL_ROOT spans
+        that record none of these share one key, so the latest of them wins.
+
+        Args:
+            record_attributes: Attributes of the EVAL_ROOT span.
+            args_span_id: Argument name to source span id.
+            args_span_attribute: Argument name to source span attribute.
+
+        Returns:
+            A hashable key for the evaluated input.
+        """
+
+        def _hashable(value: Any) -> Any:
+            if isinstance(value, (list, tuple)):
+                return tuple(_hashable(v) for v in value)
+            try:
+                hash(value)
+            except TypeError:
+                return repr(value)
+            return value
+
+        def _items(mapping: Dict[str, Any]) -> Tuple[Tuple[str, Any], ...]:
+            return tuple(
+                (k, _hashable(mapping[k])) for k in sorted(mapping.keys())
+            )
+
+        return (
+            _hashable(
+                record_attributes.get(SpanAttributes.EVAL_ROOT.SPAN_GROUP)
+            ),
+            _items(args_span_id),
+            _items(args_span_attribute),
+        )
 
     def _extract_namespaced_attributes(
         self, record_attributes: Dict[str, Any], namespace_prefix: str
