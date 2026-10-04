@@ -98,6 +98,53 @@ f_conversation_coherence = Metric(
 ).on_conversation()
 ```
 
+Requirement Satisfaction evaluates each distinct user requirement and returns
+`1.0` for met, `0.5` for partly met, and `0.0` for not met. When bound to a
+conversation, requirements are extracted from every user turn, including later
+turns. Its metadata includes the requirement count, verdicts, and supporting
+evidence, so the aggregate score can be audited. This differs from
+`agent_goal_accuracy`, which gives one binary score for the overall goal.
+Use `requirement_satisfaction_with_cot_reasons` to configure this metric.
+Pass multi-turn conversations as structured records; a string `request` is one
+user message and should be paired with an `output`. When evaluating a trace,
+select the spans and fields that contain the evidence you want the judge to see.
+Trace input over 400,000 characters is rejected, so narrow the selector when a
+trace is too large.
+
+```python
+f_requirement_satisfaction = Metric(
+    implementation=provider.requirement_satisfaction_with_cot_reasons,
+    name="Requirement Satisfaction",
+).on_conversation()
+```
+
+For a single request and output, bind the selected values directly:
+
+```python
+f_requirement_satisfaction = Metric(
+    implementation=provider.requirement_satisfaction_with_cot_reasons,
+    name="Requirement Satisfaction",
+).on({
+    "request": Selector.select_record_input(),
+    "output": Selector(trace_level=True),
+})
+```
+
+When no request is available, bind an explicit requirement list and select only
+the output:
+
+```python
+f_explicit_requirements = Metric(
+    implementation=provider.requirement_satisfaction_with_cot_reasons,
+    name="Requirement Satisfaction",
+).with_arguments(
+    reference_requirements=["Return JSON.", "Include a summary."],
+).on({"output": Selector(trace_level=True)})
+```
+
+If the request is available, omit `reference_requirements`; TruLens extracts
+requirements from the request first, then evaluates them against the output.
+
 The selected value has this shape:
 
 ```python
@@ -152,8 +199,10 @@ f_conversation_coherence = Metric(
 ```
 
 The conversation-level metrics are `coherence_across_turns`,
-`conversation_helpfulness`, `topic_adherence`, `agent_goal_accuracy`, and
-the deterministic `conversation_repetition` (no LLM calls). Each of the LLM-based ones has a matching `_with_cot_reasons` variant.
+`conversation_helpfulness`, `topic_adherence`, `agent_goal_accuracy`,
+`requirement_satisfaction`, and the deterministic `conversation_repetition`
+(no LLM calls). Each LLM-based metric has a matching `_with_cot_reasons`
+variant.
 
 ## Attach both metrics to an app
 
