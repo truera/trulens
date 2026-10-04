@@ -252,7 +252,10 @@ def test_requirement_satisfaction_scores_and_reports_each_explicit_requirement()
     assert len(provider.endpoint.calls) == 1
 
 
-def test_requirement_satisfaction_includes_later_user_turns() -> None:
+def test_requirement_satisfaction_includes_later_user_turns(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("TRULENS_OTEL_TRACING", "1")
     records = [
         {"input": "Write a command-line tool.", "output": "Here is the tool."},
         {"input": "Also add a JSON output mode.", "output": "I will add that."},
