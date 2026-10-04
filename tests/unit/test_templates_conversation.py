@@ -252,6 +252,34 @@ def test_requirement_satisfaction_scores_and_reports_each_explicit_requirement()
     assert len(provider.endpoint.calls) == 1
 
 
+@pytest.mark.parametrize(
+    "records",
+    [
+        [{"input": "", "output": "Hello."}],
+        [{"input": " \t ", "output": "Hello."}],
+        [{"role": "user", "content": " \t "}],
+    ],
+    ids=[
+        "empty-record-input",
+        "whitespace-record-input",
+        "blank-user-message",
+    ],
+)
+def test_requirement_satisfaction_rejects_blank_user_turns_without_judge_call(
+    records: list[dict[str, str]],
+) -> None:
+    provider = _provider_with_response([])
+
+    with pytest.raises(
+        ValueError, match="The conversation contains no user turns to evaluate"
+    ):
+        llm_provider.LLMProvider.requirement_satisfaction_with_cot_reasons(
+            provider, request=records
+        )
+
+    assert provider.endpoint.calls == []
+
+
 def test_requirement_satisfaction_includes_later_user_turns(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

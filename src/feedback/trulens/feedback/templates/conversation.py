@@ -82,7 +82,9 @@ def _conversation_user_turns_to_prompt(records: list[Any] | str) -> str:
         else:
             user_input = record
 
-        if user_input is not None:
+        if user_input is not None and (
+            not isinstance(user_input, str) or user_input.strip()
+        ):
             user_turns.append(f"Turn {idx} User: {user_input}")
 
     return "\n".join(user_turns)
