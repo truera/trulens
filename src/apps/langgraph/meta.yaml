@@ -11,7 +11,7 @@ source:
   # path: .
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-apps-langgraph/#files
-  sha256: 877a3b9967dcded290afbd1b84c666e250391b276dde44a595a75902737defcd
+  sha256: 9b6d95b15b7b23ac9bd68f7581b40df7aa439eb76fde9d644a235e632a5f24b3
 
 build:
   noarch: python
