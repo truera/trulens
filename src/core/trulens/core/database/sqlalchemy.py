@@ -50,6 +50,7 @@ from trulens.core.schema import prompt as prompt_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.schema.event import Event
+from trulens.core.utils import constants as constants_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
@@ -871,6 +872,45 @@ class SQLAlchemyDB(core_db.DB):
 
             return _extract_feedback_results(results)
 
+    @staticmethod
+    def _avg_score_excluding_sentinel(score_col: sa.Column) -> sa.Column:
+        """Average *score_col*, ignoring rows holding the unparsable sentinel.
+
+        A judge that returns nothing parseable stores
+        [UNPARSABLE_SCORE][trulens.core.utils.constants.UNPARSABLE_SCORE]
+        (-1.0) as its result. Averaging that in disguises a judge failure as a
+        mediocre metric: three stored scores of `1.0, 1.0, -1.0` reported
+        `0.33` instead of `1.0`. `BatchEvaluator._aggregate_scores` filters the
+        same sentinel out before aggregating; the leaderboard aggregates need
+        the same treatment so both surfaces agree.
+
+        The value comes from `trulens.core.utils.constants` rather than from
+        `trulens.feedback.llm_provider` because `trulens.feedback` is optional
+        and `trulens.core` installs without it.
+
+        Only the sentinel is filtered. A genuine negative score, such as `-0.5`
+        for a penalty metric, is still averaged in.
+
+        If every score for a metric is a sentinel then no parsable score is
+        left to average, and the sentinel itself is reported rather than NULL,
+        so the failure stays visible in the leaderboard instead of leaving the
+        column blank.
+
+        Args:
+            score_col: The score column to average.
+
+        Returns:
+            A SQLAlchemy column expression yielding the average of the parsable
+            scores, or the sentinel when there are none.
+        """
+        unparsable = constants_utils.UNPARSABLE_SCORE
+        # AVG ignores NULLs, so mapping the sentinel to NULL excludes just
+        # those rows while leaving every other score to be averaged.
+        parsable = sa.case((score_col != unparsable, score_col))
+        return sa.func.coalesce(
+            sa.func.avg(parsable), sa.literal(unparsable, sa.Float)
+        )
+
     def _json_extract_otel(self, column: str, path: str) -> sa.Column:
         """Helper function to extract JSON values from a JSON column in the Event table.
 
@@ -1289,7 +1329,9 @@ class SQLAlchemyDB(core_db.DB):
                     "resource_attributes", ResourceAttributes.APP_ID
                 ).label("app_id"),
                 metric_name_col,
-                sa.func.avg(sa.cast(score_col, sa.Float)).label("avg_score"),
+                self._avg_score_excluding_sentinel(
+                    sa.cast(score_col, sa.Float)
+                ).label("avg_score"),
             )
             .where(sa.and_(*eval_conditions))
             .group_by(
@@ -1824,9 +1866,9 @@ class SQLAlchemyDB(core_db.DB):
                     self.orm.AppDefinition.app_version.label("app_version"),
                     self.orm.AppDefinition.app_id.label("app_id"),
                     self.orm.FeedbackResult.name.label("metric_name"),
-                    sa.func.avg(self.orm.FeedbackResult.result).label(
-                        "avg_score"
-                    ),
+                    self._avg_score_excluding_sentinel(
+                        self.orm.FeedbackResult.result
+                    ).label("avg_score"),
                 )
                 .join(
                     self.orm.Record,
