@@ -112,9 +112,11 @@ def create_session() -> core_session.TruSession:
         return _snowflake_session()
     if destination == "otlp":
         endpoint = os.environ.get("TRULENS_OTLP_ENDPOINT")
-        protocol = os.environ.get("TRULENS_OTLP_PROTOCOL") or os.environ.get(
-            "OTEL_EXPORTER_OTLP_PROTOCOL"
-        )
+        # Leave the standard OTEL_EXPORTER_OTLP_* variables to the session's
+        # exporter factory, which applies the spec order (the traces-specific
+        # protocol before the generic one). Reading the generic one here
+        # would pass it as an explicit protocol and override that order.
+        protocol = os.environ.get("TRULENS_OTLP_PROTOCOL")
         return core_session.TruSession(
             otel_exporter="otlp",
             otlp_endpoint=endpoint,
