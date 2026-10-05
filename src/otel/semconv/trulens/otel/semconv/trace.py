@@ -372,6 +372,12 @@ class SpanAttributes:
         ERROR = base + ".error"
         """Error raised during evaluation."""
 
+        SKIPPED = base + ".skipped"
+        """Whether all evaluations for this metric were skipped."""
+
+        SKIP_REASON = base + ".skip_reason"
+        """Reason all evaluations for this metric were skipped."""
+
         SCORE = base + ".score"
         """Score of the evaluation."""
 
@@ -412,6 +418,9 @@ class SpanAttributes:
 
         ERROR = base + ".error"
         """Error raised during this sub-step."""
+
+        SKIP_REASON = base + ".skip_reason"
+        """Reason this sub-step was skipped."""
 
     class COST:
         """Attributes for spans with a cost."""

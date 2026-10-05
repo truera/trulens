@@ -3,6 +3,7 @@ import pytest
 from trulens.apps.app import TruApp
 from trulens.core import Metric
 from trulens.core.feedback.selector import Selector
+from trulens.core.metric import SkipEval
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
@@ -31,9 +32,13 @@ except Exception:
 
 @pytest.mark.optional
 class TestOtelInlineEvaluations(OtelTestCase):
-    def _create_and_invoke_simple_app(self, emit_spans: bool) -> pd.DataFrame:
+    def _create_and_invoke_simple_app(
+        self, emit_spans: bool, skip_eval: bool = False
+    ) -> pd.DataFrame:
         # Create feedback function (higher is better by default).
         def simple_feedback(text: str) -> float:
+            if skip_eval:
+                raise SkipEval("no test-file diffs")
             if text == "Kojikun":
                 return 0.42
             return 0.0
@@ -87,7 +92,13 @@ class TestOtelInlineEvaluations(OtelTestCase):
         assert "Feedback: simple_feedback" in g
         assert "(higher is better)" in g
         assert "[Inline Evaluation Result]" in g
-        assert "0.42" in g
+        if skip_eval:
+            self.assertIn(
+                "Skipped: Metric evaluation skipped because no test-file diffs",
+                g,
+            )
+        else:
+            assert "0.42" in g
 
         return self._get_events()
 
@@ -109,6 +120,12 @@ class TestOtelInlineEvaluations(OtelTestCase):
             SpanAttributes.SpanType.RECORD_ROOT,
             span_types[0],
             "First span should be RECORD_ROOT",
+        )
+
+    def test_skip_eval_with_unemitted_spans_preserves_graph_step(self) -> None:
+        self._create_and_invoke_simple_app(
+            emit_spans=False,
+            skip_eval=True,
         )
 
     def test_emitted_spans(self) -> None:

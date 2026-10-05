@@ -14,6 +14,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Union,
 )
 
 from opentelemetry import trace
@@ -26,6 +27,7 @@ from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import ProcessedContentNode
 from trulens.core.feedback.selector import Selector
 from trulens.core.feedback.selector import Trace
+from trulens.core.metric.metric import SkipEval
 
 try:
     from trulens.core.metric.metric import Metric
@@ -60,6 +62,11 @@ class MinimalSpanInfo:
     parent_span_id: Optional[int]
     attributes: Dict[str, Any]
     resource_attributes: Dict[str, Any]
+
+
+@dataclass(frozen=True)
+class _SkippedEvaluation:
+    reason: str
 
 
 class RecordGraphNode:
@@ -923,7 +930,7 @@ def _call_feedback_function(
     target_record_id: str,
     span_group: Optional[str] = None,
     conversation_id: Optional[str] = None,
-) -> float:
+) -> Optional[float]:
     """Call feedback function.
 
     Args:
@@ -972,7 +979,7 @@ def _call_feedback_function(
             eval_root_span.set_attribute(
                 SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER, higher_is_better
             )
-            expanded_kwargs_inputs = [{}]
+            expanded_kwargs_inputs: List[Dict[str, Any]] = [{}]
             aggregate = False
             for k, v in kwarg_inputs.items():
                 if v.span_id is not None:
@@ -996,9 +1003,9 @@ def _call_feedback_function(
                 else:
                     for curr in expanded_kwargs_inputs:
                         curr[k] = v.value
-            res = []
+            eval_results: List[Union[float, _SkippedEvaluation]] = []
             for i, curr in enumerate(expanded_kwargs_inputs):
-                res.append(
+                eval_results.append(
                     _call_feedback_function_under_eval_span(
                         feedback_function,
                         curr,
@@ -1008,14 +1015,49 @@ def _call_feedback_function(
                     )
                 )
             if aggregate:
-                if feedback_aggregator is not None:
-                    res = feedback_aggregator(res)
+                skipped_results = [
+                    score
+                    for score in eval_results
+                    if isinstance(score, _SkippedEvaluation)
+                ]
+                scored_results: List[float] = [
+                    score for score in eval_results if isinstance(score, float)
+                ]
+                if not scored_results:
+                    if not skipped_results:
+                        raise ValueError(
+                            "Metric produced no evaluation results to aggregate."
+                        )
+                    result_value = None
+                elif feedback_aggregator is not None:
+                    result_value = feedback_aggregator(scored_results)
                 else:
-                    res = sum(res) / len(res) if res else 0.0
+                    result_value = sum(scored_results) / len(scored_results)
             else:
-                res = res[0]
-            eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.SCORE, res)
-            return res
+                result = eval_results[0]
+                if isinstance(result, _SkippedEvaluation):
+                    skipped_results = [result]
+                    result_value = None
+                else:
+                    skipped_results = []
+                    result_value = result
+            if result_value is not None:
+                eval_root_span.set_attribute(
+                    SpanAttributes.EVAL_ROOT.SCORE, result_value
+                )
+            else:
+                if len(skipped_results) != len(expanded_kwargs_inputs):
+                    raise ValueError(
+                        "Metric aggregation returned no score without every evaluation raising SkipEval."
+                    )
+                eval_root_span.set_attribute(
+                    SpanAttributes.EVAL_ROOT.SKIPPED, True
+                )
+                eval_root_span.set_attribute(
+                    SpanAttributes.EVAL_ROOT.SKIP_REASON,
+                    "; ".join(result.reason for result in skipped_results),
+                )
+            return result_value
         except Exception as e:
             eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.ERROR, str(e))
             raise e
@@ -1027,7 +1069,7 @@ def _call_feedback_function_under_eval_span(
     eval_root_span: Span,
     is_only_child: bool,
     eval_child_idx: int,
-) -> float:
+) -> Union[float, _SkippedEvaluation]:
     """
     Call a feedback function with the provided kwargs and return the score.
 
@@ -1040,7 +1082,7 @@ def _call_feedback_function_under_eval_span(
         eval_child_idx: Index of this eval child span in the evaluation root.
 
     Returns:
-        The score returned by the feedback function.
+        The score returned by the feedback function, or an internal skip marker.
     """
     with (
         trace
@@ -1075,6 +1117,10 @@ def _call_feedback_function_under_eval_span(
                         "Feedback functions must return either a float score or a (score, metadata) tuple."
                     )
                 res, metadata = res[0], res[1]
+            if res is None:
+                raise ValueError(
+                    "Feedback functions must return a score or raise SkipEval."
+                )
             res = float(res)
             eval_span.set_attribute(SpanAttributes.EVAL.SCORE, res)
             _set_metadata_attributes(eval_span, metadata)
@@ -1138,6 +1184,9 @@ def _call_feedback_function_under_eval_span(
                     str(e),
                 )
             return res
+        except SkipEval as e:
+            eval_span.set_attribute(SpanAttributes.EVAL.SKIP_REASON, str(e))
+            return _SkippedEvaluation(str(e))
         except Exception as e:
             exc = e
             eval_span.set_attribute(SpanAttributes.EVAL.ERROR, str(e))

@@ -19,6 +19,7 @@ class TestFeedbackTemplateExports(unittest.TestCase):
             "Stereotypes",
             "Helpfulness",
             "PlanAdherence",
+            "TestTampering",
             "FeedbackTemplate",
             "OutputSpace",
         }
