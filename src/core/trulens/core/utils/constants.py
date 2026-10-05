@@ -16,3 +16,7 @@ NOSERIO = "__tru_non_serialized_object"
 CLASS_INFO = "tru_class_info"
 
 ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
+
+# Mirror the provider's fixed sentinel for an unparsable score, so consumers
+# of metric results do not need the optional trulens-feedback package.
+UNPARSABLE_SCORE = -1.0
