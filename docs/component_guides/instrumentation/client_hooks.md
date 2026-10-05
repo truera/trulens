@@ -41,8 +41,9 @@ backup, and is idempotent.
 
 ## Choose a destination
 
-The default is a local SQLite database. Set a database URL for a custom SQLite
-file or PostgreSQL:
+The default is a local SQLite database at
+`~/.trulens/client-hooks.sqlite`. Set `TRULENS_DATABASE_PATH` to move that file,
+or a database URL for a custom SQLite file or PostgreSQL:
 
 ```bash
 export TRULENS_DESTINATION=database
@@ -67,12 +68,40 @@ the OpenCode plugin detects it from the installed CLI.
 `TRULENS_APP_NAME`, `TRULENS_APP_VERSION`, and `TRULENS_RUN_NAME` remain
 available as explicit overrides.
 
-For OTLP gRPC:
+For OTLP, either transport:
 
 ```bash
 export TRULENS_DESTINATION=otlp
-export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317"
+export TRULENS_OTLP_ENDPOINT="http://localhost:4317"
+export TRULENS_OTLP_PROTOCOL=grpc   # or http/protobuf
 ```
+
+`TRULENS_OTLP_ENDPOINT` and `TRULENS_OTLP_PROTOCOL` are what the exporter reads.
+Leave either unset and the OpenTelemetry SDK's own variables apply instead, so
+`OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL` or
+`OTEL_EXPORTER_OTLP_PROTOCOL` also work. The transport defaults to gRPC when
+nothing sets it.
+
+Each transport needs its exporter package: `pip install "trulens-core[otlp]"`.
+
+To send spans to a Snowflake Cortex AI Gateway, so they join the gateway's own
+server spans for the same requests:
+
+```bash
+export TRULENS_DESTINATION=ai_gateway
+export TRULENS_AI_GATEWAY_URL="https://<host>/api/v2/aigateways/<GATEWAY>"
+export TRULENS_AI_GATEWAY_PAT_FILE=~/.snowflake/gateway.pat
+```
+
+Use `TRULENS_AI_GATEWAY_TOKEN` instead of `TRULENS_AI_GATEWAY_PAT_FILE` to pass
+the token directly. The exporter appends `/telemetry/v1/traces` to the URL,
+sends the token as `Authorization: Bearer`, and always uses OTLP over
+HTTP/protobuf, because gateways do not serve gRPC. This needs the HTTP exporter
+package, which `trulens-core[otlp]` installs.
+
+Spans land in the gateway's trace table rather than a database of your own. To
+get one trace spanning both client and gateway, the agent also has to propagate
+trace context; see [Inherited trace context](#inherited-trace-context).
 
 ## Configure privacy
 
@@ -88,6 +117,11 @@ export TRULENS_CAPTURE_PATHS=true
 Diffs include Cursor `afterFileEdit` old/new pairs and explicit patches. They
 can contain source code or credentials, so they remain independently opt-in.
 Values are redacted and size-bounded before durable journaling.
+
+Each captured field is truncated to `TRULENS_MAX_FIELD_BYTES`, 16384 by default
+with a floor of 256. Note that tool payloads carry whole tool results, so a file
+the agent reads is journaled up to that bound, and captured paths include the
+native transcript path.
 
 ## Identity and correlation
 
@@ -161,12 +195,13 @@ malformed or all-zero `TRACEPARENT` is ignored the same way.
 ## Run lifecycle
 
 Run lifecycle — creating a run and driving it to a terminal status — is a
-Snowflake AI Observability concept. It is managed **only** when hook spans are
-exported to a Snowflake destination. OSS (local database/Postgres) and plain
-OTLP destinations export spans but skip run lifecycle entirely: no run is
+Snowflake AI Observability concept. It is managed **only** for
+`TRULENS_DESTINATION=snowflake`, which is the one destination configured with a
+connector. OSS (local database/Postgres), plain OTLP, and AI Gateway
+destinations export spans but skip run lifecycle entirely: no run is
 created and no ingestion is started.
 
-For a Snowflake destination, each conversation maps to one run. Each exported
+For the Snowflake destination, each conversation maps to one run. Each exported
 turn contributes one invocation containing one input record:
 
 ```text
@@ -254,7 +289,17 @@ failures without blocking the coding client. Configure worker behavior with:
 ```bash
 export TRULENS_EXPORT_LEASE_SECONDS=60
 export TRULENS_WORKER_IDLE_SECONDS=2
+export TRULENS_WORKER_POLL_SECONDS=0.25
+export TRULENS_STALE_AFTER_HOURS=24
 ```
+
+`TRULENS_STALE_AFTER_HOURS` bounds how long a turn that never saw a terminal
+event waits before it is finalized as incomplete, with a one-minute floor.
+
+The journal lives in `$XDG_STATE_HOME/trulens/client-hooks`, falling back to
+`~/.trulens/client-hooks`. Set `TRULENS_JOURNAL_DIR` to relocate it; the worker
+log sits alongside it as `worker.log`, which is where export failures are
+recorded.
 
 `status` reports worker, pending, claimed, and retry state. `flush` remains a
 synchronous recovery command for troubleshooting after a machine or process

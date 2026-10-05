@@ -912,8 +912,17 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                     "latency": 0.0,  # Initialize to 0.0, filled below
                     "total_tokens": 0,  # Initialize to 0, calculated below
                     "total_cost": 0.0,  # Initialize to 0.0, calculated below
-                    "eval_cost": 0.0,  # Initialize to 0.0, calculated below (USD or non-Snowflake)
-                    "eval_cost_snowflake": 0.0,  # Initialize to 0.0, calculated below (Snowflake credits)
+                    # An evaluation's spend is written to the EVAL_ROOT span as
+                    # the total for that metric, and to each of its EVAL child
+                    # spans as that child's share. They are two measurements of
+                    # the same money, so they are kept apart here and the root
+                    # is preferred below. See `get_eval_cost_trends`, which
+                    # reads EVAL_ROOT only and so has always reported the root
+                    # figure alone.
+                    "eval_root_cost": 0.0,  # From EVAL_ROOT spans
+                    "eval_child_cost": 0.0,  # From EVAL spans
+                    "eval_root_cost_snowflake": 0.0,  # Snowflake credits
+                    "eval_child_cost_snowflake": 0.0,  # Snowflake credits
                     "cost_currency": "USD",  # Initialize to "USD", calculated below
                     "feedback_results": {},  # Initialize to empty map, calculated below
                     # Sampling decision (populated from EVAL_DECISION spans)
@@ -959,10 +968,16 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                     SpanAttributes.COST.CURRENCY, "USD"
                 )
                 amount = record_attributes.get(SpanAttributes.COST.COST, 0.0)
+                is_root = span_type == SpanAttributes.SpanType.EVAL_ROOT.value
                 if currency == "Snowflake credits":
-                    record_events[record_id]["eval_cost_snowflake"] += amount
+                    key = (
+                        "eval_root_cost_snowflake"
+                        if is_root
+                        else "eval_child_cost_snowflake"
+                    )
                 else:
-                    record_events[record_id]["eval_cost"] += amount
+                    key = "eval_root_cost" if is_root else "eval_child_cost"
+                record_events[record_id][key] += amount
                 # Do not add EVAL costs to total_cost to avoid lumping
             elif span_type == SpanAttributes.SpanType.EVAL_DECISION.value:
                 # Extract sampling decision metadata.
@@ -1079,7 +1094,9 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
 
                         # Update feedback result with cost info if available
                         self._update_cost_info_otel(
-                            feedback_result, record_attributes
+                            feedback_result,
+                            record_attributes,
+                            cost_key="root_cost",
                         )
 
                     if (
@@ -1117,7 +1134,9 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
 
                         # Update feedback result with cost info if available
                         self._update_cost_info_otel(
-                            feedback_result, record_attributes
+                            feedback_result,
+                            record_attributes,
+                            cost_key="child_cost",
                         )
 
         # Create dataframe
@@ -1176,8 +1195,13 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 "total_tokens": record_data["total_tokens"],
                 # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                 "total_cost": record_data["total_cost"],
-                "eval_cost": record_data["eval_cost"],
-                "eval_cost_snowflake": record_data["eval_cost_snowflake"],
+                # The EVAL_ROOT total is the authoritative figure for the
+                # record; the EVAL children are its components, so they are
+                # only used when no EVAL_ROOT span carried a cost.
+                "eval_cost": record_data["eval_root_cost"]
+                or record_data["eval_child_cost"],
+                "eval_cost_snowflake": record_data["eval_root_cost_snowflake"]
+                or record_data["eval_child_cost_snowflake"],
                 "cost_currency": record_data["cost_currency"],
                 "num_events": len(record_data["events"]),
                 # Sampling decision metadata
@@ -1199,7 +1223,9 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 record_row[f"{feedback_name}_calls"] = feedback_result["calls"]
                 record_row[
                     f"{feedback_name} feedback cost in {feedback_result['cost_currency']}"
-                ] = feedback_result["total_cost"]
+                ] = feedback_result.get("root_cost") or feedback_result.get(
+                    "child_cost", 0.0
+                )
                 record_row[f"{feedback_name} direction"] = feedback_result[
                     "direction"
                 ]
@@ -1291,6 +1317,7 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         target_dict: dict,
         record_attributes: dict,
         include_tokens: bool = False,
+        cost_key: str = "total_cost",
     ):
         """Update cost information in the target dictionary.
 
@@ -1298,6 +1325,11 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             target_dict: Dictionary to update with cost information
             record_attributes: Source attributes containing cost information
             include_tokens: Whether to update token count (only for record_events)
+            cost_key: Which field to accumulate into. The EVAL_ROOT span and
+                the EVAL child spans carry the same spend, so feedback
+                accumulation passes a different key for each and the caller
+                prefers the root. The non-eval path has a single writer per
+                span and keeps the default.
         """
         if any(
             key.startswith(SpanAttributes.COST.base)
@@ -1308,8 +1340,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                     SpanAttributes.COST.NUM_TOKENS, 0
                 )
 
-            target_dict["total_cost"] += record_attributes.get(
-                SpanAttributes.COST.COST, 0.0
+            target_dict[cost_key] = target_dict.get(cost_key, 0.0) + (
+                record_attributes.get(SpanAttributes.COST.COST, 0.0)
             )
             target_dict["cost_currency"] = record_attributes.get(
                 SpanAttributes.COST.CURRENCY, "USD"

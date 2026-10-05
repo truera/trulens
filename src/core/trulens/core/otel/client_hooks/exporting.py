@@ -10,7 +10,12 @@ Everything here is configured through the environment; there are no arguments to
   `TRULENS_SNOWFLAKE_DATABASE` and `TRULENS_SNOWFLAKE_SCHEMA` override what it resolves to.
 - `otlp` -- `TRULENS_OTLP_ENDPOINT` is the collector to export to. Unset, the exporter falls
   back to its own default rather than failing here, so a typo in the variable name shows up
-  as spans arriving somewhere unexpected rather than as an error.
+  as spans arriving somewhere unexpected rather than as an error. `TRULENS_OTLP_PROTOCOL`
+  picks the transport, `grpc` or `http/protobuf`, and falls back to the standard
+  `OTEL_EXPORTER_OTLP_PROTOCOL`.
+- `ai_gateway` -- `TRULENS_AI_GATEWAY_URL` (required) is the gateway base URL, and the token
+  comes from `TRULENS_AI_GATEWAY_PAT_FILE` or `TRULENS_AI_GATEWAY_TOKEN` (one required).
+  Always OTLP over HTTP/protobuf, since gateways do not serve gRPC.
 
 Any other value of `TRULENS_DESTINATION` raises.
 """
