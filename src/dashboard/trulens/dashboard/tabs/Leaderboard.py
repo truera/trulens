@@ -16,7 +16,6 @@ from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import metadata_utils
 from trulens.dashboard.utils import streamlit_compat
 from trulens.dashboard.utils.dashboard_utils import _show_no_records_error
-from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
 from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
@@ -262,47 +261,39 @@ def _render_grid(
     version_metadata_col_names: List[str],
     grid_key: Optional[str] = None,
 ):
-    if not is_sis_compatibility_enabled():
-        try:
-            import st_aggrid
+    try:
+        import st_aggrid
 
-            columns_state = st.session_state.get(
-                f"{grid_key}.columns_state", None
-            )
+        columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
 
-            if dashboard_constants.PINNED_COL_NAME in df:
+        if dashboard_constants.PINNED_COL_NAME in df:
+            df.loc[df[dashboard_constants.PINNED_COL_NAME], "app_version"] = (
                 df.loc[
                     df[dashboard_constants.PINNED_COL_NAME], "app_version"
-                ] = df.loc[
-                    df[dashboard_constants.PINNED_COL_NAME], "app_version"
                 ].apply(lambda x: f"📌 {x}")
-
-            event = st_aggrid.AgGrid(
-                df,
-                key=grid_key,
-                columns_state=columns_state,
-                gridOptions=_build_grid_options(
-                    df=df,
-                    feedback_col_names=feedback_col_names,
-                    feedback_directions=feedback_directions,
-                    version_metadata_col_names=version_metadata_col_names,
-                ),
-                custom_css=dashboard_styles.aggrid_css,
-                update_on=["selectionChanged", "cellValueChanged"],
-                allow_unsafe_jscode=True,
             )
 
-            if (
-                event.event_data
-                and event.event_data["type"] == "cellValueChanged"
-            ):
-                handle_table_edit(
-                    df, event.event_data, version_metadata_col_names
-                )
-            return pd.DataFrame(event.selected_rows)
-        except ImportError:
-            # Fallback to st.dataframe if st_aggrid is not installed
-            pass
+        event = st_aggrid.AgGrid(
+            df,
+            key=grid_key,
+            columns_state=columns_state,
+            gridOptions=_build_grid_options(
+                df=df,
+                feedback_col_names=feedback_col_names,
+                feedback_directions=feedback_directions,
+                version_metadata_col_names=version_metadata_col_names,
+            ),
+            custom_css=dashboard_styles.aggrid_css,
+            update_on=["selectionChanged", "cellValueChanged"],
+            allow_unsafe_jscode=True,
+        )
+
+        if event.event_data and event.event_data["type"] == "cellValueChanged":
+            handle_table_edit(df, event.event_data, version_metadata_col_names)
+        return pd.DataFrame(event.selected_rows)
+    except ImportError:
+        # Fallback to st.dataframe if st_aggrid is not installed
+        pass
 
     cost_cols_to_show = _get_nonzero_cost_columns(df)
 

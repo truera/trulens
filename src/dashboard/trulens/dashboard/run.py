@@ -9,7 +9,6 @@ import sys
 import threading
 from threading import Thread
 from typing import Optional
-import warnings
 
 from trulens.core import session as core_session
 from trulens.core.database.connector.base import DBConnector
@@ -21,12 +20,6 @@ from typing_extensions import Doc
 DASHBOARD_START_TIMEOUT: Annotated[
     int, Doc("Seconds to wait for dashboard to start")
 ] = 30
-
-_SIS_DEPRECATION_MESSAGE = (
-    "`run_dashboard_sis` and `sis_compatibility_mode` are deprecated and will "
-    "be removed in a future release. For Snowflake, use the AI Observability "
-    "Evaluations page in Snowsight."
-)
 
 
 def find_unused_port() -> int:
@@ -50,7 +43,6 @@ def run_dashboard(
     port: Optional[int] = None,
     address: Optional[str] = None,
     force: bool = False,
-    sis_compatibility_mode: bool = False,
     spcs_mode: bool = False,
     _dev: Optional[Path] = None,
     _watch_changes: bool = False,
@@ -63,10 +55,6 @@ def run_dashboard(
         address (Optional[str]): Address to pass to streamlit through `server.address`. `address` cannot be set if running from a colab notebook.
 
         force (bool): Stop existing dashboard(s) first. Defaults to `False`.
-
-        sis_compatibility_mode (bool): Deprecated. This compatibility mode
-            will be removed in a future release. For Snowflake, use the AI
-            Observability Evaluations page in Snowsight.
 
         spcs_mode (bool): Flag to enable compatibility with Snowpark Container Services (SPCS).
 
@@ -198,14 +186,6 @@ def run_dashboard(
             "--database-url",
             connector.db.engine.url.render_as_string(hide_password=False),
         ]
-    if sis_compatibility_mode:
-        warnings.warn(
-            _SIS_DEPRECATION_MESSAGE,
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        args += ["--sis-compatibility"]
-
     proc = subprocess.Popen(
         args,
         stdout=subprocess.PIPE,
@@ -384,47 +364,3 @@ def stop_dashboard(
     else:
         session._dashboard_proc.kill()
         session._dashboard_proc = None
-
-
-def run_dashboard_sis(
-    streamlit_name: str = "TRULENS_DASHBOARD",
-    session: Optional[core_session.TruSession] = None,
-    warehouse: Optional[str] = None,
-    init_server_side_with_staged_packages: bool = False,
-):
-    """Set up the legacy Streamlit in Snowflake dashboard.
-
-    Deprecated:
-        This function is deprecated and will be removed in a future release.
-        For Snowflake, use the AI Observability Evaluations page in Snowsight.
-    """
-    warnings.warn(
-        _SIS_DEPRECATION_MESSAGE,
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    with import_utils.OptionalImports(
-        messages=import_utils.format_import_errors(
-            "trulens-connectors-snowflake",
-            purpose="running the TruLens dashboard in Streamlit in Snowflake",
-        )
-    ) as opt:
-        import trulens.connectors.snowflake
-    opt.assert_installed(trulens.connectors.snowflake)
-
-    session = session or core_session.TruSession()
-
-    if trulens.connectors.snowflake.SnowflakeConnector and isinstance(
-        session.connector, trulens.connectors.snowflake.SnowflakeConnector
-    ):
-        return session.connector._set_up_sis_dashboard(
-            streamlit_name,
-            session.connector.snowpark_session,
-            warehouse=warehouse,
-            init_server_side_with_staged_packages=init_server_side_with_staged_packages,
-        )
-    else:
-        raise ValueError(
-            "This function is only supported with the SnowflakeConnector."
-        )
