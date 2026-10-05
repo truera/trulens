@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:trulens-judge-benchmark:receipt:v1",
+  "title": "TruLens judge benchmark receipt",
+  "description": "One evaluator result for one benchmark case.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "provider",
+    "model_id",
+    "temperature",
+    "predicted_score",
+    "latency_sec",
+    "cost_usd",
+    "retry_count",
+    "status"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^case_[0-9]{3}$"
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "temperature": {
+      "type": "number",
+      "minimum": 0
+    },
+    "predicted_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "latency_sec": {
+      "type": "number",
+      "minimum": 0
+    },
+    "cost_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "retry_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evaluator_version": {
+      "description": "Optional evaluator implementation or prompt version.",
+      "type": "string",
+      "minLength": 1
+    },
+    "run_environment_digest": {
+      "description": "Optional SHA-256 digest of a canonical run environment manifest.",
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
+  }
+}

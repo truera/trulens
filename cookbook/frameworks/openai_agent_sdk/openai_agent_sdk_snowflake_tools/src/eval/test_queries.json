@@ -1,0 +1,31 @@
+{
+  "analyst": [
+    "How many tickets are there by priority?",
+    "What is the average resolution time for technical tickets?",
+    "Which agent has the highest CSAT score?",
+    "How many tickets are currently open or pending?",
+    "What is the average first response time for urgent tickets?",
+    "Which agents resolve tickets the fastest on average, and what is their average CSAT score?",
+    "What is the month-over-month trend in ticket volume?",
+    "Show me the resolution rate and average CSAT for each ticket category.",
+    "Which tickets took longer to resolve than the average for their category?",
+    "What percentage of tickets by priority had a first response within one hour?",
+    "Who are the top 3 customers by ticket volume and what is their average satisfaction?",
+    "Show each agent's total workload, unresolved ticket count, and how many high or urgent tickets they handle.",
+    "What is the average days to resolution by month and priority for resolved tickets?"
+  ],
+  "search": [
+    "How do I reset my password?",
+    "What are the API rate limits?",
+    "How do I set up SSO?",
+    "I can't log in to my account",
+    "What is the pricing model?"
+  ],
+  "mixed": [
+    "How many high priority tickets do we have and what's our SLA?",
+    "What is the average CSAT score and how do customers reset passwords?",
+    "How do I export my data?",
+    "What is the resolution rate for billing tickets?",
+    "How do I configure webhooks?"
+  ]
+}

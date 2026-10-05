@@ -1,0 +1,43 @@
+[project]
+name = "openai-agent-sdk-snowflake-tools"
+version = "0.1.0"
+description = "TruLens + OpenAI Agent SDK with Snowflake Cortex Analyst and Cortex Search"
+requires-python = ">=3.10,<3.13"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+  "fastapi>=0.100",
+  "numpy>=1.23",
+  "openai>=2",
+  "openai-agents>=0.13",
+  "pandas>=1",
+  "pyarrow",
+  "python-dateutil",
+  "requests>=2.31",
+  "snowflake>=1",
+  "snowflake-connector-python",
+  "snowflake-ml-python",
+  "snowflake-snowpark-python>=1.18",
+  "trulens-connectors-snowflake",
+  "trulens-core",
+  "trulens-dashboard",
+  "trulens-feedback",
+  "trulens-otel-semconv",
+  "trulens-providers-cortex",
+  "trulens-providers-openai",
+  "uvicorn[standard]",
+]
+
+optional-dependencies.dev = [
+  "pytest",
+  "ruff",
+]
+
+[tool.uv]
+override-dependencies = [
+  "openai>=2.0",
+]

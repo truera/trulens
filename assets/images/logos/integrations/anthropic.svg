@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="26" viewBox="0 0 104 26" role="img" aria-label="Anthropic">
+  <g transform="translate(0 3.0) scale(.8333)">
+    <path fill="#0A2C37" d="M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z"/>
+  </g>
+  <g fill="#0A2C37" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+    <text x="26" y="19" font-size="15" font-weight="600" letter-spacing="-.2">Anthropic</text>
+  </g>
+</svg>

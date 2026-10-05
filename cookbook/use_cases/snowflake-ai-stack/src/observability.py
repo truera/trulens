@@ -1,0 +1,73 @@
+from trulens.core import TruSession
+from trulens.core import Metric, Selector
+from trulens.feedback.llm_provider import LLMProvider
+from trulens.providers.openai import OpenAI
+from trulens.otel.semconv.trace import SpanAttributes
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+import numpy as np
+import os
+
+
+def start_observability():
+    session = TruSession()
+    return session
+
+
+def create_evals(provider: LLMProvider = None):
+    if provider is None:
+        provider = OpenAI(model_engine="gpt-4.1", api_key=os.environ.get("OPENAI_API_KEY"))
+
+    # Define a groundedness feedback function
+    f_groundedness = Metric(
+        implementation=provider.groundedness_measure_with_cot_reasons,
+        name="Groundedness",
+        selectors={
+            "source": Selector(
+                span_type=SpanAttributes.SpanType.RETRIEVAL,
+                span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+            ),
+            "statement": Selector.select_record_output(),
+        },
+    )
+
+    # Question/answer relevance between overall question and answer.
+    f_answer_relevance = Metric(
+        implementation=provider.relevance_with_cot_reasons,
+        name="Answer Relevance",
+        selectors={
+            "prompt": Selector.select_record_input(),
+            "response": Selector.select_record_output(),
+        },
+    )
+
+    context_relevance_custom_criteria = """
+    When the question plausibly requires multiple different sources to answer, score context relevance based on the following criteria:
+    - 0: The context is not relevant to any part of the question.
+    - 1: The context is somewhat relevant but not sufficient for answering a portion of the question.
+    - 2: The context is sufficient for answering a portion of the question.
+    - 3: The context is highly relevant and sufficient for answering the complete question.
+    """
+
+    # Context relevance between question and each context chunk.
+    f_context_relevance = Metric(
+        implementation=provider.context_relevance,
+        name="Context Relevance",
+        criteria=context_relevance_custom_criteria,
+        selectors={
+            "question": Selector(
+                span_type=SpanAttributes.SpanType.RETRIEVAL,
+                span_attribute=SpanAttributes.RETRIEVAL.QUERY_TEXT,
+            ),
+            "context": Selector(
+                span_type=SpanAttributes.SpanType.RETRIEVAL,
+                span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+            ),
+        },
+        agg=np.mean,
+    )
+
+    return [f_context_relevance, f_groundedness, f_answer_relevance]
