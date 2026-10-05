@@ -5,7 +5,9 @@ import pytest
 from trulens.core import BatchEvaluator
 from trulens.core import Metric
 from trulens.core import Selector
-from trulens.feedback.llm_provider import UNPARSABLE_SCORE
+from trulens.feedback import llm_provider
+
+UNPARSABLE_SCORE = llm_provider.UNPARSABLE_SCORE
 
 # --- Metric implementations used across tests (module-level so they serialize) ---
 
