@@ -33,6 +33,7 @@ except ImportError:
     # Backwards compatibility with trulens-core < 2.5.0
     from trulens.core.feedback.feedback import Feedback as Metric
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
+from trulens.core.schema import base as base_schema
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import (
     set_function_call_attributes,
@@ -997,15 +998,21 @@ def _call_feedback_function(
                     for curr in expanded_kwargs_inputs:
                         curr[k] = v.value
             res = []
+            eval_cost: Optional[base_schema.Cost] = None
             for i, curr in enumerate(expanded_kwargs_inputs):
-                res.append(
-                    _call_feedback_function_under_eval_span(
-                        feedback_function,
-                        curr,
-                        eval_root_span,
-                        is_only_child=len(expanded_kwargs_inputs) == 1,
-                        eval_child_idx=i,
-                    )
+                score, child_cost = _call_feedback_function_under_eval_span(
+                    feedback_function,
+                    curr,
+                    eval_root_span,
+                    is_only_child=len(expanded_kwargs_inputs) == 1,
+                    eval_child_idx=i,
+                )
+                res.append(score)
+                # The EVAL_ROOT span carries the total cost of its children.
+                # It is rewritten after each child so that the cost of the
+                # children that completed is kept if a later one raises.
+                eval_cost = _add_eval_root_cost(
+                    eval_root_span, eval_cost, child_cost
                 )
             if aggregate:
                 if feedback_aggregator is not None:
@@ -1021,13 +1028,62 @@ def _call_feedback_function(
             raise e
 
 
+def _add_eval_root_cost(
+    eval_root_span: Span,
+    total: Optional[base_schema.Cost],
+    cost: Optional[base_schema.Cost],
+) -> Optional[base_schema.Cost]:
+    """Add one child evaluation's cost to the total on the EVAL_ROOT span.
+
+    Args:
+        eval_root_span: The root span for the evaluation.
+        total: The total cost of the children evaluated so far, if any.
+        cost: The cost of the child evaluation that just finished, if known.
+
+    Returns:
+        The new total, or `total` unchanged if `cost` could not be added.
+    """
+    if cost is None:
+        return total
+    try:
+        total = cost if total is None else total + cost
+        eval_root_span.set_attribute(
+            SpanAttributes.COST.CURRENCY, total.cost_currency or "USD"
+        )
+        eval_root_span.set_attribute(
+            SpanAttributes.COST.COST, float(total.cost or 0.0)
+        )
+        # Only set token counts when non-zero to avoid noise.
+        for attribute, value in (
+            (SpanAttributes.COST.NUM_TOKENS, total.n_tokens),
+            (SpanAttributes.COST.NUM_PROMPT_TOKENS, total.n_prompt_tokens),
+            (
+                SpanAttributes.COST.NUM_COMPLETION_TOKENS,
+                total.n_completion_tokens,
+            ),
+            (
+                SpanAttributes.COST.NUM_REASONING_TOKENS,
+                getattr(total, "n_reasoning_tokens", 0),
+            ),
+        ):
+            if value:
+                eval_root_span.set_attribute(attribute, int(value))
+    except Exception as e:
+        # Do not fail feedback evaluation if cost aggregation fails, but log for debugging
+        _logger.warning(
+            "Failed to attach eval cost attributes to EVAL_ROOT span: %s",
+            str(e),
+        )
+    return total
+
+
 def _call_feedback_function_under_eval_span(
     feedback_function: Metric,
     kwargs: Dict[str, Any],
     eval_root_span: Span,
     is_only_child: bool,
     eval_child_idx: int,
-) -> float:
+) -> Tuple[float, Optional[base_schema.Cost]]:
     """
     Call a feedback function with the provided kwargs and return the score.
 
@@ -1040,7 +1096,8 @@ def _call_feedback_function_under_eval_span(
         eval_child_idx: Index of this eval child span in the evaluation root.
 
     Returns:
-        The score returned by the feedback function.
+        The score returned by the feedback function, and the cost of the
+        provider calls it made, or None if the cost could not be read.
     """
     with (
         trace
@@ -1081,37 +1138,11 @@ def _call_feedback_function_under_eval_span(
             if is_only_child:
                 _set_metadata_attributes(eval_root_span, metadata)
 
-            # Attach cost attributes to the EVAL_ROOT span so feedback costs are visible
+            # The caller adds this cost to the EVAL_ROOT span's total.
+            cost = None
             try:
                 cost = get_eval_cost()
-                # Only set attributes when non-zero/meaningful to avoid noise
                 if cost is not None:
-                    eval_root_span.set_attribute(
-                        SpanAttributes.COST.CURRENCY,
-                        cost.cost_currency or "USD",
-                    )
-                    eval_root_span.set_attribute(
-                        SpanAttributes.COST.COST, float(cost.cost or 0.0)
-                    )
-                    if getattr(cost, "n_tokens", 0):
-                        eval_root_span.set_attribute(
-                            SpanAttributes.COST.NUM_TOKENS, int(cost.n_tokens)
-                        )
-                    if getattr(cost, "n_prompt_tokens", 0):
-                        eval_root_span.set_attribute(
-                            SpanAttributes.COST.NUM_PROMPT_TOKENS,
-                            int(cost.n_prompt_tokens),
-                        )
-                    if getattr(cost, "n_completion_tokens", 0):
-                        eval_root_span.set_attribute(
-                            SpanAttributes.COST.NUM_COMPLETION_TOKENS,
-                            int(cost.n_completion_tokens),
-                        )
-                    if getattr(cost, "n_reasoning_tokens", 0):
-                        eval_root_span.set_attribute(
-                            SpanAttributes.COST.NUM_REASONING_TOKENS,
-                            int(cost.n_reasoning_tokens),
-                        )
                     # Feed cost back to the sampling controller for
                     # daily budget tracking.  Only on the ingest path —
                     # a batch backfill must not burn the daily budget.
@@ -1132,12 +1163,9 @@ def _call_feedback_function_under_eval_span(
                                 cost_err,
                             )
             except Exception as e:
-                # Do not fail feedback evaluation if cost aggregation fails, but log for debugging
-                _logger.warning(
-                    "Failed to attach eval cost attributes to EVAL_ROOT span: %s",
-                    str(e),
-                )
-            return res
+                # Do not fail feedback evaluation if reading the cost fails, but log for debugging
+                _logger.warning("Failed to read eval cost: %s", str(e))
+            return res, cost
         except Exception as e:
             exc = e
             eval_span.set_attribute(SpanAttributes.EVAL.ERROR, str(e))
