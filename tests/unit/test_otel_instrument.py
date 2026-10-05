@@ -4,6 +4,7 @@ import gc
 from typing import Callable
 import unittest
 
+from opentelemetry import baggage
 from opentelemetry import trace
 from opentelemetry.baggage import remove_baggage
 from opentelemetry.baggage import set_baggage
@@ -537,3 +538,222 @@ class TestOtelInstrument(unittest.TestCase):
         self.assertEqual(len(spans), 1)
         proto = convert_readable_span_to_proto(spans[0])
         self.assertEqual(proto.kind, SpanProto.SpanKind.SPAN_KIND_CLIENT)
+
+
+class _StubApp:
+    """Just enough of an app for record root spans to be finalized."""
+
+    def main_input(self, func, sig, bindings):
+        return str(next(iter(bindings.arguments.values()), None))
+
+    def main_output(self, func, sig, bindings, ret):
+        return str(ret)
+
+
+class TestOtelInstrumentGeneratorContext(unittest.TestCase):
+    """A stream's span context must stay out of the caller between chunks.
+
+    Unlike `TestOtelInstrument`, no record id is set up front, so every top
+    level instrumented call starts a record of its own, as it does in an app.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        instrument.enable_all_instrumentation()
+        return super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        instrument.disable_all_instrumentation()
+        return super().tearDownClass()
+
+    def setUp(self) -> None:
+        self.exporter = InMemorySpanExporter()
+        _set_up_tracer_provider()
+        self.span_processor = SimpleSpanProcessor(self.exporter)
+        trace.get_tracer_provider().add_span_processor(self.span_processor)
+        self.recording = Recording(None)
+        context = set_baggage("__trulens_recording__", self.recording)
+        context = set_baggage("__trulens_app__", _StubApp(), context=context)
+        self.token = context_api.attach(context)
+        return super().setUp()
+
+    def tearDown(self) -> None:
+        self.span_processor.shutdown()
+        context_api.detach(self.token)
+        return super().tearDown()
+
+    def _spans_by_name(self) -> dict:
+        return {
+            span.name.rsplit(".", 1)[-1]: span
+            for span in self.exporter.get_finished_spans()
+        }
+
+    def _assert_nothing_attached(self) -> None:
+        self.assertIsNone(baggage.get_baggage(SpanAttributes.RECORD_ID))
+        self.assertFalse(trace.get_current_span().get_span_context().is_valid)
+
+    def _assert_separate_records(self, stream_span, answer_span) -> None:
+        self.assertEqual(len(self.recording), 2)
+        self.assertIsNone(answer_span.parent)
+        self.assertEqual(
+            answer_span.attributes[SpanAttributes.SPAN_TYPE],
+            SpanAttributes.SpanType.RECORD_ROOT,
+        )
+        self.assertNotEqual(
+            answer_span.attributes[SpanAttributes.RECORD_ID],
+            stream_span.attributes[SpanAttributes.RECORD_ID],
+        )
+
+    def test_sync_stream_abandoned_after_first_chunk(self) -> None:
+        @instrument()
+        def stream(question: str):
+            yield "Kojikun"
+            yield "Nolan"
+
+        @instrument()
+        def answer(question: str) -> str:
+            return "Sachiboy"
+
+        with self.assertNoLogs("opentelemetry.context", level="ERROR"):
+            chunks = stream("first")
+            self.assertEqual(next(chunks), "Kojikun")
+            self._assert_nothing_attached()
+            answer("second")
+            del chunks
+            gc.collect()
+
+        self._assert_nothing_attached()
+        spans = self._spans_by_name()
+        self._assert_separate_records(spans["stream"], spans["answer"])
+        self.assertEqual(
+            spans["stream"].attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+            "['Kojikun']",
+        )
+
+    def test_async_stream_abandoned_after_first_chunk(self) -> None:
+        @instrument()
+        async def stream(question: str):
+            yield "Kojikun"
+            yield "Nolan"
+
+        @instrument()
+        async def answer(question: str) -> str:
+            return "Sachiboy"
+
+        async def run():
+            async for chunk in stream("first"):
+                self.assertEqual(chunk, "Kojikun")
+                break
+            self._assert_nothing_attached()
+            await answer("second")
+
+        with self.assertNoLogs("opentelemetry.context", level="ERROR"):
+            asyncio.run(run())
+            gc.collect()
+
+        self._assert_nothing_attached()
+        spans = self._spans_by_name()
+        self._assert_separate_records(spans["stream"], spans["answer"])
+
+    def test_sync_stream_keeps_nested_calls_as_children(self) -> None:
+        @instrument()
+        def inner(name: str) -> str:
+            return name.upper()
+
+        @instrument()
+        def stream(question: str):
+            yield inner("Kojikun")
+            yield inner("Nolan")
+
+        self.assertEqual(list(stream("first")), ["KOJIKUN", "NOLAN"])
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 3)
+        stream_span = spans[-1]
+        self.assertEqual(len(self.recording), 1)
+        self.assertEqual(
+            stream_span.attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+            "['KOJIKUN', 'NOLAN']",
+        )
+        self.assertEqual(
+            stream_span.attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED],
+            2,
+        )
+        for inner_span in spans[:2]:
+            self.assertEqual(
+                inner_span.parent.span_id, stream_span.context.span_id
+            )
+            self.assertEqual(
+                inner_span.attributes[SpanAttributes.RECORD_ID],
+                stream_span.attributes[SpanAttributes.RECORD_ID],
+            )
+
+    def test_async_stream_keeps_nested_calls_as_children(self) -> None:
+        @instrument()
+        async def inner(name: str) -> str:
+            return name.upper()
+
+        @instrument()
+        async def stream(question: str):
+            yield await inner("Kojikun")
+            yield await inner("Nolan")
+
+        async def run():
+            return [chunk async for chunk in stream("first")]
+
+        self.assertEqual(asyncio.run(run()), ["KOJIKUN", "NOLAN"])
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 3)
+        stream_span = spans[-1]
+        self.assertEqual(len(self.recording), 1)
+        self.assertEqual(
+            stream_span.attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+            "['KOJIKUN', 'NOLAN']",
+        )
+        self.assertEqual(
+            stream_span.attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED],
+            2,
+        )
+        for inner_span in spans[:2]:
+            self.assertEqual(
+                inner_span.parent.span_id, stream_span.context.span_id
+            )
+
+    def test_sync_stream_error_marks_span(self) -> None:
+        @instrument()
+        def stream(question: str):
+            yield "Kojikun"
+            raise ValueError("no more babies")
+
+        with self.assertRaises(ValueError):
+            list(stream("first"))
+
+        self._assert_nothing_attached()
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].status.status_code, trace.StatusCode.ERROR)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.CALL.ERROR], "no more babies"
+        )
+
+    def test_async_stream_error_marks_span(self) -> None:
+        @instrument()
+        async def stream(question: str):
+            yield "Kojikun"
+            raise ValueError("no more babies")
+
+        async def run():
+            return [chunk async for chunk in stream("first")]
+
+        with self.assertRaises(ValueError):
+            asyncio.run(run())
+
+        self._assert_nothing_attached()
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].status.status_code, trace.StatusCode.ERROR)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.CALL.ERROR], "no more babies"
+        )
