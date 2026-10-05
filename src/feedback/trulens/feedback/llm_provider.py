@@ -329,6 +329,7 @@ class LLMProvider(core_provider.Provider):
 
         if isinstance(response, feedback_output_schemas.BaseFeedbackResponse):
             score = response.score
+            _validate_score_range(score, min_score_val, max_score_val)
         elif isinstance(response, str):
             score = feedback_generated.re_configured_rating(
                 response,
@@ -435,6 +436,7 @@ class LLMProvider(core_provider.Provider):
             score = response.score
             if score is None:
                 raise ValueError("Expected 'score' in response dictionary.")
+            _validate_score_range(score, min_score_val, max_score_val)
             criteria = response.criteria
             supporting_evidence = response.supporting_evidence
 
@@ -477,6 +479,7 @@ class LLMProvider(core_provider.Provider):
                     ref, feedback_output_schemas.ChainOfThoughtResponse
                 ):
                     score = ref.score
+                    _validate_score_range(score, min_score_val, max_score_val)
                     criteria = ref.criteria
                     supporting_evidence = ref.supporting_evidence
                     reasons = {
@@ -499,6 +502,11 @@ class LLMProvider(core_provider.Provider):
                             and "score" in ref_json
                         ):
                             score_val = float(ref_json["score"])
+                            _validate_score_range(
+                                score_val,
+                                min_score_val,
+                                max_score_val,
+                            )
                             reasons = {
                                 "reason": (
                                     f"{criteria_field}: {ref_json['criteria']}\n"
@@ -779,7 +787,17 @@ class LLMProvider(core_provider.Provider):
             "RELEVANCE:", templates_base.COT_REASONS_TEMPLATE
         )
         # Use default COT prompt only if no criteria AND no additional_instructions
-        if criteria is None and additional_instructions is None:
+        # AND the requested scale is the one that prompt hardcodes. It says "on a
+        # scale of 0 to 3" in prose, so on any other scale the judge answers
+        # 0-3 and the reply is then normalized against a scale it was never
+        # shown: a fully relevant context came back as 0.3 on 0-10, and a "3"
+        # was read as an out-of-range "3" on 0-1.
+        if (
+            criteria is None
+            and additional_instructions is None
+            and (min_score_val, max_score_val)
+            == templates_base.OutputSpace.LIKERT_0_3.value
+        ):
             system_prompt = templates_rag.ContextRelevance.default_cot_prompt
         else:
             output_space = self._determine_output_space(
@@ -3693,6 +3711,17 @@ class LLMProvider(core_provider.Provider):
             abstention_score = evaluate_abstention(hypothesis)
             if abstention_score > 0.5:
                 answerability_score = evaluate_answerability(question, source)
+                if answerability_score == UNPARSABLE_SCORE:
+                    # The answerability judge produced no parsable score. Below
+                    # the threshold that is indistinguishable from a verdict of
+                    # not-answerable, which would credit the statement with a
+                    # perfect score the judge never gave. Report it as
+                    # ungraded and let _mean_graded_score skip the average.
+                    return (
+                        index,
+                        UNPARSABLE_SCORE,
+                        {"reason": "Answerability score was not parsable"},
+                    )
                 if answerability_score > 0.5:
                     return index, 0.0, {"reason": "Answerable abstention"}
                 else:

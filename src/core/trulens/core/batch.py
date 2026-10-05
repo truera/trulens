@@ -51,6 +51,7 @@ import time
 from typing import (
     Any,
     Dict,
+    Iterable,
     List,
     Mapping,
     Optional,
@@ -143,23 +144,30 @@ class BatchEvaluator:
                     "argument."
                 )
 
-    def _unique_metric_names(self) -> List[str]:
-        """Return metric names, disambiguating duplicates by suffixing an index.
+    def _unique_metric_names(
+        self, existing_columns: Iterable[str] = ()
+    ) -> List[str]:
+        """Return metric names whose result columns do not collide.
 
         The first occurrence of a name keeps the bare name; subsequent
         duplicates get `_1`, `_2`, ... suffixes (e.g. two metrics named
         `overlap` produce columns `overlap` and `overlap_1`). This keeps the
-        common case of unique names free of suffixes.
+        common case of unique names free of suffixes. All three result columns
+        must also be distinct from dataset columns and earlier metric columns.
         """
         names: List[str] = []
+        used_columns = set(existing_columns)
         seen: Dict[str, int] = {}
         for metric in self.metrics:
-            name = metric.name
-            if name in seen:
-                seen[name] += 1
-                name = f"{name}_{seen[metric.name]}"
-            else:
-                seen[name] = 0
+            suffix = seen.get(metric.name, 0)
+            while True:
+                name = f"{metric.name}_{suffix}" if suffix else metric.name
+                columns = {name, f"{name}_explanation", f"{name}_latency"}
+                if not used_columns.intersection(columns):
+                    break
+                suffix += 1
+            seen[metric.name] = suffix + 1
+            used_columns.update(columns)
             names.append(name)
         return names
 
@@ -305,6 +313,20 @@ class BatchEvaluator:
     ) -> Tuple[Any, Optional[str]]:
         """Aggregate one or more metric scores using the metric's aggregator.
 
+        Before aggregating, scores equal to `UNPARSABLE_SCORE` (-1.0) are
+        filtered out. This sentinel value is returned by LLM providers when
+        their response contains no parseable score (e.g. the model refused to
+        answer or the output did not match the expected format). Excluding
+        sentinels ensures that a single judge failure does not dilute the
+        aggregate of the remaining valid scores — for example,
+        ``[1.0, 1.0, -1.0]`` aggregates to ``1.0``, not ``0.33``.
+
+        If *every* score is a sentinel (i.e. all judges failed to produce a
+        parseable score), no valid aggregate can be formed. In that case the
+        method returns `UNPARSABLE_SCORE` itself paired with an error string
+        describing how many scores were unparseable, so the failure is visible
+        in the result row rather than silently producing a misleading number.
+
         Returns:
             A tuple of (aggregate, error). `error` is `None` on success. If a
             user-configured aggregator raises, the aggregate is `float("nan")`
@@ -318,6 +340,28 @@ class BatchEvaluator:
                 per-item evaluation and should fail loudly rather than yield
                 a silent `NaN`.
         """
+        from trulens.feedback.llm_provider import UNPARSABLE_SCORE
+
+        parsable = [s for s in scores if s != UNPARSABLE_SCORE]
+        if not parsable:
+            n = len(scores)
+            return UNPARSABLE_SCORE, (
+                f"All {n} score(s) for metric {metric.name!r} were "
+                f"unparsable (sentinel {UNPARSABLE_SCORE}); no valid score "
+                "to aggregate."
+            )
+        if len(parsable) < len(scores):
+            n_dropped = len(scores) - len(parsable)
+            logger.warning(
+                "Metric %r: dropping %d unparsable score(s) (sentinel %s) "
+                "before aggregation; %d valid score(s) remain.",
+                metric.name,
+                n_dropped,
+                UNPARSABLE_SCORE,
+                len(parsable),
+            )
+        scores = parsable
+
         if len(scores) == 1:
             return scores[0], None
         agg = metric.agg if metric.agg is not None else np.mean
@@ -364,7 +408,8 @@ class BatchEvaluator:
             ``M`` (the score), ``M_explanation`` (metadata/reasons), and
             ``M_latency`` (evaluation time in seconds). If multiple metrics
             share a name, the first keeps the bare name and subsequent ones
-            are suffixed ``_1``, ``_2``, and so on.
+            are suffixed ``_1``, ``_2``, and so on. Suffixes also avoid collisions
+            with dataset columns and other metrics' explanation/latency columns.
 
         Note:
             The results exist only in the returned DataFrame; nothing is
@@ -373,7 +418,9 @@ class BatchEvaluator:
             persist evaluations of pre-collected data.
         """
         rows = self._normalize_rows(data, column_map=column_map)
-        metric_names = self._unique_metric_names()
+        metric_names = self._unique_metric_names(
+            column for row in rows for column in row
+        )
 
         # Pre-allocate the result grid so out-of-order completion is fine.
         n_rows = len(rows)

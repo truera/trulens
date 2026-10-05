@@ -69,6 +69,17 @@ steps:
       echo "Using $(python --version) ($(which python))"
       poetry config virtualenvs.create false
 
+      # Install one wheel at a time. On Python 3.10 and 3.11 the lock installs
+      # two NCCL wheels that ship the same nvidia/nccl/lib/libnccl.so.2:
+      # nvidia-nccl-cu12 for xgboost 3.2 (the last xgboost for those versions)
+      # and nvidia-nccl-cu13 for torch. Poetry's parallel installer rewrites an
+      # existing file in place, with no lock or temporary file, so when both
+      # wheels write the library at once it can end up with bytes from each.
+      # torch loads it on import, and that is the segfault that hits
+      # test_huggingface_capabilities.py on the py310 and py311 jobs only.
+      # Installed serially, the later wheel replaces the file whole.
+      poetry config installer.parallel false
+
       # NOTE: workaround for langchain typecheck error
       # https://github.com/truera/trulens/issues/1308
       PIP_CACHE_DIR=$(Pipeline.Workspace)/.pip poetry run pip install pip==24.1.2
