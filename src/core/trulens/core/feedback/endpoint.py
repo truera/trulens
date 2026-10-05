@@ -643,8 +643,20 @@ class Endpoint(
             # last condition issues a warning with more info.
             return __func(*args, **kwargs), []
 
-        # Check to see if this call is within another _track_costs call:
-        endpoints = dict(Endpoint._context_endpoints.get())  # copy
+        # Check to see if this call is within another _track_costs call. Each
+        # per-class list is copied too, not just the outer dict: `dict(...)`
+        # alone leaves the lists shared with the parent context, so appending
+        # a new callback below would mutate the parent's list in place, and
+        # that mutation would survive the `reset` in the `finally` block
+        # below since `reset` only restores which list object the contextvar
+        # points to, not the contents of a list it still shares with us. A
+        # later sibling call would then see every callback from every call
+        # that preceded it in this scope and double-count its cost onto all
+        # of them.
+        endpoints = {
+            callback_class: list(pairs)
+            for callback_class, pairs in Endpoint._context_endpoints.get().items()
+        }
 
         # Collect any new endpoints requested of us.
         with_endpoints = with_endpoints or []
