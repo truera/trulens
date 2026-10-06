@@ -552,6 +552,42 @@ large judge and reduced intra-model bias in several studied settings
 hypothesis, not a guarantee: validate both the aggregate and individual jurors
 against the same human labels before deploying the panel.
 
+A single judge is also noisy on its own: given identical inputs at non-zero
+temperature, it does not always return the same verdict
+([arXiv:2606.13685](https://arxiv.org/abs/2606.13685)).
+[`Jury.repeated`][trulens.feedback.jury.Jury.repeated] runs one judge several
+times and aggregates the trials. Judge methods and `Metric` default to
+`temperature=0.0`, so set the temperature on the `Metric` to sample distinct
+verdicts:
+
+```python
+from trulens.core import Metric
+from trulens.feedback import Jury
+
+judge = Jury.repeated(judge_a, method="relevance", n_trials=5)
+metric = (
+    Metric(implementation=judge, name="Relevance (5 trials)", temperature=0.7)
+    .on_input()
+    .on_output()
+)
+```
+
+Every `Jury` result, repeated or mixed, also records `reliability.n_scores`,
+`reliability.scores`, `reliability.score_std`, `reliability.flip_rate`,
+`reliability.outcome_entropy`, and `reliability.temperature` as eval span
+metadata. `reliability.flip_rate` is the share of trials that disagree with
+the majority pass/fail verdict, from 0.0 (unanimous) to 0.5 (an even split).
+
+!!! warning "Sample the trials"
+
+    At temperature 0 a repeated judge is not sampled, so its reliability
+    numbers reflect only nondeterminism in the serving stack. Some judges
+    still flip at temperature 0, so a nonzero flip rate is a real signal, but
+    a flip rate of 0 does not show the judge is stable. `Jury.repeated` logs a
+    warning in that case. The same study found about 11 trials are needed for
+    a majority verdict to match a 50-trial reference with 95 percent
+    probability; the default of 5 trades some of that for cost.
+
 !!! warning "Limit claims to represented data"
 
     Do not claim one judge is best outside the domains, slices, languages, and
