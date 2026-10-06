@@ -5,6 +5,7 @@ import re
 import threading
 from typing import (
     Any,
+    Callable,
     ClassVar,
     Dict,
     Iterable,
@@ -4884,4 +4885,115 @@ class LLMProvider(core_provider.Provider):
             min_score_val=0,
             max_score_val=3,
             temperature=temperature,
+        )
+
+    def instruction_retention_with_cot_reasons(
+        self,
+        records: Union[List[Any], str],
+        temperature: float = 0.0,
+        *,
+        checks: Optional[Dict[str, Callable[[str], bool]]] = None,
+        revocations: Optional[Dict[str, int]] = None,
+        additional_instructions: Optional[str] = None,
+    ) -> Tuple[float, Dict]:
+        """Evaluates whether standing instructions hold across turns.
+
+        The judge lists the instructions the user set (a format, a scope, a
+        prohibition) and rules on every assistant turn while each is in
+        force. Instructions with a check are decided by the check instead,
+        and revocations come from the caller rather than the judge, so a
+        broken instruction cannot be judged away as revoked. Forgetting and
+        correction ratios follow Multi-IF (arXiv 2410.15553).
+
+        Example:
+            ```python
+            from trulens.core import Metric
+            feedback = Metric(
+                implementation=provider.instruction_retention_with_cot_reasons,
+                name="Instruction Retention",
+            ).on_conversation()
+            ```
+
+        Args:
+            records: The ordered conversation records, or a transcript string.
+            temperature: The temperature for the LLM response. Defaults to
+                0.0.
+            checks: Instruction text to a predicate on one assistant reply,
+                for instructions that can be checked mechanically (valid
+                JSON, a word limit). The check decides that instruction from
+                the first turn whose user message states it. Needs records,
+                not a transcript string.
+            revocations: Instruction text to the turn it was revoked in. The
+                instruction is not checked after that turn.
+            additional_instructions: If provided, adds instructions to the
+                default criteria for the judge to follow. Defaults to None.
+
+        Returns:
+            Tuple[float, Dict]: The share of (turn, instruction) pairs in
+            force that were followed, from 0.0 to 1.0 (1.0 when the user set
+            no standing instruction), and a dictionary with each
+            instruction's verdicts, the first turn it broke, which source
+            decided it, and the forgetting and correction ratios. An answer
+            the judge did not give as JSON scores `UNPARSABLE_SCORE`.
+
+        Raises:
+            ValueError: `checks` was given with a transcript string.
+        """
+        from trulens.feedback import (
+            instruction_retention as feedback_instruction_retention,
+        )
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        checks = checks or {}
+        revocations = revocations or {}
+        if isinstance(records, str):
+            if checks:
+                raise ValueError(
+                    "checks run on each assistant reply, so they need the "
+                    "conversation records, not a transcript string"
+                )
+            turns = None
+            transcript = records
+        else:
+            turns = templates_conversation.conversation_turns(records)
+            transcript = templates_conversation.turns_to_prompt(turns)
+
+        template = templates_conversation.InstructionRetention
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=template.system_prompt,
+            additional_instructions=additional_instructions,
+        )
+        user_prompt = template.user_prompt_template.format(
+            transcript=transcript
+        )
+        if checks:
+            user_prompt += template.checked_instructions_template.format(
+                instructions="\n".join(f"- {text}" for text in checks)
+            )
+
+        extra_kwargs = {}
+        if self._is_reasoning_model():
+            extra_kwargs["reasoning_effort"] = "medium"
+        else:
+            extra_kwargs["temperature"] = temperature
+        response = self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            response_format=feedback_output_schemas.InstructionRetentionResponse,
+            **extra_kwargs,
+        )
+        try:
+            judged = feedback_instruction_retention.parse_judge_answer(response)
+        except ValueError as exc:
+            return UNPARSABLE_SCORE, {
+                "error": f"The judge's answer is not readable: {exc}"
+            }
+        return feedback_instruction_retention.assess(
+            judged.instructions, turns, checks, revocations
         )

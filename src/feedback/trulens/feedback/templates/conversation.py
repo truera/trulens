@@ -12,8 +12,11 @@ __all__ = [
     "AgentGoalAccuracy",
     "CoherenceAcrossTurns",
     "ConversationHelpfulness",
+    "InstructionRetention",
     "TopicAdherence",
     "conversation_to_prompt",
+    "conversation_turns",
+    "turns_to_prompt",
 ]
 
 
@@ -52,6 +55,68 @@ def conversation_to_prompt(records: list[Any] | str) -> str:
             transcript_lines.append(f"Turn {idx}: {record!s}")
 
     return "\n".join(transcript_lines)
+
+
+def conversation_turns(
+    records: list[Any],
+) -> list[tuple[str | None, str | None]]:
+    """Split conversation records into numbered (user, assistant) turns.
+
+    Accepts the same record shapes as `conversation_to_prompt`. Role-based
+    messages are paired: a user message opens a turn and the next assistant
+    message closes it. System messages are not turns.
+
+    Args:
+        records: The ordered conversation records or messages.
+
+    Returns:
+        One `(user, assistant)` pair per turn; turn `n` is at index `n - 1`.
+    """
+    turns: list[tuple[str | None, str | None]] = []
+    for record in records:
+        if hasattr(record, "main_input") and hasattr(record, "main_output"):
+            turns.append((
+                _text(getattr(record, "main_input", None)),
+                _text(getattr(record, "main_output", None)),
+            ))
+        elif isinstance(record, dict) and (
+            "input" in record or "output" in record
+        ):
+            turns.append((
+                _text(record.get("input")),
+                _text(record.get("output")),
+            ))
+        elif isinstance(record, dict):
+            role = str(record.get("role", record.get("speaker", ""))).lower()
+            content = _text(
+                record.get("content", record.get("text", record.get("message")))
+            )
+            if role == "system":
+                continue
+            if role == "assistant" and turns and turns[-1][1] is None:
+                turns[-1] = (turns[-1][0], content)
+            elif role == "assistant":
+                turns.append((None, content))
+            else:
+                turns.append((content, None))
+        else:
+            turns.append((_text(record), None))
+    return turns
+
+
+def turns_to_prompt(turns: list[tuple[str | None, str | None]]) -> str:
+    """Serialize `conversation_turns` output into a numbered transcript."""
+    lines: list[str] = []
+    for number, (user, assistant) in enumerate(turns, start=1):
+        if user is not None:
+            lines.append(f"Turn {number} User: {user}")
+        if assistant is not None:
+            lines.append(f"Turn {number} Assistant: {assistant}")
+    return "\n".join(lines)
+
+
+def _text(value: Any) -> str | None:
+    return None if value is None else str(value)
 
 
 class ConversationHelpfulness(Semantics, CriteriaOutputSpaceMixin):
@@ -140,4 +205,49 @@ class CoherenceAcrossTurns(Semantics, CriteriaOutputSpaceMixin):
 
         Respond ONLY with a single integer score from {LIKERT_0_3_PROMPT}.
         """
+    )
+
+
+class InstructionRetention(Semantics):
+    """Evaluates whether standing instructions hold across conversation turns.
+
+    The judge lists the standing instructions and rules on each assistant
+    turn. Revocations are supplied by the caller and are not judged.
+    """
+
+    system_prompt: ClassVar[str] = cleandoc(
+        """
+        You are evaluating INSTRUCTION RETENTION in a multi-turn conversation
+        between a User and an AI Assistant.
+
+        A standing instruction is a constraint the user sets that should keep
+        applying to the assistant's later replies: a required format ("answer
+        in JSON"), a scope ("only cover the EU") or a prohibition ("never
+        suggest X"). A one-off request that is answered and done is not a
+        standing instruction.
+
+        1. List every standing instruction the user gave, with the number of
+           the turn it was given in.
+        2. For each one, judge every assistant reply from that turn on: did
+           the reply follow the instruction?
+
+        Judge only whether each reply followed each instruction. Do not
+        decide whether the user later cancelled an instruction: judge every
+        reply from the turn it was given as if it still applies.
+
+        Respond ONLY with JSON of this shape:
+        {"instructions": [{"instruction": "...", "turn_given": 1,
+          "verdicts": [{"turn": 1, "followed": true, "reason": "..."}]}]}
+        With no standing instructions, respond {"instructions": []}.
+        """
+    )
+    user_prompt_template: ClassVar[str] = cleandoc(
+        """
+        Conversation Transcript:
+        {transcript}
+        """
+    )
+    checked_instructions_template: ClassVar[str] = (
+        "\n\nThese instructions are verified separately. Do not list them:\n"
+        "{instructions}"
     )
