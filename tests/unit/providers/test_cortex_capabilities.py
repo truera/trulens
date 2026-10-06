@@ -3,6 +3,13 @@ from typing import Any, Dict, List
 
 import pytest
 
+# trulens-providers-cortex is capped below Python 3.14 (snowflake-ml-python does
+# not support 3.14 yet), so it is not installed in the 3.14 test environment.
+pytest.importorskip(
+    "trulens.providers.cortex",
+    reason="trulens-providers-cortex is not installed",
+)
+
 
 def _stub_session():
     """A no-op Snowflake ``Session`` instance.

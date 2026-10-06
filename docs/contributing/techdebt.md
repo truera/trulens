@@ -100,12 +100,12 @@ threads, but are still present for backwards compatibility.
 - "HACK010" -- Cannot tell whether something is a coroutine and need additional
   checks in `sync`/`desync`.
 
-- __May be removable (Python >= 3.9 required).__ "HACK011" -- older versions of
+- __May be removable (Python >= 3.10 required).__ "HACK011" -- older versions of
   Python don't allow use of `Future` as a type constructor in annotations. We
   define a dummy type `Future` in older versions of Python to circumvent this.
-  Since TruLens now requires Python >= 3.9, this may be removable.
+  Since TruLens now requires Python >= 3.10, this may be removable.
 
-- __May be removable (Python >= 3.9 required).__ "HACK012" -- same but with
+- __May be removable (Python >= 3.10 required).__ "HACK012" -- same but with
   `Queue`. Note: This is different from HACK012 in the optional imports context.
 
 - Similarly, we define `NoneType` for older Python versions that don't include it natively.
