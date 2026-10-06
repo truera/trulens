@@ -146,8 +146,11 @@ def test_a_revoked_instruction_is_not_checked_after_its_revocation():
     )
 
     assert score == 1.0
+    # Turn 3 is in neither the numerator nor the denominator.
+    assert (meta["pairs_followed"], meta["pairs_in_force"]) == (2, 2)
     [verdict] = meta["instructions"]
     assert verdict["revoked_turn"] == 2
+    assert verdict["decided_by"] == "judge"
     assert verdict["first_broken_turn"] is None
     assert [v["turn"] for v in verdict["verdicts"]] == [1, 2]
 
