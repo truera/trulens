@@ -1,5 +1,6 @@
 """Tests for OTEL guardrail span instrumentation."""
 
+import threading
 from typing import List
 
 from trulens.apps.app import TruApp
@@ -199,6 +200,34 @@ class TestGuardrailSpans(OtelTestCase):
         ]
         self.assertEqual(len(passed_spans), 2)
         self.assertEqual(len(failed_spans), 2)
+
+    def test_context_filter_spans_follow_input_order(self):
+        """Spans and kept contexts follow input order, not finish order."""
+        texts = ["c1", "c2", "c3", "c4"]
+        scores = {"c1": 0.9, "c2": 0.2, "c3": 0.8, "c4": 0.7}
+        done = {text: threading.Event() for text in texts}
+
+        def judge(query, context):
+            # Each call waits for the next one, so c4 finishes first.
+            index = texts.index(context)
+            if index + 1 < len(texts):
+                self.assertTrue(done[texts[index + 1]].wait(10.0))
+            done[context].set()
+            return scores[context]
+
+        class App:
+            @instrument()
+            @context_filter(Feedback(judge), 0.5, "query")
+            def retrieve(self, query):
+                return list(texts)
+
+        result = self._run_app(App(), "retrieve", "question")
+        self.assertEqual(result, ["c1", "c3", "c4"])
+        spans = _collect_guardrail_spans(self._get_events())
+        self.assertEqual(
+            [span[SpanAttributes.GUARDRAIL.SCORE] for span in spans],
+            [scores[text] for text in texts],
+        )
 
     def test_block_input_pass_emits_span(self):
         """block_input emits a GUARDRAIL span and passes safe input through."""

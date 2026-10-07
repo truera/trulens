@@ -1,4 +1,3 @@
-from concurrent.futures import as_completed
 from contextlib import contextmanager
 import inspect
 import logging
@@ -48,6 +47,10 @@ class context_filter:
 
     A non-finite or unparsable (-1.0) feedback score excludes only the affected
     context and logs a warning. Other contexts are evaluated normally.
+
+    Contexts are evaluated in parallel, but the kept contexts are returned in
+    the order the decorated function produced them, and one GUARDRAIL span
+    per context is emitted in that same order.
 
     Args:
         feedback: The feedback object to use for filtering.
@@ -134,16 +137,18 @@ class context_filter:
                 )
                 return result, passed
 
+            # Contexts are scored in parallel, but results are read back in
+            # input order so the kept contexts (and their GUARDRAIL spans)
+            # keep the retriever's ranking instead of judge completion order.
             with threading_utils.ThreadPoolExecutor(
                 max_workers=max(1, len(contexts))
             ) as ex:
-                future_to_context = {
-                    ex.submit(_evaluate_context, context): context
+                futures = [
+                    ex.submit(_evaluate_context, context)
                     for context in contexts
-                }
+                ]
                 filtered = []
-                for future in as_completed(future_to_context):
-                    context = future_to_context[future]
+                for context, future in zip(contexts, futures):
                     result, passed = future.result()
                     with _guardrail_span(
                         guardrail_name, self.threshold
