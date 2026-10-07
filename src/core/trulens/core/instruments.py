@@ -57,6 +57,15 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
+_OTEL_TRACKED_METHOD_WRAPPER = "_self_trulens_tracked_method_wrapper"
+"""Marks the OTEL wrappers made by `Instrument.tracked_method_wrapper`.
+
+`wrapt` keeps `_self_` attributes on the wrapper itself, so unlike
+`TRULENS_INSTRUMENT_WRAPPER_FLAG`, which lands in the `__dict__` shared with
+the wrapped function, this mark does not leak onto the plain function inside.
+It is still visible through any `wrapt` wrapper stacked on top, including the
+bound wrapper that looking the method up on a subclass returns."""
+
 do_not_track = ContextVar("do_not_track", default=False)
 
 
@@ -724,6 +733,28 @@ class Instrument:
         ):
             from trulens.core.otel.instrument import instrument
 
+            of_cls_method = getattr(cls, method_name)
+            if (
+                getattr(of_cls_method, _OTEL_TRACKED_METHOD_WRAPPER, False)
+                is True
+            ):
+                # Spans find their record through the OTEL context, so one
+                # wrapper serves every app. Wrapping again for each new app,
+                # or for each component of the same class, would emit one
+                # span per wrapper for a single call.
+                logger.debug(
+                    "%s: %s.%s is already instrumented",
+                    query,
+                    python_utils.class_name(cls),
+                    method_name,
+                )
+                try:
+                    # The caller sets the result back on `cls`, so return
+                    # the attribute as stored, not a bound wrapper.
+                    return inspect.getattr_static(cls, method_name)
+                except AttributeError:
+                    return of_cls_method
+
             if span_type is None:
                 span_type = SpanAttributes.SpanType.UNKNOWN
             wrapper = instrument(
@@ -732,8 +763,10 @@ class Instrument:
                 must_be_first_wrapper=must_be_first_wrapper,
             )
             # return wrapper(func)?
-            of_cls_method = getattr(cls, method_name)
-            return wrapper(of_cls_method)
+            wrapped = wrapper(of_cls_method)
+            if wrapped is not of_cls_method:
+                setattr(wrapped, _OTEL_TRACKED_METHOD_WRAPPER, True)
+            return wrapped
 
         if python_utils.safe_hasattr(func, "__func__"):
             raise ValueError("Function expected but method received.")
