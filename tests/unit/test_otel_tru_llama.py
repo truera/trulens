@@ -60,9 +60,6 @@ class TestOtelTruLlama(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             app=app, main_method=app.query, TruAppClass=TruLlama
         )
 
-    @pytest.mark.skip(
-        reason="Golden file comparison skipped - span structure varies across environments"
-    )
     def test_smoke(self) -> None:
         # Create app.
         rag = self._create_simple_rag()
@@ -78,7 +75,10 @@ class TestOtelTruLlama(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             input_id="42",
             main_method_args=("What is multi-headed attention?",),
         )
-        # Smoke test - just verify it runs without errors
+        # No golden comparison: the retrieved contexts recorded in the spans
+        # depend on whether the optional `llama-index-readers-file` package
+        # (and its `pypdf` dependency) is installed, since without it
+        # `SimpleDirectoryReader` reads the PDF as raw bytes.
         # Check garbage collection.
         # Note that we need to delete `rag` too since `rag` has instrument
         # decorators that have closures of the `tru_recorder` object.

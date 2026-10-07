@@ -22,6 +22,74 @@ from tests.util.df_comparison import (
 
 logger = logging.getLogger(__name__)
 
+ENVIRONMENT_DEPENDENT_RESOURCE_ATTRIBUTES: Tuple[str, ...] = (
+    # Version of the installed opentelemetry-sdk.
+    "telemetry.sdk.version",
+    # Installed trulens-core version. Absent when trulens-core is importable
+    # but not installed as a distribution.
+    "service.version",
+    # Random UUID per process, added by default by newer opentelemetry-sdk
+    # releases and absent from older ones.
+    "service.instance.id",
+)
+"""Resource attribute keys removed from both sides of a golden comparison
+(and from newly written golden files), because their presence and value depend
+on the installed packages and the process rather than on the app under test."""
+
+SPAN_EVENT_TIMESTAMP_PLACEHOLDER = 0
+"""Replaces span event timestamps, which are raw nanosecond wall clock values
+that the id and timestamp aware comparison cannot line up."""
+
+EXCEPTION_STACKTRACE_PLACEHOLDER = "<exception.stacktrace>"
+"""Replaces the `exception.stacktrace` attribute of span events, which holds
+absolute file paths, line numbers and a Python version specific layout. The
+`exception.type` and `exception.message` attributes are still compared."""
+
+
+def normalize_environment_dependent_fields(df: pd.DataFrame) -> pd.DataFrame:
+    """Return a copy of an events dataframe with the fields that vary across
+    environments (but not across runs of the same app) normalized.
+
+    See `ENVIRONMENT_DEPENDENT_RESOURCE_ATTRIBUTES`,
+    `SPAN_EVENT_TIMESTAMP_PLACEHOLDER` and `EXCEPTION_STACKTRACE_PLACEHOLDER`.
+    """
+
+    def normalize_resource_attributes(attributes: Dict) -> Dict:
+        return {
+            k: v
+            for k, v in attributes.items()
+            if k not in ENVIRONMENT_DEPENDENT_RESOURCE_ATTRIBUTES
+        }
+
+    def normalize_event(event: Dict) -> Dict:
+        event = dict(event)
+        if "timestamp" in event:
+            event["timestamp"] = SPAN_EVENT_TIMESTAMP_PLACEHOLDER
+        attributes = event.get("attributes")
+        if isinstance(attributes, dict) and (
+            "exception.stacktrace" in attributes
+        ):
+            event["attributes"] = {
+                **attributes,
+                "exception.stacktrace": EXCEPTION_STACKTRACE_PLACEHOLDER,
+            }
+        return event
+
+    def normalize_record(record: Dict) -> Dict:
+        if not record.get("events"):
+            return record
+        return {
+            **record,
+            "events": [normalize_event(e) for e in record["events"]],
+        }
+
+    ret = df.copy()
+    ret["resource_attributes"] = ret["resource_attributes"].apply(
+        normalize_resource_attributes
+    )
+    ret["record"] = ret["record"].apply(normalize_record)
+    return ret
+
 
 class OtelTestCase(TruTestCase):
     _orig_TRULENS_OTEL_TRACING: Optional[str] = None
@@ -114,16 +182,11 @@ class OtelTestCase(TruTestCase):
     ) -> None:
         tru_session = TruSession()
         tru_session.force_flush()
-        actual = self._get_events()
+        actual = normalize_environment_dependent_fields(self._get_events())
         self.write_golden(golden_filename, actual)
         expected = self.load_golden(golden_filename)
         self._convert_column_types(expected)
-        if ignore_locators is None:
-            ignore_locators = []
-        ignore_locators += [
-            "[resource_attributes][telemetry.sdk.version]",
-            "[resource_attributes][service.version]",
-        ]
+        expected = normalize_environment_dependent_fields(expected)
         compare_dfs_accounting_for_ids_and_timestamps(
             self,
             expected,
