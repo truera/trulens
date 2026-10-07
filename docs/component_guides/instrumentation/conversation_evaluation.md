@@ -108,8 +108,8 @@ Use `requirement_satisfaction_with_cot_reasons` to configure this metric.
 Pass multi-turn conversations as structured records; a string `request` is one
 user message and should be paired with an `output`. When evaluating a trace,
 select the spans and fields that contain the evidence you want the judge to see.
-Trace input over 400,000 characters is rejected, so narrow the selector when a
-trace is too large.
+Selected trace output over 400,000 characters is rejected, so narrow the
+selector when a trace is too large.
 
 ```python
 f_requirement_satisfaction = Metric(
