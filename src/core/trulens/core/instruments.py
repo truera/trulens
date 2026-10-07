@@ -23,6 +23,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    FrozenSet,
     Iterable,
     List,
     Optional,
@@ -51,6 +52,7 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 from trulens.experimental.otel_tracing.core.span import Attributes
+from trulens.otel.semconv import constants as semconv_constants
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -58,13 +60,28 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 _OTEL_TRACKED_METHOD_WRAPPER = "_self_trulens_tracked_method_wrapper"
-"""Marks the OTEL wrappers made by `Instrument.tracked_method_wrapper`.
+"""Attribute holding the `_TrackedWrapperMark` of the OTEL wrappers made by
+`Instrument.tracked_method_wrapper`.
 
 `wrapt` keeps `_self_` attributes on the wrapper itself, so unlike
 `TRULENS_INSTRUMENT_WRAPPER_FLAG`, which lands in the `__dict__` shared with
 the wrapped function, this mark does not leak onto the plain function inside.
 It is still visible through any `wrapt` wrapper stacked on top, including the
 bound wrapper that looking the method up on a subclass returns."""
+
+
+@dataclasses.dataclass(frozen=True)
+class _TrackedWrapperMark:
+    """What the OTEL wrappers stacked on a class method were asked for."""
+
+    requests: FrozenSet[Tuple[str, bool]]
+    """Span type and whether attributes were given, for every request that
+    added one of the wrappers made by `Instrument.tracked_method_wrapper`."""
+
+    foreign: bool
+    """Whether there is a TruLens wrapper underneath that was not made by
+    `Instrument.tracked_method_wrapper`, such as a class level one."""
+
 
 do_not_track = ContextVar("do_not_track", default=False)
 
@@ -733,20 +750,30 @@ class Instrument:
         ):
             from trulens.core.otel.instrument import instrument
 
+            if span_type is None:
+                span_type = SpanAttributes.SpanType.UNKNOWN
+            has_attributes = bool(attributes)
+            request = (span_type, has_attributes)
+
             of_cls_method = getattr(cls, method_name)
-            if (
-                getattr(of_cls_method, _OTEL_TRACKED_METHOD_WRAPPER, False)
-                is True
+            mark = getattr(of_cls_method, _OTEL_TRACKED_METHOD_WRAPPER, None)
+            if not isinstance(mark, _TrackedWrapperMark):
+                mark = None
+
+            if mark is not None and (
+                request in mark.requests
+                or (not has_attributes and (span_type, True) in mark.requests)
             ):
                 # Spans find their record through the OTEL context, so one
-                # wrapper serves every app. Wrapping again for each new app,
-                # or for each component of the same class, would emit one
-                # span per wrapper for a single call.
+                # wrapper serves every app. A request that already added a
+                # wrapper, for an earlier app or another component of the
+                # same class, would only emit the same span again.
                 logger.debug(
-                    "%s: %s.%s is already instrumented",
+                    "%s: %s.%s is already instrumented for %s",
                     query,
                     python_utils.class_name(cls),
                     method_name,
+                    span_type,
                 )
                 try:
                     # The caller sets the result back on `cls`, so return
@@ -755,8 +782,28 @@ class Instrument:
                 except AttributeError:
                     return of_cls_method
 
-            if span_type is None:
-                span_type = SpanAttributes.SpanType.UNKNOWN
+            if mark is not None:
+                foreign = mark.foreign
+            else:
+                # Only look at objects that wrap something: the flag of any
+                # wrapper is also visible on the plain function inside it.
+                foreign = False
+                inner = of_cls_method
+                while hasattr(inner, "__wrapped__"):
+                    if hasattr(
+                        inner, semconv_constants.TRULENS_INSTRUMENT_WRAPPER_FLAG
+                    ):
+                        foreign = True
+                        break
+                    inner = inner.__wrapped__
+
+            if not foreign and span_type != SpanAttributes.SpanType.UNKNOWN:
+                # Nothing in the way but wrappers made here, none of them for
+                # this span type, or a flag that only leaked onto the plain
+                # function from a wrapper on another class. Neither must hide
+                # a specific span type.
+                must_be_first_wrapper = False
+
             wrapper = instrument(
                 span_type=span_type,
                 attributes=attributes,
@@ -765,7 +812,16 @@ class Instrument:
             # return wrapper(func)?
             wrapped = wrapper(of_cls_method)
             if wrapped is not of_cls_method:
-                setattr(wrapped, _OTEL_TRACKED_METHOD_WRAPPER, True)
+                setattr(
+                    wrapped,
+                    _OTEL_TRACKED_METHOD_WRAPPER,
+                    _TrackedWrapperMark(
+                        requests=(
+                            mark.requests if mark else frozenset()
+                        ).union([request]),
+                        foreign=foreign,
+                    ),
+                )
             return wrapped
 
         if python_utils.safe_hasattr(func, "__func__"):
