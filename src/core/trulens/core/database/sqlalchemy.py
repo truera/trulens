@@ -1701,6 +1701,9 @@ class SQLAlchemyDB(core_db.DB):
         )
         if records.empty:
             return records
+        # Postgres returns EXTRACT(EPOCH ...) as numeric, which arrives as
+        # Decimal; the quantiles below cannot mix Decimal with float.
+        records["latency"] = records["latency"].astype(float)
         records["time_bucket"] = pd.to_datetime(records["time_bucket"])
         records = records.sort_values("time_bucket").drop_duplicates(
             subset=["app_name", "app_version", "record_id"], keep="last"
