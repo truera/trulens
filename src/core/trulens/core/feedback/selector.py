@@ -637,7 +637,9 @@ class Selector:
                 list and the results are aggregated.
 
             ignore_none_values: If True, skip evaluation for rows where the
-                selected value is None (or missing).
+                column is absent or its value is None or a pandas missing
+                value (`NaN`, `pd.NA`, `pd.NaT`), as in an empty DataFrame
+                cell. A list value is never skipped, even if it holds `NaN`.
 
         Returns:
             A `Selector` that selects from the given tabular column.
