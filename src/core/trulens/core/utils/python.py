@@ -1162,6 +1162,11 @@ class SingletonPerNameMeta(type):
     instance max, there is one max per different `name` argument.
 
     If `name` is never given, reverts to normal singleton behavior.
+
+    A repeated call returns the existing instance without running `__init__`
+    again. If the instance defines `_on_singleton_reinit`, that method is
+    called with the arguments of the repeated call so the class can report
+    arguments it is ignoring.
     """
 
     _singleton_instances = {}
@@ -1187,6 +1192,11 @@ class SingletonPerNameMeta(type):
                 cls.__name__,
                 name,
             )
+            on_reinit = getattr(
+                cls._singleton_instances[k], "_on_singleton_reinit", None
+            )
+            if on_reinit is not None:
+                on_reinit(*args, **kwargs)
         return cls._singleton_instances[k]
 
     @staticmethod
