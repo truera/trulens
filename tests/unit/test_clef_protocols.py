@@ -178,3 +178,27 @@ def test_published_snapshot_is_complete_and_sanitized():
         "api_key",
     ]:
         assert forbidden not in text
+
+
+def test_saved_notebook_outputs_describe_published_run():
+    payload = json.loads((EXAMPLE / "results_snapshot.json").read_text())
+    notebook = json.loads((EXAMPLE / "clef_judge_comparison.ipynb").read_text())
+    outputs = [
+        output
+        for cell in notebook["cells"]
+        for output in cell.get("outputs", [])
+    ]
+    streams = "".join(
+        "".join(output.get("text", []))
+        for output in outputs
+        if output["output_type"] == "stream"
+    )
+    metadata = payload["metadata"]
+    assert f"Run: {metadata['run_started_utc']}" in streams
+    assert (
+        f"{metadata['examples']} summaries; {metadata['repeats']} trials; "
+        f"{metadata['scheduled_judgments']} scheduled judgments"
+    ) in streams
+    assert all(output["output_type"] != "error" for output in outputs)
+    assert any("image/png" in output.get("data", {}) for output in outputs)
+    assert "/Users/" not in json.dumps(outputs)
