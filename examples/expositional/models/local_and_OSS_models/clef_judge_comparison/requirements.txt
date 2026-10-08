@@ -1,0 +1,9 @@
+trulens-core
+trulens-feedback
+trulens-benchmark
+snowflake-connector-python
+httpx>=0.27
+numpy
+pandas
+pyarrow
+matplotlib
