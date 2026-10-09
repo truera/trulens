@@ -5,6 +5,7 @@ Tests for OTEL Feedback Computation.
 import gc
 import time
 from typing import Callable, List, Tuple
+import warnings
 import weakref
 
 import numpy as np
@@ -382,6 +383,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
                     SpanAttributes.EVAL_ROOT.METRIC_NAME: "feedback1",
                     SpanAttributes.RECORD_ID: "record_id1",
                     SpanAttributes.EVAL_ROOT.SPAN_GROUP: "span_group1",
+                    SpanAttributes.EVAL_ROOT.SCORE: 0.5,
                     SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".a": "span_id1a",
                     SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".b": "span_id1b",
                     SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE
@@ -421,6 +423,54 @@ class TestOtelFeedbackComputation(OtelTestCase):
             events, "feedback1", flattened_inputs
         )
         self.assertEqual([flattened_inputs[1]], res)
+
+    def test__remove_already_computed_feedbacks_groups_by_record_id(
+        self,
+    ) -> None:
+        def eval_root(record_id: str) -> dict:
+            return {
+                SpanAttributes.SPAN_TYPE: SpanAttributes.SpanType.EVAL_ROOT,
+                SpanAttributes.EVAL_ROOT.METRIC_NAME: "feedback1",
+                SpanAttributes.RECORD_ID: record_id,
+                SpanAttributes.EVAL_ROOT.SPAN_GROUP: "span_group1",
+                SpanAttributes.EVAL_ROOT.SCORE: 0.5,
+                SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".a": "span_id_a",
+                SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE
+                + ".a": "span_attribute_a",
+            }
+
+        def flattened_input(record_id: str) -> tuple:
+            return (
+                record_id,
+                "span_group1",
+                {
+                    "a": FeedbackFunctionInput(
+                        span_id="span_id_a", span_attribute="span_attribute_a"
+                    )
+                },
+            )
+
+        flattened_inputs = [
+            flattened_input("record_id1"),
+            flattened_input("record_id2"),
+            flattened_input("record_id3"),
+        ]
+        # A single eval root is the case where pandas treats the grouping
+        # Series as a length-1 list-like key, so `get_group(record_id)` warns
+        # on pandas 2 and raises `KeyError` on pandas 3.
+        for computed in (["record_id1"], ["record_id1", "record_id2"]):
+            with self.subTest(computed=computed):
+                events = pd.DataFrame({
+                    "record_attributes": [eval_root(r) for r in computed]
+                })
+                with warnings.catch_warnings():
+                    warnings.simplefilter("error", FutureWarning)
+                    res = _remove_already_computed_feedbacks(
+                        events, "feedback1", flattened_inputs
+                    )
+                self.assertEqual(
+                    [f for f in flattened_inputs if f[0] not in computed], res
+                )
 
     def _create_invoked_app_with_custom_feedback(
         self, higher_is_better: bool = True
