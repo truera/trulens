@@ -173,6 +173,16 @@ class Endpoint(
             class_name="CortexEndpoint",
         ),
         EndpointSetup(
+            arg_flag="with_anthropic",
+            module_name="trulens.providers.anthropic.endpoint",
+            class_name="AnthropicEndpoint",
+        ),
+        EndpointSetup(
+            arg_flag="with_google",
+            module_name="trulens.providers.google.endpoint",
+            class_name="GoogleEndpoint",
+        ),
+        EndpointSetup(
             arg_flag="with_dummy",
             module_name="trulens.feedback.dummy.endpoint",
             class_name="DummyEndpoint",
@@ -517,6 +527,8 @@ class Endpoint(
         with_litellm: bool = True,
         with_bedrock: bool = True,
         with_cortex: bool = True,
+        with_anthropic: bool = True,
+        with_google: bool = True,
         with_dummy: bool = True,
         **kwargs,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
@@ -587,6 +599,8 @@ class Endpoint(
         with_litellm: bool = True,
         with_bedrock: bool = True,
         with_cortex: bool = True,
+        with_anthropic: bool = True,
+        with_google: bool = True,
         with_dummy: bool = True,
         **kwargs,
     ) -> Tuple[T, python_utils.Thunk[base_schema.Cost]]:
@@ -609,6 +623,8 @@ class Endpoint(
             with_litellm=with_litellm,
             with_bedrock=with_bedrock,
             with_cortex=with_cortex,
+            with_anthropic=with_anthropic,
+            with_google=with_google,
             with_dummy=with_dummy,
             **kwargs,
         )

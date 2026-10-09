@@ -178,6 +178,8 @@ class AnthropicEndpoint(core_endpoint.Endpoint):
 
         super().__init__(**self_kwargs)
 
+        self._instrument_class(anthropic.resources.messages.Messages, "create")
+
     def handle_wrapped_call(
         self,
         func: Callable,
