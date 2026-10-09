@@ -1,4 +1,3 @@
-from concurrent.futures import as_completed
 from typing import Any, List
 
 from llama_index.core.indices.query.schema import QueryBundle
@@ -83,16 +82,17 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         # Get relevant docs using super class:
         nodes = self.query_engine.retrieve(query_bundle=query)
 
+        # Evaluate the filter on each node in parallel. Results are read back
+        # in retrieval order so the kept nodes keep the retriever's ranking.
         with ThreadPoolExecutor(max_workers=max(1, len(nodes))) as ex:
-            future_to_node = {
+            futures = [
                 ex.submit(
                     lambda node=node: self.feedback(query, node.node.get_text())
-                ): node
+                )
                 for node in nodes
-            }
+            ]
             filtered = []
-            for future in as_completed(future_to_node):
-                node = future_to_node[future]
+            for node, future in zip(nodes, futures):
                 result = future.result()
                 if not isinstance(result, float):
                     raise ValueError(
