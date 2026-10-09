@@ -219,11 +219,23 @@ class Anthropic(llm_provider.LLMProvider):
         if system_prompt:
             api_kwargs["system"] = system_prompt
 
-        # Handle temperature — non-reasoning Anthropic models support it
+        # Handle temperature — non-reasoning Anthropic models support it.
+        # anthropic>=1.0 removed the sampling parameters from
+        # `messages.create`, so they go in the request body via `extra_body`,
+        # which every SDK version supports.
+        sampling_params: dict[str, Any] = {}
         if "temperature" in kwargs:
-            api_kwargs["temperature"] = kwargs.pop("temperature")
+            sampling_params["temperature"] = kwargs.pop("temperature")
         elif not self._is_reasoning_model():
-            api_kwargs["temperature"] = 0.0
+            sampling_params["temperature"] = 0.0
+        for param in ("top_p", "top_k"):
+            if param in kwargs:
+                sampling_params[param] = kwargs.pop(param)
+        if sampling_params:
+            api_kwargs["extra_body"] = {
+                **sampling_params,
+                **(kwargs.pop("extra_body", None) or {}),
+            }
 
         # Handle structured output via tool_use
         if response_format is not None:
