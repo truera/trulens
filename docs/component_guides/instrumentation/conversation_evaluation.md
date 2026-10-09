@@ -155,6 +155,15 @@ The conversation-level metrics are `coherence_across_turns`,
 `conversation_helpfulness`, `topic_adherence`, `agent_goal_accuracy`, and
 the deterministic `conversation_repetition` (no LLM calls). Each of the LLM-based ones has a matching `_with_cot_reasons` variant.
 
+`instruction_retention_with_cot_reasons` checks whether standing instructions
+the user set ("answer in JSON", "only cover the EU") still hold in later turns.
+It comes only with reasons, because the score is read next to its breakdown:
+each instruction's verdict per turn, the first turn it broke, and the forgetting
+and correction ratios. Instructions that can be checked mechanically are passed
+as `checks` (instruction text to a predicate on one reply) and decided by the
+predicate instead of the judge. Revocations are passed as `revocations`
+(instruction text to the turn it was revoked in) rather than judged.
+
 ## Attach both metrics to an app
 
 Turn-level and conversation-level metrics can run on the same recorded application:
