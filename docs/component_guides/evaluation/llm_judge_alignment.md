@@ -491,12 +491,12 @@ Latency and cost are operational criteria, not substitutes for alignment. See
 the [model comparison cookbook](../../cookbook/models/openai/model_comparison_for_eval.ipynb)
 for a repeated-trial example.
 
-The [local Clef versus Claude judge comparison](https://github.com/truera/trulens/tree/main/examples/expositional/models/local_and_OSS_models/clef_judge_comparison)
+The [local Clef versus Claude judge comparison](https://github.com/truera/trulens/blob/main/examples/expositional/models/local_and_OSS_models/clef_judge_comparison.ipynb)
 evaluates Ollama-hosted Clef against Opus 5.5 and Sonnet 5.5 on SummEval expert
-consistency labels. The notebook uses `Metric`, `Jury.repeated`,
-`AlignmentReport`, and `CrossModelAlignmentReport` for repeatability and human
-alignment, with saved request latency and token usage. Cortex dollar costs and
-local hardware costs are explicitly unmeasured.
+consistency labels. The notebook uses `Metric`, `Jury.repeated`, and
+`AlignmentReport` for repeatability and human alignment, then applies the local
+judge as a `block_output` guardrail. Cortex dollar costs and local hardware
+costs are explicitly unmeasured.
 
 ## Change one dimension: optimize or ensemble
 
