@@ -72,9 +72,13 @@ class LiteLLMCallback(core_endpoint.EndpointCallback):
             try:
                 cost_value = completion_cost(response)
             except Exception as e:
+                # Leave the cost recorded for earlier calls in place.
                 logger.exception("Failed to compute cost: %s", e)
                 cost_value = None
-            setattr(self.cost, "cost", cost_value)
+            if cost_value is not None:
+                # Add this call's cost, as the token counts above are added,
+                # so a callback tracking several calls reports their total.
+                self.cost.cost += cost_value
 
 
 class LiteLLMEndpoint(core_endpoint.Endpoint):
