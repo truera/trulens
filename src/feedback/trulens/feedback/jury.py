@@ -286,7 +286,7 @@ class Jury:
                     else:
                         score = float(raw)
                         reason = None
-                    if score == llm_provider.UNPARSABLE_SCORE:
+                    if llm_provider.is_unparsable_score(score):
                         # The judge answered without a score a parser could
                         # find. That is a failure to grade, not a verdict at
                         # the bottom of the scale, so this juror gets no vote
