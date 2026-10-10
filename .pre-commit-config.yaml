@@ -30,6 +30,8 @@ repos:
     rev: 3.3.0
     hooks:
       - id: nb-clean
+        # Preserve the measured outputs of this worked benchmark.
+        exclude: ^examples/expositional/models/local_and_OSS_models/clef_judge_comparison\.ipynb$
         args: [--remove-empty-cells]
 -   repo: https://github.com/tox-dev/pyproject-fmt
     rev: "2.0.4"
