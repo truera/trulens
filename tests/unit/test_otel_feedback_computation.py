@@ -472,6 +472,26 @@ class TestOtelFeedbackComputation(OtelTestCase):
                     [f for f in flattened_inputs if f[0] not in computed], res
                 )
 
+    def test__remove_already_computed_feedbacks_ignores_missing_record_id(
+        self,
+    ) -> None:
+        # An eval root without a record id must not match an input whose
+        # record id is `None`.
+        events = pd.DataFrame({
+            "record_attributes": [
+                {
+                    SpanAttributes.SPAN_TYPE: SpanAttributes.SpanType.EVAL_ROOT,
+                    SpanAttributes.EVAL_ROOT.METRIC_NAME: "feedback1",
+                    SpanAttributes.EVAL_ROOT.SCORE: 0.5,
+                }
+            ]
+        })
+        flattened_inputs = [(None, None, {})]
+        res = _remove_already_computed_feedbacks(
+            events, "feedback1", flattened_inputs
+        )
+        self.assertEqual(flattened_inputs, res)
+
     def _create_invoked_app_with_custom_feedback(
         self, higher_is_better: bool = True
     ) -> TruApp:

@@ -722,9 +722,10 @@ def _remove_already_computed_feedbacks(
         defaultdict(list)
     )
     for curr in eval_root_attributes:
-        record_id_to_eval_root_attributes[
-            curr.get(SpanAttributes.RECORD_ID)
-        ].append(curr)
+        eval_root_record_id = curr.get(SpanAttributes.RECORD_ID)
+        # Like `groupby`, leave out eval roots that have no record id.
+        if eval_root_record_id is not None:
+            record_id_to_eval_root_attributes[eval_root_record_id].append(curr)
     ret = []
     for record_id, span_group, inputs in flattened_inputs:
         curr_eval_root_attributes = record_id_to_eval_root_attributes.get(
