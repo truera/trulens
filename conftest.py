@@ -15,6 +15,20 @@ except (ImportError, AttributeError):
 
 
 def pytest_addoption(parser):
+    """Register custom command-line options for the TruLens test suite.
+
+    Adds the following flags:
+
+    - ``--skip_basic_tests``: Skip tests not marked optional or snowflake.
+    - ``--run_optional_tests``: Enable tests marked as optional.
+    - ``--run_snowflake_tests``: Enable tests marked as snowflake.
+    - ``--run_huggingface_tests``: Enable tests marked as huggingface.
+
+    Each flag has a corresponding environment-variable override
+    (``SKIP_BASIC_TESTS``, ``TEST_OPTIONAL``, ``TEST_SNOWFLAKE``,
+    ``TEST_HUGGINGFACE``) that is honoured by
+    :func:`pytest_collection_modifyitems`.
+    """
     parser.addoption(
         "--skip_basic_tests",
         action="store_true",
