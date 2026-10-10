@@ -6,6 +6,7 @@ from langchain_core.language_models.llms import BaseLLM
 from langchain_core.messages import AIMessage
 from langchain_core.messages import BaseMessage
 from langchain_core.messages import HumanMessage
+from langchain_core.messages import SystemMessage
 from pydantic import BaseModel
 from trulens.feedback import llm_provider
 from trulens.providers.langchain import endpoint as langchain_endpoint
@@ -19,6 +20,8 @@ def _convert_message(message: Union[Dict, BaseMessage]) -> BaseMessage:
         return message
     if "role" not in message or message["role"] == "user":
         return HumanMessage(content=message["content"])
+    if message["role"] == "system":
+        return SystemMessage(content=message["content"])
     return AIMessage(content=message["content"])
 
 

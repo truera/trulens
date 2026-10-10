@@ -1,4 +1,3 @@
-from concurrent.futures import as_completed
 from typing import Any, List
 
 from langchain_core.documents import Document
@@ -81,19 +80,19 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         # Get relevant docs using super class:
         docs = super()._get_relevant_documents(query, run_manager=run_manager)
 
-        # Evaluate the filter on each, in parallel.
+        # Evaluate the filter on each, in parallel. Results are read back in
+        # retrieval order so the kept documents keep the retriever's ranking.
         with threading_utils.ThreadPoolExecutor(
             max_workers=max(1, len(docs))
         ) as ex:
-            future_to_doc = {
+            futures = [
                 ex.submit(
                     lambda doc=doc: self.feedback(query, doc.page_content)
-                ): doc
+                )
                 for doc in docs
-            }
+            ]
             filtered = []
-            for future in as_completed(future_to_doc):
-                doc = future_to_doc[future]
+            for doc, future in zip(docs, futures):
                 result = future.result()
                 if not isinstance(result, float):
                     raise TypeError(

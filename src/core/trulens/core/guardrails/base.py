@@ -1,11 +1,12 @@
-from concurrent.futures import as_completed
 from contextlib import contextmanager
 import inspect
 import logging
+import math
 from typing import Optional
 
 from opentelemetry import trace as otel_trace
 from trulens.core.metric import metric as core_metric
+from trulens.core.utils import constants as constants_utils
 from trulens.core.utils import threading as threading_utils
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import (
@@ -14,6 +15,16 @@ from trulens.experimental.otel_tracing.core.span import (
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
+
+
+def _validate_feedback_score(score: float) -> None:
+    """Reject failed evaluations before applying a guardrail threshold."""
+    if not math.isfinite(score) or score == constants_utils.UNPARSABLE_SCORE:
+        raise ValueError(
+            "Guardrail feedback must return a finite score, not an "
+            f"unparsable-score sentinel ({constants_utils.UNPARSABLE_SCORE}); "
+            f"got {score!r}."
+        )
 
 
 @contextmanager
@@ -34,10 +45,19 @@ def _guardrail_span(name: str, threshold: float):
 class context_filter:
     """Provides a decorator to filter contexts based on a given feedback and threshold.
 
+    A non-finite or unparsable (-1.0) feedback score excludes only the affected
+    context and logs a warning. Other contexts are evaluated normally.
+
+    Contexts are evaluated in parallel, but the kept contexts are returned in
+    the order the decorated function produced them, and one GUARDRAIL span
+    per context is emitted in that same order.
+
     Args:
         feedback: The feedback object to use for filtering.
 
-        threshold: The minimum feedback value required for a context to be included.
+        threshold: A context's score must be strictly above this value when
+            `higher_is_better` is True, or strictly below it otherwise.
+            Scores equal to the threshold are excluded.
 
         keyword_for_prompt: Keyword argument to decorator to use for prompt.
 
@@ -101,6 +121,14 @@ class context_filter:
                     raise ValueError(
                         "`context_filter` can only be used with feedback functions that return a float."
                     )
+                try:
+                    _validate_feedback_score(result)
+                except ValueError:
+                    logger.warning(
+                        "Excluding context with invalid guardrail score %r.",
+                        result,
+                    )
+                    return result, False
                 passed = (
                     self.feedback.higher_is_better and result > self.threshold
                 ) or (
@@ -109,16 +137,18 @@ class context_filter:
                 )
                 return result, passed
 
+            # Contexts are scored in parallel, but results are read back in
+            # input order so the kept contexts (and their GUARDRAIL spans)
+            # keep the retriever's ranking instead of judge completion order.
             with threading_utils.ThreadPoolExecutor(
                 max_workers=max(1, len(contexts))
             ) as ex:
-                future_to_context = {
-                    ex.submit(_evaluate_context, context): context
+                futures = [
+                    ex.submit(_evaluate_context, context)
                     for context in contexts
-                }
+                ]
                 filtered = []
-                for future in as_completed(future_to_context):
-                    context = future_to_context[future]
+                for context, future in zip(contexts, futures):
                     result, passed = future.result()
                     with _guardrail_span(
                         guardrail_name, self.threshold
@@ -142,6 +172,9 @@ class context_filter:
 
 class block_input:
     """Provides a decorator to block input based on a given feedback and threshold.
+
+    A non-finite or unparsable (-1.0) feedback score raises `ValueError`
+    before the decorated function is called.
 
     Args:
         feedback: The feedback object to use for blocking.
@@ -220,6 +253,7 @@ class block_input:
                     raise ValueError(
                         "`block_input` can only be used with feedback functions that return a float."
                     )
+                _validate_feedback_score(result)
                 blocked = (
                     self.feedback.higher_is_better and result < self.threshold
                 ) or (
@@ -243,6 +277,9 @@ class block_input:
 
 class block_output:
     """Provides a decorator to block output based on a given feedback and threshold.
+
+    A non-finite or unparsable (-1.0) feedback score raises `ValueError`
+    instead of returning the decorated function's output.
 
     Args:
         feedback: The feedback object to use for blocking. It must only take a single argument.
@@ -305,6 +342,7 @@ class block_output:
                     raise ValueError(
                         "`block_output` can only be used with feedback functions that return a float."
                     )
+                _validate_feedback_score(result)
                 blocked = (
                     self.feedback.higher_is_better and result < self.threshold
                 ) or (

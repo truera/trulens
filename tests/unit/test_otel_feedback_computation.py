@@ -752,6 +752,107 @@ class TestOtelFeedbackComputation(OtelTestCase):
             ],
         )
 
+    def test_aggregation_drops_unparsable_scores(self) -> None:
+        # A judge call that cannot be parsed answers with UNPARSABLE_SCORE.
+        # Averaging that in would report the failure as a mediocre verdict on
+        # the record instead of leaving it out of the average.
+        from trulens.feedback.llm_provider import UNPARSABLE_SCORE
+
+        def flaky_judge(a: float, b: float) -> float:
+            if (a, b) == (3, 7):
+                return UNPARSABLE_SCORE
+            return a * b
+
+        f_custom = Metric(
+            implementation=flaky_judge,
+            name="flaky",
+            selectors={
+                "a": Selector(
+                    span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                    function_attribute="xs",
+                    collect_list=False,
+                ),
+                "b": Selector(
+                    span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                    function_attribute="ys",
+                    collect_list=False,
+                ),
+            },
+        )
+
+        class _App:
+            @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
+            def invoke(self, xs: List[int], ys: List[int]) -> float:
+                return 0.0
+
+        app = _App()
+        tru_app = TruApp(
+            app, app_name="Simple App", app_version="v1", feedbacks=[f_custom]
+        )
+        with tru_app:
+            app.invoke([2, 3], [5, 7])
+        TruSession().force_flush()
+        tru_app.compute_feedbacks()
+        TruSession().force_flush()
+
+        events = self._get_events()
+        # The (3, 7) judge call failed, so the record is the mean of the rest.
+        self.assertEqual(
+            np.mean([2 * 5, 2 * 7, 3 * 5]),
+            events.iloc[1]["record_attributes"][SpanAttributes.EVAL_ROOT.SCORE],
+        )
+        self.assertListEqual(
+            [2 * 5, 2 * 7, 3 * 5, UNPARSABLE_SCORE],
+            [
+                curr["record_attributes"][SpanAttributes.EVAL.SCORE]
+                for _, curr in events.iloc[2:].iterrows()
+            ],
+        )
+
+    def test_aggregation_with_nothing_to_aggregate_is_unscored(self) -> None:
+        # Nothing was retrieved, so the judge never ran: the record has no
+        # score, which is not the same as a score of zero.
+        from trulens.feedback.llm_provider import UNPARSABLE_SCORE
+
+        def never_called(xs: List[int]) -> float:
+            return float(len(xs))
+
+        f_custom = Metric(
+            implementation=never_called,
+            name="never_called",
+            selectors={
+                "xs": Selector(
+                    span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                    function_attribute="xs",
+                    collect_list=False,
+                ),
+            },
+        )
+
+        class _App:
+            @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
+            def invoke(self, xs: List[int]) -> float:
+                return 0.0
+
+        app = _App()
+        tru_app = TruApp(
+            app, app_name="Simple App", app_version="v1", feedbacks=[f_custom]
+        )
+        with tru_app:
+            app.invoke([])
+        TruSession().force_flush()
+        tru_app.compute_feedbacks()
+        TruSession().force_flush()
+
+        events = self._get_events()
+        self.assertEqual(
+            UNPARSABLE_SCORE,
+            events.iloc[1]["record_attributes"][SpanAttributes.EVAL_ROOT.SCORE],
+        )
+        self.assertIsNotNone(
+            events.iloc[1]["record_attributes"][SpanAttributes.EVAL_ROOT.ERROR]
+        )
+
     def test_compute_feedbacks_on_events(self) -> None:
         # Create apps.
         class _TestApp:

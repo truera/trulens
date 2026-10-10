@@ -311,3 +311,43 @@ def test_is_reasoning_model_detection():
         )._is_reasoning_model()
         is False
     )
+
+
+@pytest.mark.optional
+def test_convert_message_maps_system_role_to_system_message():
+    if not _has_langchain_core():
+        pytest.skip(
+            "langchain_core not installed; skipping optional LangChain provider tests."
+        )
+
+    from langchain_core.messages import AIMessage
+    from langchain_core.messages import HumanMessage
+    from langchain_core.messages import SystemMessage
+    from trulens.providers.langchain.provider import (
+        _convert_message,  # type: ignore[import-not-found]
+    )
+
+    # Every feedback call is built as [{"role": "system", ...}, {"role":
+    # "user", ...}] (see LLMProvider.generate_score); the judge's rubric must
+    # survive as a system instruction, not be relabeled as a prior AI turn.
+    system_result = _convert_message({
+        "role": "system",
+        "content": "You are a strict judge.",
+    })
+    assert isinstance(system_result, SystemMessage)
+    assert system_result.content == "You are a strict judge."
+
+    user_result = _convert_message({
+        "role": "user",
+        "content": "Score this.",
+    })
+    assert isinstance(user_result, HumanMessage)
+
+    no_role_result = _convert_message({"content": "Score this."})
+    assert isinstance(no_role_result, HumanMessage)
+
+    assistant_result = _convert_message({
+        "role": "assistant",
+        "content": "8/10",
+    })
+    assert isinstance(assistant_result, AIMessage)

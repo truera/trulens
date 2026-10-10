@@ -27,7 +27,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 opentelemetry-api = ">=1.23.0"
 opentelemetry-sdk = ">=1.23.0"
 opentelemetry-proto = ">=1.23.0"

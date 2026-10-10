@@ -27,7 +27,9 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9,<3.14"
+# Capped below 3.14 because snowflake-ml-python (as of 2.3.0) declares
+# requires-python "<3.14".
+python = "^3.10,<3.14"
 trulens-core = { version = "^2.0.0" }
 trulens-feedback = { version = "^2.0.0" }
 packaging = ">=23.0"

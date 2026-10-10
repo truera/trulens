@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 from collections.abc import Sequence
+import contextlib
+import contextvars
 from contextvars import ContextVar
 import inspect
 import logging
@@ -226,6 +228,14 @@ def _resolve_attributes(
         value_string_to_value = all_kwargs.copy()
         value_string_to_value["return"] = ret
         for k, v in attributes.items():
+            if v not in value_string_to_value:
+                logger.warning(
+                    "Skipping span attribute %r: %r is not an argument of "
+                    "the instrumented function or 'return'.",
+                    k,
+                    v,
+                )
+                continue
             resolved[k] = value_string_to_value[v]
         return resolved
     return attributes.copy()
@@ -257,6 +267,12 @@ def _set_span_attributes(
     # callable.
     sig = inspect.signature(func)
     bound_args = sig.bind_partial(*args, **kwargs).arguments
+    # Fill in parameters the caller left at their defaults so attributes
+    # mapped to them resolve. Unlike `BoundArguments.apply_defaults`, this
+    # does not add empty `*args`/`**kwargs` placeholders.
+    for name, param in sig.parameters.items():
+        if name not in bound_args and param.default is not param.empty:
+            bound_args[name] = param.default
     all_kwargs = {**kwargs, **bound_args}
     if not only_set_user_defined_attributes:
         # Set general span attributes.
@@ -447,6 +463,47 @@ def _finalize_span(
         raise exception
 
 
+class _DetachedFunctionCall:
+    """Holds a function call span open without leaving it current in the caller.
+
+    A generator's span lives as long as its stream, but the caller holds the
+    stream between chunks and may stop reading at any point. So the span and
+    the record baggage are set up in a private context, and only attached
+    around each step that runs user code (see `step`). Between chunks, and
+    after the caller walks away, nothing of the stream is attached in the
+    caller's context.
+    """
+
+    def __init__(self, function_call_context_manager) -> None:
+        self._function_call_context_manager = function_call_context_manager
+        self._private_context = contextvars.copy_context()
+        self._otel_context = None
+
+    def __enter__(self) -> Span:
+        span = self._private_context.run(
+            self._function_call_context_manager.__enter__
+        )
+        self._otel_context = self._private_context.run(context_api.get_current)
+        return span
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return self._private_context.run(
+            self._function_call_context_manager.__exit__,
+            exc_type,
+            exc_val,
+            exc_tb,
+        )
+
+    @contextlib.contextmanager
+    def step(self):
+        """Make the span and its baggage current for one step of user code."""
+        token = context_api.attach(self._otel_context)
+        try:
+            yield
+        finally:
+            context_api.detach(token)
+
+
 class instrument:
     enabled: bool = True
 
@@ -537,11 +594,14 @@ class instrument:
         def convert_to_generator(func, instance, args, kwargs):
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             func_name_for_call = _func_name_for_instance(instance)
-            with create_function_call_context_manager(
-                self.create_new_span,
-                func_name_for_call,
-                span_type=self.span_type,
-            ) as span:
+            call = _DetachedFunctionCall(
+                create_function_call_context_manager(
+                    self.create_new_span,
+                    func_name_for_call,
+                    span_type=self.span_type,
+                )
+            )
+            with call as span:
                 ret = None
                 func_exception: Exception | None = None
                 started = time.perf_counter()
@@ -549,12 +609,18 @@ class instrument:
                 streamed = False
                 # Run function.
                 try:
-                    result = func(*args, **kwargs)
+                    with call.step():
+                        result = func(*args, **kwargs)
                     if isinstance(result, types.GeneratorType):
                         streamed = True
                         yield "is_generator"
                         ret = []
-                        for curr in result:
+                        while True:
+                            with call.step():
+                                try:
+                                    curr = next(result)
+                                except StopIteration:
+                                    break
                             if first_yield is None:
                                 first_yield = time.perf_counter()
                             ret.append(curr)
@@ -569,29 +635,31 @@ class instrument:
                     # None as a return value.
                     func_exception = e
                 finally:
-                    if streamed:
-                        # Also runs when the consumer abandons the generator,
-                        # so a partially consumed stream is still measured.
-                        _set_streaming_attributes(
+                    with call.step():
+                        if streamed:
+                            # Also runs when the consumer abandons the
+                            # generator, so a partially consumed stream is
+                            # still measured.
+                            _set_streaming_attributes(
+                                span,
+                                started,
+                                first_yield,
+                                len(ret) if ret else 0,
+                            )
+                        _finalize_span(
                             span,
-                            started,
-                            first_yield,
-                            len(ret) if ret else 0,
+                            self.span_type,
+                            func_name_for_call,
+                            func,
+                            func_exception,
+                            self.attributes,
+                            instance,
+                            args,
+                            kwargs,
+                            ret,
+                            self.only_set_user_defined_attributes,
+                            span_end_callbacks,
                         )
-                    _finalize_span(
-                        span,
-                        self.span_type,
-                        func_name_for_call,
-                        func,
-                        func_exception,
-                        self.attributes,
-                        instance,
-                        args,
-                        kwargs,
-                        ret,
-                        self.only_set_user_defined_attributes,
-                        span_end_callbacks,
-                    )
                     return ret
 
         @wrapt.decorator
@@ -661,11 +729,14 @@ class instrument:
                 return
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             func_name_for_call = _func_name_for_instance(instance)
-            with create_function_call_context_manager(
-                self.create_new_span,
-                func_name_for_call,
-                span_type=self.span_type,
-            ) as span:
+            call = _DetachedFunctionCall(
+                create_function_call_context_manager(
+                    self.create_new_span,
+                    func_name_for_call,
+                    span_type=self.span_type,
+                )
+            )
+            with call as span:
                 ret = None
                 func_exception: Exception | None = None
                 started = time.perf_counter()
@@ -674,7 +745,12 @@ class instrument:
                 try:
                     result = func(*args, **kwargs)
                     ret = []
-                    async for curr in result:
+                    while True:
+                        with call.step():
+                            try:
+                                curr = await result.__anext__()
+                            except StopAsyncIteration:
+                                break
                         if first_yield is None:
                             first_yield = time.perf_counter()
                         ret.append(curr)
@@ -685,26 +761,27 @@ class instrument:
                     # None as a return value.
                     func_exception = e
                 finally:
-                    _set_streaming_attributes(
-                        span,
-                        started,
-                        first_yield,
-                        len(ret) if ret else 0,
-                    )
-                    _finalize_span(
-                        span,
-                        self.span_type,
-                        func_name_for_call,
-                        func,
-                        func_exception,
-                        self.attributes,
-                        instance,
-                        args,
-                        kwargs,
-                        ret,
-                        self.only_set_user_defined_attributes,
-                        span_end_callbacks,
-                    )
+                    with call.step():
+                        _set_streaming_attributes(
+                            span,
+                            started,
+                            first_yield,
+                            len(ret) if ret else 0,
+                        )
+                        _finalize_span(
+                            span,
+                            self.span_type,
+                            func_name_for_call,
+                            func,
+                            func_exception,
+                            self.attributes,
+                            instance,
+                            args,
+                            kwargs,
+                            ret,
+                            self.only_set_user_defined_attributes,
+                            span_end_callbacks,
+                        )
 
         # Check if already wrapped if not allowing multiple wrappers.
         if self.must_be_first_wrapper:

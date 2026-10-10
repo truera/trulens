@@ -3,6 +3,11 @@
 !!! info
     TruLens now operates on OpenTelemetry traces. [Read more](../blog/posts/trulens_otel.md).
 
+_TruLens_ supports Python 3.10 through 3.14. Three packages have a lower upper
+bound: `trulens-providers-cortex` and `trulens-connectors-snowflake` install on
+Python 3.10 through 3.13, and the deprecated `trulens-apps-nemo` installs on
+Python 3.10 through 3.12 only.
+
 These installation instructions assume that you have conda installed and added
 to your path.
 
