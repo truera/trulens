@@ -714,20 +714,23 @@ def _remove_already_computed_feedbacks(
             )
         )
     ]
-    record_id_to_eval_root_attributes = eval_root_attributes.groupby(
-        by=eval_root_attributes.apply(
-            lambda curr: curr.get(SpanAttributes.RECORD_ID)
-        )
+    # Group in plain Python rather than with `groupby(...).get_group(...)`:
+    # when there is exactly one eval root, pandas treats the length-1 grouping
+    # Series as a length-1 list-like key, and pandas 3 then only accepts a
+    # tuple in `get_group`, raising `KeyError` for the plain record id.
+    record_id_to_eval_root_attributes: Dict[Any, List[Dict[str, Any]]] = (
+        defaultdict(list)
     )
+    for curr in eval_root_attributes:
+        eval_root_record_id = curr.get(SpanAttributes.RECORD_ID)
+        # Like `groupby`, leave out eval roots that have no record id.
+        if eval_root_record_id is not None:
+            record_id_to_eval_root_attributes[eval_root_record_id].append(curr)
     ret = []
     for record_id, span_group, inputs in flattened_inputs:
-        curr_eval_root_attributes = []
-        if record_id in record_id_to_eval_root_attributes.groups:
-            curr_eval_root_attributes = (
-                record_id_to_eval_root_attributes.get_group(record_id)
-                # DEV NOTE: In pandas 2.1.0: `get_group` deprecated grouping on
-                # non-tuple keys.
-            )
+        curr_eval_root_attributes = record_id_to_eval_root_attributes.get(
+            record_id, []
+        )
         if not _feedback_already_computed(
             span_group, inputs, feedback_name, curr_eval_root_attributes
         ):
