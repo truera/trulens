@@ -13,11 +13,9 @@ import unittest
 
 try:
     from trulens.core.schema import base as base_schema
-    from trulens.providers.anthropic.endpoint import (
-        AnthropicCallback,
-        AnthropicCostComputer,
-    )
     from trulens.otel.semconv.trace import SpanAttributes
+    from trulens.providers.anthropic.endpoint import AnthropicCallback
+    from trulens.providers.anthropic.endpoint import AnthropicCostComputer
 except Exception:  # pragma: no cover
     AnthropicCallback = None
     AnthropicCostComputer = None
@@ -48,9 +46,13 @@ class TestAnthropicCostComputerUnknownModel(unittest.TestCase):
         if AnthropicCostComputer is None:
             self.skipTest("trulens-providers-anthropic not available.")
 
-    def _make_response(self, model: str, input_tokens: int = 100, output_tokens: int = 50):
+    def _make_response(
+        self, model: str, input_tokens: int = 100, output_tokens: int = 50
+    ):
         return SimpleNamespace(
-            usage=SimpleNamespace(input_tokens=input_tokens, output_tokens=output_tokens),
+            usage=SimpleNamespace(
+                input_tokens=input_tokens, output_tokens=output_tokens
+            ),
             model=model,
         )
 
@@ -73,7 +75,9 @@ class TestAnthropicCostComputerUnknownModel(unittest.TestCase):
         )
         self.assertEqual(cost_info[SpanAttributes.COST.NUM_TOKENS], 150)
         self.assertEqual(cost_info[SpanAttributes.COST.NUM_PROMPT_TOKENS], 100)
-        self.assertEqual(cost_info[SpanAttributes.COST.NUM_COMPLETION_TOKENS], 50)
+        self.assertEqual(
+            cost_info[SpanAttributes.COST.NUM_COMPLETION_TOKENS], 50
+        )
 
     def test_known_model_includes_positive_cost(self):
         """handle_response must include a positive COST.COST for a known model."""
