@@ -16,6 +16,8 @@ from unittest import mock
 
 import pandas as pd
 import pytest
+from trulens.core import Metric
+from trulens.core import Selector
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import SpanAttributes
@@ -471,6 +473,146 @@ class TestOtelTruAutoGen(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
                 "writer.generate_reply",
             ],
             self._span_names(events),
+        )
+
+    def test_scoping_a_metric_to_one_agent(self) -> None:
+        """The documented per-agent metric scores only that agent's turns.
+
+        An `AGENT` span is emitted for every `generate_reply`, including the
+        group chat manager's (whose turn produces no reply) and the user
+        proxy's, so a metric selecting `AGENT.OUTPUT_MESSAGE` outright is also
+        handed those. This pins the filtering recipe the docs recommend.
+        """
+
+        scored: Dict[str, List[Any]] = {"researcher": [], "writer": []}
+
+        def agent_reply(agent_name: str) -> Selector:
+            """The selector the docs and notebook recommend."""
+
+            return Selector(
+                span_type=SpanAttributes.SpanType.AGENT,
+                span_attributes_processor=lambda attributes: (
+                    attributes.get(SpanAttributes.AGENT.OUTPUT_MESSAGE)
+                    if attributes.get(SpanAttributes.AGENT.NAME) == agent_name
+                    else None
+                ),
+                ignore_none_values=True,
+            )
+
+        def metric_for(agent_name: str) -> Metric:
+            return Metric(
+                implementation=lambda text: (
+                    scored[agent_name].append(text) or 1.0
+                ),
+                name=f"{agent_name} coherence",
+                selectors={"text": agent_reply(agent_name)},
+            )
+
+        researcher = _canned_agent("researcher", "Findings.")
+        writer = _canned_agent("writer", "Article.")
+        user = _user_proxy()
+
+        group_chat = GroupChat(
+            agents=[user, researcher, writer],
+            messages=[],
+            max_round=3,
+            speaker_selection_method="round_robin",
+        )
+        manager = GroupChatManager(groupchat=group_chat, llm_config=False)
+
+        tru_recorder = TruAutoGen(
+            user,
+            app_name="scoped_metric",
+            app_version="v1",
+            main_method=user.initiate_chat,
+            feedbacks=[metric_for("researcher"), metric_for("writer")],
+            # Compute explicitly below rather than racing the evaluator thread.
+            start_evaluator=False,
+        )
+
+        with tru_recorder:
+            user.initiate_chat(manager, message="Write about the sky.")
+
+        TruSession().force_flush()
+        tru_recorder.compute_feedbacks()
+        TruSession().force_flush()
+
+        # Each metric saw only its own agent's reply. The manager and the user
+        # proxy also took turns and reached neither.
+        self.assertEqual(
+            {"researcher": ["Findings."], "writer": ["Article."]}, scored
+        )
+
+        eval_roots = self._attributes_of_type(
+            self._spans(), SpanAttributes.SpanType.EVAL_ROOT
+        )
+        self.assertEqual(
+            ["researcher coherence", "writer coherence"],
+            sorted(
+                eval_root[SpanAttributes.EVAL_ROOT.METRIC_NAME]
+                for eval_root in eval_roots
+            ),
+        )
+
+    def test_unscoped_agent_metric_sees_every_turn(self) -> None:
+        """Why the docs scope the metric: the plain selector is broader.
+
+        Selecting `AGENT.OUTPUT_MESSAGE` with no filter reaches the manager's
+        reply-less turn as `None`, which is what `ignore_none_values` and the
+        name filter in the documented recipe exist to avoid.
+        """
+
+        scored: List[Any] = []
+
+        def record_text(text: Any) -> float:
+            scored.append(text)
+            return 1.0
+
+        f_every_agent = Metric(
+            implementation=record_text,
+            name="Agent Coherence",
+            selectors={
+                "text": Selector(
+                    span_type=SpanAttributes.SpanType.AGENT,
+                    span_attribute=SpanAttributes.AGENT.OUTPUT_MESSAGE,
+                ),
+            },
+        )
+
+        researcher = _canned_agent("researcher", "Findings.")
+        writer = _canned_agent("writer", "Article.")
+        user = _user_proxy()
+
+        group_chat = GroupChat(
+            agents=[user, researcher, writer],
+            messages=[],
+            max_round=3,
+            speaker_selection_method="round_robin",
+        )
+        manager = GroupChatManager(groupchat=group_chat, llm_config=False)
+
+        tru_recorder = TruAutoGen(
+            user,
+            app_name="unscoped_metric",
+            app_version="v1",
+            main_method=user.initiate_chat,
+            feedbacks=[f_every_agent],
+            start_evaluator=False,
+        )
+
+        with tru_recorder:
+            user.initiate_chat(manager, message="Write about the sky.")
+
+        TruSession().force_flush()
+        tru_recorder.compute_feedbacks()
+        TruSession().force_flush()
+
+        self.assertIn("Findings.", scored)
+        self.assertIn("Article.", scored)
+        self.assertIn(
+            None,
+            scored,
+            "the manager's reply-less turn should reach the metric",
         )
 
     def test_main_input_and_output(self) -> None:

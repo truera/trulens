@@ -567,24 +567,35 @@ class TruAutoGen(core_app.App):
             result = user.initiate_chat(assistant, message="Why is the sky blue?")
         ```
 
-    Example: "Evaluating individual agent replies"
+    Example: "Evaluating one agent's replies"
 
         Each agent turn is an `AGENT` span carrying the agent's name, the
         messages it was given, and the reply it produced, so a metric can be
-        pointed at agent replies rather than at the conversation as a whole.
+        pointed at one agent's replies rather than at the conversation as a
+        whole. Filter on `AGENT.NAME`, and use one metric per agent you want to
+        compare: every `generate_reply` is an `AGENT` span, including the group
+        chat manager's reply-less turn, the user proxy's, and the internal
+        agents that `speaker_selection_method="auto"` uses to pick a speaker.
 
         ```python
         from trulens.core import Metric
         from trulens.core import Selector
         from trulens.otel.semconv.trace import SpanAttributes
 
-        f_coherence = Metric(
+        f_researcher_coherence = Metric(
             implementation=provider.coherence_with_cot_reasons,
-            name="Coherence",
+            name="Researcher Coherence",
             selectors={
                 "text": Selector(
                     span_type=SpanAttributes.SpanType.AGENT,
-                    span_attribute=SpanAttributes.AGENT.OUTPUT_MESSAGE,
+                    span_attributes_processor=lambda attributes: (
+                        attributes.get(SpanAttributes.AGENT.OUTPUT_MESSAGE)
+                        if attributes.get(SpanAttributes.AGENT.NAME)
+                        == "researcher"
+                        else None
+                    ),
+                    # Skip turns from every other agent.
+                    ignore_none_values=True,
                 ),
             },
         )

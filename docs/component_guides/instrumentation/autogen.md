@@ -80,29 +80,49 @@ that made them.
 
 ## Evaluating individual agents
 
-Because every agent turn is its own span, a metric can be pointed at agent
-replies rather than at the conversation as a whole. Each `AGENT` span is
-scored separately, so a weak agent shows up on its own rather than being
-averaged into the final answer.
+Because every agent turn is its own span, a metric can be pointed at one
+agent's replies rather than at the conversation as a whole, so a weak agent
+shows up on its own rather than being averaged into the final answer.
 
-!!! example "Score every agent reply"
+Scope the metric to the agent you care about by filtering on `AGENT.NAME`, and
+use one metric per agent you want to compare. An `AGENT` span is emitted for
+every `ConversableAgent.generate_reply`, which is more than just the
+specialists: the group chat manager also takes a turn (and produces no reply of
+its own), as does the user proxy, and `speaker_selection_method="auto"` adds
+AutoGen's internal selection agents, whose replies are just the next speaker's
+name. Filtering keeps those out of the score.
+
+!!! example "Score one agent's replies"
 
     ```python
     from trulens.core import Metric
     from trulens.core import Selector
     from trulens.otel.semconv.trace import SpanAttributes
 
-    f_coherence = Metric(
+    f_researcher_coherence = Metric(
         implementation=provider.coherence_with_cot_reasons,
-        name="Agent Coherence",
+        name="Researcher Coherence",
         selectors={
             "text": Selector(
                 span_type=SpanAttributes.SpanType.AGENT,
-                span_attribute=SpanAttributes.AGENT.OUTPUT_MESSAGE,
+                span_attributes_processor=lambda attributes: (
+                    attributes.get(SpanAttributes.AGENT.OUTPUT_MESSAGE)
+                    if attributes.get(SpanAttributes.AGENT.NAME) == "researcher"
+                    else None
+                ),
+                # Skip turns from every other agent.
+                ignore_none_values=True,
             ),
         },
     )
     ```
+
+Filtering on `AGENT.NAME` covers both `generate_reply` and `a_generate_reply`.
+`span_name="researcher.generate_reply"` also works, but misses async chats.
+
+Note that the records table and leaderboard keep one score per metric per
+record, so per-turn scores are visible in the call details rather than as a
+column per turn.
 
 The attributes available on an `AGENT` span are `AGENT.NAME`,
 `AGENT.SYSTEM_MESSAGE`, `AGENT.DESCRIPTION`, `AGENT.INPUT_MESSAGES` (the
