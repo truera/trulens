@@ -454,14 +454,13 @@ class TestAnthropicPricing:
         assert out_p == 5e-6
 
     def test_unknown_model_fallback(self, monkeypatch):
-        """Unknown models should not guess a price."""
+        """Unknown models should return None, not a fake zero price."""
         from trulens.providers.anthropic import endpoint
 
         monkeypatch.setattr(endpoint, "LITELLM_MODEL_COSTS_TABLE", {})
 
-        in_p, out_p = endpoint._get_model_pricing("some-future-model")
-        assert in_p == 0.0
-        assert out_p == 0.0
+        result = endpoint._get_model_pricing("some-future-model")
+        assert result is None, "Expected None for an unknown model, not a price tuple"
 
     def test_cost_computation(self, monkeypatch):
         """Cost should be computed correctly from usage."""
