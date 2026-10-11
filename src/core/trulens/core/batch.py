@@ -82,11 +82,15 @@ def _is_missing_value(value: Any) -> bool:
 
     `None`, `NaN`, `pd.NA` and `pd.NaT` count as missing. A DataFrame stores a
     missing cell as `NaN` (or `pd.NaT`) rather than `None`, so this keeps
-    `ignore_none_values` working for DataFrame input. Containers such as lists
-    are never missing, even when they hold `NaN` items.
+    `ignore_none_values` working for DataFrame input. A 0-d numpy array holding
+    `NaN` is missing too. Containers such as lists are never missing, even when
+    they hold `NaN` items.
     """
     if value is None:
         return True
+    if isinstance(value, np.ndarray):
+        # `np.ndim` would also cover this, but it raises on ragged lists.
+        return value.ndim == 0 and bool(pd.isna(value))
     return pd.api.types.is_scalar(value) and bool(pd.isna(value))
 
 

@@ -404,7 +404,7 @@ def nan_input(text) -> float:
     "df",
     [
         pd.DataFrame({"q": ["the fox", "the fox"], "a": ["the fox", np.nan]}),
-        # A row without the key becomes a NaN cell.
+        # Building a DataFrame from a dict row without the key fills a NaN cell.
         pd.DataFrame([{"q": "the fox", "a": "the fox"}, {"q": "the fox"}]),
         # An empty CSV cell is read as NaN.
         pd.read_csv(io.StringIO("q,a\nthe fox,the fox\nthe fox,\n")),
@@ -413,7 +413,7 @@ def nan_input(text) -> float:
             "a": pd.Series(["the fox", pd.NaT], dtype=object),
         }),
     ],
-    ids=["nan", "missing_key", "csv_empty_cell", "nat"],
+    ids=["nan", "dict_row_without_key", "csv_empty_cell", "nat"],
 )
 def test_ignore_none_values_skips_missing_dataframe_cell(df):
     ev = BatchEvaluator(metrics=[_ignore_none_overlap_metric()], max_workers=1)
@@ -430,8 +430,8 @@ def test_ignore_none_values_skips_missing_dataframe_cell(df):
 
 @pytest.mark.parametrize(
     "missing",
-    [float("nan"), np.nan, pd.NA, pd.NaT],
-    ids=["float_nan", "np_nan", "pd_na", "pd_nat"],
+    [float("nan"), np.nan, pd.NA, pd.NaT, np.array(np.nan)],
+    ids=["float_nan", "np_nan", "pd_na", "pd_nat", "zero_dim_array_nan"],
 )
 def test_ignore_none_values_skips_missing_scalar_in_rows(missing):
     ev = BatchEvaluator(metrics=[_ignore_none_overlap_metric()], max_workers=1)
@@ -442,6 +442,29 @@ def test_ignore_none_values_skips_missing_scalar_in_rows(missing):
     assert res["overlap"].iloc[0] == pytest.approx(1.0)
     assert pd.isna(res["overlap"].iloc[1])
     assert "skipped" in res["overlap_explanation"].iloc[1]
+
+
+def test_ignore_none_values_skips_row_without_the_key():
+    ev = BatchEvaluator(metrics=[_ignore_none_overlap_metric()], max_workers=1)
+    res = ev.evaluate([{"q": "the fox", "a": "the fox"}, {"q": "the fox"}])
+    assert res["overlap"].iloc[0] == pytest.approx(1.0)
+    assert pd.isna(res["overlap"].iloc[1])
+    assert "missing from row" in str(res["overlap_explanation"].iloc[1])
+
+
+def test_ignore_none_values_keeps_ragged_list_cell():
+    metric = Metric(
+        name="nctx",
+        implementation=num_contexts,
+        selectors={
+            "context": Selector.from_column(
+                "contexts", collect_list=True, ignore_none_values=True
+            ),
+        },
+    )
+    data = [{"contexts": [["a"], ["b", "c"]]}]
+    res = BatchEvaluator(metrics=[metric], max_workers=1).evaluate(data)
+    assert res["nctx"].iloc[0] == pytest.approx(2.0)
 
 
 @pytest.mark.parametrize("as_dataframe", [False, True])
