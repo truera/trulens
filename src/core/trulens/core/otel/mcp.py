@@ -23,7 +23,9 @@ import wrapt
 
 _PATCH_FLAG = "__trulens_mcp_call_tool_instrumented__"
 _SECRET_KEY = re.compile(
-    r"(?:api[_-]?key|authorization|cookie|credential|password|private[_-]?key|secret|token)",
+    r"(?:api[_-]?key|authorization|cookie|credential|password|"
+    r"private[_-]?key|secret|(?:^|[_-])token(?:$|[_-])|"
+    r"(?:access|auth|id|refresh|bearer)[_-]?token(?:$|[_-]))",
     re.IGNORECASE,
 )
 _DEFAULT_MAX_BYTES = 16_384
@@ -115,7 +117,12 @@ def _mcp_attributes(
         SpanAttributes.MCP.INPUT_ARGUMENTS: _serialize(arguments),
         SpanAttributes.MCP.OUTPUT_CONTENT: _serialize(result),
         SpanAttributes.MCP.OUTPUT_IS_ERROR: bool(
-            exception is not None or getattr(result, "isError", False)
+            exception is not None
+            or getattr(
+                result,
+                "is_error",
+                getattr(result, "isError", False),
+            )
         ),
     }
 

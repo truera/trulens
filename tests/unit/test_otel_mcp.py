@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import sys
 import unittest
@@ -11,6 +12,8 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 from trulens.core.otel.instrument import instrument
+from trulens.core.otel.mcp import _mcp_attributes
+from trulens.core.otel.mcp import _serialize
 from trulens.core.otel.mcp import _wrap_call_tool
 from trulens.core.otel.mcp import instrument_mcp
 from trulens.core.otel.recording import Recording
@@ -26,11 +29,17 @@ class _Result:
         self.content = [{"text": "ok"}]
 
 
+class _ModernResult:
+    def __init__(self, is_error: bool = False) -> None:
+        self.is_error = is_error
+        self.content = [{"text": "ok"}]
+
+
 class _FakeSession:
     server_info = {"name": "weather"}
 
     async def call_tool(self, name, arguments=None, **kwargs):
-        return _Result(is_error=name == "missing")
+        return _ModernResult(is_error=name == "missing")
 
 
 class TestMCPInstrumentation(unittest.TestCase):
@@ -84,6 +93,39 @@ class TestMCPInstrumentation(unittest.TestCase):
         self.assertGreaterEqual(
             span.attributes[SpanAttributes.MCP.EXECUTION_TIME_MS], 0
         )
+
+    def test_legacy_sdk_error_field_is_supported(self) -> None:
+        attributes = _mcp_attributes(
+            _Result(is_error=True),
+            None,
+            _FakeSession(),
+            "missing",
+            {},
+        )
+
+        self.assertTrue(attributes[SpanAttributes.MCP.OUTPUT_IS_ERROR])
+
+    def test_redacts_credentials_without_losing_token_usage(self) -> None:
+        serialized = _serialize({
+            "usage": {
+                "input_tokens": 10,
+                "output_tokens": 5,
+                "total_tokens": 15,
+            },
+            "tokenizer": "cl100k_base",
+            "token": "raw-secret",
+            "access_token": "access-secret",
+            "api_key": "key-secret",
+        })
+
+        payload = json.loads(serialized)
+        self.assertEqual(payload["usage"]["input_tokens"], 10)
+        self.assertEqual(payload["usage"]["output_tokens"], 5)
+        self.assertEqual(payload["usage"]["total_tokens"], 15)
+        self.assertEqual(payload["tokenizer"], "cl100k_base")
+        self.assertEqual(payload["token"], "[REDACTED]")
+        self.assertEqual(payload["access_token"], "[REDACTED]")
+        self.assertEqual(payload["api_key"], "[REDACTED]")
 
     def test_cancellation_propagates_and_does_not_double_wrap(self) -> None:
         class BlockingSession:
