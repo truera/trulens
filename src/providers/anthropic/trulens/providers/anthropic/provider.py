@@ -14,6 +14,25 @@ from trulens.providers.anthropic import endpoint as anthropic_endpoint
 logger = logging.getLogger(__name__)
 
 
+# Claude models that reject `temperature` with a 400: Opus 4.7 and later reject
+# it outright, and Sonnet 5 and Haiku 5.5 reject any non-default value.
+_CLAUDE_NO_TEMPERATURE_PREFIXES = (
+    "claude-opus-4-7",
+    "claude-opus-4-8",
+    "claude-opus-5",
+    "claude-sonnet-5",
+    "claude-haiku-5",
+    "claude-fable-5",
+)
+
+# Claude models that reject a forced `tool_choice` (`tool` or `any`) with a 400.
+_CLAUDE_NO_FORCED_TOOL_CHOICE_PREFIXES = (
+    "claude-opus-5-5",
+    "claude-sonnet-5-5",
+    "claude-fable-5-1",
+)
+
+
 class Anthropic(llm_provider.LLMProvider):
     """Out of the box feedback functions calling Anthropic Claude APIs.
 
@@ -219,18 +238,23 @@ class Anthropic(llm_provider.LLMProvider):
         if system_prompt:
             api_kwargs["system"] = system_prompt
 
-        # Handle temperature — non-reasoning Anthropic models support it.
-        # anthropic>=1.0 removed the sampling parameters from
+        # Handle temperature — non-reasoning Anthropic models support it,
+        # except the newer Claude models that reject sampling parameters with
+        # a 400. anthropic>=1.0 removed the sampling parameters from
         # `messages.create`, so they go in the request body via `extra_body`,
         # which every SDK version supports.
+        model = api_kwargs["model"]
         sampling_params: dict[str, Any] = {}
-        if "temperature" in kwargs:
-            sampling_params["temperature"] = kwargs.pop("temperature")
-        elif not self._is_reasoning_model():
-            sampling_params["temperature"] = 0.0
-        for param in ("top_p", "top_k"):
+        for param in ("temperature", "top_p", "top_k"):
             if param in kwargs:
                 sampling_params[param] = kwargs.pop(param)
+        if model.startswith(_CLAUDE_NO_TEMPERATURE_PREFIXES):
+            sampling_params = {}
+        elif (
+            "temperature" not in sampling_params
+            and not self._is_reasoning_model()
+        ):
+            sampling_params["temperature"] = 0.0
         if sampling_params:
             api_kwargs["extra_body"] = {
                 **sampling_params,
@@ -250,10 +274,13 @@ class Anthropic(llm_provider.LLMProvider):
                         "input_schema": schema,
                     }
                 ]
-                api_kwargs["tool_choice"] = {
-                    "type": "tool",
-                    "name": "output_format",
-                }
+                # Models that reject a forced tool choice get `auto`; if one
+                # answers in text instead, the text fallback below handles it.
+                api_kwargs["tool_choice"] = (
+                    {"type": "auto"}
+                    if model.startswith(_CLAUDE_NO_FORCED_TOOL_CHOICE_PREFIXES)
+                    else {"type": "tool", "name": "output_format"}
+                )
             except Exception as e:
                 logger.debug(
                     "Failed to generate tool schema for response_format "
