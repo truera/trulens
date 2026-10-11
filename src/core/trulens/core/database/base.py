@@ -27,6 +27,7 @@ from trulens.core.schema import prompt as prompt_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.schema.event import Event
+from trulens.core.utils import constants as constants_utils
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
@@ -1239,12 +1240,22 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 # The record's score is the mean of the latest score of each
                 # evaluated input. Inputs whose latest score is missing are
                 # left out; with no scored input the score stays None.
+                #
+                # UNPARSABLE_SCORE is left out for the same reason a missing
+                # score is: it records that the judge produced nothing
+                # parseable, not a score of -1.0. Averaging it in lets the
+                # sentinel decide the record's score -- inputs of 1.0 and
+                # -1.0 arrived as 0.0, which compare_runs then reads as a
+                # real -1.0 regression. Mirrors the sentinel handling in
+                # BatchEvaluator._aggregate_scores and the leaderboard's
+                # _avg_score_excluding_sentinel.
                 input_scores = [
                     score
                     for _, score in feedback_result.pop(
                         "_input_scores", {}
                     ).values()
                     if score is not None
+                    and score != constants_utils.UNPARSABLE_SCORE
                 ]
                 if input_scores:
                     feedback_result["mean_score"] = sum(input_scores) / len(
