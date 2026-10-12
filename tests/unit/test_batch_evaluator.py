@@ -387,6 +387,61 @@ def test_empty_dataset_returns_empty_frame():
     assert "overlap" in res.columns
 
 
+@pytest.mark.parametrize(
+    "column", ["overlap", "overlap_explanation", "overlap_latency"]
+)
+def test_empty_dataframe_preserves_dataset_columns(column):
+    df = pd.DataFrame(columns=["q", "a", column])
+    ev = BatchEvaluator(metrics=[_overlap_metric()], max_workers=1)
+
+    res = ev.evaluate(df)
+
+    assert len(res) == 0
+    assert list(res.columns) == [
+        "q",
+        "a",
+        column,
+        "overlap_1",
+        "overlap_1_explanation",
+        "overlap_1_latency",
+    ]
+    assert list(df.columns) == ["q", "a", column]
+
+
+@pytest.mark.parametrize(
+    "metric_name, result_name", [("overlap", "overlap_1"), ("q", "q_1")]
+)
+def test_empty_dataframe_preserves_mapped_columns(metric_name, result_name):
+    df = pd.DataFrame(columns=["question", "answer", "overlap"])
+    metric = Metric(
+        name=metric_name,
+        implementation=word_overlap,
+        selectors={
+            "query": Selector.from_column("q"),
+            "answer": Selector.from_column("a"),
+        },
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+
+    res = ev.evaluate(
+        df,
+        column_map={"question": "q", "answer": "a", "missing": "unused"},
+    )
+
+    assert len(res) == 0
+    assert list(res.columns) == [
+        "question",
+        "answer",
+        "overlap",
+        "q",
+        "a",
+        result_name,
+        f"{result_name}_explanation",
+        f"{result_name}_latency",
+    ]
+    assert list(df.columns) == ["question", "answer", "overlap"]
+
+
 # --- metric return contract / aggregation failures ----------------------------
 
 
