@@ -353,7 +353,8 @@ class TestAnthropicCreateChatCompletion:
         provider._create_chat_completion(prompt="test")
 
         call_kwargs = dummy_messages.create_calls[0]
-        assert call_kwargs["temperature"] == 0.0
+        assert call_kwargs["extra_body"]["temperature"] == 0.0
+        assert "temperature" not in call_kwargs
 
     def test_temperature_explicit(self):
         """Explicit temperature should override default."""
@@ -371,7 +372,8 @@ class TestAnthropicCreateChatCompletion:
         provider._create_chat_completion(prompt="test", temperature=0.7)
 
         call_kwargs = dummy_messages.create_calls[0]
-        assert call_kwargs["temperature"] == 0.7
+        assert call_kwargs["extra_body"]["temperature"] == 0.7
+        assert "temperature" not in call_kwargs
 
     def test_max_tokens_default(self):
         """Default max_tokens should be 4096."""
