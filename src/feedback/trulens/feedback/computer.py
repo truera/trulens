@@ -1008,10 +1008,36 @@ def _call_feedback_function(
                     )
                 )
             if aggregate:
-                if feedback_aggregator is not None:
-                    res = feedback_aggregator(res)
+                # A judge whose answer cannot be parsed answers with
+                # UNPARSABLE_SCORE, so averaging one in reports a failed call
+                # as a mediocre verdict on the record. Drop those first, the
+                # way BatchEvaluator._aggregate_scores does, and keep the
+                # sentinel when nothing is left to aggregate: no score is not
+                # the same as a score of zero.
+                from trulens.feedback.llm_provider import UNPARSABLE_SCORE
+
+                n = len(res)
+                parsable = [s for s in res if s != UNPARSABLE_SCORE]
+                if len(parsable) < n:
+                    _logger.warning(
+                        "Dropping %d unparsable score(s) (sentinel %s) of %d "
+                        "before aggregation.",
+                        n - len(parsable),
+                        UNPARSABLE_SCORE,
+                        n,
+                    )
+                if parsable:
+                    if feedback_aggregator is not None:
+                        res = feedback_aggregator(parsable)
+                    else:
+                        res = sum(parsable) / len(parsable)
                 else:
-                    res = sum(res) / len(res) if res else 0.0
+                    res = UNPARSABLE_SCORE
+                    eval_root_span.set_attribute(
+                        SpanAttributes.EVAL_ROOT.ERROR,
+                        f"All {n} score(s) were unparsable (sentinel "
+                        f"{UNPARSABLE_SCORE}); no valid score to aggregate.",
+                    )
             else:
                 res = res[0]
             eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.SCORE, res)

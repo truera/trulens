@@ -598,11 +598,16 @@ class Metric(feedback_schema.FeedbackDefinition):
             kwargs["criteria"] = self.criteria
         if self.additional_instructions is not None:
             kwargs["additional_instructions"] = self.additional_instructions
-        if self.min_score_val is not None:
+        # `min_score_val`, `max_score_val` and `temperature` default to 0, 3
+        # and 0.0 respectively rather than None, so they are "not None" even
+        # when nobody set them. Only fall back to them when `with_arguments`
+        # hasn't already bound the same name, otherwise these defaults
+        # silently clobber the bound value every call.
+        if self.min_score_val is not None and "min_score_val" not in kwargs:
             kwargs["min_score_val"] = self.min_score_val
-        if self.max_score_val is not None:
+        if self.max_score_val is not None and "max_score_val" not in kwargs:
             kwargs["max_score_val"] = self.max_score_val
-        if self.temperature is not None:
+        if self.temperature is not None and "temperature" not in kwargs:
             kwargs["temperature"] = self.temperature
         if self.groundedness_configs is not None:
             kwargs["groundedness_configs"] = self.groundedness_configs

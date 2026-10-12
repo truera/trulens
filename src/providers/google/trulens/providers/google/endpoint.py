@@ -57,16 +57,15 @@ class GoogleCostComputer:
         """
         usage = response.usage_metadata
 
-        endpoint = GoogleEndpoint()
-        callback = GoogleCallback(endpoint=endpoint)
-
         model_name = response.model_version
         n_total_tokens = usage.total_token_count or 0
         n_prompt_tokens = usage.prompt_token_count or 0
         n_completion_tokens = usage.candidates_token_count or 0
         n_reasoning_tokens = usage.thoughts_token_count or 0
-        calculated_cost = callback._compute_cost(
-            model_name, n_prompt_tokens, n_completion_tokens
+        # Pricing needs no client, so do not build a GoogleEndpoint here: that
+        # requires an API key, which Vertex AI callers do not have.
+        calculated_cost = GoogleCallback._compute_cost(
+            model_name, n_prompt_tokens, n_completion_tokens, n_reasoning_tokens
         )
 
         return {
@@ -114,9 +113,10 @@ class GoogleCallback(core_endpoint.EndpointCallback):
         model_name = response_dict.get("model_version")
         n_prompt_tokens = usage.get("prompt_token_count", 0)
         n_completion_tokens = usage.get("candidates_token_count", 0)
+        n_reasoning_tokens = usage.get("thoughts_token_count", 0)
 
         calculated_cost = self._compute_cost(
-            model_name, n_prompt_tokens, n_completion_tokens
+            model_name, n_prompt_tokens, n_completion_tokens, n_reasoning_tokens
         )
 
         setattr(
@@ -124,8 +124,12 @@ class GoogleCallback(core_endpoint.EndpointCallback):
         )
         setattr(self.cost, "cost_currency", "USD")
 
+    @staticmethod
     def _compute_cost(
-        self, model_name: str, n_prompt_tokens: int, n_completion_tokens: int
+        model_name: str,
+        n_prompt_tokens: int,
+        n_completion_tokens: int,
+        n_reasoning_tokens: int = 0,
     ) -> float:
         """Compute cost in USD based on model name and token counts using LiteLLM community-maintained pricing list.
         Reference: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
@@ -134,6 +138,8 @@ class GoogleCallback(core_endpoint.EndpointCallback):
             model_name: Full model name from Google API (e.g., "gemini-2.5-flash-001")
             n_prompt_tokens: Number of input/prompt tokens
             n_completion_tokens: Number of output/completion tokens
+            n_reasoning_tokens: Number of thinking tokens, which Gemini
+                bills as output tokens
 
         Returns:
             Cost in USD
@@ -166,10 +172,11 @@ class GoogleCallback(core_endpoint.EndpointCallback):
                 else:
                     output_price = pricing.get("output_cost_per_token", 0)
 
-                # Calculate total cost
+                # Calculate total cost. Thinking tokens are billed at the
+                # output rate, on top of the candidate tokens.
                 cost = (
                     n_prompt_tokens * input_price
-                    + n_completion_tokens * output_price
+                    + (n_completion_tokens + n_reasoning_tokens) * output_price
                 )
                 logger.debug(
                     f"JSON pricing cost calculated: ${cost:.6f} for {model_name} "

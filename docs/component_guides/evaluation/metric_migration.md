@@ -29,7 +29,6 @@ f_groundedness = (
     )
     .on_context(collect_list=True)
     .on_output()
-    .on_input()
 )
 
 f_context_relevance = (
@@ -64,7 +63,6 @@ f_groundedness = Metric(
     selectors={
         "source": Selector.select_context(collect_list=True),
         "statement": Selector.select_record_output(),
-        "question": Selector.select_record_input(),
     },
 )
 
@@ -123,7 +121,7 @@ generation_output = Selector(
 | `imp=fn` | `implementation=fn` | Renamed for clarity |
 | `.on_input()` | `selectors={"param": Selector.select_record_input()}` | Explicit selector |
 | `.on_output()` | `selectors={"param": Selector.select_record_output()}` | Explicit selector |
-| `.on_context()` | `selectors={"param": Selector.select_context()}` | Explicit selector |
+| `.on_context(collect_list=...)` | `selectors={"param": Selector.select_context(collect_list=...)}` | Explicit selector |
 | `.aggregate(fn)` | `agg=fn` | Same functionality |
 | `name="..."` | `name="..."` | Unchanged |
 | `examples=[...]` | `examples=[...]` | Unchanged |

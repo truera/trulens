@@ -5,7 +5,14 @@ import pytest
 from trulens.core import BatchEvaluator
 from trulens.core import Metric
 from trulens.core import Selector
+from trulens.core.utils import constants as constants_utils
 from trulens.feedback.llm_provider import UNPARSABLE_SCORE
+
+
+def test_unparsable_score_matches_provider():
+    """Keep the core-only sentinel in sync with the provider's public value."""
+    assert constants_utils.UNPARSABLE_SCORE == UNPARSABLE_SCORE
+
 
 # --- Metric implementations used across tests (module-level so they serialize) ---
 

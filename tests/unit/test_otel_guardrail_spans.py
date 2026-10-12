@@ -1,5 +1,6 @@
 """Tests for OTEL guardrail span instrumentation."""
 
+import threading
 from typing import List
 
 from trulens.apps.app import TruApp
@@ -21,6 +22,11 @@ _context_relevance = Feedback(
 _criminality = Feedback(
     lambda text: 1.0 if "harmful" in text else 0.0,
     name="criminality",
+    higher_is_better=False,
+)
+_unparsable = Feedback(
+    lambda text: -1.0,
+    name="unparsable judge",
     higher_is_better=False,
 )
 
@@ -100,6 +106,66 @@ class TestGuardrailSpans(OtelTestCase):
         TruSession().force_flush()
         return result
 
+    def test_unparsable_input_does_not_emit_passing_span(self):
+        """An input judge failure neither invokes the app nor reports a pass."""
+
+        class App:
+            called = False
+
+            @instrument()
+            @block_input(_unparsable, 0.5, keyword_for_prompt="question")
+            def chat(self, question):
+                self.called = True
+                return "response"
+
+        app = App()
+        with self.assertRaisesRegex(ValueError, "unparsable"):
+            self._run_app(app, "chat", "question")
+        self.assertFalse(app.called)
+        TruSession().force_flush()
+        spans = _collect_guardrail_spans(self._get_events())
+        self.assertEqual(len(spans), 1)
+        self.assertNotIn(SpanAttributes.GUARDRAIL.PASSED, spans[0])
+
+    def test_invalid_context_is_excluded_without_losing_valid_contexts(self):
+        """Record failed context verdicts while retaining valid contexts."""
+        feedback = Feedback(
+            lambda query, context: -1.0 if context == "invalid" else 0.0,
+            higher_is_better=False,
+        )
+
+        class App:
+            @instrument()
+            @context_filter(feedback, 0.5, "query")
+            def retrieve(self, query):
+                return ["first", "invalid", "last"]
+
+        result = self._run_app(App(), "retrieve", "question")
+        self.assertEqual(sorted(result), ["first", "last"])
+        spans = _collect_guardrail_spans(self._get_events())
+        self.assertEqual(len(spans), 3)
+        for span in spans:
+            self.assertEqual(
+                span[SpanAttributes.GUARDRAIL.PASSED],
+                span[SpanAttributes.GUARDRAIL.SCORE] == 0.0,
+            )
+
+    def test_unparsable_output_does_not_emit_passing_span(self):
+        """An output judge failure must not be recorded as a passing verdict."""
+
+        class App:
+            @instrument()
+            @block_output(_unparsable, 0.5)
+            def chat(self, question):
+                return "response"
+
+        with self.assertRaisesRegex(ValueError, "unparsable"):
+            self._run_app(App(), "chat", "question")
+        TruSession().force_flush()
+        spans = _collect_guardrail_spans(self._get_events())
+        self.assertEqual(len(spans), 1)
+        self.assertNotIn(SpanAttributes.GUARDRAIL.PASSED, spans[0])
+
     def test_context_filter_guardrail_spans(self):
         """context_filter emits one GUARDRAIL span per context with correct attrs."""
         app = _ContextFilterApp()
@@ -134,6 +200,34 @@ class TestGuardrailSpans(OtelTestCase):
         ]
         self.assertEqual(len(passed_spans), 2)
         self.assertEqual(len(failed_spans), 2)
+
+    def test_context_filter_spans_follow_input_order(self):
+        """Spans and kept contexts follow input order, not finish order."""
+        texts = ["c1", "c2", "c3", "c4"]
+        scores = {"c1": 0.9, "c2": 0.2, "c3": 0.8, "c4": 0.7}
+        done = {text: threading.Event() for text in texts}
+
+        def judge(query, context):
+            # Each call waits for the next one, so c4 finishes first.
+            index = texts.index(context)
+            if index + 1 < len(texts):
+                self.assertTrue(done[texts[index + 1]].wait(10.0))
+            done[context].set()
+            return scores[context]
+
+        class App:
+            @instrument()
+            @context_filter(Feedback(judge), 0.5, "query")
+            def retrieve(self, query):
+                return list(texts)
+
+        result = self._run_app(App(), "retrieve", "question")
+        self.assertEqual(result, ["c1", "c3", "c4"])
+        spans = _collect_guardrail_spans(self._get_events())
+        self.assertEqual(
+            [span[SpanAttributes.GUARDRAIL.SCORE] for span in spans],
+            [scores[text] for text in texts],
+        )
 
     def test_block_input_pass_emits_span(self):
         """block_input emits a GUARDRAIL span and passes safe input through."""

@@ -126,6 +126,19 @@ Past community contributions include the SQLAlchemy connector and LiteLLM provid
 
 ---
 
+## When Two Pull Requests Fix the Same Issue
+
+Claiming an issue before you start avoids most overlap. When two pull requests
+still address the same issue:
+
+- The first pull request that correctly fixes the issue gets priority for review
+  and merge.
+- If a later pull request also adds more than the fix, such as extra options,
+  tests or documentation, rebase it onto the first after that one merges, so that
+  it contains only the additions. It is then reviewed as its own change.
+
+---
+
 ## Signing the CLA
 
 On your first pull request a bot will ask you to sign the

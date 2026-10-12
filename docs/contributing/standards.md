@@ -424,7 +424,11 @@ See `tests/integration`.
 ### Python versions
 
 The project requires Python `^3.10`. Pull request tests run on `3.10`, `3.11`,
-`3.12` and `3.13`, with `3.12` as the default job.
+`3.12`, `3.13` and `3.14`, with `3.12` as the default job.
+
+Every package under `src/` declares `python = "^3.10"`. A package whose
+dependencies do not support a newer Python yet adds an upper bound, such as
+`<3.14`, with a comment that names the blocking dependency.
 
 Each version runs the `basic`, `optional` and `snowflake` marker suites, with one
 exception: the `snowflake` suite is skipped on `3.12`.

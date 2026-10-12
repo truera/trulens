@@ -83,10 +83,10 @@ def _create_otlp_exporters(
     """Create OTLP exporters for traces and metrics.
 
     Supports both gRPC and HTTP/protobuf transports. The transport is selected
-    via ``protocol`` or, when unset, the standard
-    ``OTEL_EXPORTER_OTLP_PROTOCOL`` environment variable (``grpc`` or
-    ``http/protobuf``). When neither is set, gRPC is used for backward
-    compatibility.
+    via ``protocol`` or, when unset, the standard environment variables in
+    spec order: ``OTEL_EXPORTER_OTLP_TRACES_PROTOCOL``, then
+    ``OTEL_EXPORTER_OTLP_PROTOCOL`` (``grpc`` or ``http/protobuf``). When none
+    is set, gRPC is used for backward compatibility.
     """
 
     import os

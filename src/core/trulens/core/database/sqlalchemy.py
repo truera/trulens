@@ -50,6 +50,7 @@ from trulens.core.schema import prompt as prompt_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.schema.event import Event
+from trulens.core.utils import constants as constants_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
@@ -871,6 +872,45 @@ class SQLAlchemyDB(core_db.DB):
 
             return _extract_feedback_results(results)
 
+    @staticmethod
+    def _avg_score_excluding_sentinel(score_col: sa.Column) -> sa.Column:
+        """Average *score_col*, ignoring rows holding the unparsable sentinel.
+
+        A judge that returns nothing parseable stores
+        [UNPARSABLE_SCORE][trulens.core.utils.constants.UNPARSABLE_SCORE]
+        (-1.0) as its result. Averaging that in disguises a judge failure as a
+        mediocre metric: three stored scores of `1.0, 1.0, -1.0` reported
+        `0.33` instead of `1.0`. `BatchEvaluator._aggregate_scores` filters the
+        same sentinel out before aggregating; the leaderboard aggregates need
+        the same treatment so both surfaces agree.
+
+        The value comes from `trulens.core.utils.constants` rather than from
+        `trulens.feedback.llm_provider` because `trulens.feedback` is optional
+        and `trulens.core` installs without it.
+
+        Only the sentinel is filtered. A genuine negative score, such as `-0.5`
+        for a penalty metric, is still averaged in.
+
+        If every score for a metric is a sentinel then no parsable score is
+        left to average, and the sentinel itself is reported rather than NULL,
+        so the failure stays visible in the leaderboard instead of leaving the
+        column blank.
+
+        Args:
+            score_col: The score column to average.
+
+        Returns:
+            A SQLAlchemy column expression yielding the average of the parsable
+            scores, or the sentinel when there are none.
+        """
+        unparsable = constants_utils.UNPARSABLE_SCORE
+        # AVG ignores NULLs, so mapping the sentinel to NULL excludes just
+        # those rows while leaving every other score to be averaged.
+        parsable = sa.case((score_col != unparsable, score_col))
+        return sa.func.coalesce(
+            sa.func.avg(parsable), sa.literal(unparsable, sa.Float)
+        )
+
     def _json_extract_otel(self, column: str, path: str) -> sa.Column:
         """Helper function to extract JSON values from a JSON column in the Event table.
 
@@ -1143,15 +1183,11 @@ class SQLAlchemyDB(core_db.DB):
 
     def _build_otel_conditions(
         self,
-        span_type: str,
+        span_type: Optional[str],
         app_name: Optional[types_schema.AppName] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
     ) -> list:
         conditions = [
-            self._json_extract_otel(
-                "record_attributes", SpanAttributes.SPAN_TYPE
-            )
-            == span_type,
             self._json_extract_otel(
                 "record_attributes", SpanAttributes.RECORD_ID
             ).isnot(None),
@@ -1160,6 +1196,13 @@ class SQLAlchemyDB(core_db.DB):
             )
             != "",
         ]
+        if span_type is not None:
+            conditions.append(
+                self._json_extract_otel(
+                    "record_attributes", SpanAttributes.SPAN_TYPE
+                )
+                == span_type
+            )
         if app_name:
             conditions.append(
                 self._json_extract_otel(
@@ -1173,6 +1216,36 @@ class SQLAlchemyDB(core_db.DB):
                     "resource_attributes", ResourceAttributes.APP_VERSION
                 ).in_(app_versions)
             )
+        return conditions
+
+    def _build_otel_app_cost_conditions(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+    ) -> list:
+        """Conditions selecting the spans whose cost counts as app cost.
+
+        Providers and client hooks write cost on child spans (GENERATION,
+        AGENT, ...), not on the RECORD_ROOT. Like the records view, a record's
+        cost is the sum over all of its spans except evaluation spans, whose
+        cost is reported separately as eval cost.
+        """
+        span_type_col = self._json_extract_otel(
+            "record_attributes", SpanAttributes.SPAN_TYPE
+        )
+        conditions = self._build_otel_conditions(
+            None, app_name=app_name, app_versions=app_versions
+        )
+        conditions.append(
+            sa.or_(
+                span_type_col.is_(None),
+                span_type_col.notin_([
+                    SpanAttributes.SpanType.EVAL.value,
+                    SpanAttributes.SpanType.EVAL_ROOT.value,
+                    SpanAttributes.SpanType.EVAL_DECISION.value,
+                ]),
+            )
+        )
         return conditions
 
     def _get_leaderboard_aggregates_otel(
@@ -1227,6 +1300,31 @@ class SQLAlchemyDB(core_db.DB):
                     "Latest Record Timestamp"
                 ),
                 latency_expr.label("Average Latency (s)"),
+            )
+            .where(sa.and_(*record_root_conditions))
+            .group_by(
+                sa.text("app_name"),
+                sa.text("app_version"),
+                sa.text("app_id"),
+            )
+        )
+
+        # Cost lives on child spans, so it is summed over every non-eval span
+        # of each record rather than over the RECORD_ROOT spans above. A
+        # missing currency counts as USD, as in the records view.
+        cost_conditions = self._build_otel_app_cost_conditions(
+            app_name=app_name,
+            app_versions=app_versions,
+        )
+        cost_expr = sa.cast(
+            sa.func.coalesce(cost_col, sa.literal("0")), sa.Float
+        )
+        cost_stmt = (
+            sa
+            .select(
+                app_name_col,
+                app_version_col,
+                app_id_col,
                 # Sum cost per currency rather than summing every record's cost
                 # into one number and labelling it with whichever currency
                 # sorts last. Mixing currencies in a single total is wrong and
@@ -1234,8 +1332,9 @@ class SQLAlchemyDB(core_db.DB):
                 sa.func.sum(
                     sa.case(
                         (
-                            currency_col == sa.literal("USD"),
-                            sa.cast(cost_col, sa.Float),
+                            sa.func.coalesce(currency_col, sa.literal("USD"))
+                            == sa.literal("USD"),
+                            cost_expr,
                         ),
                         else_=0.0,
                     )
@@ -1244,7 +1343,7 @@ class SQLAlchemyDB(core_db.DB):
                     sa.case(
                         (
                             currency_col == sa.literal("Snowflake credits"),
-                            sa.cast(cost_col, sa.Float),
+                            cost_expr,
                         ),
                         else_=0.0,
                     )
@@ -1256,7 +1355,7 @@ class SQLAlchemyDB(core_db.DB):
                     )
                 ).label("Total Tokens"),
             )
-            .where(sa.and_(*record_root_conditions))
+            .where(sa.and_(*cost_conditions))
             .group_by(
                 sa.text("app_name"),
                 sa.text("app_version"),
@@ -1289,7 +1388,9 @@ class SQLAlchemyDB(core_db.DB):
                     "resource_attributes", ResourceAttributes.APP_ID
                 ).label("app_id"),
                 metric_name_col,
-                sa.func.avg(sa.cast(score_col, sa.Float)).label("avg_score"),
+                self._avg_score_excluding_sentinel(
+                    sa.cast(score_col, sa.Float)
+                ).label("avg_score"),
             )
             .where(sa.and_(*eval_conditions))
             .group_by(
@@ -1330,6 +1431,7 @@ class SQLAlchemyDB(core_db.DB):
 
         with self.session.begin() as session:
             base_rows = session.execute(base_stmt).all()
+            cost_rows = session.execute(cost_stmt).all()
             eval_rows = session.execute(eval_stmt).all()
             decision_rows = session.execute(decision_stmt).all()
 
@@ -1343,11 +1445,21 @@ class SQLAlchemyDB(core_db.DB):
                 "Recent Records",
                 "Latest Record Timestamp",
                 "Average Latency (s)",
-                "Total Cost (USD)",
-                "Total Cost (Snowflake Credits)",
-                "Total Tokens",
             ],
         )
+        cost_cols = [
+            "Total Cost (USD)",
+            "Total Cost (Snowflake Credits)",
+            "Total Tokens",
+        ]
+        cost_df = pd.DataFrame(
+            cost_rows,
+            columns=["app_name", "app_version", "app_id", *cost_cols],
+        )
+        base_df = base_df.merge(
+            cost_df, on=["app_name", "app_version", "app_id"], how="left"
+        )
+        base_df[cost_cols] = base_df[cost_cols].fillna(0.0)
 
         if base_df.empty:
             return base_df, []
@@ -1522,30 +1634,61 @@ class SQLAlchemyDB(core_db.DB):
             conditions.append(self.orm.Event.start_timestamp >= start_time)
         if end_time is not None:
             conditions.append(self.orm.Event.start_timestamp < end_time)
+        app_name_col = self._json_extract_otel(
+            "resource_attributes", ResourceAttributes.APP_NAME
+        ).label("app_name")
+        app_version_col = self._json_extract_otel(
+            "resource_attributes", ResourceAttributes.APP_VERSION
+        ).label("app_version")
+        record_id_col = self._json_extract_otel(
+            "record_attributes", SpanAttributes.RECORD_ID
+        )
         stmt = sa.select(
-            self._json_extract_otel(
-                "resource_attributes", ResourceAttributes.APP_NAME
-            ).label("app_name"),
-            self._json_extract_otel(
-                "resource_attributes", ResourceAttributes.APP_VERSION
-            ).label("app_version"),
+            app_name_col,
+            app_version_col,
             self._time_bucket_expr(bucket).label("time_bucket"),
-            self._json_extract_otel(
-                "record_attributes", SpanAttributes.RECORD_ID
-            ).label("record_id"),
+            record_id_col.label("record_id"),
             self._latency_seconds_expr().label("latency"),
-            sa.cast(
-                self._json_extract_otel(
-                    "record_attributes", SpanAttributes.COST.COST
-                ),
-                sa.Float,
-            ).label("cost"),
-            self._json_extract_otel(
-                "record_attributes", SpanAttributes.COST.CURRENCY
-            ).label("currency"),
         ).where(sa.and_(*conditions))
+        # Cost lives on child spans, so sum it over every non-eval span of the
+        # records selected above, per currency, as the records view does.
+        cost_col = self._json_extract_otel(
+            "record_attributes", SpanAttributes.COST.COST
+        )
+        cost_conditions = self._build_otel_app_cost_conditions(
+            app_name=app_name, app_versions=app_versions
+        )
+        cost_conditions.extend([
+            cost_col.isnot(None),
+            record_id_col.in_(
+                sa.select(record_id_col).where(*conditions).correlate(None)
+            ),
+        ])
+        cost_stmt = (
+            sa
+            .select(
+                app_name_col,
+                app_version_col,
+                record_id_col.label("record_id"),
+                sa.func.coalesce(
+                    self._json_extract_otel(
+                        "record_attributes", SpanAttributes.COST.CURRENCY
+                    ),
+                    sa.literal("USD"),
+                ).label("currency"),
+                sa.func.sum(sa.cast(cost_col, sa.Float)).label("cost"),
+            )
+            .where(sa.and_(*cost_conditions))
+            .group_by(
+                sa.text("app_name"),
+                sa.text("app_version"),
+                sa.text("record_id"),
+                sa.text("currency"),
+            )
+        )
         with self.session.begin() as session:
             rows = session.execute(stmt).all()
+            cost_rows = session.execute(cost_stmt).all()
         records = pd.DataFrame(
             rows,
             columns=[
@@ -1554,18 +1697,29 @@ class SQLAlchemyDB(core_db.DB):
                 "time_bucket",
                 "record_id",
                 "latency",
-                "cost",
-                "currency",
             ],
         )
         if records.empty:
             return records
         records["time_bucket"] = pd.to_datetime(records["time_bucket"])
-        records["currency"] = records["currency"].fillna("USD")
-        records["cost"] = records["cost"].fillna(0.0)
         records = records.sort_values("time_bucket").drop_duplicates(
             subset=["app_name", "app_version", "record_id"], keep="last"
         )
+        costs = pd.DataFrame(
+            cost_rows,
+            columns=[
+                "app_name",
+                "app_version",
+                "record_id",
+                "currency",
+                "cost",
+            ],
+        )
+        records = records.merge(
+            costs, on=["app_name", "app_version", "record_id"], how="left"
+        )
+        records["currency"] = records["currency"].fillna("USD")
+        records["cost"] = records["cost"].fillna(0.0)
         group_cols = ["app_name", "app_version", "time_bucket", "currency"]
         return (
             records
@@ -1824,9 +1978,9 @@ class SQLAlchemyDB(core_db.DB):
                     self.orm.AppDefinition.app_version.label("app_version"),
                     self.orm.AppDefinition.app_id.label("app_id"),
                     self.orm.FeedbackResult.name.label("metric_name"),
-                    sa.func.avg(self.orm.FeedbackResult.result).label(
-                        "avg_score"
-                    ),
+                    self._avg_score_excluding_sentinel(
+                        self.orm.FeedbackResult.result
+                    ).label("avg_score"),
                 )
                 .join(
                     self.orm.Record,

@@ -14,11 +14,17 @@ try:
         TruLensSnowflakeSpanExporter,
     )
 except Exception:
-    pass
+    # Not installed on Python versions the connector does not support (3.14+).
+    SnowflakeConnector = None
+    TruLensSnowflakeSpanExporter = None
 
 
 @pytest.mark.snowflake
 class TestOtelSnowflakeEventTableExporter(unittest.TestCase):
+    def setUp(self) -> None:
+        if SnowflakeConnector is None or TruLensSnowflakeSpanExporter is None:
+            self.skipTest("trulens-connectors-snowflake is not installed.")
+
     def test_dry_run_success(self) -> None:
         # Mock SnowflakeConnector.
         mock_connector = unittest.mock.MagicMock()

@@ -616,10 +616,19 @@ class OpenAICallback(core_endpoint.EndpointCallback):
     def handle_generation(self, response: LLMResult) -> None:
         super().handle_generation(response)
 
+        # `self.langchain_handler` accumulates each of these fields over its
+        # whole lifetime rather than resetting per call, so snapshot them
+        # beforehand and add only this call's delta to `self.cost`.
+        before = {
+            langchain_field: getattr(self.langchain_handler, langchain_field)
+            for (_, langchain_field) in OpenAICallback._FIELDS_MAP
+        }
+
         self.langchain_handler.on_llm_end(response)
 
         addl_cost = base_schema.Cost(**{
             cost_field: getattr(self.langchain_handler, langchain_field)
+            - before[langchain_field]
             for (
                 cost_field,
                 langchain_field,

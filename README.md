@@ -176,8 +176,8 @@ f_context_relevance = Metric(
     name="Context Relevance",
     implementation=provider.context_relevance,
     selectors={
-        "input": Selector.select_record_input(),
-        "context": Selector.select_context(),
+        "question": Selector.select_record_input(),
+        "context": Selector.select_context(collect_list=False),
     },
 )
 ```

@@ -65,6 +65,7 @@ import pandas as pd
 from trulens.core.feedback.selector import Selector
 from trulens.core.metric.metric import Metric
 from trulens.core.metric.metric import SkipEval
+from trulens.core.utils import constants as constants_utils
 from trulens.core.utils import threading as threading_utils
 
 logger = logging.getLogger(__name__)
@@ -340,15 +341,13 @@ class BatchEvaluator:
                 per-item evaluation and should fail loudly rather than yield
                 a silent `NaN`.
         """
-        from trulens.feedback.llm_provider import UNPARSABLE_SCORE
-
-        parsable = [s for s in scores if s != UNPARSABLE_SCORE]
+        parsable = [s for s in scores if s != constants_utils.UNPARSABLE_SCORE]
         if not parsable:
             n = len(scores)
-            return UNPARSABLE_SCORE, (
+            return constants_utils.UNPARSABLE_SCORE, (
                 f"All {n} score(s) for metric {metric.name!r} were "
-                f"unparsable (sentinel {UNPARSABLE_SCORE}); no valid score "
-                "to aggregate."
+                f"unparsable (sentinel {constants_utils.UNPARSABLE_SCORE}); "
+                "no valid score to aggregate."
             )
         if len(parsable) < len(scores):
             n_dropped = len(scores) - len(parsable)
@@ -357,7 +356,7 @@ class BatchEvaluator:
                 "before aggregation; %d valid score(s) remain.",
                 metric.name,
                 n_dropped,
-                UNPARSABLE_SCORE,
+                constants_utils.UNPARSABLE_SCORE,
                 len(parsable),
             )
         scores = parsable
