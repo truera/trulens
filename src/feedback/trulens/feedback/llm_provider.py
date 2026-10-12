@@ -4921,20 +4921,28 @@ class LLMProvider(core_provider.Provider):
             checks: Instruction text to a predicate on one assistant reply,
                 for instructions that can be checked mechanically (valid
                 JSON, a word limit). The check decides that instruction from
-                the first turn whose user message states it. Needs records,
-                not a transcript string.
+                the first turn whose user message states it, else from turn
+                1. Needs records, not a transcript string.
             revocations: Instruction text to the turn it was revoked in. The
-                instruction is not checked after that turn.
+                instruction is not checked after that turn; a revocation
+                before the turn it was given is ignored. Keys for `checks`
+                and `revocations` match instructions case- and
+                punctuation-insensitively, not semantically, so use the
+                words the user gave.
             additional_instructions: If provided, adds instructions to the
                 default criteria for the judge to follow. Defaults to None.
 
         Returns:
             Tuple[float, Dict]: The share of (turn, instruction) pairs in
-            force that were followed, from 0.0 to 1.0 (1.0 when the user set
-            no standing instruction), and a dictionary with each
-            instruction's verdicts, the first turn it broke, which source
-            decided it, and the forgetting and correction ratios. An answer
-            the judge did not give as JSON scores `UNPARSABLE_SCORE`.
+            force that were followed, from 0.0 to 1.0, and a dictionary with
+            `status`, each instruction's verdicts, the first turn it broke,
+            which source decided it, and the forgetting and correction
+            ratios (None when there is no transition to count). `status` is
+            `scored`; `no_instructions` when the user set none, which scores
+            1.0; or `nothing_evaluable` when instructions were set but no
+            assistant turn was in force for any of them, which scores
+            `UNPARSABLE_SCORE` so it is left out of averages. An answer the
+            judge did not give as JSON also scores `UNPARSABLE_SCORE`.
 
         Raises:
             ValueError: `checks` was given with a transcript string.
@@ -4994,6 +5002,13 @@ class LLMProvider(core_provider.Provider):
             return UNPARSABLE_SCORE, {
                 "error": f"The judge's answer is not readable: {exc}"
             }
-        return feedback_instruction_retention.assess(
+        score, meta = feedback_instruction_retention.assess(
             judged.instructions, turns, checks, revocations
         )
+        if score is None:
+            meta["error"] = (
+                "Standing instructions were set, but no assistant turn was "
+                "in force for any of them, so there is nothing to score."
+            )
+            return UNPARSABLE_SCORE, meta
+        return score, meta

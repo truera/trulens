@@ -221,5 +221,132 @@ def test_checks_need_structured_records_not_a_transcript_string():
         )
 
 
-def test_the_template_is_exported():
+def test_the_template_is_exported_from_the_templates_package():
+    """`templates/__init__.py` re-exports `conversation.__all__`."""
+    from trulens.feedback import templates
+
     assert "InstructionRetention" in templates_conversation.__all__
+    assert "InstructionRetention" in templates.__all__
+    assert templates.InstructionRetention is (
+        templates_conversation.InstructionRetention
+    )
+
+
+def test_the_judge_gets_the_json_shape_with_single_braces():
+    """The shape is in the formatted prompt, so its braces are escaped there
+    and reach the judge as literal JSON."""
+    provider = _JudgeProvider(_judged())
+
+    provider.instruction_retention_with_cot_reasons(CONVERSATION)
+
+    prompt = provider.judge_prompt()
+    assert '{"instructions": []}' in prompt
+    assert "{{" not in prompt
+
+
+def test_checked_instructions_are_kept_out_of_the_judges_output():
+    provider = _JudgeProvider(_judged())
+
+    provider.instruction_retention_with_cot_reasons(
+        CONVERSATION, checks={JSON_RULE: lambda reply: True}
+    )
+
+    assert "MUST NOT appear in your JSON output" in provider.judge_prompt()
+
+
+def test_no_instructions_reports_its_status():
+    provider = _JudgeProvider(_judged())
+
+    _, meta = provider.instruction_retention_with_cot_reasons(CONVERSATION)
+
+    assert meta["status"] == "no_instructions"
+    assert meta["forgetting_ratio"] is None
+    assert meta["correction_ratio"] is None
+
+
+def test_instructions_with_no_turn_in_force_are_unparsable_not_full_marks():
+    """A check with no assistant reply to run on has decided nothing; a 1.0
+    would pull a dataset average up with a sample never evaluated."""
+    called = []
+    provider = _JudgeProvider(_judged())
+    unanswered = [{"input": JSON_RULE, "output": None}]
+
+    score, meta = provider.instruction_retention_with_cot_reasons(
+        unanswered, checks={JSON_RULE: lambda r: called.append(r) or True}
+    )
+
+    assert score == llm_provider.UNPARSABLE_SCORE
+    assert meta["status"] == "nothing_evaluable"
+    assert "error" in meta
+    assert called == []
+
+
+def test_a_revocation_before_the_instruction_was_given_is_ignored():
+    """Otherwise `revocations={text: 0}` would erase an instruction from the
+    score instead of reporting it."""
+    provider = _JudgeProvider(_judged())
+
+    score, meta = provider.instruction_retention_with_cot_reasons(
+        CONVERSATION,
+        checks={JSON_RULE: lambda reply: reply.startswith("{")},
+        revocations={JSON_RULE: 0},
+    )
+
+    [verdict] = meta["instructions"]
+    assert verdict["revocation_ignored"] is True
+    assert verdict["revoked_turn"] is None
+    assert verdict["first_broken_turn"] == 3
+    assert score == pytest.approx(2 / 3)
+    assert meta["status"] == "scored"
+
+
+def test_a_check_decided_instruction_can_be_revoked_by_any_casing():
+    provider = _JudgeProvider(_judged())
+
+    score, meta = provider.instruction_retention_with_cot_reasons(
+        CONVERSATION,
+        checks={JSON_RULE: lambda reply: reply.startswith("{")},
+        revocations={"REPLY IN JSON": 2},
+    )
+
+    [verdict] = meta["instructions"]
+    assert verdict["decided_by"] == "check"
+    assert verdict["revoked_turn"] == 2
+    assert score == 1.0
+
+
+def test_a_check_starts_where_its_whole_words_appear():
+    """A key of "EU" must not start at a turn about "European" policy."""
+    provider = _JudgeProvider(_judged())
+    conversation = [
+        {"input": "What is European policy on AI?", "output": "Global view."},
+        {"input": "Only cover the EU from now on.", "output": "EU view."},
+        {"input": "And trade?", "output": "EU trade view."},
+    ]
+
+    _, meta = provider.instruction_retention_with_cot_reasons(
+        conversation, checks={"EU": lambda reply: "EU" in reply}
+    )
+
+    [verdict] = meta["instructions"]
+    assert verdict["turn_given"] == 2
+    assert [v["turn"] for v in verdict["verdicts"]] == [2, 3]
+
+
+def test_json_after_a_line_of_prose_is_read_from_its_fence():
+    answer = json.dumps(_judged((JSON_RULE, 1, {1: True, 2: False})))
+    provider = _JudgeProvider(f"Here is my evaluation:\n```json\n{answer}\n```")
+
+    score, _ = provider.instruction_retention_with_cot_reasons(CONVERSATION)
+
+    assert score == 0.5
+
+
+def test_two_assistant_messages_in_a_row_are_two_turns():
+    turns = templates_conversation.conversation_turns([
+        {"role": "user", "content": "u1"},
+        {"role": "assistant", "content": "a1"},
+        {"role": "assistant", "content": "a2"},
+    ])
+
+    assert turns == [("u1", "a1"), (None, "a2")]

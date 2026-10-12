@@ -64,7 +64,10 @@ def conversation_turns(
 
     Accepts the same record shapes as `conversation_to_prompt`. Role-based
     messages are paired: a user message opens a turn and the next assistant
-    message closes it. System messages are not turns.
+    message closes it; a second assistant message in a row opens a turn of
+    its own. System messages are not turns. Unlike `conversation_to_prompt`,
+    a record that is neither a dict nor a record object is taken as a user
+    message, so it is rendered `Turn n User: ...` rather than `Turn n: ...`.
 
     Args:
         records: The ordered conversation records or messages.
@@ -235,19 +238,22 @@ class InstructionRetention(Semantics):
         decide whether the user later cancelled an instruction: judge every
         reply from the turn it was given as if it still applies.
 
-        Respond ONLY with JSON of this shape:
-        {"instructions": [{"instruction": "...", "turn_given": 1,
-          "verdicts": [{"turn": 1, "followed": true, "reason": "..."}]}]}
-        With no standing instructions, respond {"instructions": []}.
+        Respond ONLY with JSON of the shape given after the transcript.
         """
     )
+    # Formatted with the transcript, so the literal JSON braces are doubled.
     user_prompt_template: ClassVar[str] = cleandoc(
         """
         Conversation Transcript:
         {transcript}
+
+        Respond ONLY with JSON of this shape:
+        {{"instructions": [{{"instruction": "...", "turn_given": 1,
+          "verdicts": [{{"turn": 1, "followed": true, "reason": "..."}}]}}]}}
+        With no standing instructions, respond {{"instructions": []}}.
         """
     )
     checked_instructions_template: ClassVar[str] = (
-        "\n\nThese instructions are verified separately. Do not list them:\n"
-        "{instructions}"
+        "\n\nThese instructions have mechanical checks and MUST NOT appear "
+        "in your JSON output:\n{instructions}"
     )
