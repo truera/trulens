@@ -231,6 +231,14 @@
       "created_at": "2026-10-12T06:20:23Z",
       "repoId": 309504885,
       "pullRequestNo": 2946
+    },
+    {
+      "name": "Lothnic",
+      "id": 179799587,
+      "comment_id": 6130236142,
+      "created_at": "2026-10-12T18:31:11Z",
+      "repoId": 309504885,
+      "pullRequestNo": 2947
     }
   ]
 }
