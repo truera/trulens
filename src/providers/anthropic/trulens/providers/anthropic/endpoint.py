@@ -8,7 +8,6 @@ import pprint
 from typing import (
     Any,
     ClassVar,
-    Optional,
 )
 
 from litellm import model_cost
@@ -31,7 +30,7 @@ def _get_env_api_key() -> str | None:
     return os.environ.get("ANTHROPIC_API_KEY", None)
 
 
-def _get_model_pricing(model_name: str) -> Optional[tuple[float, float]]:
+def _get_model_pricing(model_name: str) -> tuple[float, float] | None:
     """Get per-token input and output pricing from LiteLLM.
 
     Returns None when the model is not in the pricing table so that callers
