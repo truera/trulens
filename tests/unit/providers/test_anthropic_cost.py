@@ -82,6 +82,7 @@ class TestAnthropicCostComputerUnknownModel(unittest.TestCase):
     def test_known_model_includes_positive_cost(self):
         """handle_response must include a positive COST.COST for a known model."""
         from unittest.mock import patch
+
         from trulens.providers.anthropic import endpoint
 
         fake_table = {
