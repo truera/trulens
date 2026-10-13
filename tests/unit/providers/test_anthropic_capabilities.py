@@ -460,7 +460,9 @@ class TestAnthropicPricing:
         monkeypatch.setattr(endpoint, "LITELLM_MODEL_COSTS_TABLE", {})
 
         result = endpoint._get_model_pricing("some-future-model")
-        assert result is None, "Expected None for an unknown model, not a price tuple"
+        assert result is None, (
+            "Expected None for an unknown model, not a price tuple"
+        )
 
     def test_cost_computation(self, monkeypatch):
         """Cost should be computed correctly from usage."""
