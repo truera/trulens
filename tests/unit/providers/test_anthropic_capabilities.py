@@ -353,7 +353,8 @@ class TestAnthropicCreateChatCompletion:
         provider._create_chat_completion(prompt="test")
 
         call_kwargs = dummy_messages.create_calls[0]
-        assert call_kwargs["temperature"] == 0.0
+        assert call_kwargs["extra_body"]["temperature"] == 0.0
+        assert "temperature" not in call_kwargs
 
     def test_temperature_explicit(self):
         """Explicit temperature should override default."""
@@ -371,7 +372,87 @@ class TestAnthropicCreateChatCompletion:
         provider._create_chat_completion(prompt="test", temperature=0.7)
 
         call_kwargs = dummy_messages.create_calls[0]
-        assert call_kwargs["temperature"] == 0.7
+        assert call_kwargs["extra_body"]["temperature"] == 0.7
+        assert "temperature" not in call_kwargs
+
+    @pytest.mark.parametrize(
+        "model,sends_temperature",
+        [
+            ("claude-sonnet-4-6", True),
+            ("claude-haiku-4-5", True),
+            ("claude-opus-4-7", False),
+            ("claude-opus-5", False),
+            ("claude-opus-5-5", False),
+            ("claude-sonnet-5-5", False),
+            ("claude-haiku-5-5", False),
+            ("claude-fable-5-1", False),
+        ],
+    )
+    def test_temperature_skipped_for_models_that_reject_it(
+        self, model, sends_temperature
+    ):
+        """Opus 4.7+ rejects sampling parameters, and Sonnet 5+ / Haiku 5.5 reject
+        non-default values, so neither the default nor the 0.0 the feedback
+        functions pass is sent to them."""
+        from trulens.providers.anthropic.provider import Anthropic
+
+        dummy_messages = _DummyMessages(
+            _DummyResponse(content=[_DummyContentBlock("text", "ok")])
+        )
+        provider = Anthropic(model_engine=model)
+        provider.endpoint.client.client = _DummyClient(dummy_messages)
+
+        provider._create_chat_completion(
+            prompt="test", temperature=0.0, top_p=0.9
+        )
+
+        call_kwargs = dummy_messages.create_calls[0]
+        assert "temperature" not in call_kwargs
+        sent = call_kwargs.get("extra_body", {})
+        assert ("temperature" in sent) is sends_temperature
+        assert ("top_p" in sent) is sends_temperature
+
+    @pytest.mark.parametrize(
+        "model,expected_tool_choice",
+        [
+            ("claude-sonnet-4-6", {"type": "tool", "name": "output_format"}),
+            ("claude-haiku-5-5", {"type": "tool", "name": "output_format"}),
+            ("claude-opus-5", {"type": "auto"}),
+            ("claude-opus-5-5", {"type": "auto"}),
+            ("claude-sonnet-5-5", {"type": "auto"}),
+            ("claude-fable-5-1", {"type": "auto"}),
+            # a later 5.x release is matched by its family prefix
+            ("claude-opus-5-6", {"type": "auto"}),
+        ],
+    )
+    def test_structured_output_tool_choice_by_model(
+        self, model, expected_tool_choice
+    ):
+        """The Claude 5 families get `auto`; Opus 5.5, Sonnet 5.5 and Fable 5.1
+        reject a forced tool choice."""
+        from trulens.providers.anthropic.provider import Anthropic
+
+        dummy_messages = _DummyMessages(
+            _DummyResponse(
+                content=[
+                    _DummyContentBlock(
+                        "tool_use", tool_input={"value": "parsed_result"}
+                    )
+                ]
+            )
+        )
+        provider = Anthropic(model_engine=model)
+        provider.endpoint.client.client = _DummyClient(dummy_messages)
+
+        result = provider._create_chat_completion(
+            prompt="Parse this", response_format=_ParsedModel
+        )
+
+        assert result.value == "parsed_result"
+        assert (
+            dummy_messages.create_calls[0]["tool_choice"]
+            == expected_tool_choice
+        )
 
     def test_max_tokens_default(self):
         """Default max_tokens should be 4096."""
