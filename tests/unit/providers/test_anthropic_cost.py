@@ -81,32 +81,51 @@ class TestAnthropicCostComputerUnknownModel(unittest.TestCase):
 
     def test_known_model_includes_positive_cost(self):
         """handle_response must include a positive COST.COST for a known model."""
-        cost_info = AnthropicCostComputer.handle_response(
-            self._make_response("claude-3-5-sonnet-20241022", 1000, 200)
-        )
+        from unittest.mock import patch
+        from trulens.providers.anthropic import endpoint
+
+        fake_table = {
+            "claude-test-priced": {
+                "input_cost_per_token": 1e-6,
+                "output_cost_per_token": 2e-6,
+                "litellm_provider": "anthropic",
+            }
+        }
+        with patch.object(endpoint, "LITELLM_MODEL_COSTS_TABLE", fake_table):
+            cost_info = AnthropicCostComputer.handle_response(
+                self._make_response("claude-test-priced", 1000, 200)
+            )
         self.assertIn(SpanAttributes.COST.COST, cost_info)
         self.assertGreater(
             cost_info[SpanAttributes.COST.COST],
             0,
-            "Expected a positive cost for claude-3-5-sonnet-20241022 with "
+            "Expected a positive cost for a patched known model with "
             "1000 input and 200 output tokens.",
         )
 
     def test_callback_cost_stays_zero_for_unknown_model(self):
-        """AnthropicCallback must not add 0.0 to its cost accumulator for unknown models.
+        """AnthropicCallback must not stamp COST.COST for unknown models.
 
-        Before the fix, cost=0.0 was always written; after, it is left at the
-        Cost field default.  Both result in 0.0 cost, but the intent (leave
-        alone vs. stamp a fake zero) is now correct.  The key assertion is
-        that COST.COST is absent from handle_response so there is no
-        misleading span attribute.
+        Before the fix, cost=0.0 was always written as a span attribute;
+        after, COST.COST is absent so no misleading zero is recorded.
+        Both paths yield cb.cost.cost == 0.0, so that assertion does not
+        distinguish them -- asserting the span attribute is absent does.
         """
         cb = AnthropicCallback.model_construct(cost=base_schema.Cost())
         cb.handle_generation(self._make_response("claude-does-not-exist-99999"))
-        # Token counts accumulate; cost stays at the default (0.0 from Cost())
+        # Token counts accumulate regardless of whether the model is priced
         self.assertEqual(cb.cost.n_tokens, 150)
-        # cost.cost == 0.0 because it was never written, not because we priced at zero
-        self.assertEqual(cb.cost.cost, 0.0)
+        # assertNotIn fails on old code (stamped COST.COST=0.0); assertEqual
+        # cb.cost.cost==0.0 passes on both old and new, so it does not guard.
+        cost_info = AnthropicCostComputer.handle_response(
+            self._make_response("claude-does-not-exist-99999")
+        )
+        self.assertNotIn(
+            SpanAttributes.COST.COST,
+            cost_info,
+            "COST.COST span attribute must be absent for unknown models; "
+            "the default 0.0 on Cost() is not the same as a stamped zero.",
+        )
 
 
 if __name__ == "__main__":
