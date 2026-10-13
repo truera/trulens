@@ -11,6 +11,7 @@ from trulens.core.run import RunDiff
 from trulens.core.run import _normalize_input
 from trulens.core.run import compare_runs
 from trulens.core.utils import stats as stats_utils
+from trulens.core.utils.constants import UNPARSABLE_SCORE
 
 
 def _make_run_stub(run_name: str, records_df: pd.DataFrame) -> MagicMock:
@@ -581,6 +582,127 @@ class TestCompareRuns(unittest.TestCase):
         self.assertTrue(math.isnan(md.ci_lower))
         self.assertTrue(math.isnan(md.ci_upper))
         self.assertEqual(md.p_value, 1.0)
+
+    # --- UNPARSABLE_SCORE sentinel ---
+
+    def test_unparsable_sentinel_not_treated_as_score(self):
+        """A stored UNPARSABLE_SCORE (-1.0) means the judge produced nothing
+        parseable.  Like a missing (NaN) score it must not become a delta,
+        and must not flag the item as regressed."""
+        df_a = pd.DataFrame({
+            "record_id": ["r1", "r2"],
+            "input": ["a", "b"],
+            "output": ["o1", "o2"],
+            "latency": [0.1, 0.2],
+            "relevance": [0.8, 0.6],
+        })
+        df_b = pd.DataFrame({
+            "record_id": ["r3", "r4"],
+            "input": ["a", "b"],
+            "output": ["o3", "o4"],
+            "latency": [0.15, 0.25],
+            # Judge failed to produce a parsable score on "b".
+            "relevance": [0.9, UNPARSABLE_SCORE],
+        })
+        run_a = _make_run_stub("a", df_a)
+        run_b = _make_run_stub("b", df_b)
+
+        diff = compare_runs(run_a, run_b)
+        md = diff.metrics["relevance"]
+
+        item_b = next(it for it in md.items if it.input == "b")
+        self.assertIsNone(item_b.score_b)
+        self.assertIsNone(item_b.delta)
+        self.assertFalse(item_b.regressed)
+        self.assertEqual(md.n_regressed, 0)
+
+        item_a = next(it for it in md.items if it.input == "a")
+        self.assertAlmostEqual(item_a.delta, 0.1)
+
+    def test_unparsable_excluded_from_aggregates(self):
+        """Sentinel pairs must drop out of mean/CI/p exactly like NaN pairs,
+        not dilute them: deltas [0.1, -0.1] average 0.0, not -0.567."""
+        df_a = pd.DataFrame({
+            "record_id": ["r1", "r2", "r3"],
+            "input": ["a", "b", "c"],
+            "output": ["o1", "o2", "o3"],
+            "latency": [0.1, 0.2, 0.3],
+            "relevance": [0.8, 0.6, 0.7],
+        })
+        df_b = pd.DataFrame({
+            "record_id": ["r4", "r5", "r6"],
+            "input": ["a", "b", "c"],
+            "output": ["o4", "o5", "o6"],
+            "latency": [0.1, 0.2, 0.3],
+            "relevance": [0.9, 0.5, UNPARSABLE_SCORE],
+        })
+        run_a = _make_run_stub("a", df_a)
+        run_b = _make_run_stub("b", df_b)
+
+        diff = compare_runs(run_a, run_b)
+        md = diff.metrics["relevance"]
+
+        self.assertEqual(md.n_items, 3)
+        # Only the two parsable pairs contribute: mean of [0.1, -0.1].
+        self.assertAlmostEqual(md.mean_delta, 0.0, places=6)
+        self.assertEqual(md.p_value, 1.0)
+        self.assertTrue(math.isnan(md.ci_lower) or md.ci_lower <= 0.1)
+        self.assertTrue(math.isnan(md.ci_upper) or md.ci_upper >= -0.1)
+
+    def test_all_unparsable_gives_nan_aggregates(self):
+        """When every matched score is the sentinel, aggregates are NaN,
+        mirroring the all-NaN case — not a delta of -1.0 vs a real score."""
+        df_a = pd.DataFrame({
+            "record_id": ["r1"],
+            "input": ["a"],
+            "output": ["o1"],
+            "latency": [0.1],
+            "relevance": [UNPARSABLE_SCORE],
+        })
+        df_b = pd.DataFrame({
+            "record_id": ["r2"],
+            "input": ["a"],
+            "output": ["o2"],
+            "latency": [0.1],
+            "relevance": [0.5],
+        })
+        run_a = _make_run_stub("a", df_a)
+        run_b = _make_run_stub("b", df_b)
+
+        diff = compare_runs(run_a, run_b)
+        md = diff.metrics["relevance"]
+
+        self.assertTrue(math.isnan(md.mean_delta))
+        self.assertTrue(math.isnan(md.ci_lower))
+        self.assertTrue(math.isnan(md.ci_upper))
+        self.assertTrue(math.isnan(md.p_value))
+
+    def test_genuine_negative_scores_still_compared(self):
+        """Only the sentinel value itself is filtered; other negative scores
+        (e.g. penalty metrics) stay in the comparison."""
+        df_a = pd.DataFrame({
+            "record_id": ["r1", "r2"],
+            "input": ["a", "b"],
+            "output": ["o1", "o2"],
+            "latency": [0.1, 0.2],
+            "penalty": [-0.5, -0.75],
+        })
+        df_b = pd.DataFrame({
+            "record_id": ["r3", "r4"],
+            "input": ["a", "b"],
+            "output": ["o3", "o4"],
+            "latency": [0.1, 0.2],
+            "penalty": [-0.25, -0.75],
+        })
+        run_a = _make_run_stub("a", df_a)
+        run_b = _make_run_stub("b", df_b)
+
+        diff = compare_runs(run_a, run_b, metric_directions={"penalty": False})
+        md = diff.metrics["penalty"]
+
+        self.assertAlmostEqual(md.mean_delta, 0.125)
+        item_a = next(it for it in md.items if it.input == "a")
+        self.assertTrue(item_a.regressed)  # penalty got worse, lower-is-better
 
     # --- DataFrame helpers ---
 
