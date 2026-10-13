@@ -1,5 +1,9 @@
 """Tests for batch / offline evaluation (`trulens.core.batch.BatchEvaluator`)."""
 
+import io
+import math
+
+import numpy as np
 import pandas as pd
 import pytest
 from trulens.core import BatchEvaluator
@@ -378,6 +382,118 @@ def test_ignore_none_values_skips_row():
     assert res["overlap"].iloc[0] == pytest.approx(1.0)
     # Second row skipped -> no score (None/NaN).
     assert pd.isna(res["overlap"].iloc[1])
+
+
+def _ignore_none_overlap_metric() -> Metric:
+    return Metric(
+        name="overlap",
+        implementation=word_overlap,
+        selectors={
+            "query": Selector.from_column("q", ignore_none_values=True),
+            "answer": Selector.from_column("a", ignore_none_values=True),
+        },
+    )
+
+
+def nan_input(text) -> float:
+    """Return 1.0 when the metric receives a float NaN, else 0.0."""
+    return 1.0 if isinstance(text, float) and math.isnan(text) else 0.0
+
+
+@pytest.mark.parametrize(
+    "df",
+    [
+        pd.DataFrame({"q": ["the fox", "the fox"], "a": ["the fox", np.nan]}),
+        # Building a DataFrame from a dict row without the key fills a NaN cell.
+        pd.DataFrame([{"q": "the fox", "a": "the fox"}, {"q": "the fox"}]),
+        # An empty CSV cell is read as NaN.
+        pd.read_csv(io.StringIO("q,a\nthe fox,the fox\nthe fox,\n")),
+        pd.DataFrame({
+            "q": ["the fox", "the fox"],
+            "a": pd.Series(["the fox", pd.NaT], dtype=object),
+        }),
+    ],
+    ids=["nan", "dict_row_without_key", "csv_empty_cell", "nat"],
+)
+def test_ignore_none_values_skips_missing_dataframe_cell(df):
+    ev = BatchEvaluator(metrics=[_ignore_none_overlap_metric()], max_workers=1)
+    res = ev.evaluate(df)
+    expected = ev.evaluate([
+        {"q": "the fox", "a": "the fox"},
+        {"q": "the fox", "a": None},
+    ])
+    assert res["overlap"].iloc[0] == pytest.approx(1.0)
+    assert pd.isna(res["overlap"].iloc[1])
+    assert "skipped" in res["overlap_explanation"].iloc[1]
+    pd.testing.assert_series_equal(res["overlap"], expected["overlap"])
+
+
+@pytest.mark.parametrize(
+    "missing",
+    [float("nan"), np.nan, pd.NA, pd.NaT, np.array(np.nan)],
+    ids=["float_nan", "np_nan", "pd_na", "pd_nat", "zero_dim_array_nan"],
+)
+def test_ignore_none_values_skips_missing_scalar_in_rows(missing):
+    ev = BatchEvaluator(metrics=[_ignore_none_overlap_metric()], max_workers=1)
+    res = ev.evaluate([
+        {"q": "the fox", "a": "the fox"},
+        {"q": "the fox", "a": missing},
+    ])
+    assert res["overlap"].iloc[0] == pytest.approx(1.0)
+    assert pd.isna(res["overlap"].iloc[1])
+    assert "skipped" in res["overlap_explanation"].iloc[1]
+
+
+def test_ignore_none_values_skips_row_without_the_key():
+    ev = BatchEvaluator(metrics=[_ignore_none_overlap_metric()], max_workers=1)
+    res = ev.evaluate([{"q": "the fox", "a": "the fox"}, {"q": "the fox"}])
+    assert res["overlap"].iloc[0] == pytest.approx(1.0)
+    assert pd.isna(res["overlap"].iloc[1])
+    assert "missing from row" in str(res["overlap_explanation"].iloc[1])
+
+
+def test_ignore_none_values_keeps_ragged_list_cell():
+    metric = Metric(
+        name="nctx",
+        implementation=num_contexts,
+        selectors={
+            "context": Selector.from_column(
+                "contexts", collect_list=True, ignore_none_values=True
+            ),
+        },
+    )
+    data = [{"contexts": [["a"], ["b", "c"]]}]
+    res = BatchEvaluator(metrics=[metric], max_workers=1).evaluate(data)
+    assert res["nctx"].iloc[0] == pytest.approx(2.0)
+
+
+@pytest.mark.parametrize("as_dataframe", [False, True])
+def test_ignore_none_values_keeps_list_containing_nan(as_dataframe):
+    metric = Metric(
+        name="nctx",
+        implementation=num_contexts,
+        selectors={
+            "context": Selector.from_column(
+                "contexts", collect_list=True, ignore_none_values=True
+            ),
+        },
+    )
+    data = [{"contexts": ["a", float("nan")]}]
+    if as_dataframe:
+        data = pd.DataFrame(data)
+    res = BatchEvaluator(metrics=[metric], max_workers=1).evaluate(data)
+    assert res["nctx"].iloc[0] == pytest.approx(2.0)
+
+
+def test_without_ignore_none_values_nan_cell_reaches_metric():
+    metric = Metric(
+        name="nan_input",
+        implementation=nan_input,
+        selectors={"text": Selector.from_column("t")},
+    )
+    df = pd.DataFrame({"t": ["the fox", np.nan]})
+    res = BatchEvaluator(metrics=[metric], max_workers=1).evaluate(df)
+    assert list(res["nan_input"]) == [0.0, 1.0]
 
 
 def test_empty_dataset_returns_empty_frame():

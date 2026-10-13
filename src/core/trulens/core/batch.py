@@ -77,6 +77,23 @@ Row = Mapping[str, Any]
 DatasetLike = Union[pd.DataFrame, Sequence[Row]]
 
 
+def _is_missing_value(value: Any) -> bool:
+    """Whether a cell value is a scalar missing value.
+
+    `None`, `NaN`, `pd.NA` and `pd.NaT` count as missing. A DataFrame stores a
+    missing cell as `NaN` (or `pd.NaT`) rather than `None`, so this keeps
+    `ignore_none_values` working for DataFrame input. A 0-d numpy array holding
+    `NaN` is missing too. Containers such as lists are never missing, even when
+    they hold `NaN` items.
+    """
+    if value is None:
+        return True
+    if isinstance(value, np.ndarray):
+        # `np.ndim` would also cover this, but it raises on ragged lists.
+        return value.ndim == 0 and bool(pd.isna(value))
+    return pd.api.types.is_scalar(value) and bool(pd.isna(value))
+
+
 class BatchEvaluator:
     """Run metrics over a pre-collected dataset without a live app.
 
@@ -235,9 +252,9 @@ class BatchEvaluator:
                     f"row. Available columns: {sorted(row.keys())}."
                 )
             value = row[column]
-            if value is None and selector.ignore_none_values:
+            if selector.ignore_none_values and _is_missing_value(value):
                 raise SkipEval(
-                    reason=f"column {column!r} is None", metric=metric
+                    reason=f"column {column!r} is {value!r}", metric=metric
                 )
             if isinstance(value, list) and not selector.collect_list:
                 arg_values[arg_name] = list(value)
