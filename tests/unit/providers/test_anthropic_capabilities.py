@@ -415,16 +415,21 @@ class TestAnthropicCreateChatCompletion:
     @pytest.mark.parametrize(
         "model,expected_tool_choice",
         [
-            ("claude-opus-5", {"type": "tool", "name": "output_format"}),
+            ("claude-sonnet-4-6", {"type": "tool", "name": "output_format"}),
+            ("claude-haiku-5-5", {"type": "tool", "name": "output_format"}),
+            ("claude-opus-5", {"type": "auto"}),
             ("claude-opus-5-5", {"type": "auto"}),
             ("claude-sonnet-5-5", {"type": "auto"}),
             ("claude-fable-5-1", {"type": "auto"}),
+            # a later 5.x release is matched by its family prefix
+            ("claude-opus-5-6", {"type": "auto"}),
         ],
     )
     def test_structured_output_tool_choice_by_model(
         self, model, expected_tool_choice
     ):
-        """Opus 5.5, Sonnet 5.5 and Fable 5.1 reject a forced tool choice."""
+        """The Claude 5 families get `auto`; Opus 5.5, Sonnet 5.5 and Fable 5.1
+        reject a forced tool choice."""
         from trulens.providers.anthropic.provider import Anthropic
 
         dummy_messages = _DummyMessages(

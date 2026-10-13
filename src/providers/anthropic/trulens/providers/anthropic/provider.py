@@ -25,11 +25,15 @@ _CLAUDE_NO_TEMPERATURE_PREFIXES = (
     "claude-fable-5",
 )
 
-# Claude models that reject a forced `tool_choice` (`tool` or `any`) with a 400.
+# Claude model families that reject a forced `tool_choice` (`tool` or `any`)
+# with a 400 from Opus 5.5, Sonnet 5.5 and Fable 5.1 on. Matching the family
+# also sends `auto` to Opus 5, Sonnet 5 and Fable 5, which would accept the
+# forced choice; structured output still works there through the only tool or
+# the text fallback.
 _CLAUDE_NO_FORCED_TOOL_CHOICE_PREFIXES = (
-    "claude-opus-5-5",
-    "claude-sonnet-5-5",
-    "claude-fable-5-1",
+    "claude-opus-5",
+    "claude-sonnet-5",
+    "claude-fable-5",
 )
 
 
