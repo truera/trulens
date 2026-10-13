@@ -29,6 +29,7 @@ import warnings
 
 import pandas
 import pydantic
+import sqlalchemy as sa
 from trulens.core import dataset as core_dataset
 from trulens.core import experimental as core_experimental
 from trulens.core import prompt as core_prompt
@@ -69,6 +70,18 @@ with import_utils.OptionalImports(messages=optional_utils.REQUIREMENT_TQDM):
     from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
+
+
+def _database_url(source: Any) -> Optional[sa.engine.URL]:
+    """Database URL of a connector, engine or URL string, if it has one."""
+    try:
+        if isinstance(source, core_connector.DBConnector):
+            return source.db.engine.url
+        if isinstance(source, sa.engine.Engine):
+            return source.url
+        return sa.engine.make_url(source)
+    except Exception:
+        return None
 
 
 class TruSession(
@@ -216,6 +229,14 @@ class TruSession(
         pydantic.PrivateAttr(None)
     )
 
+    _otlp_settings: Dict[str, Optional[str]] = pydantic.PrivateAttr(
+        default_factory=dict
+    )
+    """`otel_exporter`, `otlp_endpoint` and `otlp_protocol` used at creation."""
+
+    _reinit_warnings: set = pydantic.PrivateAttr(default_factory=set)
+    """Ignored argument mismatches that were already warned about."""
+
     @property
     def experimental_otel_exporter(
         self,
@@ -293,12 +314,20 @@ class TruSession(
         **kwargs: Any,
     ):
         if python_utils.safe_hasattr(self, "connector"):
-            # Already initialized by SingletonByName mechanism. Give warning if
-            # any option was specified (not None) as it will be ignored.
-            if connector is not None:
-                logger.warning(
-                    "TruSession was already initialized. Cannot change database configuration after initialization."
-                )
+            # Already initialized. The singleton metaclass does not rerun
+            # `__init__` (it calls `_on_singleton_reinit` instead), so this
+            # only runs on an explicit `__init__` call. Warn the same way.
+            self._on_singleton_reinit(
+                connector=connector,
+                experimental_feature_flags=experimental_feature_flags,
+                otel_exporter=otel_exporter,
+                otlp_endpoint=otlp_endpoint,
+                otlp_protocol=otlp_protocol,
+                span_exporter=span_exporter,
+                _experimental_otel_exporter=_experimental_otel_exporter,
+                _experimental_otel_metric_exporter=_experimental_otel_metric_exporter,
+                **kwargs,
+            )
             return
         connector_args = {
             k: v
@@ -376,6 +405,11 @@ class TruSession(
                 raise ValueError(
                     '`otlp_protocol` must be "grpc" or "http/protobuf".'
                 )
+        self._otlp_settings = {
+            "otel_exporter": otel_exporter,
+            "otlp_endpoint": otlp_endpoint,
+            "otlp_protocol": otlp_protocol,
+        }
 
         if (
             _experimental_otel_exporter is not None
@@ -405,6 +439,85 @@ class TruSession(
             )
 
             _TruSession._start_track_costs_background()
+
+    def _on_singleton_reinit(self, *args: Any, **kwargs: Any) -> None:
+        """Warn when a repeated `TruSession(...)` call asks for other settings.
+
+        `TruSession` is a singleton: a repeated call returns this session
+        without running `__init__` again, so its arguments have no effect.
+        Calls without arguments, and a database or OTLP option matching what
+        this session already uses, stay silent. Each distinct set of ignored
+        arguments is warned about once.
+        """
+        try:
+            ignored = self._ignored_reinit_args(*args, **kwargs)
+        except Exception as e:
+            # Never let this check break returning the existing session.
+            logger.debug("Could not compare TruSession arguments: %s", e)
+            return
+        detail = ", ".join(ignored)
+        if not detail or detail in self._reinit_warnings:
+            return
+        self._reinit_warnings.add(detail)
+        live_url = _database_url(self.connector)
+        logger.warning(
+            "TruSession already exists, so these arguments were ignored: %s. "
+            "The session still uses database %s. To switch, call "
+            "`TruSession.delete_singleton(TruSession)` and then create the "
+            "TruSession again.",
+            detail,
+            live_url.render_as_string(hide_password=True)
+            if live_url is not None
+            else self.connector,
+        )
+
+    def _ignored_reinit_args(self, *args: Any, **kwargs: Any) -> List[str]:
+        """Describe the given arguments that this session does not use.
+
+        `None` counts as not given. A connector, `database_url` or
+        `database_engine` pointing at the database already in use, and OTLP
+        options equal to the ones given at creation, are not reported. Any
+        other argument is, since the existing session ignores it.
+        """
+        given = (
+            inspect
+            .signature(TruSession.__init__)
+            .bind(self, *args, **kwargs)
+            .arguments
+        )
+        given.pop("self")
+        given = {**given.pop("kwargs", {}), **given}
+        given = {**(given.pop("database_args", None) or {}), **given}
+        live_url = _database_url(self.connector)
+        ignored = []
+        for key, value in given.items():
+            if value is None:
+                continue
+            if key in ("connector", "database_url", "database_engine"):
+                url = _database_url(value)
+                if value is self.connector or (
+                    url is not None and url == live_url
+                ):
+                    continue
+                shown = (
+                    url.render_as_string(hide_password=True)
+                    if url is not None
+                    else f"a different {type(value).__name__}"
+                )
+            elif key in self._otlp_settings:
+                if value == self._otlp_settings[key]:
+                    continue
+                shown = repr(value)
+            elif key == "database_prefix":
+                if value == self.connector.db.table_prefix:
+                    continue
+                shown = repr(value)
+            elif isinstance(value, (str, int, float, bool)):
+                shown = repr(value)
+            else:
+                shown = f"a {type(value).__name__}"
+            ignored.append(f"{key}={shown}")
+        return ignored
 
     # -- Sampling / online-eval configuration --------------------------------
 
