@@ -442,6 +442,37 @@ def test_empty_dataframe_preserves_mapped_columns(metric_name, result_name):
     assert list(df.columns) == ["question", "answer", "overlap"]
 
 
+@pytest.mark.parametrize("column_map", [None, {"q": "query", "a": "answer"}])
+@pytest.mark.filterwarnings("ignore:DataFrame columns are not unique")
+def test_empty_dataframe_duplicate_columns_match_populated(column_map):
+    df = pd.DataFrame(
+        [["cats", "discarded", 0.1, "cats", 0.2]],
+        columns=["q", "a", "overlap", "a", "overlap"],
+    )
+    empty = df.iloc[:0].copy()
+    original = empty.copy(deep=True)
+    ev = BatchEvaluator(metrics=[_overlap_metric()], max_workers=1)
+
+    populated = ev.evaluate(df, column_map=column_map)
+    res = ev.evaluate(empty, column_map=column_map)
+
+    expected = ["q", "a", "overlap"]
+    if column_map:
+        expected.extend(["query", "answer"])
+    expected.extend([
+        "overlap_1",
+        "overlap_1_explanation",
+        "overlap_1_latency",
+    ])
+    assert list(populated.columns) == expected
+    assert list(res.columns) == expected
+    assert len(res) == 0
+    assert populated.loc[0, "a"] == "cats"
+    assert populated.loc[0, "overlap"] == 0.2
+    assert populated.loc[0, "overlap_1"] == 1.0
+    pd.testing.assert_frame_equal(empty, original)
+
+
 # --- metric return contract / aggregation failures ----------------------------
 
 

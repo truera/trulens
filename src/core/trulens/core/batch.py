@@ -418,7 +418,7 @@ class BatchEvaluator:
         """
         rows = self._normalize_rows(data, column_map=column_map)
         if not rows and isinstance(data, pd.DataFrame):
-            columns = list(data.columns)
+            columns = list(dict.fromkeys(data.columns))
             if column_map:
                 for src, dst in column_map.items():
                     if src in data.columns and dst not in columns:
