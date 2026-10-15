@@ -12,7 +12,9 @@ __all__ = [
     "AgentGoalAccuracy",
     "CoherenceAcrossTurns",
     "ConversationHelpfulness",
+    "RoleAdherence",
     "TopicAdherence",
+    "assistant_turn_numbers",
     "conversation_to_prompt",
 ]
 
@@ -52,6 +54,30 @@ def conversation_to_prompt(records: list[Any] | str) -> str:
             transcript_lines.append(f"Turn {idx}: {record!s}")
 
     return "\n".join(transcript_lines)
+
+
+def assistant_turn_numbers(records: list[Any] | str) -> list[int] | None:
+    """Numbers of the assistant turns in `records`, as labelled in the transcript.
+
+    Returns `None` when the turns are not numbered (a transcript string, or
+    role/content messages), in which case the judge's own numbering is used.
+    """
+    if isinstance(records, str):
+        return None
+
+    numbers: list[int] = []
+    for idx, record in enumerate(records, start=1):
+        if hasattr(record, "main_input") and hasattr(record, "main_output"):
+            has_output = getattr(record, "main_output", None) is not None
+        elif isinstance(record, dict) and (
+            "input" in record or "output" in record
+        ):
+            has_output = record.get("output") is not None
+        else:
+            return None
+        if has_output:
+            numbers.append(idx)
+    return numbers
 
 
 class ConversationHelpfulness(Semantics, CriteriaOutputSpaceMixin):
@@ -139,5 +165,38 @@ class CoherenceAcrossTurns(Semantics, CriteriaOutputSpaceMixin):
         3: Flawless flow, context retention, and logical consistency.
 
         Respond ONLY with a single integer score from {LIKERT_0_3_PROMPT}.
+        """
+    )
+
+
+class RoleAdherence(Semantics):
+    """Judges, turn by turn, whether the assistant stays in its assigned role."""
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """
+        You are evaluating ROLE ADHERENCE in a multi-turn conversation between a
+        User and an AI Assistant. The assistant was given this role:
+        {role}
+
+        Judge every Assistant turn on its own: does it stay within the role? Use
+        the earlier turns as context. A turn adheres if it behaves as the role
+        requires and breaks the role if it does what the role rules out
+        (for example a different persona, tone or scope, or giving away what the
+        role says to withhold).
+
+        Return one verdict for each Assistant turn, in transcript order, using
+        the turn number from the transcript. For each turn give whether it
+        adheres and a one-sentence reason.
+
+        If you cannot return structured output, write one line per turn instead:
+        Turn <number>: ADHERES - <reason>
+        or
+        Turn <number>: BREAKS - <reason>
+        """
+    )
+    user_prompt_template: ClassVar[str] = cleandoc(
+        """
+        Conversation Transcript:
+        {transcript}
         """
     )
