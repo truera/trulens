@@ -1,5 +1,6 @@
 import asyncio
 from collections import defaultdict
+import functools
 import gc
 from typing import Callable
 import unittest
@@ -829,4 +830,196 @@ class TestOtelInstrumentGeneratorContext(unittest.TestCase):
         self.assertEqual(spans[0].status.status_code, trace.StatusCode.ERROR)
         self.assertEqual(
             spans[0].attributes[SpanAttributes.CALL.ERROR], "no more babies"
+        )
+
+
+def _passthrough(func):
+    """A plain sync decorator, shaped like OpenAI's `required_args`."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def _run_to_completion(func):
+    """A sync decorator that runs the coroutine itself."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(func(*args, **kwargs))
+
+    return wrapper
+
+
+class TestOtelInstrumentAsyncBehindDecorator(unittest.TestCase):
+    """An `async def` behind a sync decorator is traced like an `async def`.
+
+    As in `TestOtelInstrumentGeneratorContext`, every top level instrumented
+    call starts a record of its own.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        instrument.enable_all_instrumentation()
+        return super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        instrument.disable_all_instrumentation()
+        return super().tearDownClass()
+
+    def setUp(self) -> None:
+        self.exporter = InMemorySpanExporter()
+        _set_up_tracer_provider()
+        self.span_processor = SimpleSpanProcessor(self.exporter)
+        trace.get_tracer_provider().add_span_processor(self.span_processor)
+        self.recording = Recording(None)
+        context = set_baggage("__trulens_recording__", self.recording)
+        context = set_baggage("__trulens_app__", _StubApp(), context=context)
+        self.token = context_api.attach(context)
+        return super().setUp()
+
+    def tearDown(self) -> None:
+        self.span_processor.shutdown()
+        context_api.detach(self.token)
+        return super().tearDown()
+
+    def _spans_by_name(self) -> dict:
+        return {
+            span.name.rsplit(".", 1)[-1]: span
+            for span in self.exporter.get_finished_spans()
+        }
+
+    def _assert_nested_child(self, outer_span, inner_span) -> None:
+        self.assertEqual(len(self.recording), 1)
+        self.assertEqual(
+            outer_span.attributes[SpanAttributes.SPAN_TYPE],
+            SpanAttributes.SpanType.RECORD_ROOT,
+        )
+        self.assertEqual(inner_span.parent.span_id, outer_span.context.span_id)
+        self.assertEqual(
+            inner_span.attributes[SpanAttributes.SPAN_TYPE],
+            SpanAttributes.SpanType.RETRIEVAL,
+        )
+        self.assertEqual(
+            inner_span.attributes[SpanAttributes.RECORD_ID],
+            outer_span.attributes[SpanAttributes.RECORD_ID],
+        )
+
+    def test_async_method_behind_sync_decorator(self) -> None:
+        @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
+        async def retrieve(query: str) -> list:
+            return ["Kojikun"]
+
+        class App:
+            @instrument()
+            @_passthrough
+            async def query(self, question: str) -> str:
+                await asyncio.sleep(0.05)
+                return str(await retrieve(question))
+
+        self.assertEqual(asyncio.run(App().query("q")), "['Kojikun']")
+
+        self.assertIsNone(baggage.get_baggage(SpanAttributes.RECORD_ID))
+        spans = self._spans_by_name()
+        self.assertEqual(len(spans), 2)
+        self._assert_nested_child(spans["query"], spans["retrieve"])
+        self.assertEqual(
+            spans["query"].attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+            "['Kojikun']",
+        )
+        self.assertGreaterEqual(
+            spans["query"].end_time - spans["query"].start_time, 50_000_000
+        )
+
+    def test_async_behind_sync_decorator_error_marks_span(self) -> None:
+        @instrument()
+        @_passthrough
+        async def query(question: str) -> str:
+            await asyncio.sleep(0.00001)
+            raise ValueError("no more babies")
+
+        with self.assertRaises(ValueError):
+            asyncio.run(query("q"))
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].status.status_code, trace.StatusCode.ERROR)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.CALL.ERROR], "no more babies"
+        )
+
+    def test_async_behind_sync_decorator_cancelled_ends_span(self) -> None:
+        @instrument()
+        @_passthrough
+        async def query(question: str) -> str:
+            await asyncio.sleep(10)
+            return "Kojikun"
+
+        async def run():
+            task = asyncio.ensure_future(query("q"))
+            await asyncio.sleep(0.01)
+            task.cancel()
+            await task
+
+        with self.assertRaises(asyncio.CancelledError):
+            asyncio.run(run())
+
+        self.assertIsNone(baggage.get_baggage(SpanAttributes.RECORD_ID))
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(len(self.recording), 1)
+
+    def test_sync_decorator_that_runs_the_coroutine(self) -> None:
+        @instrument()
+        @_run_to_completion
+        async def query(question: str) -> str:
+            await asyncio.sleep(0.00001)
+            return "Kojikun"
+
+        self.assertEqual(query("q"), "Kojikun")
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.RECORD_ROOT.OUTPUT], "Kojikun"
+        )
+
+    def test_plain_async_function_unchanged(self) -> None:
+        @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
+        async def retrieve(query: str) -> list:
+            return ["Kojikun"]
+
+        @instrument()
+        async def query(question: str) -> str:
+            await asyncio.sleep(0.00001)
+            return str(await retrieve(question))
+
+        self.assertEqual(asyncio.run(query("q")), "['Kojikun']")
+
+        spans = self._spans_by_name()
+        self._assert_nested_child(spans["query"], spans["retrieve"])
+        self.assertEqual(
+            spans["query"].attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+            "['Kojikun']",
+        )
+
+    def test_plain_sync_function_unchanged(self) -> None:
+        @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
+        def retrieve(query: str) -> list:
+            return ["Kojikun"]
+
+        @instrument()
+        def query(question: str) -> str:
+            return str(retrieve(question))
+
+        self.assertEqual(query("q"), "['Kojikun']")
+
+        spans = self._spans_by_name()
+        self._assert_nested_child(spans["query"], spans["retrieve"])
+        self.assertEqual(
+            spans["query"].attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+            "['Kojikun']",
         )
