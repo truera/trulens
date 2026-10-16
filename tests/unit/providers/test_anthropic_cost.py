@@ -131,3 +131,54 @@ class TestAnthropicCostComputerUnknownModel(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestAnthropicCostComputerPromptCache(unittest.TestCase):
+    """Anthropic's input_tokens excludes tokens read from or written to the
+    prompt cache, so they are reported in separate usage fields."""
+
+    def setUp(self):
+        if AnthropicCostComputer is None:
+            self.skipTest("trulens-providers-anthropic not available.")
+
+    def test_cache_tokens_count_as_prompt_tokens_and_are_priced(self):
+        from trulens.providers.anthropic.endpoint import (
+            LITELLM_MODEL_COSTS_TABLE,
+        )
+
+        model = "claude-sonnet-4-5"
+        response = SimpleNamespace(
+            usage=SimpleNamespace(
+                input_tokens=100,
+                cache_read_input_tokens=1000,
+                cache_creation_input_tokens=200,
+                output_tokens=50,
+            ),
+            model=model,
+        )
+
+        cost_info = AnthropicCostComputer.handle_response(response)
+
+        pricing = LITELLM_MODEL_COSTS_TABLE[model]
+        expected_cost = (
+            100 * pricing["input_cost_per_token"]
+            + 1000 * pricing["cache_read_input_token_cost"]
+            + 200 * pricing["cache_creation_input_token_cost"]
+            + 50 * pricing["output_cost_per_token"]
+        )
+        self.assertEqual(cost_info[SpanAttributes.COST.NUM_PROMPT_TOKENS], 1300)
+        self.assertEqual(cost_info[SpanAttributes.COST.NUM_TOKENS], 1350)
+        self.assertAlmostEqual(
+            cost_info[SpanAttributes.COST.COST], round(expected_cost, 8)
+        )
+
+    def test_usage_without_cache_fields_is_unchanged(self):
+        response = SimpleNamespace(
+            usage=SimpleNamespace(input_tokens=100, output_tokens=50),
+            model="claude-sonnet-4-5",
+        )
+
+        cost_info = AnthropicCostComputer.handle_response(response)
+
+        self.assertEqual(cost_info[SpanAttributes.COST.NUM_PROMPT_TOKENS], 100)
+        self.assertEqual(cost_info[SpanAttributes.COST.NUM_TOKENS], 150)
