@@ -4776,6 +4776,12 @@ class LLMProvider(core_provider.Provider):
             )
         assert self.endpoint is not None, "Endpoint is not set."
 
+        expected = templates_conversation.assistant_turn_numbers(records)
+        if expected == []:
+            return UNPARSABLE_SCORE, {
+                "reason": "The conversation has no assistant turns to judge."
+            }
+
         transcript = templates_conversation.conversation_to_prompt(records)
         system_prompt = self._build_criteria_with_instructions(
             criteria=None,
@@ -4807,7 +4813,6 @@ class LLMProvider(core_provider.Provider):
         )
 
         verdicts = _parse_turn_verdicts(response)
-        expected = templates_conversation.assistant_turn_numbers(records)
         if (
             not verdicts
             or len({v.turn for v in verdicts}) != len(verdicts)

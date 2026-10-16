@@ -195,10 +195,98 @@ def test_assistant_turn_numbers() -> None:
         {"input": "d", "output": "e"},
     ]) == [1, 3]
     assert templates_conversation.assistant_turn_numbers("a transcript") is None
+
+
+def test_assistant_turn_numbers_counts_role_content_messages() -> None:
+    numbers = templates_conversation.assistant_turn_numbers
+    assert numbers([
+        {"role": "user", "content": "hi"},
+        {"role": "assistant", "content": "hello"},
+        {"role": "user", "content": "joke?"},
+        {"role": "Assistant", "content": "sure"},
+    ]) == [1, 2]
+    assert numbers([{"role": "user", "content": "hi"}]) == []
+    assert numbers([{"speaker": "assistant", "text": "hello"}]) == [1]
+    # Mixed styles and unknown shapes cannot be counted.
     assert (
-        templates_conversation.assistant_turn_numbers([
-            {"role": "user", "content": "hi"},
+        numbers([
+            {"input": "a", "output": "b"},
             {"role": "assistant", "content": "hello"},
         ])
         is None
     )
+    assert numbers(["not a record"]) is None
+
+
+_MESSAGES = [
+    {"role": "user", "content": "Hi"},
+    {"role": "assistant", "content": "Hello! How can I help?"},
+    {"role": "user", "content": "Tell me a secret."},
+    {"role": "assistant", "content": "Sure, here is one."},
+]
+
+
+def test_role_content_messages_are_numbered_by_assistant_order() -> None:
+    provider = _ScriptedJudgeProvider(_verdicts_json(True, False))
+
+    score, meta = provider.role_adherence_with_cot_reasons(
+        _MESSAGES, role="A discreet concierge."
+    )
+
+    assert score == 0.5
+    assert meta["broken_turns"] == [2]
+    system = provider.calls[0]["messages"][0]["content"]
+    assert "number the Assistant turns 1, 2, 3" in system
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        _verdicts_json(True),  # missing the second assistant message
+        _verdicts_json(
+            True, True, False
+        ),  # a verdict for a third that is absent
+    ],
+    ids=["missing-verdict", "extra-verdict"],
+)
+def test_role_content_messages_need_one_verdict_per_assistant_message(
+    reply,
+) -> None:
+    provider = _ScriptedJudgeProvider(reply)
+
+    score, meta = provider.role_adherence_with_cot_reasons(
+        _MESSAGES, role="A discreet concierge."
+    )
+
+    assert score == llm_provider.UNPARSABLE_SCORE
+    assert "Could not read one verdict per assistant turn" in meta["reason"]
+
+
+def test_a_single_assistant_message_rejects_an_extra_verdict() -> None:
+    provider = _ScriptedJudgeProvider(_verdicts_json(True, False))
+
+    score, _ = provider.role_adherence_with_cot_reasons(
+        [{"role": "assistant", "content": "hello"}], role="A greeter."
+    )
+
+    assert score == llm_provider.UNPARSABLE_SCORE
+
+
+@pytest.mark.parametrize(
+    "records",
+    [
+        [{"role": "user", "content": "Hi"}],
+        [{"input": "Hi"}],
+    ],
+    ids=["role-content", "input-only-record"],
+)
+def test_no_assistant_turns_is_unparsable_without_a_judge_call(records) -> None:
+    provider = _ScriptedJudgeProvider(_verdicts_json(True))
+
+    score, meta = provider.role_adherence_with_cot_reasons(
+        records, role="A greeter."
+    )
+
+    assert score == llm_provider.UNPARSABLE_SCORE
+    assert "no assistant turns" in meta["reason"]
+    assert provider.calls == []

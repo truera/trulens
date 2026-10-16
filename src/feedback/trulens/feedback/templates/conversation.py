@@ -57,27 +57,44 @@ def conversation_to_prompt(records: list[Any] | str) -> str:
 
 
 def assistant_turn_numbers(records: list[Any] | str) -> list[int] | None:
-    """Numbers of the assistant turns in `records`, as labelled in the transcript.
+    """Numbers of the assistant turns in `records`.
 
-    Returns `None` when the turns are not numbered (a transcript string, or
-    role/content messages), in which case the judge's own numbering is used.
+    Input/output records are numbered by position, as in the transcript
+    (`Turn 2 Assistant: ...`). Role/content messages are not numbered in the
+    transcript, so their assistant messages are numbered 1, 2, 3, ... in order
+    of appearance; the role adherence prompt asks the judge to do the same.
+
+    Returns `None` when the assistant turns cannot be counted: a transcript
+    string, a list that mixes the two styles, or items of another shape.
     """
     if isinstance(records, str):
         return None
 
-    numbers: list[int] = []
+    positional: list[int] = []
+    messages: list[int] = []
+    seen_record = seen_message = False
     for idx, record in enumerate(records, start=1):
         if hasattr(record, "main_input") and hasattr(record, "main_output"):
-            has_output = getattr(record, "main_output", None) is not None
+            seen_record = True
+            if getattr(record, "main_output", None) is not None:
+                positional.append(idx)
         elif isinstance(record, dict) and (
             "input" in record or "output" in record
         ):
-            has_output = record.get("output") is not None
+            seen_record = True
+            if record.get("output") is not None:
+                positional.append(idx)
+        elif isinstance(record, dict):
+            seen_message = True
+            role = record.get("role", record.get("speaker"))
+            if str(role).strip().lower() == "assistant":
+                messages.append(len(messages) + 1)
         else:
             return None
-        if has_output:
-            numbers.append(idx)
-    return numbers
+
+    if seen_record and seen_message:
+        return None
+    return messages if seen_message else positional
 
 
 class ConversationHelpfulness(Semantics, CriteriaOutputSpaceMixin):
@@ -185,8 +202,10 @@ class RoleAdherence(Semantics):
         role says to withhold).
 
         Return one verdict for each Assistant turn, in transcript order, using
-        the turn number from the transcript. For each turn give whether it
-        adheres and a one-sentence reason.
+        the turn number from the transcript. If the transcript does not number
+        its turns, number the Assistant turns 1, 2, 3, ... in the order they
+        appear. For each turn give whether it adheres and a one-sentence
+        reason.
 
         If you cannot return structured output, write one line per turn instead:
         Turn <number>: ADHERES - <reason>
