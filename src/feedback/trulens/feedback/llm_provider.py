@@ -26,6 +26,7 @@ from pydantic import BaseModel
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.feedback import provider as core_provider
 from trulens.core.feedback.selector import Trace
+from trulens.core.utils import constants as constants_utils
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils.threading import ThreadPoolExecutor
 from trulens.feedback import generated as feedback_generated
@@ -62,8 +63,10 @@ def _validate_score_range(
 
 
 # `generate_score_and_reasons` returns this when it could not parse a score out
-# of the judge's reply, on both the JSON and the text path.
-UNPARSABLE_SCORE = -1.0
+# of the judge's reply, on both the JSON and the text path. The value lives in
+# `trulens.core.utils.constants` so core-only consumers see the same sentinel.
+UNPARSABLE_SCORE = constants_utils.UNPARSABLE_SCORE
+is_unparsable_score = constants_utils.is_unparsable_score
 
 
 def _mean_graded_score(scores: Iterable[float]) -> float:
@@ -76,7 +79,7 @@ def _mean_graded_score(scores: Iterable[float]) -> float:
     graded statements, and report the same sentinel when there are none, since
     `np.mean` of an empty list is NaN rather than a usable feedback value.
     """
-    graded = [score for score in scores if score != UNPARSABLE_SCORE]
+    graded = [score for score in scores if not is_unparsable_score(score)]
     if not graded:
         return UNPARSABLE_SCORE
     return float(np.mean(graded))
