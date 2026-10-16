@@ -138,9 +138,6 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             app=app, main_method=app.invoke, TruAppClass=TruGraph
         )
 
-    @pytest.mark.skip(
-        reason="Golden file comparison skipped - span structure varies across environments"
-    )
     def test_smoke(self) -> None:
         multi_agent_graph = self._create_simple_multi_agent()
         tru_recorder = TruGraph(
@@ -158,7 +155,10 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             ),
         )
 
-        # Smoke test - just verify it runs without errors
+        # No golden comparison: every `TruGraph` constructed in the process
+        # wraps `Pregel.invoke` again, so this record gets one extra
+        # `CompiledStateGraph.invoke` span per `TruGraph` created by earlier
+        # tests.
 
         tru_recorder_ref = weakref.ref(tru_recorder)
         del tru_recorder
@@ -166,9 +166,6 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         gc.collect()
         self.assertCollected(tru_recorder_ref)
 
-    @pytest.mark.skip(
-        reason="Golden file comparison skipped - span structure varies across environments"
-    )
     def test_task_instrumentation(self) -> None:
         essay_writer = self._create_functional_api_graph_app()
 
@@ -190,7 +187,9 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         self.assertIn("is_approved", result)
         self.assertIn("artificial intelligence", result["essay"])
 
-        # Golden file comparison skipped due to span structure changes
+        # No golden comparison: every `TruGraph` constructed in the process
+        # wraps `Pregel.invoke` again, so this record gets one extra
+        # `Pregel.invoke` span per `TruGraph` created by earlier tests.
 
     def test_langgraph_detection_by_module(self):
         """Test that LangGraph apps are detected by module name."""
