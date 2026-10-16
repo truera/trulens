@@ -149,6 +149,7 @@ def compute_feedback_by_span_group(
             `higher_is_better`, and `aggregator` will be used.
         raise_error_on_no_feedbacks_computed:
             Raise an error if no feedbacks were computed. Default is True.
+            Not raised when every input's feedback was already computed.
         selectors: Optional dict of selectors for OTEL mode. If not provided,
             will use feedback.selectors.
         max_workers: Max threads for parallel per-record evaluation.
@@ -163,7 +164,7 @@ def compute_feedback_by_span_group(
     feedback_aggregator = feedback.agg
 
     if _is_conversation_level(kwarg_to_selector):
-        num_feedbacks_computed = _compute_feedback_by_conversation(
+        _compute_feedback_by_conversation(
             events,
             feedback_name,
             feedback.feedback_definition_id,
@@ -172,9 +173,8 @@ def compute_feedback_by_span_group(
             feedback_aggregator,
             kwarg_to_selector,
             max_workers,
+            raise_error_on_no_feedbacks_computed,
         )
-        if raise_error_on_no_feedbacks_computed and num_feedbacks_computed == 0:
-            raise ValueError("No feedbacks were computed!")
         return
 
     kwarg_groups = _group_kwargs_by_selectors(kwarg_to_selector)
@@ -189,6 +189,7 @@ def compute_feedback_by_span_group(
         feedback_name,
     )
     flattened_inputs = _flatten_inputs(unflattened_inputs)
+    num_inputs = len(flattened_inputs)
     flattened_inputs = _remove_already_computed_feedbacks(
         events, feedback_name, flattened_inputs
     )
@@ -201,7 +202,44 @@ def compute_feedback_by_span_group(
         record_id_to_record_root,
         max_workers=max_workers,
     )
-    if raise_error_on_no_feedbacks_computed and num_feedbacks_computed == 0:
+    if raise_error_on_no_feedbacks_computed:
+        _raise_if_no_feedbacks_computed(
+            feedback_name,
+            num_inputs,
+            len(flattened_inputs),
+            num_feedbacks_computed,
+        )
+
+
+def _raise_if_no_feedbacks_computed(
+    feedback_name: str,
+    num_inputs: int,
+    num_inputs_to_compute: int,
+    num_feedbacks_computed: int,
+) -> None:
+    """Raise if there was feedback to compute but none was computed.
+
+    Inputs whose feedback is already computed are skipped, so rerunning on
+    events that are fully evaluated has nothing left to compute. That is not
+    an error, unlike having no inputs at all (e.g. selectors that match no
+    spans) or every remaining computation failing.
+
+    Args:
+        feedback_name: Name of the feedback function.
+        num_inputs: Number of inputs found in the events.
+        num_inputs_to_compute: Number of inputs left after removing those
+            whose feedback is already computed.
+        num_feedbacks_computed: Number of feedbacks computed.
+    """
+    if num_inputs > 0 and num_inputs_to_compute == 0:
+        _logger.info(
+            "feedback_name=%s is already computed for all %d inputs, "
+            "nothing left to compute.",
+            feedback_name,
+            num_inputs,
+        )
+        return
+    if num_feedbacks_computed == 0:
         raise ValueError("No feedbacks were computed!")
 
 
@@ -227,7 +265,8 @@ def _compute_feedback_by_conversation(
     feedback_aggregator: Optional[Callable[[List[float]], float]],
     kwarg_to_selector: Dict[str, Selector],
     max_workers: Optional[int],
-) -> int:
+    raise_error_on_no_feedbacks_computed: bool,
+) -> None:
     record_roots = [
         row
         for _, row in events.iterrows()
@@ -311,10 +350,11 @@ def _compute_feedback_by_conversation(
             inputs,
         ))
 
+    num_inputs = len(flattened_inputs)
     flattened_inputs = _remove_already_computed_feedbacks(
         events, feedback_name, flattened_inputs
     )
-    return _run_feedback_on_inputs(
+    num_feedbacks_computed = _run_feedback_on_inputs(
         flattened_inputs,
         feedback_name,
         feedback_function,
@@ -325,6 +365,13 @@ def _compute_feedback_by_conversation(
         record_id_to_conversation_id=target_record_id_to_conversation_id,
         raise_worker_errors=True,
     )
+    if raise_error_on_no_feedbacks_computed:
+        _raise_if_no_feedbacks_computed(
+            feedback_name,
+            num_inputs,
+            len(flattened_inputs),
+            num_feedbacks_computed,
+        )
 
 
 def _group_kwargs_by_selectors(
