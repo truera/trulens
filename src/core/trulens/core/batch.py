@@ -434,9 +434,17 @@ class BatchEvaluator:
             persist evaluations of pre-collected data.
         """
         rows = self._normalize_rows(data, column_map=column_map)
-        metric_names = self._unique_metric_names(
-            column for row in rows for column in row
-        )
+        if not rows and isinstance(data, pd.DataFrame):
+            columns = list(dict.fromkeys(data.columns))
+            if column_map:
+                for src, dst in column_map.items():
+                    if src in data.columns and dst not in columns:
+                        columns.append(dst)
+        else:
+            columns = list(
+                dict.fromkeys(column for row in rows for column in row)
+            )
+        metric_names = self._unique_metric_names(columns)
 
         # Pre-allocate the result grid so out-of-order completion is fine.
         n_rows = len(rows)
@@ -476,7 +484,7 @@ class BatchEvaluator:
             explanations[metric_idx][row_idx] = explanation
             latencies[metric_idx][row_idx] = latency
 
-        result_df = pd.DataFrame(rows)
+        result_df = pd.DataFrame(rows, columns=columns)
         for metric_idx, name in enumerate(metric_names):
             result_df[name] = scores[metric_idx]
             result_df[f"{name}_explanation"] = explanations[metric_idx]
