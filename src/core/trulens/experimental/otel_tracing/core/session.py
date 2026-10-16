@@ -283,7 +283,7 @@ class _TruSession(core_session.TruSession):
         method: str,
         cost_computer: Callable[[Any], Dict[str, Any]],
     ):
-        from trulens.core.otel.instrument import instrument_cost_computer
+        from trulens.core.otel import instrument as core_instrument
 
         for cls in dir(module):
             obj = python_utils.safer_getattr(module, cls)
@@ -292,6 +292,17 @@ class _TruSession(core_session.TruSession):
                 and isinstance(obj, type)
                 and hasattr(obj, method)
             ):
+                # Skip an `async def` behind a sync decorator, such as
+                # `AsyncCompletions.create`. Async openai cost is recorded on
+                # `AsyncOpenAI.post` (see `_track_costs`), so tracking it here
+                # too would count it twice.
+                if core_instrument._wraps_coroutine_function(
+                    getattr(obj, method)
+                ):
+                    logger.debug(
+                        f"Skipping {obj.__name__}.{method} for cost tracking"
+                    )
+                    continue
                 logger.info(
                     f"Instrumenting {obj.__name__}.{method} for cost tracking"
                 )
@@ -310,7 +321,7 @@ class _TruSession(core_session.TruSession):
                         logger.debug(f"Cost computation skipped: {e}")
                         return {}
 
-                instrument_cost_computer(
+                core_instrument.instrument_cost_computer(
                     obj,
                     method,
                     attributes=cost_attributes,

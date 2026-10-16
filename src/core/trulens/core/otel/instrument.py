@@ -445,6 +445,20 @@ def _finalize_span(
         raise exception
 
 
+def _wraps_coroutine_function(func: Callable) -> bool:
+    """Whether a sync `func` is a decorator wrapper around an `async def`.
+
+    `inspect.iscoroutinefunction` does not follow `__wrapped__`, so an
+    `async def` behind a plain `functools.wraps` decorator (OpenAI's
+    `AsyncCompletions.create` is one) looks like a sync function.
+    """
+    try:
+        unwrapped = inspect.unwrap(func)
+    except ValueError:
+        return False
+    return unwrapped is not func and inspect.iscoroutinefunction(unwrapped)
+
+
 class _DetachedFunctionCall:
     """Holds a function call span open without leaving it current in the caller.
 
@@ -704,6 +718,80 @@ class instrument:
             return ret
 
         @wrapt.decorator
+        def coroutine_returning_wrapper(func, instance, args, kwargs):
+            # A sync callable around an `async def`, such as a plain
+            # `functools.wraps` decorator. It runs at call time and usually
+            # returns a coroutine, so the span stays open until the caller
+            # awaits that coroutine. If it returns anything else (it ran the
+            # coroutine itself), it is treated like any sync function.
+            if not self.enabled or get_baggage("__trulens_recording__") is None:
+                return func(*args, **kwargs)
+            span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
+            func_name_for_call = _func_name_for_instance(instance)
+            call = _DetachedFunctionCall(
+                create_function_call_context_manager(
+                    self.create_new_span,
+                    func_name_for_call,
+                    span_type=self.span_type,
+                )
+            )
+            span = call.__enter__()
+
+            def finish(ret, func_exception, cancelled=None):
+                # Set the span attributes, then end the span. Like the other
+                # wrappers, this raises `func_exception` (or `cancelled`)
+                # once the span has ended.
+                exc = cancelled
+                try:
+                    with call.step():
+                        _finalize_span(
+                            span,
+                            self.span_type,
+                            func_name_for_call,
+                            func,
+                            func_exception,
+                            self.attributes,
+                            instance,
+                            args,
+                            kwargs,
+                            ret,
+                            self.only_set_user_defined_attributes,
+                            span_end_callbacks,
+                        )
+                except BaseException as e:
+                    if exc is None:
+                        exc = e
+                    else:
+                        logger.exception(
+                            "Error finalizing span during cancellation."
+                        )
+                if exc is None:
+                    call.__exit__(None, None, None)
+                    return ret
+                call.__exit__(type(exc), exc, exc.__traceback__)
+                raise exc
+
+            try:
+                with call.step():
+                    result = func(*args, **kwargs)
+            except Exception as e:
+                return finish(None, e)
+            if not inspect.iscoroutine(result):
+                return finish(result, None)
+
+            async def await_in_span():
+                try:
+                    with call.step():
+                        ret = await result
+                except asyncio.CancelledError as e:
+                    return finish(None, None, cancelled=e)
+                except Exception as e:
+                    return finish(None, e)
+                return finish(ret, None)
+
+            return await_in_span()
+
+        @wrapt.decorator
         async def async_generator_wrapper(func, instance, args, kwargs):
             if not self.enabled or get_baggage("__trulens_recording__") is None:
                 async for curr in func(*args, **kwargs):
@@ -781,6 +869,8 @@ class instrument:
             ret = async_generator_wrapper(func)
         elif inspect.iscoroutinefunction(func):
             ret = async_wrapper(func)
+        elif _wraps_coroutine_function(func):
+            ret = coroutine_returning_wrapper(func)
         else:
             ret = sync_wrapper(func)
         ret.__dict__[TRULENS_INSTRUMENT_WRAPPER_FLAG] = True
