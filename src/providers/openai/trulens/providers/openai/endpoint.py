@@ -168,6 +168,16 @@ def token_cost_for_model(
         return None
 
 
+def _cached_tokens(usage: Any, details_key: str) -> int:
+    """Number of cached prompt tokens reported in a usage dict, if any."""
+    details = usage.get(details_key) if isinstance(usage, dict) else None
+    if isinstance(details, pydantic.BaseModel):
+        details = details.model_dump()
+    if not isinstance(details, dict):
+        return 0
+    return details.get("cached_tokens") or 0
+
+
 def cost_attributes(callback: Any, model_name: str) -> Dict[str, Any]:
     """Build the span attributes describing what a call has cost so far."""
     ret = {
@@ -177,6 +187,7 @@ def cost_attributes(callback: Any, model_name: str) -> Dict[str, Any]:
         SpanAttributes.COST.NUM_PROMPT_TOKENS: callback.cost.n_prompt_tokens,
         SpanAttributes.COST.NUM_COMPLETION_TOKENS: callback.cost.n_completion_tokens,
         SpanAttributes.COST.NUM_REASONING_TOKENS: callback.cost.n_reasoning_tokens,
+        SpanAttributes.COST.NUM_CACHE_READ_TOKENS: callback.cost.n_cache_read_tokens,
     }
     if model_name:
         ret[SpanAttributes.COST.MODEL] = model_name
@@ -573,6 +584,9 @@ class OpenAICallback(core_endpoint.EndpointCallback):
         self.cost.n_completion_tokens = completion_tokens
         self.cost.n_tokens = total_tokens
         self.cost.n_reasoning_tokens = reasoning_tokens
+        self.cost.n_cache_read_tokens = _cached_tokens(
+            usage, "prompt_tokens_details"
+        )
 
         cost = token_cost_for_model(
             model_name, prompt_tokens, completion_tokens
@@ -839,6 +853,7 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
 
             if isinstance(response, ChatCompletion):
                 # Extract reasoning tokens if available (for reasoning models)
+                cached_tokens = _cached_tokens(usage, "prompt_tokens_details")
                 reasoning_tokens = 0
                 if usage and isinstance(usage, dict):
                     # Look for reasoning tokens in completion_tokens_details
@@ -859,12 +874,15 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
                     # Track reasoning tokens separately
                     if reasoning_tokens > 0:
                         callback.cost.n_reasoning_tokens += reasoning_tokens
+                    # Track prompt-cache hits separately
+                    callback.cost.n_cache_read_tokens += cached_tokens
             elif (
                 RESPONSE_API_AVAILABLE
                 and ResponseAPIResponse is not None
                 and isinstance(response, ResponseAPIResponse)
             ):
                 # Handle Response API responses (for newer models like gpt-5, o3)
+                cached_tokens = _cached_tokens(usage, "input_tokens_details")
                 reasoning_tokens = 0
                 if usage and isinstance(usage, dict):
                     # Look for reasoning tokens in output_tokens_details
@@ -885,6 +903,8 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
                     # Track reasoning tokens separately
                     if reasoning_tokens > 0:
                         callback.cost.n_reasoning_tokens += reasoning_tokens
+                    # Track prompt-cache hits separately
+                    callback.cost.n_cache_read_tokens += cached_tokens
             elif isinstance(response, CreateEmbeddingResponse):
                 for callback in callbacks:
                     callback.handle_embedding(response=response)

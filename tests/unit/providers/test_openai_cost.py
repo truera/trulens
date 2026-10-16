@@ -83,3 +83,46 @@ class TestOpenAICallbackCostAccumulation(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestOpenAICacheReadTokens(unittest.TestCase):
+    def setUp(self):
+        if OpenAICallback is None:
+            self.skipTest("trulens-providers-openai not available.")
+
+    def test_cached_tokens_helper(self):
+        from trulens.providers.openai.endpoint import _cached_tokens
+
+        usage = {"prompt_tokens_details": {"cached_tokens": 128}}
+        self.assertEqual(_cached_tokens(usage, "prompt_tokens_details"), 128)
+        self.assertEqual(_cached_tokens(usage, "input_tokens_details"), 0)
+        self.assertEqual(_cached_tokens({}, "prompt_tokens_details"), 0)
+        self.assertEqual(_cached_tokens(None, "prompt_tokens_details"), 0)
+        self.assertEqual(
+            _cached_tokens(
+                {"prompt_tokens_details": {"cached_tokens": None}},
+                "prompt_tokens_details",
+            ),
+            0,
+        )
+
+    def test_streamed_usage_records_cached_tokens(self):
+        from trulens.otel.semconv.trace import SpanAttributes
+        from trulens.providers.openai.endpoint import cost_attributes
+
+        callback = OpenAICallback(
+            endpoint=core_endpoint.Endpoint(name="test-endpoint")
+        )
+        callback.handle_generation_usage(
+            "gpt-4o",
+            {
+                "prompt_tokens": 200,
+                "completion_tokens": 10,
+                "total_tokens": 210,
+                "prompt_tokens_details": {"cached_tokens": 150},
+            },
+        )
+
+        self.assertEqual(callback.cost.n_cache_read_tokens, 150)
+        attrs = cost_attributes(callback, "gpt-4o")
+        self.assertEqual(attrs[SpanAttributes.COST.NUM_CACHE_READ_TOKENS], 150)
