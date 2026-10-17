@@ -83,8 +83,8 @@ class GenAIAttributes:
         )
         """Number of input tokens served from the provider's prompt cache."""
 
-        CACHE_WRITE_INPUT_TOKENS = (
-            GEN_AI_SCOPE + ".usage.cache_write.input_tokens"
+        CACHE_CREATION_INPUT_TOKENS = (
+            GEN_AI_SCOPE + ".usage.cache_creation.input_tokens"
         )
         """Number of input tokens written to the provider's prompt cache."""
 
