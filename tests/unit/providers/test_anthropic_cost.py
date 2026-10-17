@@ -131,3 +131,44 @@ class TestAnthropicCostComputerUnknownModel(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestAnthropicCacheTokens(unittest.TestCase):
+    def setUp(self):
+        if AnthropicCallback is None:
+            self.skipTest("trulens-providers-anthropic not available.")
+
+    def test_cache_tokens_recorded(self):
+        cb = AnthropicCallback.model_construct(cost=base_schema.Cost())
+        response = SimpleNamespace(
+            usage=SimpleNamespace(
+                input_tokens=10,
+                output_tokens=5,
+                cache_read_input_tokens=300,
+                cache_creation_input_tokens=40,
+            ),
+            model="claude-3-5-sonnet-20241022",
+        )
+
+        cb.handle_generation(response)
+
+        self.assertEqual(cb.cost.n_cache_read_tokens, 300)
+        self.assertEqual(cb.cost.n_cache_write_tokens, 40)
+
+    def test_missing_or_null_cache_fields_default_to_zero(self):
+        for usage in (
+            SimpleNamespace(input_tokens=1, output_tokens=1),
+            SimpleNamespace(
+                input_tokens=1,
+                output_tokens=1,
+                cache_read_input_tokens=None,
+                cache_creation_input_tokens=None,
+            ),
+        ):
+            info = AnthropicCostComputer.handle_response(
+                SimpleNamespace(usage=usage, model="claude-3-5-sonnet-20241022")
+            )
+            self.assertEqual(info[SpanAttributes.COST.NUM_CACHE_READ_TOKENS], 0)
+            self.assertEqual(
+                info[SpanAttributes.COST.NUM_CACHE_WRITE_TOKENS], 0
+            )

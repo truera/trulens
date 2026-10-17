@@ -7416,6 +7416,8 @@ trulens_eval.schema.base.Cost:
     cost: builtins.float
     cost_currency: builtins.str
     formatted_objects: _contextvars.ContextVar
+    n_cache_read_tokens: builtins.int
+    n_cache_write_tokens: builtins.int
     n_classes: builtins.int
     n_classification_requests: builtins.int
     n_completion_requests: builtins.int
