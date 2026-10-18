@@ -129,9 +129,6 @@ class TestAnthropicCostComputerUnknownModel(unittest.TestCase):
         )
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class TestAnthropicCacheTokens(unittest.TestCase):
     def setUp(self):
@@ -172,3 +169,7 @@ class TestAnthropicCacheTokens(unittest.TestCase):
             self.assertEqual(
                 info[SpanAttributes.COST.NUM_CACHE_WRITE_TOKENS], 0
             )
+
+
+if __name__ == "__main__":
+    unittest.main()

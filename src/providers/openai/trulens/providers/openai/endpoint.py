@@ -187,8 +187,11 @@ def cost_attributes(callback: Any, model_name: str) -> Dict[str, Any]:
         SpanAttributes.COST.NUM_PROMPT_TOKENS: callback.cost.n_prompt_tokens,
         SpanAttributes.COST.NUM_COMPLETION_TOKENS: callback.cost.n_completion_tokens,
         SpanAttributes.COST.NUM_REASONING_TOKENS: callback.cost.n_reasoning_tokens,
-        SpanAttributes.COST.NUM_CACHE_READ_TOKENS: callback.cost.n_cache_read_tokens,
     }
+    if callback.cost.n_cache_read_tokens:
+        ret[SpanAttributes.COST.NUM_CACHE_READ_TOKENS] = (
+            callback.cost.n_cache_read_tokens
+        )
     if model_name:
         ret[SpanAttributes.COST.MODEL] = model_name
 

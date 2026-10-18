@@ -81,9 +81,6 @@ class TestOpenAICallbackCostAccumulation(unittest.TestCase):
         self.assertAlmostEqual(callback.cost.cost, n * per_call_cost)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class TestOpenAICacheReadTokens(unittest.TestCase):
     def setUp(self):
@@ -126,3 +123,22 @@ class TestOpenAICacheReadTokens(unittest.TestCase):
         self.assertEqual(callback.cost.n_cache_read_tokens, 150)
         attrs = cost_attributes(callback, "gpt-4o")
         self.assertEqual(attrs[SpanAttributes.COST.NUM_CACHE_READ_TOKENS], 150)
+
+    def test_cost_attributes_omit_cache_read_when_zero(self):
+        from trulens.otel.semconv.trace import SpanAttributes
+        from trulens.providers.openai.endpoint import cost_attributes
+
+        callback = OpenAICallback(
+            endpoint=core_endpoint.Endpoint(name="test-endpoint")
+        )
+        callback.handle_generation_usage(
+            "gpt-4o",
+            {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
+        )
+
+        attrs = cost_attributes(callback, "gpt-4o")
+        self.assertNotIn(SpanAttributes.COST.NUM_CACHE_READ_TOKENS, attrs)
+
+
+if __name__ == "__main__":
+    unittest.main()
