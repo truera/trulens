@@ -4,6 +4,7 @@ import unittest
 
 from trulens.feedback import templates
 from trulens.feedback.templates import agent as templates_agent
+from trulens.feedback.templates import conversation as templates_conversation
 from trulens.feedback.templates import quality as templates_quality
 from trulens.feedback.templates import rag as templates_rag
 from trulens.feedback.templates import safety as templates_safety
@@ -21,6 +22,7 @@ class TestFeedbackTemplateExports(unittest.TestCase):
             "PlanAdherence",
             "FeedbackTemplate",
             "OutputSpace",
+            "RequirementSatisfaction",
         }
 
         for symbol in expected:
@@ -41,6 +43,7 @@ class TestFeedbackTemplateExports(unittest.TestCase):
             templates_quality,
             templates_rag,
             templates_safety,
+            templates_conversation,
         ]:
             self.assertTrue(hasattr(mod, "__all__"))
             self.assertGreater(len(mod.__all__), 0)
