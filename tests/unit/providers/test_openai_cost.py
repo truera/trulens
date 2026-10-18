@@ -81,7 +81,6 @@ class TestOpenAICallbackCostAccumulation(unittest.TestCase):
         self.assertAlmostEqual(callback.cost.cost, n * per_call_cost)
 
 
-
 class TestOpenAICacheReadTokens(unittest.TestCase):
     def setUp(self):
         if OpenAICallback is None:
