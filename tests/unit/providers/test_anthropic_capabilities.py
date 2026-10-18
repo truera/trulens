@@ -522,15 +522,20 @@ class TestAnthropicPricing:
 
         _get_model_pricing = endpoint._get_model_pricing
 
-        in_p, out_p = _get_model_pricing("claude-sonnet-4-6")
+        in_p, out_p, cache_read_p, cache_write_p = _get_model_pricing(
+            "claude-sonnet-4-6"
+        )
         assert in_p == 3e-6
         assert out_p == 15e-6
+        # No cache prices in the table: both fall back to the input price.
+        assert cache_read_p == 3e-6
+        assert cache_write_p == 3e-6
 
-        in_p, out_p = _get_model_pricing("claude-opus-4-8")
+        in_p, out_p, _, _ = _get_model_pricing("claude-opus-4-8")
         assert in_p == 5e-6
         assert out_p == 25e-6
 
-        in_p, out_p = _get_model_pricing("claude-haiku-4-5")
+        in_p, out_p, _, _ = _get_model_pricing("claude-haiku-4-5")
         assert in_p == 1e-6
         assert out_p == 5e-6
 
