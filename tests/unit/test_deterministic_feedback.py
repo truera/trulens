@@ -1,6 +1,7 @@
 """Tests for deterministic (non-LLM) feedback metrics."""
 
 from trulens.feedback.deterministic import conversation_repetition
+from trulens.feedback.deterministic import tool_argument_validity
 
 
 def _records(pairs):
@@ -114,3 +115,30 @@ class TestConversationRepetition:
         ])
         score, _ = conversation_repetition(records)
         assert 0.0 <= score <= 1.0
+
+
+def test_tool_argument_validity_excludes_unknown_schemas():
+    schema = {
+        "type": "object",
+        "properties": {"query": {"type": "string"}},
+        "required": ["query"],
+        "additionalProperties": False,
+    }
+    calls = [
+        {"span_id": "one", "name": "search", "arguments": {"query": "a"}},
+        {"span_id": "two", "name": "search", "arguments": {}},
+        {
+            "span_id": "three",
+            "name": "search",
+            "arguments": {"query": "c"},
+        },
+        {"span_id": "unknown", "name": "other", "arguments": {}},
+    ]
+
+    score, meta = tool_argument_validity(calls, {"search": schema})
+
+    assert score == 0.67
+    assert meta["num_calls_with_known_schema"] == 3
+    assert meta["num_valid_calls"] == 2
+    assert meta["invalid_calls"][0]["span_id"] == "two"
+    assert "query" in meta["invalid_calls"][0]["errors"][0]

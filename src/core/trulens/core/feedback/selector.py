@@ -3,12 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 import pandas as pd
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.utils.trace_compression import compress_trace_for_feedback
 from trulens.core.utils.trace_compression import safe_truncate
+from trulens.otel.semconv.trace import ErrorAttributes
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -476,7 +478,7 @@ class Selector:
     conversation_level: bool = False
     function_name: Optional[str] = None
     span_name: Optional[str] = None
-    span_type: Optional[str] = None
+    span_type: Optional[Union[str, Sequence[str]]] = None
 
     # The following fields describe what to extract from the spans to use as
     # the feedback function input.
@@ -532,7 +534,7 @@ class Selector:
         conversation_level: bool = False,
         function_name: Optional[str] = None,
         span_name: Optional[str] = None,
-        span_type: Optional[str] = None,
+        span_type: Optional[Union[str, Sequence[str]]] = None,
         span_attributes_processor: Optional[
             Callable[[Dict[str, Any]], Any]
         ] = None,
@@ -695,9 +697,11 @@ class Selector:
         if self.span_name is not None:
             ret = ret and self.span_name == name
         if self.span_type is not None:
-            ret = ret and self.span_type == attributes.get(
-                SpanAttributes.SPAN_TYPE, None
-            )
+            actual_span_type = attributes.get(SpanAttributes.SPAN_TYPE, None)
+            if isinstance(self.span_type, str):
+                ret = ret and self.span_type == actual_span_type
+            else:
+                ret = ret and actual_span_type in self.span_type
         return ret
 
     def _extract_from_span_events(
@@ -743,6 +747,12 @@ class Selector:
         )
         if self.span_attributes_processor is not None:
             ret.value = self.span_attributes_processor(attributes)
+            if (
+                isinstance(ret.value, dict)
+                and ret.value.get("span_id") is None
+                and "span_id" in ret.value
+            ):
+                ret.value = {**ret.value, "span_id": span_id}
         elif self.span_event_attribute is not None:
             # Record where the value came from so evaluation provenance and the
             # already-computed check can distinguish it from a span attribute of
@@ -823,6 +833,107 @@ class Selector:
         return Selector(
             span_type=SpanAttributes.SpanType.RECORD_ROOT,
             span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+            ignore_none_values=ignore_none_values,
+        )
+
+    @staticmethod
+    def select_tool_calls(ignore_none_values: bool = True) -> Selector:
+        """Return TOOL and MCP calls without serializing the whole trace."""
+
+        def parse_arguments(value: Any) -> Any:
+            if not isinstance(value, str):
+                return value
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                return value
+
+        def tool_call_processor(attributes: Dict[str, Any]) -> Dict[str, Any]:
+            return {
+                "span_id": None,
+                "name": attributes.get(
+                    GenAIAttributes.TOOL.NAME,
+                    attributes.get(SpanAttributes.MCP.TOOL_NAME),
+                ),
+                "arguments": parse_arguments(
+                    attributes.get(
+                        GenAIAttributes.TOOL.CALL_ARGUMENTS,
+                        attributes.get(SpanAttributes.MCP.INPUT_ARGUMENTS),
+                    )
+                ),
+                "result": attributes.get(
+                    GenAIAttributes.TOOL.CALL_RESULT,
+                    attributes.get(SpanAttributes.MCP.OUTPUT_CONTENT),
+                ),
+                "error": attributes.get(
+                    ErrorAttributes.TYPE,
+                    attributes.get(SpanAttributes.MCP.OUTPUT_IS_ERROR),
+                ),
+            }
+
+        return Selector(
+            span_type=[
+                SpanAttributes.SpanType.TOOL,
+                SpanAttributes.SpanType.MCP,
+            ],
+            span_attributes_processor=tool_call_processor,
+            collect_list=True,
+            ignore_none_values=ignore_none_values,
+        )
+
+    @staticmethod
+    def select_tool_definitions(ignore_none_values: bool = True) -> Selector:
+        """Return tool parameter schemas keyed by tool name."""
+
+        def definitions_processor(
+            attributes: Dict[str, Any],
+        ) -> Optional[Dict[str, Any]]:
+            mcp_name = attributes.get(SpanAttributes.MCP.TOOL_NAME)
+            mcp_schema = attributes.get(SpanAttributes.MCP.INPUT_SCHEMA)
+            if mcp_name and mcp_schema is not None:
+                if isinstance(mcp_schema, str):
+                    try:
+                        mcp_schema = json.loads(mcp_schema)
+                    except json.JSONDecodeError:
+                        pass
+                return {mcp_name: mcp_schema}
+
+            definitions = attributes.get(
+                GenAIAttributes.TOOL.DEFINITIONS,
+                attributes.get(f"{SpanAttributes.CALL.KWARGS}.tools"),
+            )
+            if isinstance(definitions, str):
+                try:
+                    definitions = json.loads(definitions)
+                except json.JSONDecodeError:
+                    return None
+            if isinstance(definitions, dict):
+                definitions = [definitions]
+            if not isinstance(definitions, list):
+                return None
+
+            result: Dict[str, Any] = {}
+            for definition in definitions:
+                if not isinstance(definition, dict):
+                    continue
+                function = definition.get("function", definition)
+                if not isinstance(function, dict):
+                    continue
+                name = function.get("name")
+                schema = function.get(
+                    "parameters", function.get("input_schema")
+                )
+                if name and schema is not None:
+                    result[name] = schema
+            return result or None
+
+        return Selector(
+            span_type=[
+                SpanAttributes.SpanType.GENERATION,
+                SpanAttributes.SpanType.MCP,
+            ],
+            span_attributes_processor=definitions_processor,
+            collect_list=True,
             ignore_none_values=ignore_none_values,
         )
 

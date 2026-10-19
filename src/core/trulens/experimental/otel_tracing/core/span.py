@@ -320,6 +320,7 @@ def set_genai_generation_attributes(
     temperature: float | None = None,
     provider_name: str | None = None,
     operation_name: str | None = None,
+    tools: Any | None = None,
 ) -> None:
     """Emit ``gen_ai.*`` attributes for a GENERATION span.
 
@@ -338,6 +339,8 @@ def set_genai_generation_attributes(
         operation_name: GenAI operation name (maps to
             ``gen_ai.operation.name``). When ``None`` the attribute is
             not emitted.
+        tools: Provider tool definitions. Only names and parameter schemas are
+            recorded, capped to 16,000 serialized characters.
     """
     if operation_name is not None:
         set_span_attribute_safely(
@@ -361,6 +364,27 @@ def set_genai_generation_attributes(
         set_span_attribute_safely(
             span, GenAIAttributes.SYSTEM.NAME, provider_name
         )
+    if tools is not None:
+        definitions = []
+        for tool in tools if isinstance(tools, (list, tuple)) else [tools]:
+            if not isinstance(tool, dict):
+                continue
+            function = tool.get("function", tool)
+            if not isinstance(function, dict) or not function.get("name"):
+                continue
+            schema = function.get("parameters", function.get("input_schema"))
+            if schema is not None:
+                definitions.append({
+                    "name": function["name"],
+                    "parameters": schema,
+                })
+        if definitions:
+            serialized = json.dumps(definitions, default=str)
+            if len(serialized) > 16_000:
+                serialized = serialized[:15_985] + "...[truncated]"
+            set_span_attribute_safely(
+                span, GenAIAttributes.TOOL.DEFINITIONS, serialized
+            )
 
 
 def set_genai_retrieval_attributes(

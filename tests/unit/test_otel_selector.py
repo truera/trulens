@@ -2,6 +2,7 @@ from typing import Optional
 
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import Selector
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import GenAIEvents
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -9,6 +10,79 @@ from tests.util.otel_test_case import OtelTestCase
 
 
 class TestOtelSelector(OtelTestCase):
+    def test_span_type_accepts_multiple_types(self) -> None:
+        selector = Selector(
+            span_type=[
+                SpanAttributes.SpanType.TOOL,
+                SpanAttributes.SpanType.MCP,
+            ],
+            span_attribute="value",
+        )
+        for span_type in (
+            SpanAttributes.SpanType.TOOL,
+            SpanAttributes.SpanType.MCP,
+        ):
+            self.assertTrue(
+                selector.matches_span(
+                    None, {SpanAttributes.SPAN_TYPE: span_type}
+                )
+            )
+        self.assertFalse(
+            selector.matches_span(
+                None,
+                {SpanAttributes.SPAN_TYPE: SpanAttributes.SpanType.GENERATION},
+            )
+        )
+
+    def test_select_tool_calls_normalizes_tool_and_mcp_spans(self) -> None:
+        selector = Selector.select_tool_calls()
+        tool = selector.process_span(
+            "tool-span",
+            {
+                GenAIAttributes.TOOL.NAME: "search",
+                GenAIAttributes.TOOL.CALL_ARGUMENTS: '{"query": "snow"}',
+                GenAIAttributes.TOOL.CALL_RESULT: "result",
+            },
+        ).value
+        mcp = selector.process_span(
+            "mcp-span",
+            {
+                SpanAttributes.MCP.TOOL_NAME: "read_file",
+                SpanAttributes.MCP.INPUT_ARGUMENTS: {"path": "a.py"},
+                SpanAttributes.MCP.OUTPUT_IS_ERROR: True,
+            },
+        ).value
+        self.assertEqual(tool["span_id"], "tool-span")
+        self.assertEqual(tool["arguments"], {"query": "snow"})
+        self.assertEqual(mcp["name"], "read_file")
+        self.assertTrue(mcp["error"])
+
+    def test_select_tool_definitions_normalizes_provider_and_mcp(self) -> None:
+        selector = Selector.select_tool_definitions()
+        provider = selector.process_span(
+            "generation",
+            {
+                GenAIAttributes.TOOL.DEFINITIONS: [
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": "search",
+                            "parameters": {"type": "object"},
+                        },
+                    }
+                ]
+            },
+        ).value
+        mcp = selector.process_span(
+            "mcp",
+            {
+                SpanAttributes.MCP.TOOL_NAME: "read_file",
+                SpanAttributes.MCP.INPUT_SCHEMA: '{"type": "object"}',
+            },
+        ).value
+        self.assertEqual(provider, {"search": {"type": "object"}})
+        self.assertEqual(mcp, {"read_file": {"type": "object"}})
+
     def test_conversation_selectors(self) -> None:
         self.assertEqual(
             Selector.select_conversation(),

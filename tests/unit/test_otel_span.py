@@ -221,6 +221,33 @@ class TestGenAIHelpers(TestCase):
         # Nothing should be set when all params are None.
         span.set_attribute.assert_not_called()
 
+    def test_set_genai_generation_attributes_records_tool_schemas(self) -> None:
+        span = self._make_span()
+        set_genai_generation_attributes(
+            span,
+            tools=[
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "search",
+                        "description": "Not recorded",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"query": {"type": "string"}},
+                        },
+                    },
+                }
+            ],
+        )
+        set_attribute_calls = {
+            call.args[0]: call.args[1]
+            for call in span.set_attribute.call_args_list
+        }
+        definitions = set_attribute_calls[GenAIAttributes.TOOL.DEFINITIONS]
+        self.assertIn('"name": "search"', definitions)
+        self.assertIn('"parameters"', definitions)
+        self.assertNotIn("Not recorded", definitions)
+
     def test_set_genai_generation_attributes_operation_name_none_not_emitted(
         self,
     ) -> None:
