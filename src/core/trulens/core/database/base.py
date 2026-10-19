@@ -538,7 +538,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
 
         Returns:
             Feedback score counts, means, and 95% confidence bounds grouped by
-            app version, metric, and time bucket.
+            app version, metric, and time bucket. Unparsable judge scores are
+            excluded; buckets without graded scores are omitted.
         """
         raise NotImplementedError()
 
