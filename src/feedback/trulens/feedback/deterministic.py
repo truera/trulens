@@ -43,6 +43,16 @@ def tool_argument_validity(
         if isinstance(group, dict):
             definitions.update(group)
 
+    validators: Dict[str, Any] = {}
+    schema_errors: Dict[str, str] = {}
+    for name, schema in definitions.items():
+        try:
+            validator_class = jsonschema.validators.validator_for(schema)
+            validator_class.check_schema(schema)
+            validators[name] = validator_class(schema)
+        except Exception as exc:
+            schema_errors[name] = str(exc)
+
     known_calls = 0
     valid_calls = 0
     invalid_calls: List[Dict[str, Any]] = []
@@ -50,26 +60,30 @@ def tool_argument_validity(
         if not isinstance(call, dict):
             continue
         name = call.get("name")
-        if name not in definitions:
+        if name not in validators:
             continue
-        known_calls += 1
         arguments = call.get("arguments")
         if isinstance(arguments, str):
             try:
                 arguments = json.loads(arguments)
             except json.JSONDecodeError as exc:
+                known_calls += 1
                 invalid_calls.append({
                     "span_id": call.get("span_id"),
                     "name": name,
                     "errors": [f"Arguments are not valid JSON: {exc.msg}"],
                 })
                 continue
-        validator = jsonschema.validators.validator_for(definitions[name])(
-            definitions[name]
-        )
-        errors = sorted(
-            validator.iter_errors(arguments), key=lambda error: list(error.path)
-        )
+        try:
+            errors = sorted(
+                validators[name].iter_errors(arguments),
+                key=lambda error: list(error.path),
+            )
+        except Exception as exc:
+            schema_errors[name] = str(exc)
+            validators.pop(name, None)
+            continue
+        known_calls += 1
         if not errors:
             valid_calls += 1
             continue
@@ -82,6 +96,10 @@ def tool_argument_validity(
     score = round(valid_calls / known_calls, 2) if known_calls else None
     return score, {
         "invalid_calls": invalid_calls,
+        "schema_errors": [
+            {"name": name, "error": error}
+            for name, error in schema_errors.items()
+        ],
         "num_calls_with_known_schema": known_calls,
         "num_valid_calls": valid_calls,
     }

@@ -379,9 +379,12 @@ def set_genai_generation_attributes(
                     "parameters": schema,
                 })
         if definitions:
-            serialized = json.dumps(definitions, default=str)
-            if len(serialized) > 16_000:
-                serialized = serialized[:15_985] + "...[truncated]"
+            retained_definitions = []
+            for definition in definitions:
+                candidate = retained_definitions + [definition]
+                if len(json.dumps(candidate, default=str)) <= 16_000:
+                    retained_definitions.append(definition)
+            serialized = json.dumps(retained_definitions, default=str)
             set_span_attribute_safely(
                 span, GenAIAttributes.TOOL.DEFINITIONS, serialized
             )

@@ -142,3 +142,26 @@ def test_tool_argument_validity_excludes_unknown_schemas():
     assert meta["num_valid_calls"] == 2
     assert meta["invalid_calls"][0]["span_id"] == "two"
     assert "query" in meta["invalid_calls"][0]["errors"][0]
+
+
+def test_tool_argument_validity_reports_malformed_schemas():
+    calls = [
+        {"span_id": "bad-type", "name": "bad_type", "arguments": {}},
+        {"span_id": "bad-ref", "name": "bad_ref", "arguments": {}},
+        {"span_id": "valid", "name": "valid", "arguments": {}},
+    ]
+    definitions = {
+        "bad_type": {"type": "nope"},
+        "bad_ref": {"$ref": "#/definitions/missing"},
+        "valid": {"type": "object"},
+    }
+
+    score, meta = tool_argument_validity(calls, definitions)
+
+    assert score == 1.0
+    assert meta["num_calls_with_known_schema"] == 1
+    assert meta["num_valid_calls"] == 1
+    assert {error["name"] for error in meta["schema_errors"]} == {
+        "bad_type",
+        "bad_ref",
+    }
