@@ -1,0 +1,73 @@
+# TruLens
+
+> TruLens is an open source library for evaluating and tracing AI agents. Instrument with OpenTelemetry and score every step with benchmarked LLM judges.
+
+Notes for interpreting these docs:
+
+- Tracing is OpenTelemetry-native. Spans carry TruLens semantic conventions, so a trace is portable to any OTel backend.
+- Evaluations run two ways: as traces land, or over a dataset after the fact. Both use the same metric definitions.
+- Snowflake is one supported logging backend, not a requirement. TruLens runs locally against SQLite or Postgres.
+- Metrics are LLM judges with explanations attached. A score without a reason is not the intended output.
+
+## Start here
+
+- [Getting started](https://www.trulens.org/getting_started/): Orientation and the shape of a TruLens workflow
+- [Install](https://www.trulens.org/getting_started/install/): Package layout and optional extras
+- [Quickstart](https://www.trulens.org/getting_started/quickstarts/quickstart/): Instrument an app, run metrics, read results
+- [Viewing results](https://www.trulens.org/getting_started/dashboard/): Leaderboard, Trends, Records and Compare dashboard views
+- [Monitoring trends](https://www.trulens.org/getting_started/dashboard/trends/): Evaluation metrics, latency, app and evaluation cost over time, with record investigations
+- [GitHub repository](https://github.com/truera/trulens): Source, issues and releases. MIT licensed
+
+## Core concepts
+
+- [Metrics](https://www.trulens.org/getting_started/core_concepts/feedback_functions/): What a metric is and how judges produce scores with reasons
+- [RAG triad](https://www.trulens.org/getting_started/core_concepts/rag_triad/): Context relevance, groundedness and answer relevance, and why all three are needed
+- [Honest, harmless, helpful](https://www.trulens.org/getting_started/core_concepts/honest_harmless_helpful_evals/): A framework for choosing which metrics matter
+- [OpenTelemetry semantic conventions](https://www.trulens.org/otel/semantic_conventions/): The span and attribute names TruLens emits
+
+## Instrumentation
+
+- [Instrumentation overview](https://www.trulens.org/component_guides/instrumentation/): The @instrument decorator, span types and attributes
+- [LangChain](https://www.trulens.org/component_guides/instrumentation/langchain/): TruChain
+- [LangGraph](https://www.trulens.org/component_guides/instrumentation/langgraph/): TruGraph, for graph and agent workflows
+- [LlamaIndex](https://www.trulens.org/component_guides/instrumentation/llama_index/): TruLlama
+- [MCP](https://www.trulens.org/component_guides/instrumentation/mcp/): Tracing Model Context Protocol tool calls
+- [Span groups](https://www.trulens.org/component_guides/instrumentation/span_groups/): Localising a metric to one hop of a multi-step app
+
+## Metrics and evaluation
+
+- [Evaluation overview](https://www.trulens.org/component_guides/evaluation/): How evaluation fits together
+- [Anatomy of a metric](https://www.trulens.org/component_guides/evaluation/feedback_anatomy/): Implementation, selectors and aggregation, explained part by part
+- [Stock metrics](https://www.trulens.org/component_guides/evaluation/feedback_implementations/stock/): The built-in library, including agentic and retrieval metrics
+- [Custom metrics](https://www.trulens.org/component_guides/evaluation/feedback_implementations/custom_feedback_functions/): Writing your own judge, rubric and score range
+- [Agentic evaluations](https://www.trulens.org/component_guides/evaluation/agentic_evaluations/): Plan adherence, tool selection and execution metrics for agents
+- [Selectors](https://www.trulens.org/component_guides/evaluation/feedback_selectors/): Pointing a metric at the right span and field
+- [Aggregation](https://www.trulens.org/component_guides/evaluation/feedback_aggregation/): Turning per-span scores into one number
+- [LLM judge alignment](https://www.trulens.org/component_guides/evaluation/llm_judge_alignment/): Building golden sets, diagnosing alignment, comparing judges and criteria, selecting examples, and using juries
+
+## Running evaluations
+
+- [Running with your app](https://www.trulens.org/component_guides/evaluation/running_feedback_functions/with_app/): Evaluate as traces are recorded
+- [Running on existing data](https://www.trulens.org/component_guides/evaluation/running_feedback_functions/existing_data/): Evaluate traces already logged
+- [Batch evaluation with runs](https://www.trulens.org/component_guides/evaluation/batch_evaluation/): The Run API, for evaluating a dataset as one unit
+- [Inline evaluations](https://www.trulens.org/component_guides/runtime_evaluation/inline_evals/): Scoring inside the request path
+- [Guardrails](https://www.trulens.org/component_guides/runtime_evaluation/guardrails/): Blocking or filtering on a score at runtime
+
+## Logging and storage
+
+- [Where to log](https://www.trulens.org/component_guides/logging/where_to_log/): Choosing a backend
+- [Postgres](https://www.trulens.org/component_guides/logging/where_to_log/log_in_postgres/)
+- [Snowflake](https://www.trulens.org/component_guides/logging/where_to_log/log_in_snowflake/)
+
+## API reference
+
+- [API reference](https://www.trulens.org/reference/): Generated reference for every package, provider and connector
+
+## Optional
+
+- [Cookbook](https://www.trulens.org/cookbook/): Runnable notebooks per framework, model, vector store and use case
+- [Migrating from TruLens Eval](https://www.trulens.org/component_guides/other/trulens_eval_migration/): For code written against the pre-1.0 API
+- [Development setup](https://www.trulens.org/contributing/development/): Building and testing TruLens itself
+- [Release history](https://www.trulens.org/contributing/release_history/)
+- [Blog](https://www.trulens.org/blog/)
+- [PyPI](https://pypi.org/project/trulens/): Published packages

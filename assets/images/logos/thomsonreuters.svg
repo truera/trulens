@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 152 60" role="img" aria-label="Thomson Reuters">
+  <g fill="#FF8000">
+    <circle cx="19.00" cy="14.00" r="2.4"/>
+    <circle cx="25.94" cy="15.58" r="2.4"/>
+    <circle cx="31.51" cy="20.02" r="2.4"/>
+    <circle cx="34.60" cy="26.44" r="2.4"/>
+    <circle cx="34.60" cy="33.56" r="2.4"/>
+    <circle cx="31.51" cy="39.98" r="2.4"/>
+    <circle cx="25.94" cy="44.42" r="2.4"/>
+    <circle cx="19.00" cy="46.00" r="2.4"/>
+    <circle cx="12.06" cy="44.42" r="2.4"/>
+    <circle cx="6.49" cy="39.98" r="2.4"/>
+    <circle cx="3.40" cy="33.56" r="2.4"/>
+    <circle cx="3.40" cy="26.44" r="2.4"/>
+    <circle cx="6.49" cy="20.02" r="2.4"/>
+    <circle cx="12.06" cy="15.58" r="2.4"/>
+    <circle cx="22.21" cy="22.24" r="2.0"/>
+    <circle cx="26.76" cy="26.79" r="2.0"/>
+    <circle cx="26.76" cy="33.21" r="2.0"/>
+    <circle cx="22.21" cy="37.76" r="2.0"/>
+    <circle cx="15.79" cy="37.76" r="2.0"/>
+    <circle cx="11.24" cy="33.21" r="2.0"/>
+    <circle cx="11.24" cy="26.79" r="2.0"/>
+    <circle cx="15.79" cy="22.24" r="2.0"/>
+    <circle cx="19.0" cy="30.0" r="1.7"/>
+  </g>
+  <g fill="#3C3C3B" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0.2">
+    <text x="42" y="27">THOMSON</text>
+    <text x="42" y="52">REUTERS</text>
+  </g>
+</svg>

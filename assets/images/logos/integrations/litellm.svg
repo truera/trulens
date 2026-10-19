@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="94" height="26" viewBox="0 0 94 26" role="img" aria-label="LiteLLM">
+  <g transform="translate(0 3.0) scale(.8333)" fill="#0A2C37">
+    <path fill-rule="evenodd" d="M.5 17C.5 13.9 3.3 9.5 8.9 7.1A14.4 14.4 0 0 1 14.2 5.8h7.9A1.5 1.5 0 0 1 23.6 7.3V17Zm12.9-8.4c-3.2.5-6 2-7.8 3.8h7.8Zm2.6 0a.7.7 0 0 0-.7.7v2.4a.7.7 0 0 0 .7.7h6.4a.7.7 0 0 0 .7-.7V9.3a.7.7 0 0 0-.7-.7Z"/>
+    <circle cx="8.8" cy="18.6" r="1.6"/>
+    <circle cx="19.6" cy="18.6" r="1.6"/>
+  </g>
+  <g fill="#0A2C37" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+    <text x="27" y="19" font-size="15" font-weight="600" letter-spacing="-.2">LiteLLM</text>
+  </g>
+</svg>

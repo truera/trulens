@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="92" height="26" viewBox="0 0 92 26" role="img" aria-label="Chroma">
+  <g transform="translate(0 3) scale(.5714) translate(0 -2.5)" fill="#0A2C37">
+    <path opacity=".34" d="M35.003 2.501c-9.665 0-17.5 7.835-17.5 17.5s7.835 17.5 17.5 17.5 17.5-7.834 17.5-17.5c0-9.665-7.835-17.5-17.5-17.5z"/>
+    <path opacity=".62" d="M17.503 2.501c-9.665 0-17.5 7.835-17.5 17.5s7.835 17.5 17.5 17.5 17.5-7.835 17.5-17.5-7.835-17.5-17.5-17.5z"/>
+    <path d="M17.503 20.002c0-9.665 7.835-17.5 17.5-17.5v17.5h-17.5z"/>
+    <path d="M35.003 20.001c0 9.665-7.835 17.5-17.5 17.5v-17.5h17.5z"/>
+  </g>
+  <g fill="#0A2C37" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+    <text x="36" y="19" font-size="15" font-weight="600" letter-spacing="-.2">Chroma</text>
+  </g>
+</svg>

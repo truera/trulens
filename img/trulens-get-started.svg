@@ -1,0 +1,394 @@
+<svg width="1240" height="573" viewBox="0 0 1240 573" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.18"/>
+    </filter>
+    <filter id="dbShadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity="0.25"/>
+    </filter>
+    <linearGradient id="panelGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0A4A5E"/>
+      <stop offset="100%" stop-color="#073B4D"/>
+    </linearGradient>
+    <linearGradient id="titleBarGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0A5570"/>
+      <stop offset="100%" stop-color="#034A61"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ============ STEP 1: Build your LLM Application ============ -->
+  <g id="step1">
+    <rect x="0" y="0" width="378" height="573" rx="6" fill="url(#panelGrad)"/>
+
+    <!-- Inner title bar -->
+    <rect x="16" y="16" width="346" height="48" rx="4" fill="url(#titleBarGrad)"/>
+
+    <!-- Step number (large, no box) -->
+    <text x="32" y="52" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="30" font-weight="300" fill="#DCB1FD">1</text>
+
+    <!-- Title -->
+    <text x="58" y="47" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="17" font-weight="500" fill="#FFFFFF">Build your LLM Application</text>
+
+    <!-- Chat conversation -->
+    <g transform="translate(30, 84)">
+      <!-- Human bubble 1 -->
+      <rect x="0" y="0" width="130" height="38" rx="8" fill="#0FB5AE"/>
+      <polygon points="16,38 24,50 32,38" fill="#0FB5AE"/>
+
+      <!-- AI Agent bubble 1 -->
+      <rect x="170" y="14" width="148" height="44" rx="8" fill="#DCB1FD"/>
+      <polygon points="286,58 294,70 302,58" fill="#DCB1FD"/>
+
+      <!-- Human bubble 2 -->
+      <rect x="0" y="74" width="115" height="36" rx="8" fill="#0FB5AE"/>
+      <polygon points="16,110 24,122 32,110" fill="#0FB5AE"/>
+
+      <!-- AI Agent bubble 2 -->
+      <rect x="160" y="88" width="158" height="42" rx="8" fill="#DCB1FD"/>
+      <polygon points="286,130 294,142 302,130" fill="#DCB1FD"/>
+
+      <!-- Human bubble 3 -->
+      <rect x="0" y="148" width="140" height="40" rx="8" fill="#0FB5AE"/>
+      <polygon points="16,188 24,200 32,188" fill="#0FB5AE"/>
+
+      <!-- AI Agent bubble 3 -->
+      <rect x="165" y="164" width="153" height="38" rx="8" fill="#DCB1FD"/>
+      <polygon points="286,202 294,214 302,202" fill="#DCB1FD"/>
+
+      <!-- Human bubble 4 -->
+      <rect x="0" y="224" width="125" height="38" rx="8" fill="#0FB5AE"/>
+      <polygon points="16,262 24,274 32,262" fill="#0FB5AE"/>
+
+      <!-- AI Agent bubble 4 -->
+      <rect x="170" y="238" width="148" height="44" rx="8" fill="#DCB1FD"/>
+      <polygon points="286,282 294,294 302,282" fill="#DCB1FD"/>
+
+      <!-- Human bubble 5 -->
+      <rect x="0" y="302" width="135" height="40" rx="8" fill="#0FB5AE"/>
+      <polygon points="16,342 24,354 32,342" fill="#0FB5AE"/>
+
+      <!-- AI Agent bubble 5 -->
+      <rect x="162" y="318" width="156" height="38" rx="8" fill="#DCB1FD"/>
+      <polygon points="286,356 294,368 302,356" fill="#DCB1FD"/>
+    </g>
+
+    <!-- Labels -->
+    <text x="88" y="488" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-style="italic" fill="#0FB5AE">Human</text>
+    <text x="260" y="488" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-style="italic" fill="#DCB1FD">AI Agent</text>
+
+    <!-- Input field -->
+    <rect x="20" y="516" width="338" height="38" rx="5" fill="#034A61"/>
+    <line x1="34" y1="535" x2="36" y2="535" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+    <g transform="translate(338, 527)">
+      <path d="M0 8 L12 4 L0 0" fill="none" stroke="#0FB5AE" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <!-- ============ STEP 2: Start a TruLens session ============ -->
+  <g id="step2">
+    <rect x="398" y="0" width="422" height="277" rx="6" fill="url(#panelGrad)"/>
+
+    <!-- Inner title bar at TOP -->
+    <rect x="414" y="16" width="390" height="56" rx="4" fill="url(#titleBarGrad)"/>
+
+    <!-- Step number -->
+    <text x="432" y="55" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="30" font-weight="300" fill="#DCB1FD">2</text>
+
+    <!-- Title -->
+    <text x="466" y="41" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-weight="500" fill="#FFFFFF">Connect a database for logging</text>
+    <text x="466" y="61" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-weight="500" fill="#FFFFFF">traces and evaluations</text>
+
+    <!-- Agent icon (vertically centered, horizontally centered group) -->
+    <g transform="translate(443, 140)">
+      <!-- Simple agent/bot icon -->
+      <rect x="0" y="0" width="60" height="50" rx="8" fill="#DCB1FD"/>
+      <circle cx="18" cy="20" r="5" fill="#073B4D"/>
+      <circle cx="42" cy="20" r="5" fill="#073B4D"/>
+      <rect x="14" y="34" width="32" height="4" rx="2" fill="#073B4D"/>
+      <!-- Antenna -->
+      <line x1="30" y1="0" x2="30" y2="-10" stroke="#DCB1FD" stroke-width="2"/>
+      <circle cx="30" cy="-14" r="4" fill="#DCB1FD"/>
+      <!-- Label -->
+      <text x="30" y="70" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" fill="#DCB1FD" text-anchor="middle">Agent</text>
+    </g>
+
+    <!-- Arrow from agent to database -->
+    <g transform="translate(513, 165)">
+      <line x1="0" y1="0" x2="60" y2="0" stroke="#0FB5AE" stroke-width="2" stroke-dasharray="6,3"/>
+      <polygon points="60,-4 68,0 60,4" fill="#0FB5AE"/>
+    </g>
+
+    <!-- 3D Database cylinder (smaller, centered) -->
+    <g transform="translate(583, 100)" filter="url(#dbShadow)">
+      <ellipse cx="65" cy="100" rx="58" ry="15" fill="#021E28"/>
+      <rect x="7" y="15" width="116" height="85" fill="#034A61"/>
+      <ellipse cx="65" cy="100" rx="58" ry="15" fill="#045A78"/>
+      <ellipse cx="65" cy="15" rx="58" ry="15" fill="#067D9E"/>
+      <ellipse cx="65" cy="15" rx="46" ry="10" fill="none" stroke="#0FB5AE" stroke-width="0.5" opacity="0.3"/>
+    </g>
+
+    <!-- Database logos / labels (stacked to the right of db icon) -->
+    <g transform="translate(715, 108)">
+      <!-- SQLite -->
+      <rect x="0" y="0" width="50" height="18" rx="3" fill="#034A61"/>
+      <text x="25" y="13" font-family="system-ui, sans-serif" font-size="8" fill="#9CA3AF" text-anchor="middle">SQLite</text>
+      <!-- Postgres -->
+      <rect x="0" y="24" width="58" height="18" rx="3" fill="#034A61"/>
+      <text x="29" y="37" font-family="system-ui, sans-serif" font-size="8" fill="#9CA3AF" text-anchor="middle">Postgres</text>
+      <!-- Snowflake -->
+      <rect x="0" y="48" width="60" height="18" rx="3" fill="#034A61"/>
+      <text x="30" y="61" font-family="system-ui, sans-serif" font-size="8" fill="#9CA3AF" text-anchor="middle">Snowflake</text>
+      <!-- MySQL -->
+      <rect x="0" y="72" width="44" height="18" rx="3" fill="#034A61"/>
+      <text x="22" y="85" font-family="system-ui, sans-serif" font-size="8" fill="#9CA3AF" text-anchor="middle">MySQL</text>
+      <!-- Three dots suggesting more -->
+      <circle cx="12" cy="102" r="3" fill="#9CA3AF" opacity="0.5"/>
+      <circle cx="22" cy="102" r="3" fill="#9CA3AF" opacity="0.5"/>
+      <circle cx="32" cy="102" r="3" fill="#9CA3AF" opacity="0.5"/>
+    </g>
+  </g>
+
+  <!-- ============ STEP 3: Add metrics ============ -->
+  <g id="step3">
+    <rect x="398" y="296" width="422" height="277" rx="6" fill="url(#panelGrad)"/>
+
+    <!-- Dashboard mockup (was step 4 graphic) -->
+    <g transform="translate(427, 306)" filter="url(#shadow)">
+      <rect x="0" y="0" width="365" height="178" rx="5" fill="#FFFFFF"/>
+
+      <!-- Window chrome -->
+      <rect x="0" y="0" width="365" height="22" rx="5" fill="#F3F4F6"/>
+      <rect x="0" y="11" width="365" height="11" fill="#F3F4F6"/>
+      <circle cx="14" cy="11" r="4" fill="#EF4444"/>
+      <circle cx="28" cy="11" r="4" fill="#F59E0B"/>
+      <circle cx="42" cy="11" r="4" fill="#22C55E"/>
+
+      <!-- Nav sidebar -->
+      <rect x="0" y="22" width="68" height="156" fill="#073B4D"/>
+      <rect x="6" y="30" width="56" height="12" rx="2" fill="#0FB5AE" opacity="0.3"/>
+      <rect x="6" y="48" width="56" height="12" rx="2" fill="#0FB5AE"/>
+      <text x="12" y="58" font-family="system-ui, sans-serif" font-size="6.5" fill="#FFFFFF">Evaluations</text>
+
+      <!-- Table header -->
+      <rect x="75" y="34" width="283" height="14" fill="#F9FAFB"/>
+      <text x="82" y="44" font-family="system-ui, sans-serif" font-size="6" fill="#6B7280">User Input</text>
+      <text x="175" y="44" font-family="system-ui, sans-serif" font-size="6" fill="#6B7280">Response</text>
+      <text x="270" y="44" font-family="system-ui, sans-serif" font-size="6" fill="#6B7280">Latency</text>
+      <text x="310" y="44" font-family="system-ui, sans-serif" font-size="6" fill="#6B7280">Relevance</text>
+
+      <!-- Table rows -->
+      <line x1="75" y1="48" x2="358" y2="48" stroke="#E5E7EB" stroke-width="0.3"/>
+      <rect x="75" y="48" width="283" height="18" fill="#FFFFFF"/>
+      <rect x="75" y="66" width="283" height="18" fill="#F9FAFB"/>
+      <rect x="75" y="84" width="283" height="18" fill="#FFFFFF"/>
+      <rect x="75" y="102" width="283" height="18" fill="#F9FAFB"/>
+      <rect x="75" y="120" width="283" height="18" fill="#FFFFFF"/>
+      <rect x="75" y="138" width="283" height="18" fill="#F9FAFB"/>
+      <rect x="75" y="156" width="283" height="22" fill="#FFFFFF"/>
+
+      <!-- Row content placeholders -->
+      <rect x="82" y="55" width="80" height="4" rx="1" fill="#E5E7EB"/>
+      <rect x="175" y="55" width="70" height="4" rx="1" fill="#E5E7EB"/>
+
+      <rect x="82" y="73" width="75" height="4" rx="1" fill="#E5E7EB"/>
+      <rect x="175" y="73" width="65" height="4" rx="1" fill="#E5E7EB"/>
+
+      <rect x="82" y="91" width="82" height="4" rx="1" fill="#E5E7EB"/>
+      <rect x="175" y="91" width="72" height="4" rx="1" fill="#E5E7EB"/>
+
+      <rect x="82" y="109" width="68" height="4" rx="1" fill="#E5E7EB"/>
+      <rect x="175" y="109" width="60" height="4" rx="1" fill="#E5E7EB"/>
+
+      <rect x="82" y="127" width="78" height="4" rx="1" fill="#E5E7EB"/>
+      <rect x="175" y="127" width="68" height="4" rx="1" fill="#E5E7EB"/>
+
+      <rect x="82" y="145" width="72" height="4" rx="1" fill="#E5E7EB"/>
+      <rect x="175" y="145" width="62" height="4" rx="1" fill="#E5E7EB"/>
+
+      <rect x="82" y="165" width="85" height="4" rx="1" fill="#E5E7EB"/>
+      <rect x="175" y="165" width="55" height="4" rx="1" fill="#E5E7EB"/>
+
+      <!-- Latency values -->
+      <text x="274" y="60" font-family="monospace" font-size="5.5" fill="#9CA3AF">1.2s</text>
+      <text x="274" y="78" font-family="monospace" font-size="5.5" fill="#9CA3AF">0.8s</text>
+      <text x="274" y="96" font-family="monospace" font-size="5.5" fill="#9CA3AF">2.1s</text>
+      <text x="274" y="114" font-family="monospace" font-size="5.5" fill="#9CA3AF">0.9s</text>
+      <text x="274" y="132" font-family="monospace" font-size="5.5" fill="#9CA3AF">1.5s</text>
+      <text x="274" y="150" font-family="monospace" font-size="5.5" fill="#9CA3AF">3.4s</text>
+      <text x="274" y="170" font-family="monospace" font-size="5.5" fill="#9CA3AF">1.1s</text>
+
+      <!-- Relevance color badges (no numerical scores) -->
+      <rect x="310" y="53" width="28" height="10" rx="3" fill="#22C55E"/>
+      <rect x="343" y="53" width="14" height="10" rx="3" fill="#22C55E"/>
+
+      <rect x="310" y="71" width="28" height="10" rx="3" fill="#22C55E"/>
+      <rect x="343" y="71" width="14" height="10" rx="3" fill="#F59E0B"/>
+
+      <rect x="310" y="89" width="28" height="10" rx="3" fill="#F59E0B"/>
+      <rect x="343" y="89" width="14" height="10" rx="3" fill="#22C55E"/>
+
+      <rect x="310" y="107" width="28" height="10" rx="3" fill="#22C55E"/>
+      <rect x="343" y="107" width="14" height="10" rx="3" fill="#22C55E"/>
+
+      <rect x="310" y="125" width="28" height="10" rx="3" fill="#22C55E"/>
+      <rect x="343" y="125" width="14" height="10" rx="3" fill="#22C55E"/>
+
+      <rect x="310" y="143" width="28" height="10" rx="3" fill="#EF4444"/>
+      <rect x="343" y="143" width="14" height="10" rx="3" fill="#F59E0B"/>
+
+      <rect x="310" y="163" width="28" height="10" rx="3" fill="#22C55E"/>
+      <rect x="343" y="163" width="14" height="10" rx="3" fill="#22C55E"/>
+    </g>
+
+    <!-- Inner title bar at BOTTOM -->
+    <rect x="414" y="497" width="390" height="60" rx="4" fill="url(#titleBarGrad)"/>
+
+    <!-- Step number -->
+    <text x="432" y="538" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="30" font-weight="300" fill="#DCB1FD">3</text>
+
+    <!-- Title -->
+    <text x="466" y="524" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-weight="500" fill="#FFFFFF">Add metrics and evaluate the quality of</text>
+    <text x="466" y="544" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-weight="500" fill="#FFFFFF">your application responses</text>
+  </g>
+
+  <!-- ============ STEP 4: Explore traces ============ -->
+  <g id="step4">
+    <rect x="840" y="0" width="400" height="277" rx="6" fill="url(#panelGrad)"/>
+
+    <!-- Inner title bar at TOP -->
+    <rect x="856" y="16" width="368" height="60" rx="4" fill="url(#titleBarGrad)"/>
+
+    <!-- Step number -->
+    <text x="874" y="57" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="30" font-weight="300" fill="#DCB1FD">4</text>
+
+    <!-- Title -->
+    <text x="904" y="44" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-weight="500" fill="#FFFFFF">Explore traces and evaluation results across</text>
+    <text x="904" y="64" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-weight="500" fill="#FFFFFF">different app versions</text>
+
+    <!-- 3D Database cylinder with metric indicators (was step 3 graphic) -->
+    <g transform="translate(940, 90)" filter="url(#dbShadow)">
+      <ellipse cx="100" cy="140" rx="88" ry="22" fill="#021E28"/>
+      <rect x="12" y="22" width="176" height="118" fill="#034A61"/>
+      <ellipse cx="100" cy="140" rx="88" ry="22" fill="#045A78"/>
+      <ellipse cx="100" cy="22" rx="88" ry="22" fill="#067D9E"/>
+
+      <rect x="30" y="48" width="24" height="16" rx="3" fill="#DCB1FD"/>
+      <circle cx="72" cy="56" r="6" fill="#22C55E"/>
+      <circle cx="90" cy="56" r="6" fill="#22C55E"/>
+      <circle cx="108" cy="56" r="6" fill="#22C55E"/>
+      <circle cx="126" cy="56" r="6" fill="#22C55E"/>
+      <circle cx="144" cy="56" r="6" fill="#22C55E"/>
+
+      <rect x="30" y="74" width="24" height="16" rx="3" fill="#0FB5AE"/>
+      <circle cx="72" cy="82" r="6" fill="#22C55E"/>
+      <circle cx="90" cy="82" r="6" fill="#EF4444"/>
+      <circle cx="108" cy="82" r="6" fill="#22C55E"/>
+      <circle cx="126" cy="82" r="6" fill="#22C55E"/>
+      <circle cx="144" cy="82" r="6" fill="#22C55E"/>
+
+      <rect x="30" y="100" width="24" height="16" rx="3" fill="#DCB1FD"/>
+      <circle cx="72" cy="108" r="6" fill="#EF4444"/>
+      <circle cx="90" cy="108" r="6" fill="#EF4444"/>
+      <circle cx="108" cy="108" r="6" fill="#EF4444"/>
+      <circle cx="126" cy="108" r="6" fill="#EF4444"/>
+      <circle cx="144" cy="108" r="6" fill="#22C55E"/>
+    </g>
+  </g>
+
+  <!-- ============ STEP 5: Iterate and select ============ -->
+  <g id="step5">
+    <rect x="840" y="296" width="400" height="277" rx="6" fill="url(#panelGrad)"/>
+
+    <!-- Version comparison cards -->
+    <g transform="translate(860, 308)">
+      <!-- Card v1 (dimmer, not selected) -->
+      <g opacity="0.6">
+        <rect x="0" y="0" width="170" height="175" rx="6" fill="#034A61" stroke="#045A78" stroke-width="1"/>
+        <!-- Header -->
+        <rect x="0" y="0" width="170" height="28" rx="6" fill="#045A78"/>
+        <rect x="0" y="14" width="170" height="14" fill="#045A78"/>
+        <text x="85" y="19" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="600" fill="#FFFFFF" text-anchor="middle">App v1</text>
+        <!-- Config items -->
+        <text x="14" y="50" font-family="system-ui, sans-serif" font-size="8" fill="#9CA3AF">LLM</text>
+        <rect x="60" y="41" width="96" height="14" rx="7" fill="#073B4D"/>
+        <text x="108" y="51" font-family="system-ui, sans-serif" font-size="8" fill="#DCB1FD" text-anchor="middle">gpt-5-mini</text>
+
+        <text x="14" y="72" font-family="system-ui, sans-serif" font-size="8" fill="#9CA3AF">Search</text>
+        <rect x="60" y="63" width="68" height="14" rx="7" fill="#073B4D"/>
+        <text x="94" y="73" font-family="system-ui, sans-serif" font-size="8" fill="#DCB1FD" text-anchor="middle">Semantic</text>
+
+        <text x="14" y="94" font-family="system-ui, sans-serif" font-size="8" fill="#9CA3AF">Tools</text>
+        <rect x="60" y="85" width="56" height="14" rx="7" fill="#073B4D"/>
+        <text x="88" y="95" font-family="system-ui, sans-serif" font-size="8" fill="#DCB1FD" text-anchor="middle">ReAct</text>
+
+        <text x="14" y="116" font-family="system-ui, sans-serif" font-size="8" fill="#9CA3AF">Prompt</text>
+        <rect x="60" y="107" width="36" height="14" rx="7" fill="#073B4D"/>
+        <text x="78" y="117" font-family="system-ui, sans-serif" font-size="8" fill="#DCB1FD" text-anchor="middle">v1</text>
+
+        <!-- Eval results -->
+        <line x1="14" y1="128" x2="156" y2="128" stroke="#045A78" stroke-width="0.5"/>
+        <text x="14" y="142" font-family="system-ui, sans-serif" font-size="7" fill="#9CA3AF">Relevance</text>
+        <rect x="70" y="134" width="50" height="11" rx="3" fill="#F59E0B"/>
+        <text x="95" y="143" font-family="system-ui, sans-serif" font-size="7" fill="#FFF" text-anchor="middle">0.64</text>
+        <text x="14" y="156" font-family="system-ui, sans-serif" font-size="7" fill="#9CA3AF">Groundedness</text>
+        <rect x="82" y="148" width="50" height="11" rx="3" fill="#22C55E"/>
+        <text x="107" y="157" font-family="system-ui, sans-serif" font-size="7" fill="#FFF" text-anchor="middle">0.81</text>
+        <text x="14" y="170" font-family="system-ui, sans-serif" font-size="7" fill="#9CA3AF">Latency</text>
+        <text x="70" y="170" font-family="monospace" font-size="7" fill="#9CA3AF">2.1s</text>
+      </g>
+
+      <!-- Arrow between cards -->
+      <text x="183" y="95" font-family="system-ui, sans-serif" font-size="16" fill="#9CA3AF" text-anchor="middle">vs</text>
+
+      <!-- Card v2 (selected, highlighted) -->
+      <g>
+        <rect x="198" y="0" width="170" height="175" rx="6" fill="#034A61" stroke="#0FB5AE" stroke-width="2"/>
+        <!-- Header -->
+        <rect x="198" y="0" width="170" height="28" rx="6" fill="#0A5570"/>
+        <rect x="198" y="14" width="170" height="14" fill="#0A5570"/>
+        <text x="270" y="19" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="600" fill="#FFFFFF" text-anchor="middle">App v2</text>
+        <!-- Checkmark -->
+        <circle cx="348" cy="14" r="8" fill="#0FB5AE"/>
+        <path d="M344 14 L347 17 L353 11" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- Config items -->
+        <text x="212" y="50" font-family="system-ui, sans-serif" font-size="8" fill="#9CA3AF">LLM</text>
+        <rect x="258" y="41" width="96" height="14" rx="7" fill="#073B4D"/>
+        <text x="306" y="51" font-family="system-ui, sans-serif" font-size="8" fill="#0FB5AE" text-anchor="middle">claude-4-opus</text>
+
+        <text x="212" y="72" font-family="system-ui, sans-serif" font-size="8" fill="#9CA3AF">Search</text>
+        <rect x="258" y="63" width="68" height="14" rx="7" fill="#073B4D"/>
+        <text x="292" y="73" font-family="system-ui, sans-serif" font-size="8" fill="#0FB5AE" text-anchor="middle">Hybrid</text>
+
+        <text x="212" y="94" font-family="system-ui, sans-serif" font-size="8" fill="#9CA3AF">Tools</text>
+        <rect x="258" y="85" width="80" height="14" rx="7" fill="#073B4D"/>
+        <text x="298" y="95" font-family="system-ui, sans-serif" font-size="8" fill="#0FB5AE" text-anchor="middle">Function call</text>
+
+        <text x="212" y="116" font-family="system-ui, sans-serif" font-size="8" fill="#9CA3AF">Prompt</text>
+        <rect x="258" y="107" width="36" height="14" rx="7" fill="#073B4D"/>
+        <text x="276" y="117" font-family="system-ui, sans-serif" font-size="8" fill="#0FB5AE" text-anchor="middle">v3</text>
+
+        <!-- Eval results -->
+        <line x1="212" y1="128" x2="354" y2="128" stroke="#045A78" stroke-width="0.5"/>
+        <text x="212" y="142" font-family="system-ui, sans-serif" font-size="7" fill="#9CA3AF">Relevance</text>
+        <rect x="268" y="134" width="50" height="11" rx="3" fill="#22C55E"/>
+        <text x="293" y="143" font-family="system-ui, sans-serif" font-size="7" fill="#FFF" text-anchor="middle">0.93</text>
+        <text x="212" y="156" font-family="system-ui, sans-serif" font-size="7" fill="#9CA3AF">Groundedness</text>
+        <rect x="280" y="148" width="50" height="11" rx="3" fill="#22C55E"/>
+        <text x="305" y="157" font-family="system-ui, sans-serif" font-size="7" fill="#FFF" text-anchor="middle">0.95</text>
+        <text x="212" y="170" font-family="system-ui, sans-serif" font-size="7" fill="#9CA3AF">Latency</text>
+        <text x="268" y="170" font-family="monospace" font-size="7" fill="#0FB5AE">1.2s</text>
+      </g>
+    </g>
+
+    <!-- Inner title bar at BOTTOM -->
+    <rect x="856" y="500" width="368" height="57" rx="4" fill="url(#titleBarGrad)"/>
+
+    <!-- Step number -->
+    <text x="874" y="539" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="30" font-weight="300" fill="#DCB1FD">5</text>
+
+    <!-- Title -->
+    <text x="904" y="525" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-weight="500" fill="#FFFFFF">Iterate and select the best version</text>
+    <text x="904" y="545" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-weight="500" fill="#FFFFFF">of your app</text>
+  </g>
+</svg>

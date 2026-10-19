@@ -1,0 +1,8 @@
+{"question": "How do I reset MFA for a locked-out user?", "policy_id": "SEC-104", "expected_answer": "Verify the user with a backup code, then clear the enrolled factor and ask them to re-enrol within 24 hours."}
+{"question": "What is the refund window for an annual plan?", "policy_id": "BIL-210", "expected_answer": "Annual plans can be refunded in full within 30 days of the charge, prorated after that."}
+{"question": "Can a customer export their data before cancelling?", "policy_id": "DAT-118", "expected_answer": "Yes. Export stays available for 60 days after cancellation and is served as a signed download link."}
+{"question": "Who can approve a seat increase mid-contract?", "policy_id": "BIL-305", "expected_answer": "Any workspace owner can add seats mid-contract, and the added seats are billed prorated on the next invoice."}
+{"question": "What happens to shared links when a user is deprovisioned?", "policy_id": "SEC-221", "expected_answer": "Shared links created by the user are revoked immediately and their content is transferred to the workspace owner."}
+{"question": "How long are audit logs retained?", "policy_id": "DAT-402", "expected_answer": "Audit logs are retained for 13 months and can be streamed to a customer bucket on request."}
+{"question": "Is there a sandbox for testing webhooks?", "policy_id": "DEV-150", "expected_answer": "Yes. The sandbox workspace replays webhook deliveries for 7 days and never sends production data."}
+{"question": "What is the SLA for a severity one incident?", "policy_id": "OPS-011", "expected_answer": "Severity one incidents get a 15 minute first response and hourly updates until mitigation."}
