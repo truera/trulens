@@ -340,9 +340,10 @@ def test_result_columns_preserve_dataset_columns(column):
 
 
 def test_parallel_matches_serial():
+    query = " ".join(f"word{i}" for i in range(20))
     df = pd.DataFrame({
-        "q": [f"word{i} common" for i in range(20)],
-        "a": [f"word{i} common extra" for i in range(20)],
+        "q": [query] * 20,
+        "a": [" ".join(query.split()[:i]) for i in range(20)],
     })
     serial = BatchEvaluator(
         metrics=[_overlap_metric()], max_workers=1
@@ -350,6 +351,8 @@ def test_parallel_matches_serial():
     parallel = BatchEvaluator(
         metrics=[_overlap_metric()], max_workers=8
     ).evaluate(df)
+    # Distinct scores make reordered rows observable.
+    assert serial["overlap"].tolist() == [i / 20 for i in range(20)]
     pd.testing.assert_series_equal(
         serial["overlap"], parallel["overlap"], check_names=False
     )
