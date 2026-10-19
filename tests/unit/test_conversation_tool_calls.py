@@ -89,3 +89,23 @@ def test_mcp_fallback_and_tool_result_truncation() -> None:
         "result": "x" * 2_000 + "... [truncated]",
         "error": "mcp_tool_error",
     }
+
+
+def test_falsy_tool_error_is_normalized_to_none() -> None:
+    span = pd.Series(
+        _event(
+            span_id="successful-tool",
+            record_id="turn-1",
+            start_timestamp=datetime.now(),
+            span_type=SpanAttributes.SpanType.TOOL,
+            attributes={
+                GenAIAttributes.TOOL.NAME: "search",
+                GenAIAttributes.TOOL.CALL_RESULT: "ok",
+                SpanAttributes.CALL.ERROR: False,
+            },
+        )
+    )
+
+    call = computer._tool_call_from_span(span, 2_000)
+
+    assert call["error"] is None

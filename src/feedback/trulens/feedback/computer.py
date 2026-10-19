@@ -275,6 +275,8 @@ def _tool_call_from_span(
     error = attributes.get(ErrorAttributes.TYPE)
     if error is None:
         error = attributes.get(SpanAttributes.CALL.ERROR)
+    if not error:
+        error = None
     if error is None and attributes.get(SpanAttributes.MCP.OUTPUT_IS_ERROR):
         error = "mcp_tool_error"
 
