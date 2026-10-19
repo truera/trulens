@@ -1,6 +1,7 @@
 """Conversation-aware evaluation templates."""
 
 from inspect import cleandoc
+import json
 from typing import Any, ClassVar
 
 from trulens.feedback.templates.base import LIKERT_0_3_PROMPT
@@ -39,6 +40,18 @@ def conversation_to_prompt(records: list[Any] | str) -> str:
         ):
             if record.get("input") is not None:
                 transcript_lines.append(f"Turn {idx} User: {record['input']}")
+            for tool_call in record.get("tool_calls", []):
+                arguments = _tool_arguments_to_prompt(
+                    tool_call.get("arguments")
+                )
+                result = json.dumps(tool_call.get("result"), default=str)
+                line = (
+                    f"Turn {idx} Tool call: {tool_call.get('name')}"
+                    f"({arguments}) -> {result}"
+                )
+                if tool_call.get("error") is not None:
+                    line += f" [error: {tool_call['error']}]"
+                transcript_lines.append(line)
             if record.get("output") is not None:
                 transcript_lines.append(
                     f"Turn {idx} Assistant: {record['output']}"
@@ -53,6 +66,22 @@ def conversation_to_prompt(records: list[Any] | str) -> str:
             transcript_lines.append(f"Turn {idx}: {record!s}")
 
     return "\n".join(transcript_lines)
+
+
+def _tool_arguments_to_prompt(arguments: Any) -> str:
+    """Render tool arguments compactly for a conversation transcript."""
+    parsed = arguments
+    if isinstance(arguments, str):
+        try:
+            parsed = json.loads(arguments)
+        except (TypeError, ValueError):
+            return arguments
+    if isinstance(parsed, dict):
+        return ", ".join(
+            f"{key}={json.dumps(value, default=str)}"
+            for key, value in parsed.items()
+        )
+    return json.dumps(parsed, default=str)
 
 
 def _conversation_user_turns_to_prompt(records: list[Any] | str) -> str:
