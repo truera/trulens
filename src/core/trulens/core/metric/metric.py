@@ -1312,13 +1312,13 @@ Metric function signature:
                 num_unparsable = sum(
                     1
                     for result_val in result_vals
-                    if result_val == constants_utils.UNPARSABLE_SCORE
+                    if constants_utils.is_unparsable_score(result_val)
                 )
                 if num_unparsable > 0:
                     result_vals = [
                         result_val
                         for result_val in result_vals
-                        if result_val != constants_utils.UNPARSABLE_SCORE
+                        if not constants_utils.is_unparsable_score(result_val)
                     ]
                     warnings.warn(
                         f"{num_unparsable}/{num_eval}="
