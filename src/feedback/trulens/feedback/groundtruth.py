@@ -1377,8 +1377,9 @@ class GroundTruthAggregator(
             float: Expected calibration error
         """
 
-        # Undefined for empty input, as for brier_score.
-        if not score_confidence_pairs:
+        # Undefined for empty input, as for brier_score. `len` rather than
+        # truthiness: a NumPy array of pairs is accepted here.
+        if len(score_confidence_pairs) == 0:
             return np.nan
 
         assert len(score_confidence_pairs) == len(self.true_labels)
@@ -1436,8 +1437,9 @@ class GroundTruthAggregator(
             float: Mean absolute error
         """
 
-        # Undefined for empty input, as for brier_score.
-        if not scores:
+        # Undefined for empty input, as for brier_score, whatever the labels
+        # hold. `len` rather than truthiness: a NumPy array is accepted here.
+        if len(scores) == 0:
             return np.nan
 
         # TODO: refactor this, this is to deal with COT type of response from feedback functions

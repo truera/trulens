@@ -5,6 +5,7 @@ import io
 import logging
 import math
 
+import numpy as np
 import pytest
 from trulens.core.utils.constants import UNPARSABLE_SCORE
 from trulens.feedback import groundtruth as feedback_groundtruth
@@ -128,3 +129,34 @@ def test_mae_refuses_a_score_list_that_does_not_match_the_labels():
 
     with pytest.raises(ValueError, match="3 labels and 2 scores"):
         aggregator.mae([1.0, 0.0])
+
+
+@pytest.mark.parametrize("method", ["brier_score", "mae", "ece"])
+def test_empty_input_is_undefined_even_when_labels_exist(method):
+    # brier_score has always answered nan here (test_brier_score pins it); mae
+    # and ece used to raise. All three now agree.
+    aggregator = feedback_groundtruth.GroundTruthAggregator(
+        true_labels=[1, 0, 1]
+    )
+
+    assert math.isnan(getattr(aggregator, method)([]))
+
+
+def test_mae_accepts_a_numpy_array():
+    aggregator = feedback_groundtruth.GroundTruthAggregator(
+        true_labels=[1, 0, 1]
+    )
+
+    assert aggregator.mae(np.array([1.0, 0.0, 1.0])) == 0.0
+    assert aggregator.mae(np.array([1.0, UNPARSABLE_SCORE, 1.0])) == 0.0
+    assert math.isnan(aggregator.mae(np.array([])))
+
+
+def test_ece_accepts_a_numpy_array():
+    aggregator = feedback_groundtruth.GroundTruthAggregator(true_labels=[1, 1])
+
+    assert aggregator.ece(np.array([[1.0, 1.0], [1.0, 1.0]])) == 0.0
+    assert (
+        aggregator.ece(np.array([[1.0, 1.0], [UNPARSABLE_SCORE, 1.0]])) == 0.0
+    )
+    assert math.isnan(aggregator.ece(np.empty((0, 2))))
