@@ -12,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-providers-cortex/#files
-  sha256: c39135a14e82f932ff3eaefa33ba607dea7717a36eb4a0778160e4861b4d3e6f
+  sha256: 3fbfb6f6d7d47ab5733406431fabf2463d286349572df26440c43b1af7aacbbd
   {% endif %}
 
 build:
