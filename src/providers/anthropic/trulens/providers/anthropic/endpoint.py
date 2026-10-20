@@ -87,6 +87,14 @@ class AnthropicCostComputer:
         input_tokens = getattr(usage, "input_tokens", 0) if usage else 0
         output_tokens = getattr(usage, "output_tokens", 0) if usage else 0
         total_tokens = input_tokens + output_tokens
+        cache_read_tokens = (
+            getattr(usage, "cache_read_input_tokens", 0) or 0 if usage else 0
+        )
+        cache_write_tokens = (
+            getattr(usage, "cache_creation_input_tokens", 0) or 0
+            if usage
+            else 0
+        )
 
         result: dict[str, Any] = {
             SpanAttributes.COST.CURRENCY: "USD",
@@ -94,6 +102,8 @@ class AnthropicCostComputer:
             SpanAttributes.COST.NUM_PROMPT_TOKENS: input_tokens,
             SpanAttributes.COST.NUM_COMPLETION_TOKENS: output_tokens,
             SpanAttributes.COST.NUM_REASONING_TOKENS: 0,
+            SpanAttributes.COST.NUM_CACHE_READ_TOKENS: cache_read_tokens,
+            SpanAttributes.COST.NUM_CACHE_WRITE_TOKENS: cache_write_tokens,
             SpanAttributes.COST.MODEL: model_name,
         }
 
@@ -122,6 +132,12 @@ def _build_cost(cost_info: dict[str, Any]) -> base_schema.Cost:
         ),
         n_reasoning_tokens=cost_info.get(
             SpanAttributes.COST.NUM_REASONING_TOKENS, 0
+        ),
+        n_cache_read_tokens=cost_info.get(
+            SpanAttributes.COST.NUM_CACHE_READ_TOKENS, 0
+        ),
+        n_cache_write_tokens=cost_info.get(
+            SpanAttributes.COST.NUM_CACHE_WRITE_TOKENS, 0
         ),
     )
     cost_val = cost_info.get(SpanAttributes.COST.COST)
