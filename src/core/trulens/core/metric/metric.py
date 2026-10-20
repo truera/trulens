@@ -48,6 +48,7 @@ from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import select as select_schema
 from trulens.core.schema import types as types_schema
+from trulens.core.utils import constants as constants_utils
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
@@ -1300,7 +1301,40 @@ Metric function signature:
                 )
                 result = float("nan")
             else:
-                if isinstance(result_vals[0], float):
+                # A judge-backed metric reports UNPARSABLE_SCORE rather than a
+                # verdict when its reply carried no parseable score. Averaging
+                # the sentinel in disguises that failure as a mediocre result
+                # (1.0 and -1.0 would average to 0.0), so drop it first the way
+                # BatchEvaluator._aggregate_scores, the OTEL computation and
+                # the leaderboard already do. Only the exact sentinel is
+                # dropped; a genuine negative score such as -0.5 is still
+                # aggregated.
+                num_unparsable = sum(
+                    1
+                    for result_val in result_vals
+                    if constants_utils.is_unparsable_score(result_val)
+                )
+                if num_unparsable > 0:
+                    result_vals = [
+                        result_val
+                        for result_val in result_vals
+                        if not constants_utils.is_unparsable_score(result_val)
+                    ]
+                    warnings.warn(
+                        f"{num_unparsable}/{num_eval}="
+                        f"{100.0 * num_unparsable / num_eval:0.1f}% "
+                        "evaluation(s) produced no parseable score (sentinel "
+                        f"{constants_utils.UNPARSABLE_SCORE}) and were left out "
+                        "of the aggregate.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
+
+                if not result_vals:
+                    # Nothing parsable is left to aggregate, so report the
+                    # sentinel instead of inventing a number.
+                    result = constants_utils.UNPARSABLE_SCORE
+                elif isinstance(result_vals[0], float):
                     result_vals = np.array(result_vals)
                     result = self.agg(result_vals)
                 else:
