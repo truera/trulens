@@ -1327,7 +1327,7 @@ Metric function signature:
                         f"{constants_utils.UNPARSABLE_SCORE}) and were left out "
                         "of the aggregate.",
                         UserWarning,
-                        stacklevel=1,
+                        stacklevel=2,
                     )
 
                 if not result_vals:

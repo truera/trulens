@@ -6,6 +6,7 @@ every test in the importing file.
 """
 
 import os
+import warnings
 
 # CRITICAL: Set OTEL environment variable BEFORE any TruLens imports
 # This must be done before any TruSession is created to avoid freezing the experimental flag
@@ -99,3 +100,33 @@ class TestMetricRunUnparsable(TestCase):
 
         self.assertEqual(res.result, constants_utils.UNPARSABLE_SCORE)
         self.assertEqual(res.status, feedback_schema.FeedbackResultStatus.DONE)
+
+    def test_warning_points_at_the_calling_code(self) -> None:
+        """The sentinel warning blames the caller, not ``Metric.run``'s internals."""
+
+        f = core_feedback.Feedback(imp=test_feedbacks.echo_score).on(
+            val=select_schema.Select.RecordCalls.somemethod.args.num[:]
+        )
+
+        source_data = {
+            "__record__": {
+                "app": {
+                    "somemethod": {
+                        "args": {"num": [0.5, constants_utils.UNPARSABLE_SCORE]}
+                    }
+                }
+            }
+        }
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            f.run(source_data=source_data)
+
+        sentinel_warnings = [
+            w for w in caught if "no parseable score" in str(w.message)
+        ]
+        self.assertEqual(len(sentinel_warnings), 1)
+        # stacklevel=2 walks past Metric.run to this call site, so the warning
+        # names the metric invocation that produced the sentinel. stacklevel=1
+        # would point at metric.py and hide which of the caller's metrics it was.
+        self.assertEqual(sentinel_warnings[0].filename, __file__)
