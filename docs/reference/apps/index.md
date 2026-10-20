@@ -33,6 +33,14 @@ Apps derive from [AppDefinition][trulens.core.schema.app.AppDefinition] and
     pip install trulens-apps-langgraph
     ```
 
+- [TruAutoGen][trulens.apps.autogen.TruAutoGen] in package `trulens-apps-autogen`.
+  Records an AutoGen (AG2) multi-agent conversation: agent turns, tool calls,
+  and group chat speaker selection.
+
+    ```bash
+    pip install trulens-apps-autogen
+    ```
+
 - [TruRails][trulens.apps.nemo.TruRails] in package `trulens-apps-nemo`.
 
     !!! warning "Not installable alongside LangGraph"
