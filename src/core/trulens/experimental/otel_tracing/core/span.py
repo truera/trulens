@@ -379,12 +379,23 @@ def set_genai_generation_attributes(
                     "parameters": schema,
                 })
         if definitions:
-            retained_definitions = []
+            serialized_definitions = []
+            serialized_length = 2  # Opening and closing brackets.
             for definition in definitions:
-                candidate = retained_definitions + [definition]
-                if len(json.dumps(candidate, default=str)) <= 16_000:
-                    retained_definitions.append(definition)
-            serialized = json.dumps(retained_definitions, default=str)
+                serialized_definition = json.dumps(definition, default=str)
+                separator_length = 2 if serialized_definitions else 0
+                if (
+                    serialized_length
+                    + separator_length
+                    + len(serialized_definition)
+                    > 16_000
+                ):
+                    continue
+                serialized_definitions.append(serialized_definition)
+                serialized_length += separator_length + len(
+                    serialized_definition
+                )
+            serialized = f"[{', '.join(serialized_definitions)}]"
             set_span_attribute_safely(
                 span, GenAIAttributes.TOOL.DEFINITIONS, serialized
             )

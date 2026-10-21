@@ -747,6 +747,7 @@ class Selector:
         )
         if self.span_attributes_processor is not None:
             ret.value = self.span_attributes_processor(attributes)
+            # A processor can request the real span id with a None placeholder.
             if (
                 isinstance(ret.value, dict)
                 and ret.value.get("span_id") is None
@@ -883,7 +884,13 @@ class Selector:
 
     @staticmethod
     def select_tool_definitions(ignore_none_values: bool = True) -> Selector:
-        """Return tool parameter schemas keyed by tool name."""
+        """Return tool parameter schemas keyed by tool name.
+
+        The normalized ``gen_ai.tool.definitions`` attribute is preferred.
+        Recorded ``call.kwargs.tools`` is a best-effort compatibility fallback
+        for older traces created before normalized definition recording; its
+        provider-specific serialization may not always be parseable.
+        """
 
         def definitions_processor(
             attributes: Dict[str, Any],
@@ -898,10 +905,13 @@ class Selector:
                         pass
                 return {mcp_name: mcp_schema}
 
-            definitions = attributes.get(
-                GenAIAttributes.TOOL.DEFINITIONS,
-                attributes.get(f"{SpanAttributes.CALL.KWARGS}.tools"),
-            )
+            definitions = attributes.get(GenAIAttributes.TOOL.DEFINITIONS)
+            if definitions is None:
+                # Best-effort support for traces recorded before the normalized
+                # GenAI tool-definitions attribute was emitted.
+                definitions = attributes.get(
+                    f"{SpanAttributes.CALL.KWARGS}.tools"
+                )
             if isinstance(definitions, str):
                 try:
                     definitions = json.loads(definitions)

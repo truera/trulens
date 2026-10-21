@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
@@ -82,6 +83,22 @@ class TestOtelSelector(OtelTestCase):
         ).value
         self.assertEqual(provider, {"search": {"type": "object"}})
         self.assertEqual(mcp, {"read_file": {"type": "object"}})
+
+    def test_select_tool_definitions_supports_legacy_call_kwargs(self) -> None:
+        selector = Selector.select_tool_definitions()
+        definitions = selector.process_span(
+            "legacy-generation",
+            {
+                f"{SpanAttributes.CALL.KWARGS}.tools": json.dumps([
+                    {
+                        "name": "search",
+                        "parameters": {"type": "object"},
+                    }
+                ])
+            },
+        ).value
+
+        self.assertEqual(definitions, {"search": {"type": "object"}})
 
     def test_conversation_selectors(self) -> None:
         self.assertEqual(
