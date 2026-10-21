@@ -1332,7 +1332,8 @@ def instrument_tools(
     """Instrument a tools dictionary in place for clean tool span names.
 
     Replaces each tool in the dictionary with a wrapper that produces spans
-    named after the tool (e.g., "add", "multiply") when invoke() is called.
+    named after the tool (e.g., "add", "multiply") when `invoke_method` is
+    called. Other methods are passed through to the tool untraced.
 
     This is the least invasive way to get clean tool spans - no changes
     to app code required beyond this one setup call.
@@ -1362,17 +1363,20 @@ def instrument_tools(
             span_type=SpanAttributes.SpanType.TOOL,
         )(original_invoke)
 
-        # Create a wrapper that delegates to the original tool
-        # but uses the instrumented invoke
+        # Create a wrapper that delegates to the original tool but uses the
+        # instrumented method under the name it was taken from, so
+        # `invoke_method="ainvoke"` traces `ainvoke` and leaves `invoke` alone.
         class ToolWrapper:
-            def __init__(self, original_tool, instrumented_invoke):
+            def __init__(
+                self, original_tool, invoke_method, instrumented_invoke
+            ):
                 self._tool = original_tool
                 self._instrumented_invoke = instrumented_invoke
-
-            def invoke(self, *args, **kwargs):
-                return self._instrumented_invoke(*args, **kwargs)
+                setattr(self, invoke_method, instrumented_invoke)
 
             def __getattr__(self, name):
                 return getattr(self._tool, name)
 
-        tools_by_name[name] = ToolWrapper(tool, instrumented_invoke)
+        tools_by_name[name] = ToolWrapper(
+            tool, invoke_method, instrumented_invoke
+        )
