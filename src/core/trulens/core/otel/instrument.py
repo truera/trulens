@@ -324,6 +324,7 @@ def _set_span_attributes(
             temperature=resolved_attributes.get("temperature"),
             provider_name=resolved_attributes.get("provider_name"),
             operation_name=resolved_attributes.get("operation_name"),
+            tools=all_kwargs.get("tools"),
         )
         add_genai_inference_event(
             span,

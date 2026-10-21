@@ -2,13 +2,107 @@
 
 from __future__ import annotations
 
+import json
 import re
 from typing import Any, Dict, List, Optional, Sequence, Tuple
+
+from trulens.core.utils import imports as import_utils
+
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
+        "jsonschema", purpose="validating tool call arguments"
+    )
+) as _jsonschema_opt:
+    import jsonschema
 
 __all__ = [
     "DEFAULT_FALLBACK_PHRASES",
     "conversation_repetition",
+    "tool_argument_validity",
 ]
+
+
+def tool_argument_validity(
+    tool_calls: List[Dict[str, Any]],
+    tool_definitions: Dict[str, Any] | List[Dict[str, Any]],
+) -> Tuple[Optional[float], Dict[str, Any]]:
+    """Validate tool-call arguments against their recorded JSON schemas.
+
+    Calls whose tool name has no known schema are excluded from the score.
+    Invalid calls are reported with their span ids and validation errors.
+    """
+    _jsonschema_opt.assert_installed(jsonschema)
+
+    definitions: Dict[str, Any] = {}
+    definition_groups = (
+        tool_definitions
+        if isinstance(tool_definitions, list)
+        else [tool_definitions]
+    )
+    for group in definition_groups:
+        if isinstance(group, dict):
+            definitions.update(group)
+
+    validators: Dict[str, Any] = {}
+    schema_errors: Dict[str, str] = {}
+    for name, schema in definitions.items():
+        try:
+            validator_class = jsonschema.validators.validator_for(schema)
+            validator_class.check_schema(schema)
+            validators[name] = validator_class(schema)
+        except Exception as exc:
+            schema_errors[name] = str(exc)
+
+    known_calls = 0
+    valid_calls = 0
+    invalid_calls: List[Dict[str, Any]] = []
+    for call in tool_calls:
+        if not isinstance(call, dict):
+            continue
+        name = call.get("name")
+        if name not in validators:
+            continue
+        arguments = call.get("arguments")
+        if isinstance(arguments, str):
+            try:
+                arguments = json.loads(arguments)
+            except json.JSONDecodeError as exc:
+                known_calls += 1
+                invalid_calls.append({
+                    "span_id": call.get("span_id"),
+                    "name": name,
+                    "errors": [f"Arguments are not valid JSON: {exc.msg}"],
+                })
+                continue
+        try:
+            errors = sorted(
+                validators[name].iter_errors(arguments),
+                key=lambda error: list(error.path),
+            )
+        except Exception as exc:
+            schema_errors[name] = str(exc)
+            validators.pop(name, None)
+            continue
+        known_calls += 1
+        if not errors:
+            valid_calls += 1
+            continue
+        invalid_calls.append({
+            "span_id": call.get("span_id"),
+            "name": name,
+            "errors": [error.message for error in errors],
+        })
+
+    score = round(valid_calls / known_calls, 2) if known_calls else None
+    return score, {
+        "invalid_calls": invalid_calls,
+        "schema_errors": [
+            {"name": name, "error": error}
+            for name, error in schema_errors.items()
+        ],
+        "num_calls_with_known_schema": known_calls,
+        "num_valid_calls": valid_calls,
+    }
 
 
 #: Fallback phrases checked by [conversation_repetition][trulens.feedback.
