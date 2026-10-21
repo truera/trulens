@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncGenerator
 from collections.abc import Callable
 from collections.abc import Sequence
 import contextlib
@@ -459,6 +460,51 @@ def _wraps_coroutine_function(func: Callable) -> bool:
     return unwrapped is not func and inspect.iscoroutinefunction(unwrapped)
 
 
+def _wraps_async_generator_function(func: Callable) -> bool:
+    """Whether a sync `func` is a decorator wrapper around an async generator.
+
+    The streaming counterpart of `_wraps_coroutine_function`:
+    `inspect.isasyncgenfunction` does not follow `__wrapped__` either.
+    """
+    try:
+        unwrapped = inspect.unwrap(func)
+    except ValueError:
+        return False
+    return unwrapped is not func and inspect.isasyncgenfunction(unwrapped)
+
+
+async def _stream_in_call(
+    result: AsyncGenerator, call: _DetachedFunctionCall, finish: Callable
+) -> AsyncGenerator:
+    """Re-yield an async generator inside a detached function call span.
+
+    Each step of `result` runs with the span current, so spans it creates are
+    children of it. When the stream ends, raises, or is abandoned by the
+    consumer, `finish` is called with the consumed chunks, the exception (if
+    any), and the time of the first yield, and ends the span.
+    """
+    chunks = []
+    first_yield: float | None = None
+    func_exception: Exception | None = None
+    try:
+        while True:
+            with call.step():
+                try:
+                    curr = await result.__anext__()
+                except StopAsyncIteration:
+                    break
+            if first_yield is None:
+                first_yield = time.perf_counter()
+            chunks.append(curr)
+            yield curr
+    except Exception as e:
+        func_exception = e
+    finally:
+        # Also runs when the consumer abandons the stream, so a partially
+        # consumed stream is still measured.
+        finish(chunks, func_exception, first_yield=first_yield)
+
+
 class _DetachedFunctionCall:
     """Holds a function call span open without leaving it current in the caller.
 
@@ -673,21 +719,20 @@ class instrument:
             )
             span = call.__enter__()
             started = time.perf_counter()
-            first_yield: float | None = None
-            streamed = False
 
-            def finish(ret, func_exception, cancelled=None):
+            def finish(ret, func_exception, cancelled=None, **stream):
                 # Set the span attributes, then end the span. Like the other
                 # wrappers, this raises `func_exception` (or `cancelled`)
-                # once the span has ended.
+                # once the span has ended. `_stream_in_call` passes
+                # `first_yield`, which marks `ret` as the consumed chunks.
                 exc = cancelled
                 try:
                     with call.step():
-                        if streamed:
+                        if stream:
                             _set_streaming_attributes(
                                 span,
                                 started,
-                                first_yield,
+                                stream["first_yield"],
                                 len(ret) if ret else 0,
                             )
                         _finalize_span(
@@ -736,39 +781,18 @@ class instrument:
             # yielding itself, just as a sync function can return a
             # generator. Keep this span open until the caller is done with
             # the stream, and record what they actually consumed.
-            streamed = True
-
-            async def stream(result):
-                nonlocal first_yield
-                chunks = []
-                func_exception: Exception | None = None
-                try:
-                    while True:
-                        with call.step():
-                            try:
-                                curr = await result.__anext__()
-                            except StopAsyncIteration:
-                                break
-                        if first_yield is None:
-                            first_yield = time.perf_counter()
-                        chunks.append(curr)
-                        yield curr
-                except Exception as e:
-                    func_exception = e
-                finally:
-                    # Also runs when the consumer abandons the stream, so a
-                    # partially consumed stream is still measured.
-                    finish(chunks, func_exception)
-
-            return stream(ret)
+            return _stream_in_call(ret, call, finish)
 
         @wrapt.decorator
         def coroutine_returning_wrapper(func, instance, args, kwargs):
             # A sync callable around an `async def`, such as a plain
             # `functools.wraps` decorator. It runs at call time and usually
             # returns a coroutine, so the span stays open until the caller
-            # awaits that coroutine. If it returns anything else (it ran the
-            # coroutine itself), it is treated like any sync function.
+            # awaits that coroutine. Around an async generator function it
+            # returns an async generator instead, and the span stays open
+            # until the caller is done with the stream. If it returns anything
+            # else (it ran the coroutine itself), it is treated like any sync
+            # function.
             if not self.enabled or get_baggage("__trulens_recording__") is None:
                 return func(*args, **kwargs)
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
@@ -781,14 +805,23 @@ class instrument:
                 )
             )
             span = call.__enter__()
+            started = time.perf_counter()
 
-            def finish(ret, func_exception, cancelled=None):
+            def finish(ret, func_exception, cancelled=None, **stream):
                 # Set the span attributes, then end the span. Like the other
                 # wrappers, this raises `func_exception` (or `cancelled`)
-                # once the span has ended.
+                # once the span has ended. `_stream_in_call` passes
+                # `first_yield`, which marks `ret` as the consumed chunks.
                 exc = cancelled
                 try:
                     with call.step():
+                        if stream:
+                            _set_streaming_attributes(
+                                span,
+                                started,
+                                stream["first_yield"],
+                                len(ret) if ret else 0,
+                            )
                         _finalize_span(
                             span,
                             self.span_type,
@@ -821,6 +854,8 @@ class instrument:
                     result = func(*args, **kwargs)
             except Exception as e:
                 return finish(None, e)
+            if inspect.isasyncgen(result):
+                return _stream_in_call(result, call, finish)
             if not inspect.iscoroutine(result):
                 return finish(result, None)
 
@@ -914,7 +949,9 @@ class instrument:
             ret = async_generator_wrapper(func)
         elif inspect.iscoroutinefunction(func):
             ret = async_wrapper(func)
-        elif _wraps_coroutine_function(func):
+        elif _wraps_coroutine_function(func) or (
+            _wraps_async_generator_function(func)
+        ):
             ret = coroutine_returning_wrapper(func)
         else:
             ret = sync_wrapper(func)
