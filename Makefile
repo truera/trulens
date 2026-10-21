@@ -311,9 +311,9 @@ test-%-all: env-tests env-tests-optional env-tests-snowflake
 # OTEL tests require process isolation due to async background threads
 # NOTE: pytest-xdist MUST be installed for OTEL tests to pass in batch
 # It should be installed via: poetry install --with dev
+# With .ONESHELL, an OTEL failure must stop before the next test phase.
 test-unit:
-	@set -e
-	# With .ONESHELL, an OTEL failure must stop before the next test phase.
+	@set -e; \
 	if poetry run python -c "import xdist" 2>/dev/null; then \
 		echo "✅ Running OTEL tests with pytest-xdist for process isolation..."; \
 		$(PYTEST_ISOLATED) tests/unit/test_otel*.py; \
