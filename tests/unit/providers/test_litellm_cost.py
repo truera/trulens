@@ -15,6 +15,7 @@ from unittest import mock
 try:
     import litellm
     from trulens.core.schema import base as base_schema
+    from trulens.otel.semconv.trace import SpanAttributes
     from trulens.providers.litellm import endpoint as litellm_endpoint
 except Exception:  # pragma: no cover
     litellm_endpoint = None
@@ -68,6 +69,36 @@ class TestLiteLLMCostCallback(unittest.TestCase):
 
         self.assertAlmostEqual(self.callback.cost.cost, expected)
         self.assertEqual(self.callback.cost.n_tokens, 1620)
+
+    def test_response_without_usage_counts_zero_tokens(self):
+        # Some providers send no usage; litellm leaves response.usage as None.
+        response = litellm.ModelResponse(
+            model=_MODEL,
+            choices=[{"message": {"role": "assistant", "content": "ok"}}],
+        )
+        self.assertIsNone(getattr(response, "usage", None))
+
+        self.callback.handle_generation(response)
+
+        self.assertEqual(self.callback.cost.n_tokens, 0)
+        self.assertEqual(self.callback.cost.n_prompt_tokens, 0)
+        self.assertEqual(self.callback.cost.n_completion_tokens, 0)
+        self.assertEqual(self.callback.cost.n_requests, 1)
+
+    def test_cost_computer_response_without_usage(self):
+        response = litellm.ModelResponse(
+            model=_MODEL,
+            choices=[{"message": {"role": "assistant", "content": "ok"}}],
+        )
+
+        with mock.patch.object(
+            litellm_endpoint, "completion_cost", return_value=0.0
+        ):
+            attributes = litellm_endpoint.LiteLLMCostComputer.handle_response(
+                response
+            )
+
+        self.assertEqual(attributes[SpanAttributes.COST.NUM_TOKENS], 0)
 
 
 if __name__ == "__main__":
