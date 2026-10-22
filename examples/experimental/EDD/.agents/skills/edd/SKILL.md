@@ -12,7 +12,7 @@ TruLens core patterns (`Feedback`, `Selector`, `SpanAttributes`).
 Stack: LangGraph orchestrates retrieve → generate; retrieval embeddings are OpenAI
 (`text-embedding-3-small`, requires `OPENAI_API_KEY`); generation uses OpenAI
 (`gpt-5.6-luna`); TruLens feedback judges use the **RAG Triad** with OpenAI
-(`gpt-4.1-nano`);
+(`gpt-5.6-luna`);
 vector database is Qdrant (`QDRANT_URL`/`QDRANT_API_KEY`). Traces and evaluations are recorded via
 TruLens OpenTelemetry instrumentation and saved in TruLens database.
 
