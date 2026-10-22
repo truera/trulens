@@ -5231,7 +5231,8 @@ class LLMProvider(core_provider.Provider):
             when no position was disputed, and metadata with the dispute
             count, flip count, unsupported flip count, the first unsupported
             flip turn, and for each dispute whether the pre-check or the judge
-            decided it.
+            decided it. Each user pushback is its own dispute, so a position
+            that gives way to two separate pushbacks counts as two flips.
 
         Raises:
             TypeError: If records is not a list of records or messages.
