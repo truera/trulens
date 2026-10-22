@@ -23,6 +23,7 @@ class TestFeedbackTemplateExports(unittest.TestCase):
             "FeedbackTemplate",
             "OutputSpace",
             "RequirementSatisfaction",
+            "StanceStability",
         }
 
         for symbol in expected:
