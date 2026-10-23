@@ -10,6 +10,9 @@ import asyncio
 import unittest
 
 import httpx
+from opentelemetry import context as context_api
+from opentelemetry.baggage import get_baggage
+from opentelemetry.baggage import set_baggage
 from opentelemetry.context import Context
 from opentelemetry.propagate import set_global_textmap
 from opentelemetry.propagators.textmap import TextMapPropagator
@@ -75,6 +78,43 @@ class TestInjectTraceContext(_TracingTestCase):
             propagation.inject_trace_context(headers)
 
         self.assertEqual("Bearer test", headers["authorization"])
+
+    def _attach_baggage(self, key: str, value: object) -> None:
+        token = context_api.attach(set_baggage(key, value))
+        self.addCleanup(context_api.detach, token)
+
+    def test_does_not_send_trulens_baggage(self) -> None:
+        # A recording keeps live objects and record ids in baggage. None of it
+        # belongs on a request to a third-party host.
+        self._attach_baggage("__trulens_recording__", object())
+        self._attach_baggage("ai.observability.record_id", "record-1")
+
+        with self.tracer.start_as_current_span("outbound"):
+            headers = {}
+            self.assertTrue(propagation.inject_trace_context(headers))
+
+        self.assertIn("traceparent", headers)
+        self.assertNotIn("baggage", headers)
+
+    def test_sends_application_baggage(self) -> None:
+        self._attach_baggage("__trulens_recording__", object())
+        self._attach_baggage("tenant", "acme")
+
+        with self.tracer.start_as_current_span("outbound"):
+            headers = {}
+            propagation.inject_trace_context(headers)
+
+        self.assertEqual("tenant=acme", headers["baggage"])
+
+    def test_leaves_trulens_baggage_in_the_active_context(self) -> None:
+        # Instrumentation reads its state back from baggage after the request,
+        # so filtering what is sent must not remove it locally.
+        recording = object()
+        self._attach_baggage("__trulens_recording__", recording)
+
+        with self.tracer.start_as_current_span("outbound"):
+            propagation.inject_trace_context({})
+            self.assertIs(recording, get_baggage("__trulens_recording__"))
 
 
 _TRACE_ID = "07f8c88f000f3854aedaf55fa46a8b71"
