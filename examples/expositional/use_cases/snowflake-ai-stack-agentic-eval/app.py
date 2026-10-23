@@ -38,7 +38,7 @@ if st.session_state.multi_agent_workflow is None:
     st.session_state.multi_agent_workflow = MultiAgentWorkflow(
         search_max_results=int(os.environ.get("SEARCH_MAX_RESULTS", "5")),
         llm_model=os.environ.get("LLM_MODEL_NAME", "gpt-4o"),
-        reasoning_model=os.environ.get("REASONING_MODEL_NAME", "o1"),
+        reasoning_model=os.environ.get("REASONING_MODEL_NAME", "gpt-5.6-sol"),
     )
     traj_provider = CustomTrajEval(model_engine=os.environ.get("LLM_MODEL_NAME", "gpt-4o")) # note: reasoning model is not yet supported in TruLens OpenAI provider
 
