@@ -145,6 +145,32 @@ f_explicit_requirements = Metric(
 If the request is available, omit `reference_requirements`; TruLens extracts
 requirements from the request first, then evaluates them against the output.
 
+Escalation Correctness checks whether the assistant handed the conversation to
+a human when, and only when, an escalation policy requires it. The judge labels
+each turn that required a handoff and each handoff that was not needed, and the
+score is computed from those labels on a 0-3 scale, normalized to [0, 1]. A
+required handoff scores 3 on its turn, 2 one turn late, 1 later, and 0 when it
+is missed or only offered. A handoff that was not needed scores 0. The lowest
+outcome counts. Pass the policy with `escalation_policy`; without one, the
+assistant is expected to escalate when the user asks for a human or the request
+is outside its tools. Use `escalation_correctness_with_cot_reasons` to
+configure this metric.
+
+```python
+f_escalation_correctness = Metric(
+    implementation=provider.escalation_correctness_with_cot_reasons,
+    name="Escalation Correctness",
+).with_arguments(
+    escalation_policy="Transfer billing disputes to a human.",
+).on_conversation()
+```
+
+The metadata lists each trigger with its turn, outcome, and 0-3 `raw_score`,
+each unnecessary handoff, and each offer of a human that was not needed and
+never acted on. Those offers are not penalized unless you pass
+`penalize_offers=True`; the policy text does not switch this on. Turn numbers
+follow the `Turn N` labels of structured `{"input", "output"}` records.
+
 The selected value has this shape:
 
 ```python
@@ -200,9 +226,10 @@ f_conversation_coherence = Metric(
 
 The conversation-level metrics are `coherence_across_turns`,
 `conversation_helpfulness`, `topic_adherence`, `agent_goal_accuracy`,
-`requirement_satisfaction`, and the deterministic `conversation_repetition`
-(no LLM calls). Each LLM-based metric has a matching `_with_cot_reasons`
-variant.
+`requirement_satisfaction`, `escalation_correctness`, and the deterministic
+`conversation_repetition` (no LLM calls). Each LLM-based metric has a matching
+`_with_cot_reasons` variant; `requirement_satisfaction` and
+`escalation_correctness` are available only in that form.
 
 ## Attach both metrics to an app
 
