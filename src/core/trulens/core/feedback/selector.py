@@ -631,10 +631,11 @@ class Selector:
         Args:
             column_name: The name of the dataset column to read the value from.
 
-            collect_list: Only relevant when the column holds list values. If
-                True (default), the whole list is passed to the metric in a
-                single call. If False, the metric is called once per item in the
-                list and the results are aggregated.
+            collect_list: Only relevant when the column holds list values (a
+                list, tuple or numpy array, as a DataFrame loaded from parquet
+                or Arrow stores a list column). If True (default), the whole
+                value is passed to the metric in a single call. If False, the
+                metric is called once per item and the results are aggregated.
 
             ignore_none_values: If True, skip evaluation for rows where the
                 column is absent or its value is None or a pandas missing
