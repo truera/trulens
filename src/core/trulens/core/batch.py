@@ -94,6 +94,28 @@ def _is_missing_value(value: Any) -> bool:
     return pd.api.types.is_scalar(value) and bool(pd.isna(value))
 
 
+def _list_items(value: Any) -> Optional[List[Any]]:
+    """The items of a list-valued cell, or `None` for a scalar cell.
+
+    Lists, tuples and numpy arrays of one or more dimensions count. A
+    DataFrame loaded from parquet or Arrow stores a list column as one numpy
+    array per cell, and its items are returned as native Python values, as a
+    list cell would hold them, with datetimes as `pd.Timestamp`. An array of
+    two or more dimensions is expanded along its first axis, one nested list
+    per row, as a list of lists would be.
+    """
+    if isinstance(value, np.ndarray):
+        if value.ndim == 0:
+            return None
+        # ndarray.tolist() turns datetime64 items into integers.
+        if value.ndim == 1:
+            return pd.Series(value).tolist()
+        return value.tolist()
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    return None
+
+
 class BatchEvaluator:
     """Run metrics over a pre-collected dataset without a live app.
 
@@ -229,9 +251,10 @@ class BatchEvaluator:
     ) -> Dict[str, List[Any]]:
         """Resolve each metric argument to a list of candidate values for a row.
 
-        A scalar column yields a single candidate. A list-valued column yields a
-        single candidate (the whole list) when `collect_list` is True, or one
-        candidate per element when `collect_list` is False.
+        A scalar column yields a single candidate. A list-valued column (a
+        list, tuple or numpy array cell) yields a single candidate (the whole
+        value) when `collect_list` is True, or one candidate per element when
+        `collect_list` is False.
 
         Raises:
             KeyError: If a required column is missing and the selector does not
@@ -256,10 +279,8 @@ class BatchEvaluator:
                 raise SkipEval(
                     reason=f"column {column!r} is {value!r}", metric=metric
                 )
-            if isinstance(value, list) and not selector.collect_list:
-                arg_values[arg_name] = list(value)
-            else:
-                arg_values[arg_name] = [value]
+            items = None if selector.collect_list else _list_items(value)
+            arg_values[arg_name] = [value] if items is None else items
         return arg_values
 
     def _evaluate_metric_on_row(
