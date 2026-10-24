@@ -388,12 +388,18 @@ class Jury:
             return float(int(votes > len(scores) / 2))
 
         if self._aggregation == "weighted_mean":
-            total = sum(self._weights[idx] for idx in scores_by_idx)
+            # Scaling preserves the mean without overflowing the weight sum.
+            # Use surviving weights so a failed juror cannot underflow them.
+            weight_scale = (
+                max(abs(self._weights[idx]) for idx, _ in ordered) or 1.0
+            )
+            weights = [self._weights[idx] / weight_scale for idx, _ in ordered]
+            total = sum(weights)
             if total == 0.0:
                 raise ValueError(
                     "weighted_mean: total weight of surviving jurors is 0.0."
                 )
-            return sum(self._weights[idx] * s for idx, s in ordered) / total
+            return sum(w * s for w, s in zip(weights, scores)) / total
 
         raise ValueError(f"Unknown aggregation: {self._aggregation!r}")
 
