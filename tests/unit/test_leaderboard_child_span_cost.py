@@ -30,7 +30,15 @@ def _cost(cost, tokens, currency="USD"):
     }
 
 
-def _span(record_id, name, span_type, attributes=None, parent=""):
+def _span(
+    record_id,
+    name,
+    span_type,
+    attributes=None,
+    parent="",
+    start_timestamp="2026-01-01T00:00:00",
+    timestamp="2026-01-01T00:00:01",
+):
     return event_schema.Event.model_validate({
         "event_id": f"evt-{record_id}-{name}",
         "record": {
@@ -53,8 +61,8 @@ def _span(record_id, name, span_type, attributes=None, parent=""):
             "telemetry.sdk.version": "1.31.0",
             **APP,
         },
-        "start_timestamp": "2026-01-01T00:00:00",
-        "timestamp": "2026-01-01T00:00:01",
+        "start_timestamp": start_timestamp,
+        "timestamp": timestamp,
         "trace": {
             "parent_id": parent,
             "span_id": f"span-{record_id}-{name}",
@@ -63,7 +71,12 @@ def _span(record_id, name, span_type, attributes=None, parent=""):
     })
 
 
-def _root(record_id, attributes=None):
+def _root(
+    record_id,
+    attributes=None,
+    start_timestamp="2026-01-01T00:00:00",
+    timestamp="2026-01-01T00:00:01",
+):
     return _span(
         record_id,
         "root",
@@ -73,6 +86,8 @@ def _root(record_id, attributes=None):
             "ai.observability.record_root.output": "out",
             **(attributes or {}),
         },
+        start_timestamp=start_timestamp,
+        timestamp=timestamp,
     )
 
 
@@ -126,6 +141,54 @@ class TestLeaderboardChildSpanCost(OtelTestCase):
         self.assertEqual(trends["record_count"].tolist(), [3])
         self.assertAlmostEqual(trends["total_app_cost"].iloc[0], 0.06)
         self.assertAlmostEqual(trends["average_app_cost"].iloc[0], 0.02)
+
+    def test_conversation_summary_fields(self):
+        conversation = "conversation-1"
+        events = []
+        for i in range(3):
+            second = i * 10
+            events.append(
+                _root(
+                    f"r{i}",
+                    {SpanAttributes.CONVERSATION_ID: conversation},
+                    start_timestamp=f"2026-01-01T00:00:{second:02d}",
+                    timestamp=f"2026-01-01T00:00:{second + 1:02d}",
+                )
+            )
+            events.append(
+                _child(
+                    f"r{i}",
+                    "llm",
+                    SpanType.GENERATION,
+                    {
+                        **_cost(0.02 * (i + 1), 100 * (i + 1)),
+                        "gen_ai.request.model": "model-a"
+                        if i < 2
+                        else "model-b",
+                    },
+                )
+            )
+            events.append(_child(f"r{i}", "tool", SpanType.TOOL, {}))
+        events.append(
+            _child(
+                "r2",
+                "failed-tool",
+                SpanType.MCP,
+                {"error.type": "RuntimeError"},
+            )
+        )
+        db = self._db(events)
+
+        summary = db.get_conversations()[conversation]
+
+        self.assertEqual(summary.num_turns, 3)
+        self.assertEqual(summary.duration, 21.0)
+        self.assertEqual(summary.llm_calls, 3)
+        self.assertEqual(summary.models_used, ["model-a", "model-b"])
+        self.assertEqual(summary.total_tokens, 600)
+        self.assertAlmostEqual(summary.total_cost, 0.12)
+        self.assertEqual(summary.tool_calls, 4)
+        self.assertEqual(summary.tool_errors, 1)
 
     def test_eval_span_cost_is_not_counted(self):
         eval_root = {
