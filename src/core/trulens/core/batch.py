@@ -100,10 +100,17 @@ def _list_items(value: Any) -> Optional[List[Any]]:
     Lists, tuples and numpy arrays of one or more dimensions count. A
     DataFrame loaded from parquet or Arrow stores a list column as one numpy
     array per cell, and its items are returned as native Python values, as a
-    list cell would hold them.
+    list cell would hold them, with datetimes as `pd.Timestamp`. An array of
+    two or more dimensions is expanded along its first axis, one nested list
+    per row, as a list of lists would be.
     """
     if isinstance(value, np.ndarray):
-        return value.tolist() if value.ndim >= 1 else None
+        if value.ndim == 0:
+            return None
+        # ndarray.tolist() turns datetime64 items into integers.
+        if value.ndim == 1:
+            return pd.Series(value).tolist()
+        return value.tolist()
     if isinstance(value, (list, tuple)):
         return list(value)
     return None
