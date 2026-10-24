@@ -4785,9 +4785,11 @@ class LLMProvider(core_provider.Provider):
         needed no escalation and had none scores 3.
 
         A handoff the judge also labels as unnecessary is ignored when it
-        answers a trigger. Offers of a human that were not needed and never
-        acted on are always listed in the metadata, and score 0 only when
-        `penalize_offers` is True. The policy text does not switch this on.
+        answers a trigger, and so is an unneeded offer on a turn where a
+        trigger was offered or answered. Offers of a human that were not
+        needed and never acted on are always listed in the metadata, and
+        score 0 only when `penalize_offers` is True. The policy text does not
+        switch this on.
 
         Turn numbers follow the ``Turn N`` labels of the transcript, which
         `{"input", "output"}` records produce. For a transcript string or
@@ -4915,9 +4917,10 @@ class LLMProvider(core_provider.Provider):
             if escalation.turn not in answered_turns
         ]
         trigger_offer_turns = {
-            trigger.offered_turn
+            turn
             for trigger in response.triggers
-            if trigger.offered_turn is not None
+            for turn in (trigger.offered_turn, trigger.escalation_turn)
+            if turn is not None
         }
         unneeded_offers = [
             offer

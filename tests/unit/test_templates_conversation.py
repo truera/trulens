@@ -959,3 +959,20 @@ def test_escalation_correctness_does_not_count_a_trigger_offer_twice() -> None:
 
     assert score == pytest.approx(2 / 3)
     assert metadata["unneeded_offers"] == []
+
+
+def test_escalation_correctness_ignores_unneeded_offer_on_answering_turn() -> (
+    None
+):
+    response = _escalation_response(
+        triggers=[_escalation_trigger(2, escalation_turn=2)],
+        unneeded_offers=[_unneeded_offer(2)],
+    )
+
+    _, score, metadata = _run_escalation_correctness(
+        response, penalize_offers=True
+    )
+
+    assert score == 1.0
+    assert metadata["triggers"][0]["outcome"] == "on_time"
+    assert metadata["unneeded_offers"] == []
