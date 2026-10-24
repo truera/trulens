@@ -1,4 +1,5 @@
 from concurrent.futures import as_completed
+import fnmatch
 import json
 import logging
 import re
@@ -4080,6 +4081,283 @@ class LLMProvider(core_provider.Provider):
             max_score_val=max_score_val,
             temperature=temperature,
         )
+
+    def project_rule_adherence_with_cot_reasons(
+        self,
+        rules: str,
+        trace: Union[Trace, str],
+        temperature: float = 0.0,
+        *,
+        forbidden_path_globs: Optional[List[str]] = None,
+        required_commands: Optional[List[str]] = None,
+        additional_instructions: Optional[str] = None,
+    ) -> Tuple[float, Dict]:
+        """Evaluate a coding-agent trace against repository instructions.
+
+        The judge classifies every checkable rule as followed, violated, or
+        not applicable. The score is ``followed / (followed + violated)``;
+        not-applicable rules remain in the reason metadata but do not affect
+        the denominator.
+
+        Calls that never executed are excluded. In traces produced by the
+        coding-agent client hooks, these are pre-execution native-event spans
+        without a call return, tool result, or diff. This includes calls
+        blocked by a client or denied at its permission boundary.
+
+        Args:
+            rules: Project instructions, such as ``AGENTS.md`` or
+                ``CLAUDE.md`` contents.
+            trace: Coding-agent trace as a ``Trace`` or JSON string.
+            temperature: Temperature for the judge response.
+            forbidden_path_globs: Optional path globs checked
+                deterministically against executed edits.
+            required_commands: Optional command fragments checked
+                deterministically against executed tool calls.
+            additional_instructions: Optional judge guidance.
+
+        Returns:
+            A score in [0, 1] and metadata with counts, per-rule verdicts,
+            cited span IDs, determination sources, and excluded-call count.
+
+        Raises:
+            TypeError: If rules or trace have unsupported types.
+            ValueError: If inputs or the judge response cannot be evaluated.
+        """
+        if not isinstance(rules, str):
+            raise TypeError("rules must be a string.")
+        if not rules.strip():
+            raise ValueError("rules must not be empty.")
+
+        if isinstance(trace, Trace):
+            trace_data: Any = {
+                "events": []
+                if trace.events is None
+                else json.loads(
+                    trace.events.to_json(
+                        orient="records",
+                        force_ascii=False,
+                        default_handler=str,
+                    )
+                )
+            }
+        elif isinstance(trace, str):
+            try:
+                trace_data = json.loads(trace)
+            except json.JSONDecodeError:
+                trace_data = trace
+        else:
+            raise TypeError("trace must be a Trace or string.")
+
+        trace_text = json.dumps(trace_data, ensure_ascii=False, default=str)
+        if len(trace_text) > 400_000:
+            raise ValueError(
+                "Selected trace exceeds 400,000 characters; narrow the trace "
+                "selector before evaluation."
+            )
+
+        pre_execution_events = {
+            "pretooluse",
+            "beforeshellexecution",
+            "beforemcpexecution",
+            "tool.execute.before",
+        }
+
+        def mappings(value: Any) -> Iterable[Dict[str, Any]]:
+            if isinstance(value, dict):
+                yield value
+                for child in value.values():
+                    yield from mappings(child)
+            elif isinstance(value, list):
+                for child in value:
+                    yield from mappings(child)
+
+        def matching_value(
+            value: Dict[str, Any], suffixes: Sequence[str]
+        ) -> Any:
+            for key, item in value.items():
+                normalized = str(key).lower().replace("_", ".")
+                if any(normalized.endswith(suffix) for suffix in suffixes):
+                    return item
+            return None
+
+        span_views = []
+        for value in mappings(trace_data):
+            native_event = matching_value(
+                value, ("coding.agent.native.event", "native.event")
+            )
+            if native_event is not None:
+                span_views.append(value)
+
+        executed_spans = []
+        excluded_span_ids = []
+        excluded_call_count = 0
+        for span in span_views:
+            native_event = str(
+                matching_value(
+                    span, ("coding.agent.native.event", "native.event")
+                )
+            ).lower()
+            has_result = any(
+                matching_value(span, (suffix,)) is not None
+                for suffix in (
+                    "call.return",
+                    "tool.call.result",
+                    "coding.agent.diff",
+                )
+            )
+            span_id = matching_value(span, ("span.id", "spanid"))
+            if native_event in pre_execution_events and not has_result:
+                excluded_call_count += 1
+                if span_id is not None:
+                    excluded_span_ids.append(str(span_id))
+                continue
+            executed_spans.append(span)
+
+        deterministic_results = []
+        for pattern in forbidden_path_globs or []:
+            matches = []
+            span_ids = []
+            for span in executed_spans:
+                paths = []
+                for value in mappings(span):
+                    for key, item in value.items():
+                        if str(key).lower() in {"path", "file_path"}:
+                            paths.append(str(item))
+                        if "diff" in str(key).lower() and isinstance(item, str):
+                            paths.extend(
+                                re.findall(r"[+-]{3}\s+[ab]/([^\r\n]+)", item)
+                            )
+                matching_paths = [
+                    path for path in paths if fnmatch.fnmatch(path, pattern)
+                ]
+                if matching_paths:
+                    matches.extend(matching_paths)
+                    span_id = matching_value(span, ("span.id", "spanid"))
+                    if span_id is not None:
+                        span_ids.append(str(span_id))
+            deterministic_results.append({
+                "rule": f"Do not edit paths matching {pattern!r}.",
+                "verdict": "violated" if matches else "followed",
+                "evidence": (
+                    f"Edited forbidden paths: {sorted(set(matches))}."
+                    if matches
+                    else f"No executed edit matched {pattern!r}."
+                ),
+                "span_ids": sorted(set(span_ids)),
+                "determination": "deterministic",
+            })
+
+        for required_command in required_commands or []:
+            matching_span_ids = []
+            for span in executed_spans:
+                serialized = json.dumps(span, ensure_ascii=False, default=str)
+                if required_command in serialized:
+                    span_id = matching_value(span, ("span.id", "spanid"))
+                    if span_id is not None:
+                        matching_span_ids.append(str(span_id))
+            command_ran = bool(matching_span_ids)
+            deterministic_results.append({
+                "rule": f"Run required command containing {required_command!r}.",
+                "verdict": "followed" if command_ran else "violated",
+                "evidence": (
+                    f"The required command ran in spans {matching_span_ids}."
+                    if command_ran
+                    else "No executed tool span contains the required command."
+                ),
+                "span_ids": sorted(set(matching_span_ids)),
+                "determination": "deterministic",
+            })
+
+        evaluation_data = {
+            "rules": rules,
+            "trace": trace_data,
+            "excluded_unexecuted_span_ids": excluded_span_ids,
+            "deterministic_results": deterministic_results,
+        }
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=templates_agent.ProjectRuleAdherence.system_prompt,
+            additional_instructions=additional_instructions,
+        )
+        user_prompt = templates_agent.ProjectRuleAdherence.user_prompt.format(
+            evaluation_data=json.dumps(
+                evaluation_data, ensure_ascii=False, indent=2, default=str
+            )
+        )
+
+        assert self.endpoint is not None, "Endpoint is not set."
+        extra_kwargs = {}
+        if self._is_reasoning_model():
+            extra_kwargs["reasoning_effort"] = "medium"
+        else:
+            extra_kwargs["temperature"] = temperature
+        response_model = feedback_output_schemas.ProjectRuleAdherenceResponse
+        response = self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            response_format=response_model,
+            **extra_kwargs,
+        )
+        if not isinstance(response, response_model):
+            if isinstance(response, BaseModel):
+                response = response.model_dump()
+            if isinstance(response, str):
+                try:
+                    response = json.loads(response)
+                except json.JSONDecodeError as exc:
+                    raise ValueError(
+                        "The judge returned invalid project-rule evaluations."
+                    ) from exc
+            try:
+                response = response_model.model_validate(response)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "The judge returned invalid project-rule evaluations."
+                ) from exc
+
+        evaluations = [
+            evaluation.model_dump() for evaluation in response.evaluations
+        ]
+        if not evaluations:
+            raise ValueError("The judge returned no project-rule evaluations.")
+        deterministic_by_rule = {
+            result["rule"]: result for result in deterministic_results
+        }
+        returned_rules = {result["rule"] for result in evaluations}
+        missing_deterministic = set(deterministic_by_rule) - returned_rules
+        if missing_deterministic:
+            raise ValueError(
+                "The judge omitted deterministic project-rule results: "
+                f"{sorted(missing_deterministic)}"
+            )
+        for index, result in enumerate(evaluations):
+            if result["rule"] in deterministic_by_rule:
+                evaluations[index] = deterministic_by_rule[result["rule"]]
+            elif result["determination"] == "deterministic":
+                raise ValueError(
+                    "The judge marked a non-deterministic rule as deterministic."
+                )
+        counts = {
+            verdict: sum(result["verdict"] == verdict for result in evaluations)
+            for verdict in ("followed", "violated", "not_applicable")
+        }
+        denominator = counts["followed"] + counts["violated"]
+        if denominator == 0:
+            raise ValueError("No applicable project rules could be scored.")
+        score = counts["followed"] / denominator
+        return score, {
+            "rule_count": len(evaluations),
+            "followed_count": counts["followed"],
+            "violated_count": counts["violated"],
+            "not_applicable_count": counts["not_applicable"],
+            "scored_rule_count": denominator,
+            "excluded_unexecuted_call_count": excluded_call_count,
+            "excluded_unexecuted_span_ids": excluded_span_ids,
+            "rules": evaluations,
+        }
 
     def plan_quality_with_cot_reasons(
         self,

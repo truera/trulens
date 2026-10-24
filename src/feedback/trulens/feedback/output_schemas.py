@@ -71,3 +71,33 @@ class RequirementSatisfactionResponse(BaseModel):
     evaluations: list[RequirementEvaluation] = Field(
         description="One ordered evaluation for each requirement."
     )
+
+
+class ProjectRuleEvaluation(BaseModel):
+    """A verdict and trace evidence for one project rule."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    rule: str = Field(description="The project rule being evaluated.")
+    verdict: Literal["followed", "violated", "not_applicable"] = Field(
+        description="Whether the rule was followed, violated, or not applicable."
+    )
+    evidence: str = Field(
+        description="Concise evidence supporting the verdict."
+    )
+    span_ids: list[str] = Field(
+        description="Trace span IDs supporting the verdict, if any."
+    )
+    determination: Literal["judge", "deterministic"] = Field(
+        description="Whether the verdict came from the judge or a deterministic check."
+    )
+
+
+class ProjectRuleAdherenceResponse(BaseModel):
+    """Structured project-rule evaluation output."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    evaluations: list[ProjectRuleEvaluation] = Field(
+        description="One evaluation for every checkable project rule."
+    )
