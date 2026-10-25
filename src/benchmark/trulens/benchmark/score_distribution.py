@@ -34,6 +34,7 @@ import math
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
+from trulens.core.utils.constants import is_unparsable_score
 
 log = logging.getLogger(__name__)
 
@@ -320,6 +321,14 @@ class ScoreDistributionAnalyzer:
                 score = self._to_score(self.feedback_fn(*self.args_fn(row)))
             except Exception:
                 log.exception("feedback_fn failed on a row; skipping it")
+                continue
+            # UNPARSABLE_SCORE is "no score", not a bad score: letting it into
+            # the statistics charges a judge for every reply it failed to
+            # parse (the sentinel group is the same one Metric.run skips).
+            if is_unparsable_score(score):
+                log.warning(
+                    "feedback_fn returned an unparsable reply; skipping the row"
+                )
                 continue
             predicted.append(score)
             expected.append(row.get("expected_score"))

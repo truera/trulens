@@ -88,3 +88,26 @@ def test_analyzer_raises_when_no_scores_produced():
     golden = [{"query": "q", "expected_response": "r"}]
     with pytest.raises(ValueError):
         ScoreDistributionAnalyzer(boom, golden).run()
+
+
+def test_analyzer_skips_unparsable_judge_replies():
+    """UNPARSABLE_SCORE is "no score", not a bad score (#2997)."""
+    from trulens.core.utils.constants import UNPARSABLE_SCORE
+
+    golden = [
+        {"query": f"q{i}", "expected_response": "r", "expected_score": 1.0}
+        for i in range(4)
+    ]
+
+    def judge(q, r):  # right on 3 rows, one unparsable reply
+        return (UNPARSABLE_SCORE, {}) if q == "q3" else (1.0, {})
+
+    report = ScoreDistributionAnalyzer(
+        feedback_fn=judge,
+        golden_set=golden,
+        args_fn=lambda r: (r["query"], r["expected_response"]),
+    ).run()
+
+    assert list(report.predicted) == [1.0, 1.0, 1.0]
+    assert report.mean == pytest.approx(1.0)
+    assert report.min == pytest.approx(1.0)

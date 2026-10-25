@@ -40,6 +40,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 from trulens.core.utils import stats as stats_utils
+from trulens.core.utils.constants import is_unparsable_score
 from trulens.feedback import groundtruth as feedback_groundtruth
 
 log = logging.getLogger(__name__)
@@ -268,6 +269,14 @@ class CriteriaABTest:
                 )
             except Exception:
                 log.exception("a variant failed on a row; skipping the row")
+                continue
+            # Either variant returning UNPARSABLE_SCORE means the row has no
+            # score; skip it so both variants stay aligned (same treatment as
+            # a raised failure).
+            if is_unparsable_score(a) or is_unparsable_score(b):
+                log.warning(
+                    "a variant returned an unparsable reply; skipping the row"
+                )
                 continue
             scores_a.append(a)
             scores_b.append(b)

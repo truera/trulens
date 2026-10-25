@@ -38,6 +38,7 @@ import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
+from trulens.core.utils.constants import is_unparsable_score
 from trulens.feedback import groundtruth as feedback_groundtruth
 
 log = logging.getLogger(__name__)
@@ -318,13 +319,22 @@ class CrossModelAlignment:
             for judge in self.judges:
                 fn = getattr(judge["provider"], self.feedback_method)
                 try:
-                    row_scores[judge["name"]] = _to_score(fn(*args))
+                    judge_score = _to_score(fn(*args))
                 except Exception:
                     log.exception(
                         "judge %s failed on a row; skipping the row",
                         judge["name"],
                     )
                     break
+                # An unparsable reply is "no score", not a score of -1.0;
+                # treat it like the raised-failure path so the row is skipped.
+                if is_unparsable_score(judge_score):
+                    log.warning(
+                        "judge %s returned an unparsable reply; skipping the row",
+                        judge["name"],
+                    )
+                    break
+                row_scores[judge["name"]] = judge_score
             if len(row_scores) != len(self.judges):
                 skipped += 1
                 continue
