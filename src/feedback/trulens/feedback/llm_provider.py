@@ -4778,11 +4778,12 @@ class LLMProvider(core_provider.Provider):
         The judge lists each turn where the escalation policy requires a
         handoff and each handoff the policy does not require. The score is
         computed from those labels on a 0-3 scale and normalized to [0, 1].
-        Each required escalation scores 3 when the handoff happens on or
-        before its trigger turn, 2 when it is one turn late, 1 when it is
-        later, and 0 when it is missed or only offered. An unnecessary
-        handoff scores 0. The lowest score counts, and a conversation that
-        needed no escalation and had none scores 3.
+        Each required escalation scores 3 when the handoff happens on its
+        trigger turn, 2 when it is one turn late, 1 when it is later, and 0
+        when it is missed or only offered. A handoff turn before the trigger
+        turn does not answer that trigger. An unnecessary handoff scores 0.
+        The lowest score counts, and a conversation that needed no
+        escalation and had none scores 3.
 
         A handoff the judge also labels as unnecessary is ignored when it
         answers a trigger, and so is an unneeded offer on a turn where a
@@ -4888,13 +4889,22 @@ class LLMProvider(core_provider.Provider):
             extra_kwargs=extra_kwargs,
         )
 
+        def answering_turn(trigger):
+            if (
+                trigger.escalation_turn is None
+                or trigger.escalation_turn < trigger.trigger_turn
+            ):
+                return None
+            return trigger.escalation_turn
+
         trigger_results = []
         lowest_score = 3
         for trigger in response.triggers:
-            if trigger.escalation_turn is not None:
-                delay = trigger.escalation_turn - trigger.trigger_turn
-                outcome = "on_time" if delay <= 0 else "late"
-                trigger_score = 3 if delay <= 0 else 2 if delay == 1 else 1
+            escalation_turn = answering_turn(trigger)
+            if escalation_turn is not None:
+                delay = escalation_turn - trigger.trigger_turn
+                outcome = "on_time" if delay == 0 else "late"
+                trigger_score = 3 if delay == 0 else 2 if delay == 1 else 1
             else:
                 outcome = (
                     "offered" if trigger.offered_turn is not None else "missed"
@@ -4907,9 +4917,9 @@ class LLMProvider(core_provider.Provider):
                 "raw_score": trigger_score,
             })
         answered_turns = {
-            trigger.escalation_turn
+            answering_turn(trigger)
             for trigger in response.triggers
-            if trigger.escalation_turn is not None
+            if answering_turn(trigger) is not None
         }
         unnecessary = [
             escalation
@@ -4919,7 +4929,7 @@ class LLMProvider(core_provider.Provider):
         trigger_offer_turns = {
             turn
             for trigger in response.triggers
-            for turn in (trigger.offered_turn, trigger.escalation_turn)
+            for turn in (trigger.offered_turn, answering_turn(trigger))
             if turn is not None
         }
         unneeded_offers = [

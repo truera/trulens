@@ -713,7 +713,8 @@ def _run_escalation_correctness(response, **kwargs):
     "trigger_turn, escalation_turn, offered_turn, want_raw, want_outcome",
     [
         (2, 2, None, 3, "on_time"),
-        (2, 1, None, 3, "on_time"),
+        (2, 1, None, 0, "missed"),
+        (2, 1, 2, 0, "offered"),
         (2, 3, None, 2, "late"),
         (2, 5, None, 1, "late"),
         (2, 3, 2, 2, "late"),
@@ -723,6 +724,7 @@ def _run_escalation_correctness(response, **kwargs):
     ids=[
         "same-turn",
         "before-trigger",
+        "before-trigger-offered",
         "one-turn-late",
         "three-turns-late",
         "offered-then-escalated-late",
@@ -976,3 +978,40 @@ def test_escalation_correctness_ignores_unneeded_offer_on_answering_turn() -> (
     assert score == 1.0
     assert metadata["triggers"][0]["outcome"] == "on_time"
     assert metadata["unneeded_offers"] == []
+
+
+def test_escalation_correctness_handoff_cannot_answer_a_later_trigger() -> None:
+    response = _escalation_response(
+        triggers=[
+            _escalation_trigger(1, escalation_turn=1),
+            _escalation_trigger(2, escalation_turn=1),
+        ]
+    )
+
+    _, score, metadata = _run_escalation_correctness(response)
+
+    assert score == 0.0
+    assert [
+        (trigger["trigger_turn"], trigger["outcome"])
+        for trigger in metadata["triggers"]
+    ] == [(1, "on_time"), (2, "missed")]
+
+
+def test_escalation_correctness_early_handoff_hides_no_labels() -> None:
+    response = _escalation_response(
+        triggers=[_escalation_trigger(4, escalation_turn=2)],
+        unnecessary_escalations=[
+            feedback_output_schemas.UnnecessaryEscalation(
+                turn=2, reason="The policy did not require a human yet."
+            )
+        ],
+        unneeded_offers=[_unneeded_offer(2)],
+    )
+
+    _, score, metadata = _run_escalation_correctness(
+        response, penalize_offers=True
+    )
+
+    assert score == 0.0
+    assert [e["turn"] for e in metadata["unnecessary_escalations"]] == [2]
+    assert [offer["turn"] for offer in metadata["unneeded_offers"]] == [2]
