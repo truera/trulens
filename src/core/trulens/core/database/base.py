@@ -426,6 +426,12 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 if isinstance(models, (list, tuple, set))
                 for model in models
             })
+            cost_by_currency = {
+                str(currency): float(currency_group["total_cost"].sum())
+                for currency, currency_group in group.groupby(
+                    "cost_currency", dropna=True, sort=True
+                )
+            }
             conversations[conversation_id] = conversation_schema.Conversation(
                 conversation_id=conversation_id,
                 app_id=app_ids_in_group[0],
@@ -438,7 +444,7 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 else 0,
                 models_used=models_used,
                 total_tokens=int(group["total_tokens"].sum()),
-                total_cost=float(group["total_cost"].sum()),
+                cost_by_currency=cost_by_currency,
                 tool_calls=int(group["tool_calls"].sum())
                 if "tool_calls" in group
                 else 0,

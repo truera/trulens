@@ -186,9 +186,43 @@ class TestLeaderboardChildSpanCost(OtelTestCase):
         self.assertEqual(summary.llm_calls, 3)
         self.assertEqual(summary.models_used, ["model-a", "model-b"])
         self.assertEqual(summary.total_tokens, 600)
-        self.assertAlmostEqual(summary.total_cost, 0.12)
+        self.assertEqual(summary.cost_by_currency, {"USD": 0.12})
         self.assertEqual(summary.tool_calls, 4)
         self.assertEqual(summary.tool_errors, 1)
+
+    def test_conversation_summary_keeps_costs_separate_by_currency(self):
+        conversation = "conversation-mixed-currency"
+        db = self._db([
+            _root(
+                "usd-record",
+                {SpanAttributes.CONVERSATION_ID: conversation},
+            ),
+            _child(
+                "usd-record",
+                "usd-llm",
+                SpanType.GENERATION,
+                _cost(0.5, 10, "USD"),
+            ),
+            _root(
+                "credits-record",
+                {SpanAttributes.CONVERSATION_ID: conversation},
+                start_timestamp="2026-01-01T00:00:02",
+                timestamp="2026-01-01T00:00:03",
+            ),
+            _child(
+                "credits-record",
+                "credits-llm",
+                SpanType.GENERATION,
+                _cost(2.0, 20, "Snowflake credits"),
+            ),
+        ])
+
+        summary = db.get_conversations()[conversation]
+
+        self.assertEqual(
+            summary.cost_by_currency,
+            {"Snowflake credits": 2.0, "USD": 0.5},
+        )
 
     def test_eval_span_cost_is_not_counted(self):
         eval_root = {

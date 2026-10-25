@@ -1,7 +1,7 @@
 """Conversation schema definitions."""
 
 import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import pydantic
 from trulens.core.schema import types as types_schema
@@ -31,8 +31,8 @@ class Conversation(serial_utils.SerialModel):
     total_tokens: int = 0
     """Total tokens reported across the conversation's records."""
 
-    total_cost: float = 0.0
-    """Total application cost reported across the conversation's records."""
+    cost_by_currency: Dict[str, float] = pydantic.Field(default_factory=dict)
+    """Application cost totals grouped by currency."""
 
     tool_calls: int = 0
     """Number of TOOL and MCP spans across the conversation."""
