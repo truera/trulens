@@ -142,6 +142,88 @@ def test_project_rule_adherence_passes_deterministic_checks_to_judge() -> None:
     ]
 
 
+def test_project_rule_adherence_read_is_not_an_edit() -> None:
+    deterministic_rule = "Do not edit paths matching 'secrets/**'."
+    response = output_schemas.ProjectRuleAdherenceResponse(
+        evaluations=[
+            output_schemas.ProjectRuleEvaluation(
+                rule=deterministic_rule,
+                verdict="followed",
+                evidence="No executed edit matched 'secrets/**'.",
+                span_ids=[],
+                determination="deterministic",
+            )
+        ]
+    )
+    provider = _provider_with_response(response)
+    trace = json.dumps({
+        "spans": [
+            {
+                "span_id": "read-span",
+                "trulens.coding_agent.native_event": "PostToolUse",
+                "gen_ai.tool.name": "Read",
+                "gen_ai.tool.call.arguments": {
+                    "file_path": "secrets/token.txt"
+                },
+                "gen_ai.tool.call.result": "redacted",
+            }
+        ]
+    })
+
+    score, reason = (
+        llm_provider.LLMProvider.project_rule_adherence_with_cot_reasons(
+            provider,
+            rules="Do not edit secrets/**.",
+            trace=trace,
+            forbidden_path_globs=["secrets/**"],
+        )
+    )
+
+    assert score == 1.0
+    assert reason["rules"][0]["verdict"] == "followed"
+    assert reason["rules"][0]["span_ids"] == []
+
+
+def test_project_rule_adherence_ignores_commands_in_tool_results() -> None:
+    deterministic_rule = "Run required command containing 'ruff check'."
+    response = output_schemas.ProjectRuleAdherenceResponse(
+        evaluations=[
+            output_schemas.ProjectRuleEvaluation(
+                rule=deterministic_rule,
+                verdict="violated",
+                evidence="No executed tool span contains the required command.",
+                span_ids=[],
+                determination="deterministic",
+            )
+        ]
+    )
+    provider = _provider_with_response(response)
+    trace = json.dumps({
+        "spans": [
+            {
+                "span_id": "grep-span",
+                "trulens.coding_agent.native_event": "PostToolUse",
+                "gen_ai.tool.name": "Grep",
+                "gen_ai.tool.call.arguments": {"pattern": "lint command"},
+                "gen_ai.tool.call.result": "Run poetry ruff check before PR.",
+            }
+        ]
+    })
+
+    score, reason = (
+        llm_provider.LLMProvider.project_rule_adherence_with_cot_reasons(
+            provider,
+            rules="Run the repository lint command.",
+            trace=trace,
+            required_commands=["ruff check"],
+        )
+    )
+
+    assert score == 0.0
+    assert reason["rules"][0]["verdict"] == "violated"
+    assert reason["rules"][0]["span_ids"] == []
+
+
 def test_project_rule_adherence_requires_an_applicable_rule() -> None:
     response = output_schemas.ProjectRuleAdherenceResponse(
         evaluations=[

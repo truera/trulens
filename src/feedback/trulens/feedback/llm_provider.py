@@ -4180,6 +4180,78 @@ class LLMProvider(core_provider.Provider):
                     return item
             return None
 
+        def matching_values(value: Any, suffixes: Sequence[str]) -> List[Any]:
+            matches = []
+            for mapping in mappings(value):
+                for key, item in mapping.items():
+                    normalized = str(key).lower().replace("_", ".")
+                    if any(normalized.endswith(suffix) for suffix in suffixes):
+                        matches.append(item)
+            return matches
+
+        def decoded(value: Any) -> Any:
+            if not isinstance(value, str):
+                return value
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                return value
+
+        edit_tool_names = {
+            "afterfileedit",
+            "applypatch",
+            "beforefileedit",
+            "createfile",
+            "deletefile",
+            "edit",
+            "movefile",
+            "multiedit",
+            "notebookedit",
+            "renamefile",
+            "write",
+        }
+
+        def edited_paths(span: Dict[str, Any]) -> List[str]:
+            paths = []
+            diff_values = matching_values(span, ("coding.agent.diff",))
+            for diff in diff_values:
+                if isinstance(diff, str):
+                    paths.extend(re.findall(r"[+-]{3}\s+[ab]/([^\r\n]+)", diff))
+                decoded_diff = decoded(diff)
+                if isinstance(decoded_diff, (dict, list)):
+                    for value in mappings(decoded_diff):
+                        for key, item in value.items():
+                            if str(key).lower() in {"path", "file_path"}:
+                                paths.append(str(item))
+
+            tool_name = matching_value(
+                span,
+                ("tool.name", "call.function", "mcp.tool.name"),
+            )
+            normalized_tool_name = re.sub(
+                r"[^a-z0-9]", "", str(tool_name).lower()
+            )
+            if normalized_tool_name not in edit_tool_names:
+                return paths
+
+            argument_values = matching_values(
+                span,
+                (
+                    "tool.call.arguments",
+                    "call.kwargs.input",
+                    "mcp.input.arguments",
+                ),
+            )
+            for arguments in argument_values:
+                decoded_arguments = decoded(arguments)
+                if not isinstance(decoded_arguments, (dict, list)):
+                    continue
+                for value in mappings(decoded_arguments):
+                    for key, item in value.items():
+                        if str(key).lower() in {"path", "file_path"}:
+                            paths.append(str(item))
+            return paths
+
         span_views = []
         for value in mappings(trace_data):
             native_event = matching_value(
@@ -4218,17 +4290,10 @@ class LLMProvider(core_provider.Provider):
             matches = []
             span_ids = []
             for span in executed_spans:
-                paths = []
-                for value in mappings(span):
-                    for key, item in value.items():
-                        if str(key).lower() in {"path", "file_path"}:
-                            paths.append(str(item))
-                        if "diff" in str(key).lower() and isinstance(item, str):
-                            paths.extend(
-                                re.findall(r"[+-]{3}\s+[ab]/([^\r\n]+)", item)
-                            )
                 matching_paths = [
-                    path for path in paths if fnmatch.fnmatch(path, pattern)
+                    path
+                    for path in edited_paths(span)
+                    if fnmatch.fnmatch(path, pattern)
                 ]
                 if matching_paths:
                     matches.extend(matching_paths)
@@ -4250,8 +4315,18 @@ class LLMProvider(core_provider.Provider):
         for required_command in required_commands or []:
             matching_span_ids = []
             for span in executed_spans:
-                serialized = json.dumps(span, ensure_ascii=False, default=str)
-                if required_command in serialized:
+                arguments = matching_values(
+                    span,
+                    (
+                        "tool.call.arguments",
+                        "call.kwargs.input",
+                        "mcp.input.arguments",
+                    ),
+                )
+                serialized_arguments = json.dumps(
+                    arguments, ensure_ascii=False, default=str
+                )
+                if required_command in serialized_arguments:
                     span_id = matching_value(span, ("span.id", "spanid"))
                     if span_id is not None:
                         matching_span_ids.append(str(span_id))
