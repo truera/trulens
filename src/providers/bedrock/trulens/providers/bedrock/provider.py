@@ -16,6 +16,7 @@ _CLAUDE_NO_TEMPERATURE_PREFIXES = (
     "anthropic.claude-opus-4-8",
     "anthropic.claude-opus-5",
     "anthropic.claude-sonnet-5",
+    "anthropic.claude-haiku-5",
     "anthropic.claude-fable-5",
 )
 
