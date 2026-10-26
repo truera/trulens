@@ -33,6 +33,7 @@ except ImportError:
     # Backwards compatibility with trulens-core < 2.5.0
     from trulens.core.feedback.feedback import Feedback as Metric
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
+from trulens.core.utils.constants import is_unparsable_score
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import (
     set_function_call_attributes,
@@ -811,7 +812,11 @@ def _feedback_already_computed(
         valid = valid and feedback_name == curr.get(
             SpanAttributes.EVAL_ROOT.METRIC_NAME
         )
-        valid = valid and curr.get(SpanAttributes.EVAL_ROOT.SCORE) is not None
+        # A judge that could not be parsed writes UNPARSABLE_SCORE into the
+        # eval root. That sentinel means "no score", not "computed", so the
+        # record must be offered for computation again.
+        score = curr.get(SpanAttributes.EVAL_ROOT.SCORE)
+        valid = valid and score is not None and not is_unparsable_score(score)
         for k, v in kwarg_inputs.items():
             if not valid:
                 break
