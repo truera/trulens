@@ -664,24 +664,38 @@ class instrument:
                 return await func(*args, **kwargs)
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             func_name_for_call = _func_name_for_instance(instance)
-            with create_function_call_context_manager(
-                self.create_new_span,
-                func_name_for_call,
-                span_type=self.span_type,
-            ) as span:
-                ret = None
-                func_exception: Exception | None = None
-                # Run function.
+            call = _DetachedFunctionCall(
+                create_function_call_context_manager(
+                    self.create_new_span,
+                    func_name_for_call,
+                    span_type=self.span_type,
+                )
+            )
+            span = call.__enter__()
+            started = time.perf_counter()
+            first_yield: float | None = None
+            streamed = False
+
+            def finish(ret, func_exception, cancelled=None):
+                # Set the span attributes, then end the span. Like the other
+                # wrappers, this raises `func_exception` (or `cancelled`)
+                # once the span has ended.
+                exc = cancelled
                 try:
-                    ret = await func(*args, **kwargs)
-                except asyncio.CancelledError:
-                    try:
+                    with call.step():
+                        if streamed:
+                            _set_streaming_attributes(
+                                span,
+                                started,
+                                first_yield,
+                                len(ret) if ret else 0,
+                            )
                         _finalize_span(
                             span,
                             self.span_type,
                             func_name_for_call,
                             func,
-                            None,
+                            func_exception,
                             self.attributes,
                             instance,
                             args,
@@ -690,32 +704,63 @@ class instrument:
                             self.only_set_user_defined_attributes,
                             span_end_callbacks,
                         )
-                    except Exception:
+                except BaseException as e:
+                    if exc is None:
+                        exc = e
+                    else:
                         logger.exception(
                             "Error finalizing span during cancellation."
                         )
-                    raise
+                if exc is None:
+                    call.__exit__(None, None, None)
+                    return ret
+                call.__exit__(type(exc), exc, exc.__traceback__)
+                raise exc
+
+            # Run function.
+            try:
+                with call.step():
+                    ret = await func(*args, **kwargs)
+            except asyncio.CancelledError as e:
+                return finish(None, None, cancelled=e)
+            except Exception as e:
+                # We want to get into the next clause to allow the users
+                # to still add attributes. It's on the user to deal with
+                # None as a return value.
+                return finish(None, e)
+
+            if not inspect.isasyncgen(ret):
+                return finish(ret, None)
+
+            # An async function can hand back an async generator instead of
+            # yielding itself, just as a sync function can return a
+            # generator. Keep this span open until the caller is done with
+            # the stream, and record what they actually consumed.
+            streamed = True
+
+            async def stream(result):
+                nonlocal first_yield
+                chunks = []
+                func_exception: Exception | None = None
+                try:
+                    while True:
+                        with call.step():
+                            try:
+                                curr = await result.__anext__()
+                            except StopAsyncIteration:
+                                break
+                        if first_yield is None:
+                            first_yield = time.perf_counter()
+                        chunks.append(curr)
+                        yield curr
                 except Exception as e:
-                    # We want to get into the next clause to allow the users
-                    # to still add attributes. It's on the user to deal with
-                    # None as a return value.
                     func_exception = e
-                # Set span attributes.
-                _finalize_span(
-                    span,
-                    self.span_type,
-                    func_name_for_call,
-                    func,
-                    func_exception,
-                    self.attributes,
-                    instance,
-                    args,
-                    kwargs,
-                    ret,
-                    self.only_set_user_defined_attributes,
-                    span_end_callbacks,
-                )
-            return ret
+                finally:
+                    # Also runs when the consumer abandons the stream, so a
+                    # partially consumed stream is still measured.
+                    finish(chunks, func_exception)
+
+            return stream(ret)
 
         @wrapt.decorator
         def coroutine_returning_wrapper(func, instance, args, kwargs):

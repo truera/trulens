@@ -621,6 +621,24 @@ class TestJuryMetricIntegration(unittest.TestCase):
         self.assertIn("prompt", m.selectors)
         self.assertIn("response", m.selectors)
 
+    def test_metric_temperature_reaches_kwargs_only_judge(self):
+        # The judge takes temperature only through **kwargs, so the Metric
+        # must still forward it to every trial and the jury must record it.
+        from trulens.core import Metric
+
+        p = _make_sequence_provider("gpt-4o-mini", [0.8])
+        p.relevance.__signature__ = inspect.signature(
+            _mock_relevance_with_kwargs
+        )
+        j = Jury.repeated(p, method="relevance", n_trials=3)
+
+        m = Metric(implementation=j, name="Repeated", temperature=0.7)
+        _, meta = m(prompt="x", response="y")
+        self.assertEqual(meta["reliability.temperature"], 0.7)
+        self.assertEqual(p.relevance.call_count, 3)
+        for call in p.relevance.call_args_list:
+            self.assertEqual(call.kwargs.get("temperature"), 0.7)
+
 
 class TestJuryDuplicateNames(unittest.TestCase):
     def test_duplicate_model_engine_names_disambiguated(self):
