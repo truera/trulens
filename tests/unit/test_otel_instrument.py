@@ -16,6 +16,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
 )
 from opentelemetry.trace import SpanKind
 import pandas as pd
+from trulens.core.otel import instrument as core_instrument
 from trulens.core.otel.instrument import get_func_name
 from trulens.core.otel.instrument import instrument
 from trulens.core.otel.instrument import instrument_method
@@ -676,6 +677,47 @@ class TestOtelInstrument(unittest.TestCase):
         self.assertEqual(len(spans), 1)
         proto = convert_readable_span_to_proto(spans[0])
         self.assertEqual(proto.kind, SpanProto.SpanKind.SPAN_KIND_CLIENT)
+
+    def _assert_one_tool_span(self, name: str) -> None:
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].name, name)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.SPAN_TYPE],
+            SpanAttributes.SpanType.TOOL,
+        )
+
+    def test_instrument_tools_invoke(self) -> None:
+        tools_by_name = {"add": _AddTool()}
+        core_instrument.instrument_tools(tools_by_name)
+
+        self.assertEqual(tools_by_name["add"].invoke({"a": 1, "b": 2}), 3)
+        self._assert_one_tool_span("add")
+
+    def test_instrument_tools_ainvoke(self) -> None:
+        tools_by_name = {"add": _AddTool()}
+        core_instrument.instrument_tools(tools_by_name, invoke_method="ainvoke")
+        tool = tools_by_name["add"]
+
+        self.assertEqual(asyncio.run(tool.ainvoke({"a": 1, "b": 2})), 3)
+        self._assert_one_tool_span("add")
+        # The sync path is passed through to the tool, untraced.
+        self.assertEqual(tool.invoke({"a": 1, "b": 2}), 3)
+        self.assertEqual(len(self.exporter.get_finished_spans()), 1)
+        self.assertEqual(tool.name, "add")
+
+
+class _AddTool:
+    """Just enough of a LangChain tool for `instrument_tools`."""
+
+    name = "add"
+
+    def invoke(self, args: dict) -> int:
+        return args["a"] + args["b"]
+
+    async def ainvoke(self, args: dict) -> int:
+        await asyncio.sleep(0)
+        return args["a"] + args["b"]
 
 
 class _StubApp:

@@ -44,12 +44,16 @@ from trulens.experimental.otel_tracing.core.span import (
 from trulens.experimental.otel_tracing.core.span import (
     set_span_attribute_safely,
 )
+from trulens.otel.semconv.trace import ErrorAttributes
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 _logger = logging.getLogger(__name__)
 
 
 _EXPLANATION_KEYS = ["explanation", "explanations", "reason", "reasons"]
+
+_TOOL_RESULT_TRUNCATION_MARKER = "... [truncated]"
 
 
 # If we could just have `opentelemetry.sdk.trace.ReadableSpan` it would be
@@ -257,6 +261,72 @@ def _is_conversation_level(
     return levels == {True}
 
 
+def _truncate_tool_result(value: Any, max_chars: int) -> Any:
+    """Truncate a tool result while preserving non-string values."""
+    if not isinstance(value, str) or len(value) <= max_chars:
+        return value
+    return value[:max_chars] + _TOOL_RESULT_TRUNCATION_MARKER
+
+
+def _conversation_tool_spans_by_record_id(
+    events: pd.DataFrame,
+) -> Dict[str, List[pd.Series]]:
+    """Group TOOL and MCP event rows by record id in execution order."""
+    tool_spans = defaultdict(list)
+    for _, row in events.iterrows():
+        attributes = row["record_attributes"]
+        if attributes.get(SpanAttributes.SPAN_TYPE) not in {
+            SpanAttributes.SpanType.TOOL,
+            SpanAttributes.SpanType.MCP,
+        }:
+            continue
+        record_id = attributes.get(SpanAttributes.RECORD_ID)
+        if record_id is not None:
+            tool_spans[record_id].append(row)
+
+    for spans in tool_spans.values():
+        spans.sort(
+            key=lambda row: (
+                row["start_timestamp"],
+                row["trace"].get("span_id", ""),
+            )
+        )
+    return tool_spans
+
+
+def _tool_call_from_span(
+    span: pd.Series, max_tool_result_chars: int
+) -> Dict[str, Any]:
+    """Convert a TOOL or MCP span into a conversation tool-call value."""
+    attributes = span["record_attributes"]
+    name = attributes.get(GenAIAttributes.TOOL.NAME)
+    if name is None:
+        name = attributes.get(SpanAttributes.MCP.TOOL_NAME)
+
+    arguments = attributes.get(GenAIAttributes.TOOL.CALL_ARGUMENTS)
+    if arguments is None:
+        arguments = attributes.get(SpanAttributes.MCP.INPUT_ARGUMENTS)
+
+    result = attributes.get(GenAIAttributes.TOOL.CALL_RESULT)
+    if result is None:
+        result = attributes.get(SpanAttributes.MCP.OUTPUT_CONTENT)
+
+    error = attributes.get(ErrorAttributes.TYPE)
+    if error is None:
+        error = attributes.get(SpanAttributes.CALL.ERROR)
+    if not error:
+        error = None
+    if error is None and attributes.get(SpanAttributes.MCP.OUTPUT_IS_ERROR):
+        error = "mcp_tool_error"
+
+    return {
+        "name": name,
+        "arguments": arguments,
+        "result": _truncate_tool_result(result, max_tool_result_chars),
+        "error": error,
+    }
+
+
 def _compute_feedback_by_conversation(
     events: pd.DataFrame,
     feedback_name: str,
@@ -293,6 +363,16 @@ def _compute_feedback_by_conversation(
     flattened_inputs = []
     target_record_id_to_conversation_id = {}
     record_id_to_record_root = _map_record_id_to_record_roots(events)
+    include_tool_calls = any(
+        selector.conversation_attribute == "records"
+        and selector.include_tool_calls
+        for selector in kwarg_to_selector.values()
+    )
+    tool_spans_by_record_id = (
+        _conversation_tool_spans_by_record_id(events)
+        if include_tool_calls
+        else {}
+    )
     for key, roots in conversations.items():
         roots.sort(
             key=lambda root: (
@@ -317,7 +397,24 @@ def _compute_feedback_by_conversation(
         inputs = {}
         for arg, selector in kwarg_to_selector.items():
             if selector.conversation_attribute == "records":
-                value = records
+                if selector.include_tool_calls:
+                    value = []
+                    for record, root in zip(records, roots, strict=True):
+                        record_with_tools = dict(record)
+                        record_id = root["record_attributes"].get(
+                            SpanAttributes.RECORD_ID
+                        )
+                        record_with_tools["tool_calls"] = [
+                            _tool_call_from_span(
+                                span, selector.max_tool_result_chars
+                            )
+                            for span in tool_spans_by_record_id.get(
+                                record_id, []
+                            )
+                        ]
+                        value.append(record_with_tools)
+                else:
+                    value = records
                 span_attribute = "conversation.records"
             elif selector.conversation_attribute == "input":
                 value = [
