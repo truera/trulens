@@ -223,10 +223,30 @@ f_conversation_coherence = Metric(
 
 The conversation-level metrics are `coherence_across_turns`,
 `conversation_helpfulness`, `topic_adherence`, `agent_goal_accuracy`,
-`requirement_satisfaction`, `stance_stability`, and the deterministic
-`conversation_repetition` (no LLM calls). `requirement_satisfaction` and
-`stance_stability` are available only as `_with_cot_reasons` methods; each
-other LLM-based metric also has a matching `_with_cot_reasons` variant.
+`requirement_satisfaction`, `role_adherence_with_cot_reasons`, `stance_stability`,
+and the deterministic `conversation_repetition` (no LLM calls).
+`requirement_satisfaction` and `stance_stability` are available only as
+`_with_cot_reasons` methods, as `role_adherence_with_cot_reasons` is; each other
+LLM-based metric also has a matching `_with_cot_reasons` variant.
+
+`role_adherence_with_cot_reasons` checks whether the assistant keeps an assigned
+role or persona. It requires a `role` argument. One judge call returns a verdict
+for every assistant turn, and the score is the share of assistant turns that
+adhered, computed in code rather than asked of the judge. The returned reasons
+list each turn's verdict, and `broken_turns` holds the turn numbers that broke
+the role:
+
+```python
+f_role_adherence = Metric(
+    implementation=provider.role_adherence_with_cot_reasons,
+    name="Role Adherence",
+).with_arguments(
+    role="A math tutor who guides with questions and never states the final answer."
+).on_conversation()
+```
+
+If the judge's reply does not contain exactly one verdict per assistant turn,
+the metric returns `UNPARSABLE_SCORE` instead of guessing.
 
 ## Attach both metrics to an app
 
