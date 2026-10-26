@@ -111,3 +111,32 @@ def test_analyzer_skips_unparsable_judge_replies():
     assert list(report.predicted) == [1.0, 1.0, 1.0]
     assert report.mean == pytest.approx(1.0)
     assert report.min == pytest.approx(1.0)
+
+
+def test_analyzer_skips_dict_reply_containing_sentinel(caplog):
+    """A dict reply with one unparsable criterion is not a partial score."""
+    import logging
+
+    from trulens.core.utils.constants import UNPARSABLE_SCORE
+
+    golden = [
+        {"query": f"q{i}", "expected_response": "r", "expected_score": 1.0}
+        for i in range(4)
+    ]
+
+    def judge(q, r):  # right on 3 rows, one unparsable criterion on q3
+        if q == "q3":
+            return ({"relevance": 0.5, "groundedness": UNPARSABLE_SCORE}, {})
+        return ({"relevance": 1.0}, {})
+
+    with caplog.at_level(logging.WARNING):
+        report = ScoreDistributionAnalyzer(
+            feedback_fn=judge,
+            golden_set=golden,
+            args_fn=lambda r: (r["query"], r["expected_response"]),
+        ).run()
+
+    assert list(report.predicted) == [1.0, 1.0, 1.0]
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert len(warnings) == 1
+    assert "1 of 4 rows" in warnings[0].getMessage()

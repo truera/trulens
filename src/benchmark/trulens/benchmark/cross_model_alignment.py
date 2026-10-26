@@ -38,6 +38,7 @@ import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
+from trulens.core.utils.constants import UNPARSABLE_SCORE
 from trulens.core.utils.constants import is_unparsable_score
 from trulens.feedback import groundtruth as feedback_groundtruth
 
@@ -54,6 +55,11 @@ def _to_score(result: Any) -> float:
         result = result[0]
     if isinstance(result, dict):
         values = [v for v in result.values() if isinstance(v, (int, float))]
+        if any(is_unparsable_score(v) for v in values):
+            # One unparsable criterion has no score; averaging it with the
+            # numeric ones would turn the sentinel into a "real" score
+            # somewhere between -1 and 1.
+            return UNPARSABLE_SCORE
         result = float(np.mean(values)) if values else float("nan")
     return float(result)
 
@@ -270,7 +276,7 @@ class CrossModelAlignment:
         outlier_mean_spearman: A judge whose mean correlation with the others is
             below this is reported as an outlier.
         skip_warn_fraction: Warn if more than this fraction of rows are skipped
-            because a judge errored on them.
+            because a judge errored or returned an unparsable reply.
     """
 
     def __init__(
@@ -300,7 +306,8 @@ class CrossModelAlignment:
     def run(self) -> CrossModelAlignmentReport:
         """Score the golden set with every judge and build the report.
 
-        Rows on which any judge errors are skipped so all judges stay aligned.
+        Rows on which any judge errors or returns an unparsable reply are
+        skipped so all judges stay aligned.
 
         Returns:
             A populated
@@ -329,7 +336,7 @@ class CrossModelAlignment:
                 # An unparsable reply is "no score", not a score of -1.0;
                 # treat it like the raised-failure path so the row is skipped.
                 if is_unparsable_score(judge_score):
-                    log.warning(
+                    log.debug(
                         "judge %s returned an unparsable reply; skipping the row",
                         judge["name"],
                     )
@@ -345,8 +352,9 @@ class CrossModelAlignment:
         total = len(self.golden_set)
         if total and skipped / total > self.skip_warn_fraction:
             log.warning(
-                "%d of %d rows (%.0f%%) were skipped because a judge errored; "
-                "the alignment is computed on the remaining %d rows.",
+                "%d of %d rows (%.0f%%) were skipped because a judge errored "
+                "or returned an unparsable reply; the alignment is computed on "
+                "the remaining %d rows.",
                 skipped,
                 total,
                 100 * skipped / total,

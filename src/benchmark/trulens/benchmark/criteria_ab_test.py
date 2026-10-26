@@ -40,6 +40,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 from trulens.core.utils import stats as stats_utils
+from trulens.core.utils.constants import UNPARSABLE_SCORE
 from trulens.core.utils.constants import is_unparsable_score
 from trulens.feedback import groundtruth as feedback_groundtruth
 
@@ -54,6 +55,11 @@ def _to_score(result: Any) -> float:
         result = result[0]
     if isinstance(result, dict):
         values = [v for v in result.values() if isinstance(v, (int, float))]
+        if any(is_unparsable_score(v) for v in values):
+            # One unparsable criterion has no score; averaging it with the
+            # numeric ones would turn the sentinel into a "real" score
+            # somewhere between -1 and 1.
+            return UNPARSABLE_SCORE
         result = float(np.mean(values)) if values else float("nan")
     return float(result)
 
@@ -241,7 +247,8 @@ class CriteriaABTest:
     def run(self) -> CriteriaABTestReport:
         """Score the golden set with both variants and build the report.
 
-        Rows on which either variant errors are skipped so both stay aligned.
+        Rows on which either variant errors or returns an unparsable reply are
+        skipped so both stay aligned.
 
         Returns:
             A populated
@@ -254,6 +261,7 @@ class CriteriaABTest:
         scores_b: List[float] = []
         expected: List[Optional[float]] = []
         queries: List[str] = []
+        unparsable = 0
         for row in self.golden_set:
             args = self.args_fn(row)
             try:
@@ -274,14 +282,19 @@ class CriteriaABTest:
             # score; skip it so both variants stay aligned (same treatment as
             # a raised failure).
             if is_unparsable_score(a) or is_unparsable_score(b):
-                log.warning(
-                    "a variant returned an unparsable reply; skipping the row"
-                )
+                unparsable += 1
                 continue
             scores_a.append(a)
             scores_b.append(b)
             expected.append(row.get("expected_score"))
             queries.append(str(row.get("query", "")))
+        if unparsable:
+            log.warning(
+                "%d of %d rows were left out because a variant returned an "
+                "unparsable reply",
+                unparsable,
+                len(self.golden_set),
+            )
         if not scores_a:
             raise ValueError(
                 "No row was scored by both variants; check the variants and "
