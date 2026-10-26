@@ -205,6 +205,70 @@ class TestOtelInstrument(unittest.TestCase):
             "Kojikun",
         )
 
+    def test_async_generator_passed_through_function(self) -> None:
+        # Set up instrumented function.
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                f"{SpanAttributes.UNKNOWN.base}.best_babies": ret
+            }
+        )
+        async def my_function():
+            return my_generator()
+
+        async def my_generator():
+            yield "Kojikun"
+            yield "Nolan"
+            yield "Sachiboy"
+
+        # Helper to run the function.
+        async def consume_async_generator(num_iters):
+            async_generator = await my_function()
+            i = 0
+            async for curr in async_generator:
+                print(f"\t{curr}")
+                i += 1
+                if i == num_iters:
+                    break
+
+        # Run the generator to completion.
+        asyncio.run(consume_async_generator(100))
+        # Verify that the span is emitted correctly.
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].name,
+            "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_generator_passed_through_function.<locals>.my_function",
+        )
+        self.assertTupleEqual(
+            spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
+            ("Kojikun", "Nolan", "Sachiboy"),
+        )
+        self.assertTrue(
+            spans[0].attributes[SpanAttributes.GENERATION.IS_STREAMING]
+        )
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED],
+            3,
+        )
+        # Run the generator partially.
+        asyncio.run(consume_async_generator(2))
+        gc.collect()
+        # Verify that the span is emitted correctly.
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 2)
+        self.assertEqual(
+            spans[1].name,
+            "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_generator_passed_through_function.<locals>.my_function",
+        )
+        self.assertTupleEqual(
+            spans[1].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
+            ("Kojikun", "Nolan"),
+        )
+        self.assertEqual(
+            spans[1].attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED],
+            2,
+        )
+
     def test_async_generator_function(self) -> None:
         # Set up instrumented function.
         @instrument(
