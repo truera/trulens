@@ -617,6 +617,16 @@ class Metric(feedback_schema.FeedbackDefinition):
         # Filter out unexpected keyword arguments
         sig = signature(self.imp)
         valid_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
+        # An implementation that takes `**kwargs` (such as a `Jury` over a
+        # judge method that does) has no named `temperature` to match above,
+        # but can still accept it. Forward only the temperature: the other
+        # metric settings change the prompt or score scale and stay limited
+        # to implementations that name them.
+        if "temperature" in kwargs and any(
+            param.kind == inspect.Parameter.VAR_KEYWORD
+            for param in sig.parameters.values()
+        ):
+            valid_kwargs["temperature"] = kwargs["temperature"]
         return self.imp(*args, **valid_kwargs)
 
     def aggregate(
