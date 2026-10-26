@@ -32,8 +32,10 @@ jobs:
       # calls it directly, so install it here rather than depending on the image.
       # Pinning vmImage would only defer the problem to the next image bump.
       set -e
-      curl -sSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+      curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-py314_26.9.4-0-Linux-x86_64.sh \
         -o /tmp/miniconda.sh
+      echo "4ecd6f5ced565b02ef2fd5992fca4244b5e695ef5bff2beffbf03c7da5686e35  /tmp/miniconda.sh" \
+        | sha256sum --check --strict
       bash /tmp/miniconda.sh -b -p "$HOME/miniconda"
       echo "##vso[task.prependpath]$HOME/miniconda/bin"
     displayName: Install Miniconda
