@@ -163,6 +163,28 @@ Selector.select_conversation_input()  # Ordered record inputs
 Selector.select_conversation_output()  # Ordered record outputs
 ```
 
+By default, conversation records contain only the user input and assistant
+output. Opt in to the TOOL and MCP calls associated with each turn when the
+judge needs to evaluate tool-grounded answers or coding-agent actions:
+
+```python
+f_goal_accuracy = Metric(
+    implementation=provider.agent_goal_accuracy_with_cot_reasons,
+    name="Goal Accuracy",
+).on({
+    "conversation": Selector.select_conversation(
+        include_tool_calls=True,
+        max_tool_result_chars=2_000,
+    )
+})
+```
+
+Each record then includes an ordered `tool_calls` list with `name`,
+`arguments`, `result`, and `error`. Tool results longer than
+`max_tool_result_chars` are truncated with a marker to control judge token
+usage. The option is disabled by default, so existing conversation metrics see
+the same records and prompts as before.
+
 Conversation selectors cannot be mixed with record or span selectors in the same
 `Metric`. Attach separate metrics at each scope instead.
 
