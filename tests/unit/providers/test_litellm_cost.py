@@ -76,6 +76,9 @@ class TestLiteLLMCostCallback(unittest.TestCase):
             model=_MODEL,
             choices=[{"message": {"role": "assistant", "content": "ok"}}],
         )
+        # LiteLLM fills in a zero Usage when it is omitted; clear it to model a
+        # provider that sends none.
+        response.usage = None
         self.assertIsNone(getattr(response, "usage", None))
 
         self.callback.handle_generation(response)
@@ -90,13 +93,11 @@ class TestLiteLLMCostCallback(unittest.TestCase):
             model=_MODEL,
             choices=[{"message": {"role": "assistant", "content": "ok"}}],
         )
+        response.usage = None
 
-        with mock.patch.object(
-            litellm_endpoint, "completion_cost", return_value=0.0
-        ):
-            attributes = litellm_endpoint.LiteLLMCostComputer.handle_response(
-                response
-            )
+        attributes = litellm_endpoint.LiteLLMCostComputer.handle_response(
+            response
+        )
 
         self.assertEqual(attributes[SpanAttributes.COST.NUM_TOKENS], 0)
 
