@@ -154,6 +154,50 @@ or any reverse-proxy that speaks `/v1/chat/completions`.
     )
     ```
 
+### Using DemonRoute
+
+[DemonRoute](https://demonroute.com) is an OpenAI-compatible gateway to
+open-weight models (Dolphin, MythoMax, Hermes, and abliterated Llama/Qwen
+builds) behind a single endpoint. It is prepaid, does not log IPs, and does
+not retain prompts, which makes it an option for running feedback functions
+over data that should not go to a first-party API.
+
+Point the OpenAI provider at the gateway's base URL with a DemonRoute API
+key and any model ID from the [model
+catalog](https://demonroute.com/models):
+
+```python
+import os
+
+from trulens.providers.openai import OpenAI
+
+provider = OpenAI(
+    model_engine="huihui-ai/Huihui-Qwen3.5-27B-abliterated",  # or any ID from demonroute.com/models
+    api_key=<redacted>
+    base_url="https://api.demonroute.com/v1",
+)
+
+# Example feedback call
+score, reasons = provider.relevance_with_cot_reasons(
+    "What is the capital of France?",
+    "Paris is the capital of France.",
+)
+```
+
+Equivalent LiteLLM route:
+
+```python
+import os
+
+from trulens.providers.litellm import LiteLLM
+
+provider = LiteLLM(
+    model_engine="openai/huihui-ai/Huihui-Qwen3.5-27B-abliterated",
+    api_base="https://api.demonroute.com/v1",
+    api_key=<redacted>
+)
+```
+
 ### Using OrcaRouter
 
 [OrcaRouter](https://www.orcarouter.ai) is an OpenAI-compatible gateway that
