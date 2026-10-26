@@ -172,7 +172,7 @@ import os
 from trulens.providers.openai import OpenAI
 
 provider = OpenAI(
-    model_engine="huihui-ai/Huihui-Qwen3.5-27B-abliterated",  # or any ID from demonroute.com/models
+    model_engine="shoukewei/Qwen3.8-27B-OBLITERATED22-AGENT",  # or any ID from demonroute.com/models
     api_key=<redacted>
     base_url="https://api.demonroute.com/v1",
 )
@@ -192,7 +192,7 @@ import os
 from trulens.providers.litellm import LiteLLM
 
 provider = LiteLLM(
-    model_engine="openai/huihui-ai/Huihui-Qwen3.5-27B-abliterated",
+    model_engine="openai/shoukewei/Qwen3.8-27B-OBLITERATED22-AGENT",
     api_base="https://api.demonroute.com/v1",
     api_key=<redacted>
 )
