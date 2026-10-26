@@ -55,7 +55,7 @@ def _dcg(scores: list[float]) -> float:
 
 def _validate_relevance_scores(
     retrieved_context_chunks: list[str],
-    relevance_scores: list[float] | None,
+    relevance_scores: Sequence[float] | None,
 ) -> None:
     """Require one score per retrieved chunk when scores are supplied."""
     if relevance_scores is not None and len(relevance_scores) != len(
@@ -351,7 +351,7 @@ class GroundTruthAgreement(
         self,
         query: str,
         retrieved_context_chunks: list[str],
-        relevance_scores: list[float] | None = None,
+        relevance_scores: Sequence[float] | None = None,
         k: int | None = None,
     ) -> float:
         """
@@ -450,7 +450,7 @@ class GroundTruthAgreement(
         self,
         query: str,
         retrieved_context_chunks: list[str],
-        relevance_scores: list[float] | None = None,
+        relevance_scores: Sequence[float] | None = None,
         k: int | None = None,
     ) -> float:
         """
@@ -516,7 +516,7 @@ class GroundTruthAgreement(
         self,
         query: str,
         retrieved_context_chunks: list[str],
-        relevance_scores: list[float] | None = None,
+        relevance_scores: Sequence[float] | None = None,
         k: int | None = None,
     ) -> float:
         """
@@ -583,7 +583,7 @@ class GroundTruthAgreement(
         self,
         query: str,
         retrieved_context_chunks: list[str],
-        relevance_scores: list[float] | None = None,
+        relevance_scores: Sequence[float] | None = None,
     ) -> float:
         """
         Compute Mean Reciprocal Rank (MRR) for a given query and retrieved context chunks.
