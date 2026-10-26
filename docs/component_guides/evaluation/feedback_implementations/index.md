@@ -20,9 +20,11 @@ _TruLens_ can also provide reasons using [chain-of-thought methodology](https://
 
 ### When the judge reply cannot be parsed
 
-`generate_score` and `generate_score_and_reasons` return [`UNPARSABLE_SCORE`][trulens.core.utils.constants.UNPARSABLE_SCORE] (`-1.0`) when the judge's reply has the expected shape but its score cannot be read: a JSON reply whose `score` is not a number, or a chain-of-thought reply with criteria and supporting evidence but no score line. A reply with no recognizable score at all, such as free text without any number, raises `trulens.feedback.generated.ParseError` instead. Scores are otherwise normalized to the 0 to 1 range, so a negative score is never a verdict. _TruLens_ skips it in its own aggregates: `Jury` drops that juror's vote, `BatchEvaluator` leaves it out of averages, the groundedness implementation averages only the statements that were graded, and guardrails refuse to act on it.
+`generate_score` and `generate_score_and_reasons` raise `trulens.feedback.generated.ParseError` whenever no score can be read from the judge's reply, and so do the `_with_cot_reasons` methods built on them. That covers free text without any number, a chain-of-thought reply with criteria and supporting evidence but no score line, and a JSON reply whose `score` is not a number. A score outside the configured scale raises `ParseError` too. When TruLens computes feedback on recorded app calls, the exception is recorded as that evaluation's error; `Jury` drops a juror that raises and still scores the remaining votes.
 
-If you call a `_with_cot_reasons` method directly and compare the score against a threshold, handle both outcomes: check [`is_unparsable_score`][trulens.core.utils.constants.is_unparsable_score] on the returned score and catch `ParseError`. Both `UNPARSABLE_SCORE` and `is_unparsable_score` are also importable from `trulens.feedback`:
+Some metrics record a failure as a score instead of raising: [`UNPARSABLE_SCORE`][trulens.core.utils.constants.UNPARSABLE_SCORE] (`-1.0`). The groundedness methods give it to a statement whose judge reply could not be parsed and average only the graded statements, returning it when none was graded; the role adherence metric returns it when it cannot read the judge's verdicts; and results stored by earlier versions may carry it. Scores are otherwise normalized to the 0 to 1 range, so a negative score is never a verdict. _TruLens_ skips it in its own aggregates: `Jury` drops that juror's vote, `BatchEvaluator` leaves it out of averages, and guardrails refuse to act on it.
+
+If you call a `_with_cot_reasons` method directly and compare the score against a threshold, catch `ParseError`, and check [`is_unparsable_score`][trulens.core.utils.constants.is_unparsable_score] on scores from the metrics above. Both `UNPARSABLE_SCORE` and `is_unparsable_score` are also importable from `trulens.feedback`:
 
 !!! example
 
@@ -34,8 +36,12 @@ If you call a `_with_cot_reasons` method directly and compare the score against 
         score, reasons = provider.coherence_with_cot_reasons(text)
     except ParseError as e:
         raise RuntimeError("judge reply had no score") from e
+
+    score, reasons = provider.groundedness_measure_with_cot_reasons(
+        source, statement
+    )
     if is_unparsable_score(score):
-        raise RuntimeError(f"judge produced no score: {reasons}")
+        raise RuntimeError(f"no statement could be graded: {reasons}")
     ```
 
 ## Classification-based Providers

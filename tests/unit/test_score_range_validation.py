@@ -22,7 +22,6 @@ back as ``4.2`` and looked like a valid rating. These cover them against the
 same expectation.
 """
 
-import math
 from typing import ClassVar
 
 import pytest
@@ -171,37 +170,31 @@ def test_generate_score_list_skips_out_of_range_items():
     assert score == pytest.approx(0.2)
 
 
-def test_generate_score_and_reasons_unparseable_sentinel_not_normalized():
-    """Regression: the -1.0 failure sentinel was previously normalized to
-    -0.1 on a 0-10 scale; it must be returned raw, matching generate_score."""
+def test_generate_score_and_reasons_unparseable_json_score_raises():
+    """A JSON reply whose score is not a number raises ParseError rather than
+    returning a sentinel (which an earlier version also normalized to -0.1)."""
     response = '{"criteria": "c", "supporting_evidence": "e", "score": "abc"}'
 
-    score, _ = MockLLMProvider(response).generate_score_and_reasons(
-        system_prompt="System prompt.",
-        min_score_val=_MIN,
-        max_score_val=_MAX,
-    )
-
-    assert not math.isnan(score)
-    assert score == -1.0
+    with pytest.raises(feedback_generated.ParseError):
+        MockLLMProvider(response).generate_score_and_reasons(
+            system_prompt="System prompt.",
+            min_score_val=_MIN,
+            max_score_val=_MAX,
+        )
 
 
-def test_generate_score_and_reasons_text_without_score_line_keeps_sentinel():
-    """Regression: the same leak on the text fallback. A reply that carries
-    supporting evidence but no "Score:" line leaves the -1 sentinel in place,
-    and normalizing it turned a parse failure into a plausible -0.1 rating on a
-    0-10 scale. The JSON path above was fixed for exactly this; the text branch
-    was not."""
+def test_generate_score_and_reasons_text_without_score_line_raises():
+    """The same on the text fallback: a reply that carries supporting evidence
+    but no "Score:" line raises ParseError instead of a plausible-looking
+    rating or a sentinel."""
     response = "Criteria: c\nSupporting Evidence: cut off before the score"
 
-    score, _ = MockLLMProvider(response).generate_score_and_reasons(
-        system_prompt="System prompt.",
-        min_score_val=_MIN,
-        max_score_val=_MAX,
-    )
-
-    assert not math.isnan(score)
-    assert score == -1.0
+    with pytest.raises(feedback_generated.ParseError):
+        MockLLMProvider(response).generate_score_and_reasons(
+            system_prompt="System prompt.",
+            min_score_val=_MIN,
+            max_score_val=_MAX,
+        )
 
 
 def test_generate_score_and_reasons_text_with_score_line_still_normalizes():
@@ -355,22 +348,21 @@ def test_generate_score_and_reasons_reformat_object_out_of_range_raises():
         )
 
 
-def test_generate_score_and_reasons_reformat_object_out_of_range_sentinel():
+def test_generate_score_and_reasons_evidence_reformat_out_of_range_raises():
     """And when the text parses as evidence without a score, the rejected
-    reformat score leaves the documented unparsable sentinel behind instead of a
-    normalized out-of-scale rating."""
+    reformat score ends in ParseError instead of a normalized out-of-scale
+    rating."""
     provider = ScriptedLLMProvider([
         "Criteria: c\nSupporting Evidence: e",
         _COT_OUT_OF_RANGE,
     ])
 
-    score, _ = provider.generate_score_and_reasons(
-        system_prompt="System prompt.",
-        min_score_val=_MIN,
-        max_score_val=_MAX,
-    )
-
-    assert score == -1.0
+    with pytest.raises(feedback_generated.ParseError):
+        provider.generate_score_and_reasons(
+            system_prompt="System prompt.",
+            min_score_val=_MIN,
+            max_score_val=_MAX,
+        )
 
 
 def test_generate_score_and_reasons_reformat_in_range_still_normalizes():
@@ -391,3 +383,58 @@ def test_generate_score_and_reasons_reformat_in_range_still_normalizes():
 
     assert score == pytest.approx(0.2)
     assert isinstance(reasons, dict)
+
+
+# Every reply shape a judge can send without a readable score raises ParseError
+# from generate_score, generate_score_and_reasons and the _with_cot_reasons
+# methods built on them, rather than returning UNPARSABLE_SCORE for some shapes.
+_UNREADABLE_REPLIES = [
+    "I cannot rate this response.",
+    "Criteria: c\nSupporting Evidence: cut off before the score",
+    '{"criteria": "c", "supporting_evidence": "e", "score": "high"}',
+]
+_UNREADABLE_IDS = [
+    "free_text",
+    "evidence_without_score_line",
+    "json_non_numeric",
+]
+
+
+@pytest.mark.parametrize("response", _UNREADABLE_REPLIES, ids=_UNREADABLE_IDS)
+def test_generate_score_raises_parse_error_for_unreadable_reply(response):
+    with pytest.raises(feedback_generated.ParseError):
+        MockLLMProvider(response).generate_score(
+            system_prompt="System prompt.",
+            min_score_val=_MIN,
+            max_score_val=_MAX,
+        )
+
+
+@pytest.mark.parametrize("response", _UNREADABLE_REPLIES, ids=_UNREADABLE_IDS)
+def test_generate_score_and_reasons_raises_parse_error_for_unreadable_reply(
+    response,
+):
+    with pytest.raises(feedback_generated.ParseError):
+        MockLLMProvider(response).generate_score_and_reasons(
+            system_prompt="System prompt.",
+            min_score_val=_MIN,
+            max_score_val=_MAX,
+        )
+
+
+@pytest.mark.parametrize("response", _UNREADABLE_REPLIES, ids=_UNREADABLE_IDS)
+def test_with_cot_reasons_raises_parse_error_for_unreadable_reply(response):
+    with pytest.raises(feedback_generated.ParseError):
+        MockLLMProvider(response).coherence_with_cot_reasons(
+            "Some text to grade."
+        )
+
+
+def test_generate_score_list_without_usable_score_raises():
+    """A JSON list reply where no item carries a usable score raises too."""
+    with pytest.raises(feedback_generated.ParseError):
+        MockLLMProvider('[{"score": "high"}, {"score": 42}]').generate_score(
+            system_prompt="System prompt.",
+            min_score_val=_MIN,
+            max_score_val=_MAX,
+        )
