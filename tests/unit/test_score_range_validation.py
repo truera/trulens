@@ -430,6 +430,22 @@ def test_with_cot_reasons_raises_parse_error_for_unreadable_reply(response):
         )
 
 
+def test_generate_score_list_warns_on_non_numeric_item(caplog):
+    """A non-numeric list item is dropped with a warning, like an
+    out-of-range one, so the remaining items still score."""
+    with caplog.at_level("WARNING", logger=llm_provider.__name__):
+        score = MockLLMProvider(
+            '[{"score": 2}, {"score": "high"}]'
+        ).generate_score(
+            system_prompt="System prompt.",
+            min_score_val=_MIN,
+            max_score_val=_MAX,
+        )
+
+    assert score == pytest.approx(0.2)
+    assert "Could not parse score from list item" in caplog.text
+
+
 def test_generate_score_list_without_usable_score_raises():
     """A JSON list reply where no item carries a usable score raises too."""
     with pytest.raises(feedback_generated.ParseError):
