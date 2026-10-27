@@ -116,3 +116,31 @@ def test_re_configured_rating_keeps_out_of_phrasing(test_input, expected):
     assert result == expected, (
         f"Failed on {test_input}: expected {expected}, got {result}"
     )
+
+
+# The minus sign belongs to the number, so "-2" is out of range and not a 2.
+signed_data = [
+    ("Rating: -2", 0, 3, None),
+    ("Score: 3 (-1 for repetition)", 0, 3, 3),
+    ("-1", -1, 1, -1),
+]
+
+
+@pytest.mark.parametrize(
+    "test_input,min_score_val,max_score_val,expected", signed_data
+)
+def test_re_configured_rating_keeps_the_sign(
+    test_input, min_score_val, max_score_val, expected
+):
+    """A negative integer is not read as its absolute value."""
+
+    try:
+        result = feedback_generated.re_configured_rating(
+            test_input, min_score_val, max_score_val
+        )
+    except feedback_generated.ParseError:
+        result = None
+
+    assert result == expected, (
+        f"Failed on {test_input}: expected {expected}, got {result}"
+    )
