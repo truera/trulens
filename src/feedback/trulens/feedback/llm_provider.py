@@ -359,6 +359,9 @@ class LLMProvider(core_provider.Provider):
                     try:
                         candidate = float(item["score"])
                     except (TypeError, ValueError):
+                        logger.warning(
+                            "Could not parse score from list item: %s", item
+                        )
                         continue
                     if min_score_val <= candidate <= max_score_val:
                         scores.append(candidate)
