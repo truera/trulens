@@ -189,6 +189,28 @@ Selector.select_conversation_input()  # Ordered record inputs
 Selector.select_conversation_output()  # Ordered record outputs
 ```
 
+By default, conversation records contain only the user input and assistant
+output. Opt in to the TOOL and MCP calls associated with each turn when the
+judge needs to evaluate tool-grounded answers or coding-agent actions:
+
+```python
+f_goal_accuracy = Metric(
+    implementation=provider.agent_goal_accuracy_with_cot_reasons,
+    name="Goal Accuracy",
+).on({
+    "conversation": Selector.select_conversation(
+        include_tool_calls=True,
+        max_tool_result_chars=2_000,
+    )
+})
+```
+
+Each record then includes an ordered `tool_calls` list with `name`,
+`arguments`, `result`, and `error`. Tool results longer than
+`max_tool_result_chars` are truncated with a marker to control judge token
+usage. The option is disabled by default, so existing conversation metrics see
+the same records and prompts as before.
+
 Conversation selectors cannot be mixed with record or span selectors in the same
 `Metric`. Attach separate metrics at each scope instead.
 
@@ -226,10 +248,30 @@ f_conversation_coherence = Metric(
 
 The conversation-level metrics are `coherence_across_turns`,
 `conversation_helpfulness`, `topic_adherence`, `agent_goal_accuracy`,
-`requirement_satisfaction`, `escalation_correctness`, and the deterministic
-`conversation_repetition` (no LLM calls). Each LLM-based metric has a matching
-`_with_cot_reasons` variant; `requirement_satisfaction` and
-`escalation_correctness` are available only in that form.
+`requirement_satisfaction`, `role_adherence_with_cot_reasons`,
+`escalation_correctness`, and the deterministic `conversation_repetition` (no
+LLM calls). Each LLM-based metric has a matching `_with_cot_reasons` variant;
+`requirement_satisfaction`, `role_adherence`, and `escalation_correctness` are
+available only in that form.
+
+`role_adherence_with_cot_reasons` checks whether the assistant keeps an assigned
+role or persona. It requires a `role` argument. One judge call returns a verdict
+for every assistant turn, and the score is the share of assistant turns that
+adhered, computed in code rather than asked of the judge. The returned reasons
+list each turn's verdict, and `broken_turns` holds the turn numbers that broke
+the role:
+
+```python
+f_role_adherence = Metric(
+    implementation=provider.role_adherence_with_cot_reasons,
+    name="Role Adherence",
+).with_arguments(
+    role="A math tutor who guides with questions and never states the final answer."
+).on_conversation()
+```
+
+If the judge's reply does not contain exactly one verdict per assistant turn,
+the metric returns `UNPARSABLE_SCORE` instead of guessing.
 
 ## Attach both metrics to an app
 

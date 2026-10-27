@@ -477,6 +477,8 @@ class Selector:
     function_name: Optional[str] = None
     span_name: Optional[str] = None
     span_type: Optional[str] = None
+    include_tool_calls: bool = False
+    max_tool_result_chars: int = 2_000
 
     # The following fields describe what to extract from the spans to use as
     # the feedback function input.
@@ -545,11 +547,22 @@ class Selector:
         collect_list: bool = True,
         match_only_if_no_ancestor_matched: bool = False,
         dataset_column: Optional[str] = None,
+        include_tool_calls: bool = False,
+        max_tool_result_chars: int = 2_000,
     ):
         if trace_level and conversation_level:
             raise ValueError(
                 "A selector cannot be both trace level and conversation level."
             )
+        if include_tool_calls and (
+            not conversation_level or conversation_attribute != "records"
+        ):
+            raise ValueError(
+                "`include_tool_calls` is only valid for conversation record "
+                "selectors."
+            )
+        if max_tool_result_chars < 0:
+            raise ValueError("`max_tool_result_chars` must be non-negative.")
         if conversation_level and conversation_attribute not in {
             "records",
             "input",
@@ -598,6 +611,8 @@ class Selector:
         self.function_name = function_name
         self.span_name = span_name
         self.span_type = span_type
+        self.include_tool_calls = include_tool_calls
+        self.max_tool_result_chars = max_tool_result_chars
         self.span_attributes_processor = span_attributes_processor
         self.span_attribute = span_attribute
         self.function_attribute = function_attribute
@@ -662,6 +677,8 @@ class Selector:
             and self.function_name == other.function_name
             and self.span_name == other.span_name
             and self.span_type == other.span_type
+            and self.include_tool_calls == other.include_tool_calls
+            and self.max_tool_result_chars == other.max_tool_result_chars
             and self.match_only_if_no_ancestor_matched
             == other.match_only_if_no_ancestor_matched
             and self.dataset_column == other.dataset_column
@@ -769,11 +786,24 @@ class Selector:
         return ret
 
     @staticmethod
-    def select_conversation() -> Selector:
-        """Return a selector for ordered records in a conversation."""
+    def select_conversation(
+        include_tool_calls: bool = False,
+        max_tool_result_chars: int = 2_000,
+    ) -> Selector:
+        """Return a selector for ordered records in a conversation.
+
+        Args:
+            include_tool_calls: Include TOOL and MCP spans associated with each
+                conversation turn. Defaults to False to preserve existing
+                conversation inputs and token usage.
+            max_tool_result_chars: Maximum number of characters retained from
+                each tool result before adding a truncation marker.
+        """
         return Selector(
             conversation_level=True,
             conversation_attribute="records",
+            include_tool_calls=include_tool_calls,
+            max_tool_result_chars=max_tool_result_chars,
         )
 
     @staticmethod
