@@ -186,6 +186,23 @@ def test_anthropic_request_shape():
     assert body["messages"] == [{"role": "user", "content": "hi"}]
 
 
+@pytest.mark.optional
+def test_anthropic_request_without_system_message():
+    """Without a leading system message there is no `system` field, and the
+    first message is kept."""
+    provider = _make_provider(
+        "anthropic.claude-3-sonnet-20240229-v1:0",
+        {"content": [{"text": "claude-ok"}]},
+    )
+    out = provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}]
+    )
+    assert out == "claude-ok"
+    body = json.loads(provider.endpoint.client.calls[0]["body"])
+    assert "system" not in body
+    assert body["messages"] == [{"role": "user", "content": "hi"}]
+
+
 _CLAUDE_MESSAGES = [
     {"role": "system", "content": "be terse"},
     {"role": "user", "content": "hi"},
