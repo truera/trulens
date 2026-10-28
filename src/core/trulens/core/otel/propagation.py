@@ -17,14 +17,30 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Mapping, MutableMapping, Optional
 
+from opentelemetry.baggage import get_all
+from opentelemetry.baggage import remove_baggage
 from opentelemetry.context import Context
+from opentelemetry.context import get_current
 from opentelemetry.propagate import extract
 from opentelemetry.propagate import inject
 from opentelemetry.trace import SpanContext
 from opentelemetry.trace import get_current_span
+from trulens.otel.semconv.trace import BASE_SCOPE
 
 if TYPE_CHECKING:
     import httpx
+
+# A recording keeps its state in baggage: live objects under `__trulens_*` keys
+# and ids under `ai.observability.*`. The default baggage propagator would
+# serialize all of it onto every outbound request.
+_TRULENS_BAGGAGE_PREFIXES = ("__trulens_", f"{BASE_SCOPE}.")
+
+
+def _without_trulens_baggage(context: Context) -> Context:
+    for key in get_all(context):
+        if key.startswith(_TRULENS_BAGGAGE_PREFIXES):
+            context = remove_baggage(key, context)
+    return context
 
 
 def inject_trace_context(headers: MutableMapping[str, str]) -> bool:
@@ -33,6 +49,8 @@ def inject_trace_context(headers: MutableMapping[str, str]) -> bool:
     Uses the globally configured propagators, so a `traceparent` header is
     written when the default W3C propagator is installed, and nothing is
     written when the span context is invalid or propagation is disabled.
+    Baggage that TruLens sets for its own bookkeeping is not sent; baggage
+    set by the application is.
 
     Args:
         headers: Mutable header mapping to write into, modified in place.
@@ -48,7 +66,7 @@ def inject_trace_context(headers: MutableMapping[str, str]) -> bool:
     # span context is valid but nothing is written, and the return value should
     # say so rather than report an injection that did not happen.
     injected: dict[str, str] = {}
-    inject(injected)
+    inject(injected, context=_without_trulens_baggage(get_current()))
     if not injected:
         return False
 
