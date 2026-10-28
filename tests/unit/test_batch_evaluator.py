@@ -9,6 +9,7 @@ import pytest
 from trulens.core import BatchEvaluator
 from trulens.core import Metric
 from trulens.core import Selector
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import constants as constants_utils
 from trulens.feedback.llm_provider import UNPARSABLE_SCORE
 
@@ -42,6 +43,11 @@ def contains_answer(context: str, answer: str) -> float:
 def num_contexts(context: list) -> float:
     """Score using the whole list of contexts at once."""
     return float(len(context))
+
+
+def starts_with_label(context: str, label: str) -> float:
+    """Score 1.0 when a context starts with its label."""
+    return 1.0 if context.startswith(label) else 0.0
 
 
 def custom_quality(doc: str, summary: str) -> float:
@@ -232,6 +238,60 @@ def test_collect_list_true_passes_whole_list():
     data = [{"contexts": ["a", "b", "c"]}]
     res = ev.evaluate(data)
     assert res["nctx"].iloc[0] == pytest.approx(3.0)
+
+
+def _label_metric(**aggregate_kwargs) -> Metric:
+    metric = Metric(
+        name="match",
+        implementation=starts_with_label,
+        selectors={
+            "context": Selector.from_column("contexts", collect_list=False),
+            "label": Selector.from_column("labels", collect_list=False),
+        },
+    )
+    if aggregate_kwargs:
+        metric = metric.aggregate(**aggregate_kwargs)
+    return metric
+
+
+@pytest.mark.parametrize(
+    "combinations, expected_calls, expected_score",
+    [
+        pytest.param(None, 9, 1 / 3, id="default-product"),
+        pytest.param(
+            feedback_schema.FeedbackCombinations.PRODUCT,
+            9,
+            1 / 3,
+            id="product",
+        ),
+        pytest.param(
+            feedback_schema.FeedbackCombinations.ZIP, 3, 1.0, id="zip"
+        ),
+    ],
+)
+def test_collect_list_false_honors_metric_combinations(
+    combinations, expected_calls, expected_score
+):
+    metric = _label_metric(
+        **({"combinations": combinations} if combinations else {})
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+    data = [{"contexts": ["a1", "b1", "c1"], "labels": ["a", "b", "c"]}]
+    res = ev.evaluate(data)
+    assert len(res["match_explanation"].iloc[0]) == expected_calls
+    assert res["match"].iloc[0] == pytest.approx(expected_score)
+
+
+def test_collect_list_false_zip_stops_at_shortest_list():
+    metric = _label_metric(
+        combinations=feedback_schema.FeedbackCombinations.ZIP
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+    # Like Python zip (non-strict), as FeedbackCombinations.ZIP documents.
+    data = [{"contexts": ["a1", "x1", "c1"], "labels": ["a", "b"]}]
+    res = ev.evaluate(data)
+    assert len(res["match_explanation"].iloc[0]) == 2
+    assert res["match"].iloc[0] == pytest.approx(0.5)
 
 
 # --- metric returning a plain float, multiple metrics -------------------------
