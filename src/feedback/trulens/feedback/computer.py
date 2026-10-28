@@ -1290,6 +1290,16 @@ def _call_feedback_function_under_eval_span(
                             SpanAttributes.COST.NUM_REASONING_TOKENS,
                             int(cost.n_reasoning_tokens),
                         )
+                    if getattr(cost, "n_cache_read_tokens", 0):
+                        eval_root_span.set_attribute(
+                            SpanAttributes.COST.NUM_CACHE_READ_TOKENS,
+                            int(cost.n_cache_read_tokens),
+                        )
+                    if getattr(cost, "n_cache_write_tokens", 0):
+                        eval_root_span.set_attribute(
+                            SpanAttributes.COST.NUM_CACHE_WRITE_TOKENS,
+                            int(cost.n_cache_write_tokens),
+                        )
                     # Feed cost back to the sampling controller for
                     # daily budget tracking.  Only on the ingest path —
                     # a batch backfill must not burn the daily budget.
