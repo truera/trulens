@@ -181,6 +181,22 @@ class TestJuryAggregation(unittest.TestCase):
         expected = 1.0 * 0.5 + 0.0 * 0.3 + 0.5 * 0.2
         self.assertAlmostEqual(self._call(j), expected)
 
+    def test_weighted_mean_large_equal_weights(self):
+        j = self._jury([0.0, 1.0], "weighted_mean", weights=[1e308, 1e308])
+        self.assertAlmostEqual(self._call(j), 0.5)
+
+    def test_weighted_mean_large_weights_unanimous_scores(self):
+        j = self._jury([1.0, 1.0], "weighted_mean", weights=[1e308, 1e308])
+        self.assertAlmostEqual(self._call(j), 1.0)
+
+    def test_weighted_mean_large_unequal_weights(self):
+        j = self._jury([0.0, 1.0], "weighted_mean", weights=[1e308, 9e307])
+        self.assertAlmostEqual(self._call(j), 9 / 19)
+
+    def test_weighted_mean_zero_weight_does_not_contribute(self):
+        j = self._jury([0.0, 1.0], "weighted_mean", weights=[0.0, 1e308])
+        self.assertAlmostEqual(self._call(j), 1.0)
+
     def test_custom_aggregation_callable(self):
         j = self._jury([0.3, 0.7], aggregation=lambda scores: max(scores))
         self.assertAlmostEqual(self._call(j), 0.7)
@@ -289,6 +305,34 @@ class TestJuryErrorHandling(unittest.TestCase):
         j.__signature__ = inspect.signature(_mock_relevance)
         with self.assertRaises(ValueError):
             j(prompt="x", response="y")
+
+    def test_weighted_mean_large_weights_after_partial_failure(self):
+        j = Jury(
+            [
+                self._sig(_make_provider("low", 0.0)),
+                self._sig(_make_failing_provider("failed")),
+                self._sig(_make_provider("high", 1.0)),
+            ],
+            method="relevance",
+            aggregation="weighted_mean",
+            weights=[1e308, 1e308, 1e308],
+        )
+        score, _ = j(prompt="x", response="y")
+        self.assertAlmostEqual(score, 0.5)
+
+    def test_weighted_mean_scales_using_only_surviving_weights(self):
+        j = Jury(
+            [
+                self._sig(_make_provider("low", 0.25)),
+                self._sig(_make_failing_provider("failed")),
+                self._sig(_make_provider("high", 0.75)),
+            ],
+            method="relevance",
+            aggregation="weighted_mean",
+            weights=[1e-308, 1e308, 1e-308],
+        )
+        score, _ = j(prompt="x", response="y")
+        self.assertAlmostEqual(score, 0.5)
 
 
 class TestJuryUnparsableScoreSentinel(unittest.TestCase):
