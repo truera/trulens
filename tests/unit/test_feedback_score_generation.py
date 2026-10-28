@@ -123,6 +123,10 @@ signed_data = [
     ("Rating: -2", 0, 3, None),
     ("Score: 3 (-1 for repetition)", 0, 3, 3),
     ("-1", -1, 1, -1),
+    # A date is not a rating, so its "-10" month is not read as 10.
+    ("2026-10-27", 0, 10, None),
+    # In "3-1" the "-1" is out of range, so it is not read as 1.
+    ("3-1", 0, 10, 3),
 ]
 
 
