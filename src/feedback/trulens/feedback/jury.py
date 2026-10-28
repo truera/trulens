@@ -70,10 +70,11 @@ class Jury:
     - ``reliability.temperature``: the ``temperature`` passed to the jurors,
       or ``None`` when none was passed.
 
-    A juror counts as failed when it raises *or* when its judge reply carried
-    no parseable score, which the providers report as
-    :data:`~trulens.feedback.llm_provider.UNPARSABLE_SCORE` (``-1.0``). Either
-    way it gets no vote. Only a jury with no surviving juror raises.
+    A juror counts as failed when it raises (the providers raise
+    :class:`~trulens.feedback.generated.ParseError` when its judge reply
+    carried no parseable score) *or* when it returns
+    :data:`~trulens.feedback.llm_provider.UNPARSABLE_SCORE` (``-1.0``), as a
+    custom juror or an aggregating metric may. Either way it gets no vote. Only a jury with no surviving juror raises.
 
     Args:
         jurors: Non-empty list of ``LLMProvider`` instances.

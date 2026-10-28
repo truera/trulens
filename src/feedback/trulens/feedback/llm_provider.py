@@ -62,9 +62,12 @@ def _validate_score_range(
     return rating
 
 
-# `generate_score_and_reasons` returns this when it could not parse a score out
-# of the judge's reply, on both the JSON and the text path. The value lives in
-# `trulens.core.utils.constants` so core-only consumers see the same sentinel.
+# `generate_score` and `generate_score_and_reasons` raise `ParseError` when they
+# cannot read a score out of the judge's reply. Feedback methods that aggregate
+# several judge calls (groundedness) catch it per statement and record this
+# sentinel for that statement, and stored results may still carry it. The value
+# lives in `trulens.core.utils.constants` so core-only consumers see the same
+# sentinel.
 UNPARSABLE_SCORE = constants_utils.UNPARSABLE_SCORE
 is_unparsable_score = constants_utils.is_unparsable_score
 
@@ -290,6 +293,10 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: The normalized score on a 0-1 scale. If reasons are needed,
             use :meth:`generate_score_and_reasons` instead.
+
+        Raises:
+            ParseError: If no score can be read from the judge's reply, or the
+                score is outside [`min_score_val`, `max_score_val`].
         """
 
         assert self.endpoint is not None, "Endpoint is not set."
@@ -332,29 +339,29 @@ class LLMProvider(core_provider.Provider):
         if isinstance(parsed_json, dict) and "score" in parsed_json:
             try:
                 raw_score = float(parsed_json["score"])
-            except (TypeError, ValueError):
-                normalized_score = -1.0
-            else:
-                _validate_score_range(raw_score, min_score_val, max_score_val)
-                normalized_score = (raw_score - min_score_val) / (
-                    max_score_val - min_score_val
-                )
-
-            return normalized_score
+            except (TypeError, ValueError) as e:
+                raise feedback_generated.ParseError(
+                    "numeric score", response
+                ) from e
+            _validate_score_range(raw_score, min_score_val, max_score_val)
+            return (raw_score - min_score_val) / (max_score_val - min_score_val)
 
         if isinstance(parsed_json, list):
             # If a list is returned, average the scores where possible.
             #
             # Asymmetric with the scalar path above on purpose: an out-of-range
-            # item is dropped with a warning rather than raised, so one bad
-            # rating does not discard the valid ones. When every item is out of
-            # range the result is the -1.0 sentinel, not a ParseError.
+            # or non-numeric item is dropped with a warning rather than raised,
+            # so one bad rating does not discard the valid ones. When no item
+            # carries a usable score, a ParseError is raised.
             scores = []
             for item in parsed_json:
                 if isinstance(item, dict) and "score" in item:
                     try:
                         candidate = float(item["score"])
                     except (TypeError, ValueError):
+                        logger.warning(
+                            "Could not parse score from list item: %s", item
+                        )
                         continue
                     if min_score_val <= candidate <= max_score_val:
                         scores.append(candidate)
@@ -364,14 +371,13 @@ class LLMProvider(core_provider.Provider):
                             min_score_val,
                             max_score_val,
                         )
-            if scores:
-                avg_raw = sum(scores) / len(scores)
-                normalized_score = (avg_raw - min_score_val) / (
-                    max_score_val - min_score_val
+            if not scores:
+                raise feedback_generated.ParseError(
+                    f"{min_score_val}-{max_score_val} numeric score in a list item",
+                    response,
                 )
-            else:
-                normalized_score = -1.0
-            return normalized_score
+            avg_raw = sum(scores) / len(scores)
+            return (avg_raw - min_score_val) / (max_score_val - min_score_val)
 
         if isinstance(response, feedback_output_schemas.BaseFeedbackResponse):
             score = response.score
@@ -410,6 +416,10 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing the normalized score on a 0-1 scale and
                 reason metadata dictionary.
+
+        Raises:
+            ParseError: If no score can be read from the judge's reply, or the
+                score is outside [`min_score_val`, `max_score_val`].
         """
         assert self.endpoint is not None, "Endpoint is not set."
         assert max_score_val > min_score_val, (
@@ -461,15 +471,14 @@ class LLMProvider(core_provider.Provider):
             ):
                 try:
                     score_val = float(json_score)
-                except (TypeError, ValueError):
-                    score_val = -1.0
-                else:
-                    _validate_score_range(
-                        score_val, min_score_val, max_score_val
-                    )
-                    score_val = (score_val - min_score_val) / (
-                        max_score_val - min_score_val
-                    )
+                except (TypeError, ValueError) as e:
+                    raise feedback_generated.ParseError(
+                        "numeric score", response
+                    ) from e
+                _validate_score_range(score_val, min_score_val, max_score_val)
+                score_val = (score_val - min_score_val) / (
+                    max_score_val - min_score_val
+                )
                 reasons = {
                     "reason": (
                         f"{criteria_field}: {json_criteria}\n"
@@ -658,12 +667,10 @@ class LLMProvider(core_provider.Provider):
         # Normalize score to [0, 1] range
         if score is None:
             # The reply carried supporting evidence but never a "Score:" line,
-            # so nothing was parsed. Return the raw -1.0 failure sentinel
-            # instead of normalizing it into a plausible-looking rating, which
-            # is what the JSON branch above does for an unparseable score.
-            score = -1.0
-        else:
-            score = (score - min_score_val) / (max_score_val - min_score_val)
+            # so nothing was parsed. Raise like every other unreadable reply
+            # instead of returning a value a caller could mistake for a score.
+            raise feedback_generated.ParseError("'Score:' line", response)
+        score = (score - min_score_val) / (max_score_val - min_score_val)
         return score, reasons
 
     def _determine_output_space(
@@ -3538,13 +3545,28 @@ class LLMProvider(core_provider.Provider):
             user_prompt = templates_rag.Groundedness.user_prompt.format(
                 premise=f"{source}", hypothesis=f"{hypothesis}"
             )
-            score, reason = self.generate_score_and_reasons(
-                system_prompt=system_prompt,
-                user_prompt=user_prompt,
-                min_score_val=min_score_val,
-                max_score_val=max_score_val,
-                temperature=temperature,
-            )
+            try:
+                score, reason = self.generate_score_and_reasons(
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                    min_score_val=min_score_val,
+                    max_score_val=max_score_val,
+                    temperature=temperature,
+                )
+            except feedback_generated.ParseError as e:
+                # One unreadable judge reply leaves this statement ungraded
+                # rather than failing the whole metric; _mean_graded_score
+                # skips it.
+                logger.warning(
+                    "Groundedness judge reply for statement %d could not be "
+                    "parsed: %s",
+                    index,
+                    e,
+                )
+                score, reason = (
+                    UNPARSABLE_SCORE,
+                    {"reason": "Judge reply could not be parsed"},
+                )
 
             # Build structured reason dict to ensure criteria, evidence, and score present
             structured = {
@@ -3724,15 +3746,20 @@ class LLMProvider(core_provider.Provider):
             user_prompt = templates_rag.Answerability.user_prompt.format(
                 question=question, source=source
             )
-            score = self.generate_score(
-                templates_rag.Answerability.system_prompt.format(
-                    min_score=0, max_score=1
-                ),
-                user_prompt,
-                min_score_val=0,
-                max_score_val=1,
-            )
-            return score
+            try:
+                return self.generate_score(
+                    templates_rag.Answerability.system_prompt.format(
+                        min_score=0, max_score=1
+                    ),
+                    user_prompt,
+                    min_score_val=0,
+                    max_score_val=1,
+                )
+            except feedback_generated.ParseError as e:
+                logger.warning(
+                    "Answerability judge reply could not be parsed: %s", e
+                )
+                return UNPARSABLE_SCORE
 
         if filter_trivial_statements:
             hypotheses = self._remove_trivial_statements(hypotheses)
@@ -3776,13 +3803,28 @@ class LLMProvider(core_provider.Provider):
                 user_prompt = templates_rag.Groundedness.user_prompt.format(
                     premise=f"{source}", hypothesis=f"{hypothesis}"
                 )
-                score, reason = self.generate_score_and_reasons(
-                    system_prompt=system_prompt,
-                    user_prompt=user_prompt,
-                    min_score_val=min_score_val,
-                    max_score_val=max_score_val,
-                    temperature=temperature,
-                )
+                try:
+                    score, reason = self.generate_score_and_reasons(
+                        system_prompt=system_prompt,
+                        user_prompt=user_prompt,
+                        min_score_val=min_score_val,
+                        max_score_val=max_score_val,
+                        temperature=temperature,
+                    )
+                except feedback_generated.ParseError as e:
+                    # One unreadable judge reply leaves this statement ungraded
+                    # rather than failing the whole metric; _mean_graded_score
+                    # skips it.
+                    logger.warning(
+                        "Groundedness judge reply for statement %d could not be "
+                        "parsed: %s",
+                        index,
+                        e,
+                    )
+                    score, reason = (
+                        UNPARSABLE_SCORE,
+                        {"reason": "Judge reply could not be parsed"},
+                    )
 
                 # Build structured reason dict to ensure criteria, evidence, and score present
                 structured = {

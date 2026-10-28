@@ -39,8 +39,9 @@ class _SplittingStubProvider(llm_provider.LLMProvider):
 
     The sentence-splitter call is the one made without a ``response_format``;
     it answers with two lines. Each judge call gets a top-of-scale score, except
-    for the statement named by ``failing`` whose reply carries no usable score
-    and so comes back as the -1.0 sentinel.
+    for the statement named by ``failing`` whose reply carries no usable score,
+    so the judge call raises ParseError and groundedness records that statement
+    with the -1.0 sentinel.
     """
 
     model_config: ClassVar[dict[str, str]] = {"extra": "allow"}
