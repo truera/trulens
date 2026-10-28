@@ -21,14 +21,6 @@ from trulens.core.schema import select as select_schema
 # Get the "globally importable" feedback implementations.
 from tests.unit import feedbacks as test_feedbacks
 
-try:
-    from trulens.apps.langchain import TruChain
-    from trulens.providers.langchain import Langchain
-
-    import tests.unit.test_otel_tru_chain
-except ImportError:
-    pass
-
 
 class TestFeedbackEval(TestCase):
     """Tests for feedback function evaluation."""
@@ -91,6 +83,11 @@ class TestFeedbackEval(TestCase):
         reason="Non-OTEL test importing OTEL fixtures - deprecated on langchain 1.x branch"
     )
     def test_same_provider_for_app_and_feedback(self) -> None:
+        from trulens.apps.langchain import TruChain
+        from trulens.providers.langchain import Langchain
+
+        import tests.unit.test_otel_tru_chain
+
         tru_session = TruSession()
         tru_session.reset_database()
         rag_chain = (
