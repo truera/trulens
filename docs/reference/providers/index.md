@@ -63,3 +63,11 @@ some derive from [LLMProvider][trulens.feedback.llm_provider.LLMProvider].
     ```bash
     pip install trulens-providers-ollama
     ```
+
+- [TypeSafe][trulens.providers.typesafe.provider.TypeSafe] in package
+  `trulens-providers-typesafe`. Uses the non-generative Jev decision model for
+  typed, calibrated feedback.
+
+    ```bash
+    pip install trulens-providers-typesafe
+    ```
