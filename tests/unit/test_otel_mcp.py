@@ -34,6 +34,12 @@ class _ModernResult:
         self.is_error = is_error
         self.content = [{"text": "ok"}]
 
+    @property
+    def isError(self) -> bool:
+        raise AssertionError(
+            "legacy field must not be read for MCP 2.x results"
+        )
+
 
 class _FakeSession:
     server_info = {"name": "weather"}
@@ -113,8 +119,11 @@ class TestMCPInstrumentation(unittest.TestCase):
                 "total_tokens": 15,
             },
             "tokenizer": "cl100k_base",
+            "token_budget": 1000,
             "token": "raw-secret",
+            "session_token": "session-secret",
             "access_token": "access-secret",
+            "authToken": "auth-secret",
             "api_key": "key-secret",
         })
 
@@ -123,8 +132,11 @@ class TestMCPInstrumentation(unittest.TestCase):
         self.assertEqual(payload["usage"]["output_tokens"], 5)
         self.assertEqual(payload["usage"]["total_tokens"], 15)
         self.assertEqual(payload["tokenizer"], "cl100k_base")
+        self.assertEqual(payload["token_budget"], 1000)
         self.assertEqual(payload["token"], "[REDACTED]")
+        self.assertEqual(payload["session_token"], "[REDACTED]")
         self.assertEqual(payload["access_token"], "[REDACTED]")
+        self.assertEqual(payload["authToken"], "[REDACTED]")
         self.assertEqual(payload["api_key"], "[REDACTED]")
 
     def test_cancellation_propagates_and_does_not_double_wrap(self) -> None:

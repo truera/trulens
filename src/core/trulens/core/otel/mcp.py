@@ -24,8 +24,8 @@ import wrapt
 _PATCH_FLAG = "__trulens_mcp_call_tool_instrumented__"
 _SECRET_KEY = re.compile(
     r"(?:api[_-]?key|authorization|cookie|credential|password|"
-    r"private[_-]?key|secret|(?:^|[_-])token(?:$|[_-])|"
-    r"(?:access|auth|id|refresh|bearer)[_-]?token(?:$|[_-]))",
+    r"private[_-]?key|secret|(?:^token$|[_-]token$)|"
+    r"(?:access|auth|id|refresh|bearer)[_-]?token$)",
     re.IGNORECASE,
 )
 _DEFAULT_MAX_BYTES = 16_384
@@ -97,6 +97,15 @@ def _server_name(session: Any) -> str:
     return "unknown"
 
 
+def _result_is_error(result: Any) -> bool:
+    """Read the MCP 2.x error field, falling back to the 1.x spelling."""
+
+    modern = getattr(result, "is_error", None)
+    if modern is not None:
+        return bool(modern)
+    return bool(getattr(result, "isError", False))
+
+
 def _mcp_attributes(
     result: Any,
     exception: Exception | None,
@@ -117,12 +126,7 @@ def _mcp_attributes(
         SpanAttributes.MCP.INPUT_ARGUMENTS: _serialize(arguments),
         SpanAttributes.MCP.OUTPUT_CONTENT: _serialize(result),
         SpanAttributes.MCP.OUTPUT_IS_ERROR: bool(
-            exception is not None
-            or getattr(
-                result,
-                "is_error",
-                getattr(result, "isError", False),
-            )
+            exception is not None or _result_is_error(result)
         ),
     }
 
