@@ -32,7 +32,9 @@ class ParseError(Exception):
 PATTERN_0_10: re.Pattern = re.compile(r"([0-9]+)(?=\D*$)")
 """Regex that matches the last integer."""
 
-PATTERN_NUMBER: re.Pattern = re.compile(r"([+-]?[0-9]+\.[0-9]*|[1-9][0-9]*|0)")
+PATTERN_NUMBER: re.Pattern = re.compile(
+    r"([+-]?[0-9]+\.[0-9]*|[+-]?[1-9][0-9]*|0)"
+)
 """Regex that matches floating point and integer numbers."""
 
 PATTERN_INTEGER: re.Pattern = re.compile(r"([+-]?[1-9][0-9]*|0)")
