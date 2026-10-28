@@ -1183,6 +1183,65 @@ class TestOtelInstrumentAsyncBehindDecorator(unittest.TestCase):
             spans[0].attributes[SpanAttributes.CALL.ERROR], "no more babies"
         )
 
+    def _assert_stream_protocol_forwarded(self, make_stream) -> None:
+        # `asend`, `athrow`, and `aclose` reach the inner generator, as they
+        # would without instrumentation.
+        events = []
+
+        async def source():
+            try:
+                value = yield "ready"
+                events.append(("received", value))
+                try:
+                    yield value
+                except KeyError as e:
+                    events.append(("thrown", e.args[0]))
+                    yield "recovered"
+                yield "unreached"
+            finally:
+                events.append(("closed",))
+
+        async def run():
+            stream = await make_stream(source)
+            self.assertEqual(await stream.__anext__(), "ready")
+            self.assertEqual(await stream.asend("Kojikun"), "Kojikun")
+            self.assertEqual(
+                await stream.athrow(KeyError("Nolan")), "recovered"
+            )
+            await stream.aclose()
+
+        asyncio.run(run())
+
+        self.assertEqual(
+            events,
+            [("received", "Kojikun"), ("thrown", "Nolan"), ("closed",)],
+        )
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED], 3
+        )
+
+    def test_async_generator_behind_sync_decorator_forwards_protocol(
+        self,
+    ) -> None:
+        async def make_stream(source):
+            return instrument()(_passthrough(source))()
+
+        self._assert_stream_protocol_forwarded(make_stream)
+
+    def test_async_generator_returned_by_function_forwards_protocol(
+        self,
+    ) -> None:
+        async def make_stream(source):
+            @instrument()
+            async def my_function():
+                return source()
+
+            return await my_function()
+
+        self._assert_stream_protocol_forwarded(make_stream)
+
     def test_plain_async_function_unchanged(self) -> None:
         @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
         async def retrieve(query: str) -> list:

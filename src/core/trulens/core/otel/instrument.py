@@ -479,7 +479,9 @@ async def _stream_in_call(
     """Re-yield an async generator inside a detached function call span.
 
     Each step of `result` runs with the span current, so spans it creates are
-    children of it. When the stream ends, raises, or is abandoned by the
+    children of it. Values passed to `asend`, exceptions passed to `athrow`,
+    and `aclose` are forwarded to `result`, so the stream behaves like
+    `result` itself. When the stream ends, raises, or is abandoned by the
     consumer, `finish` is called with the consumed chunks, the exception (if
     any), and the time of the first yield, and ends the span.
     """
@@ -487,16 +489,36 @@ async def _stream_in_call(
     first_yield: float | None = None
     func_exception: Exception | None = None
     try:
+        with call.step():
+            try:
+                curr = await result.__anext__()
+            except StopAsyncIteration:
+                return
         while True:
-            with call.step():
-                try:
-                    curr = await result.__anext__()
-                except StopAsyncIteration:
-                    break
             if first_yield is None:
                 first_yield = time.perf_counter()
             chunks.append(curr)
-            yield curr
+            try:
+                sent = yield curr
+            except GeneratorExit:
+                with call.step():
+                    await result.aclose()
+                raise
+            except BaseException as e:
+                with call.step():
+                    try:
+                        curr = await result.athrow(e)
+                    except StopAsyncIteration:
+                        return
+                continue
+            with call.step():
+                try:
+                    if sent is None:
+                        curr = await result.__anext__()
+                    else:
+                        curr = await result.asend(sent)
+                except StopAsyncIteration:
+                    return
     except Exception as e:
         func_exception = e
     finally:
