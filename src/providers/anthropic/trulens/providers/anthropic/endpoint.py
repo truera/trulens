@@ -30,8 +30,12 @@ def _get_env_api_key() -> str | None:
     return os.environ.get("ANTHROPIC_API_KEY", None)
 
 
-def _get_model_pricing(model_name: str) -> tuple[float, float] | None:
-    """Get per-token input and output pricing from LiteLLM.
+def _get_model_pricing(
+    model_name: str,
+) -> tuple[float, float, float, float] | None:
+    """Get per-token input, output, cache-read and cache-write pricing from LiteLLM.
+
+    The cache prices fall back to the input price when the table has none.
 
     Returns None when the model is not in the pricing table so that callers
     can leave any already-recorded cost alone rather than stamping a
@@ -70,9 +74,12 @@ def _get_model_pricing(model_name: str) -> tuple[float, float] | None:
         logger.warning("Model %s not found in LiteLLM pricing data", model_name)
         return None
 
+    input_price = pricing.get("input_cost_per_token", 0.0)
     return (
-        pricing.get("input_cost_per_token", 0.0),
+        input_price,
         pricing.get("output_cost_per_token", 0.0),
+        pricing.get("cache_read_input_token_cost", input_price),
+        pricing.get("cache_creation_input_token_cost", input_price),
     )
 
 
@@ -86,12 +93,23 @@ class AnthropicCostComputer:
 
         input_tokens = getattr(usage, "input_tokens", 0) if usage else 0
         output_tokens = getattr(usage, "output_tokens", 0) if usage else 0
-        total_tokens = input_tokens + output_tokens
+        # Anthropic's input_tokens excludes tokens read from or written to the
+        # prompt cache; they are billed at their own rates.
+        cache_read_tokens = (
+            getattr(usage, "cache_read_input_tokens", 0) or 0 if usage else 0
+        )
+        cache_write_tokens = (
+            getattr(usage, "cache_creation_input_tokens", 0) or 0
+            if usage
+            else 0
+        )
+        prompt_tokens = input_tokens + cache_read_tokens + cache_write_tokens
+        total_tokens = prompt_tokens + output_tokens
 
         result: dict[str, Any] = {
             SpanAttributes.COST.CURRENCY: "USD",
             SpanAttributes.COST.NUM_TOKENS: total_tokens,
-            SpanAttributes.COST.NUM_PROMPT_TOKENS: input_tokens,
+            SpanAttributes.COST.NUM_PROMPT_TOKENS: prompt_tokens,
             SpanAttributes.COST.NUM_COMPLETION_TOKENS: output_tokens,
             SpanAttributes.COST.NUM_REASONING_TOKENS: 0,
             SpanAttributes.COST.MODEL: model_name,
@@ -99,8 +117,15 @@ class AnthropicCostComputer:
 
         pricing = _get_model_pricing(model_name)
         if pricing is not None:
-            input_price, output_price = pricing
-            cost = input_tokens * input_price + output_tokens * output_price
+            input_price, output_price, cache_read_price, cache_write_price = (
+                pricing
+            )
+            cost = (
+                input_tokens * input_price
+                + cache_read_tokens * cache_read_price
+                + cache_write_tokens * cache_write_price
+                + output_tokens * output_price
+            )
             result[SpanAttributes.COST.COST] = round(cost, 8)
 
         return result
