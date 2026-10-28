@@ -79,6 +79,7 @@ class BaseAppsExtractor:
         "total_tokens",
         "total_cost",
         "llm_calls",
+        "models_used",
         "tool_calls",
         "tool_errors",
         "repeated_tool_calls",
@@ -415,11 +416,44 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                     f"Conversation ID {conversation_id!r} belongs to multiple apps. "
                     "Pass app_id to disambiguate it."
                 )
+            starts = pd.to_datetime(group["ts"])
+            ends = starts + pd.to_timedelta(
+                group["latency"].fillna(0.0), unit="s"
+            )
+            duration = (ends.max() - starts.min()).total_seconds()
+            if pd.isna(duration):
+                duration = 0.0
+            models_used = sorted({
+                model
+                for models in group.get("models_used", pd.Series(dtype=object))
+                if isinstance(models, (list, tuple, set))
+                for model in models
+            })
+            cost_by_currency = {
+                str(currency): float(currency_group["total_cost"].sum())
+                for currency, currency_group in group.groupby(
+                    "cost_currency", dropna=True, sort=True
+                )
+            }
             conversations[conversation_id] = conversation_schema.Conversation(
                 conversation_id=conversation_id,
                 app_id=app_ids_in_group[0],
                 record_ids=group["record_id"].tolist(),
                 ts=group.iloc[0]["ts"],
+                num_turns=len(group),
+                duration=max(duration, 0.0),
+                llm_calls=int(group["llm_calls"].sum())
+                if "llm_calls" in group
+                else 0,
+                models_used=models_used,
+                total_tokens=int(group["total_tokens"].sum()),
+                cost_by_currency=cost_by_currency,
+                tool_calls=int(group["tool_calls"].sum())
+                if "tool_calls" in group
+                else 0,
+                tool_errors=int(group["tool_errors"].sum())
+                if "tool_errors" in group
+                else 0,
             )
         return conversations
 
@@ -921,6 +955,7 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                     "total_tokens": 0,  # Initialize to 0, calculated below
                     "total_cost": 0.0,  # Initialize to 0.0, calculated below
                     "llm_calls": 0,
+                    "models_used": set(),
                     # An evaluation's spend is written to the EVAL_ROOT span as
                     # the total for that metric, and to each of its EVAL child
                     # spans as that child's share. They are two measurements of
@@ -971,6 +1006,11 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             span_type = record_attributes.get(SpanAttributes.SPAN_TYPE)
             if span_type == SpanAttributes.SpanType.GENERATION.value:
                 record_events[record_id]["llm_calls"] += 1
+                model = record_attributes.get(
+                    "gen_ai.request.model"
+                ) or record_attributes.get(SpanAttributes.COST.MODEL)
+                if model:
+                    record_events[record_id]["models_used"].add(str(model))
             if span_type in [
                 SpanAttributes.SpanType.EVAL.value,
                 SpanAttributes.SpanType.EVAL_ROOT.value,
@@ -1233,6 +1273,7 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                 "total_cost": record_data["total_cost"],
                 "llm_calls": record_data["llm_calls"],
+                "models_used": sorted(record_data["models_used"]),
                 "tool_calls": record_data["tool_calls"],
                 "tool_errors": record_data["tool_errors"],
                 "repeated_tool_calls": record_data["repeated_tool_calls"],
