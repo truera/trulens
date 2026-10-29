@@ -62,6 +62,26 @@ def _validate_score_range(
     return rating
 
 
+_JSON_FENCE = re.compile(
+    r"\A\s*```(?:json)?\s*(.*?)\s*```\s*\Z", re.DOTALL | re.IGNORECASE
+)
+
+
+def _load_json_reply(response: str) -> Any:
+    """Parse a judge reply as JSON, looking inside a markdown code fence.
+
+    Judges asked for JSON often wrap it in a ```json fence. Read as plain text,
+    that reply falls through to `re_configured_rating`, which takes the smallest
+    in-range number anywhere in it, so a count inside the reasoning wins over
+    the score.
+
+    Raises:
+        ValueError: If the reply, or the fenced block, is not valid JSON.
+    """
+    fenced = _JSON_FENCE.match(response)
+    return json.loads(fenced.group(1) if fenced else response)
+
+
 # `generate_score_and_reasons` returns this when it could not parse a score out
 # of the judge's reply, on both the JSON and the text path. The value lives in
 # `trulens.core.utils.constants` so core-only consumers see the same sentinel.
@@ -325,7 +345,7 @@ class LLMProvider(core_provider.Provider):
         # Attempt to parse structured JSON responses directly.
         # --------------------------------------------------------------
         try:
-            parsed_json = json.loads(response)
+            parsed_json = _load_json_reply(response)
         except Exception:
             parsed_json = None
 
@@ -447,7 +467,7 @@ class LLMProvider(core_provider.Provider):
         parsed_json = None
         if isinstance(response, str):
             try:
-                parsed_json = json.loads(response)
+                parsed_json = _load_json_reply(response)
             except Exception:
                 parsed_json = None
 
@@ -540,7 +560,7 @@ class LLMProvider(core_provider.Provider):
                     return score, reasons
                 elif isinstance(ref, str):
                     try:
-                        ref_json = json.loads(ref)
+                        ref_json = _load_json_reply(ref)
                         if (
                             isinstance(ref_json, dict)
                             and "criteria" in ref_json
