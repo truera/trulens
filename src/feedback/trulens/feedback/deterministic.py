@@ -24,7 +24,8 @@ DEFAULT_FALLBACK_PHRASES: Tuple[str, ...] = (
     "as an ai language model",
 )
 
-_TOKEN_RE = re.compile(r"[a-z0-9]+")
+# Match Unicode alphanumeric characters, keeping underscores as separators.
+_TOKEN_RE = re.compile(r"[^\W_]+")
 
 _ASSISTANT_LINE_RE = re.compile(
     r"^\s*(?:turn\s+\d+\s+)?assistant\s*:\s*(.*?)\s*$",
