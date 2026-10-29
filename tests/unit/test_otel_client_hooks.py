@@ -689,6 +689,32 @@ def test_capture_policy_reads_unscoped_environment_names(
     assert policy.max_field_bytes == 256
 
 
+def test_capture_policy_accepts_on_and_shares_tool_redaction(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("TRULENS_CAPTURE_TOOL_PAYLOADS", "on")
+    event = parsers.parse_claude(
+        _claude(
+            "PostToolUse",
+            tool_name="MCP:example",
+            tool_input={
+                "apiToken": "secret",
+                "usage": {"input_tokens": 10, "output_tokens": 5},
+                "token_budget": 1000,
+                "tokenizer": "cl100k_base",
+            },
+        )
+    )
+
+    captured = privacy.CapturePolicy.from_environment().apply(event)
+
+    assert captured.tool_input["apiToken"] == "[REDACTED]"
+    assert captured.tool_input["usage"]["input_tokens"] == 10
+    assert captured.tool_input["usage"]["output_tokens"] == 5
+    assert captured.tool_input["token_budget"] == 1000
+    assert captured.tool_input["tokenizer"] == "cl100k_base"
+
+
 def test_assembler_defaults_identity_to_native_client_and_conversation():
     event = parsers.parse_cursor(_cursor("stop", cursor_version="3.17.19"))
 

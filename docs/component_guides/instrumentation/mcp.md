@@ -5,6 +5,18 @@ connecting LLM agents to external tools and data sources. TruLens provides first
 support for instrumenting MCP tool calls via the `MCP` span type and a dedicated set of
 semantic attributes.
 
+For applications using the official MCP Python SDK, call
+`trulens.core.otel.mcp.instrument_mcp()` once during setup. It lazily imports the
+optional SDK and instruments `ClientSession.call_tool` directly, so framework
+adapters do not need a second tracing wrapper. Repeated activation is safe, and
+importing the module alone does not patch the SDK.
+
+Tool payloads are redacted and omitted by default. Set
+`TRULENS_CAPTURE_TOOL_PAYLOADS=true` to opt into bounded JSON payload capture;
+`TRULENS_MAX_FIELD_BYTES` controls the per-field limit. Cancellation, Python
+exceptions, and MCP results with `isError=true` remain visible in the span while
+the SDK's return value and error behavior are preserved.
+
 ## MCP span attributes
 
 When you instrument an MCP tool call, TruLens captures the following attributes in the
