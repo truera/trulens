@@ -1303,6 +1303,17 @@ class GroundTruthAggregator(
         precision = self.precision(scores, threshold)
         recall = self.recall(scores, threshold)
 
+        # F1 = 2TP / (2TP + FP + FN) is only undefined when there are no actual
+        # and no predicted positives, i.e. when precision and recall are both nan.
+        # If just one of them is nan, TP is 0 and the other side is defined, so
+        # F1 is a measured 0.0 (scikit-learn agrees, even with zero_division=nan).
+        precision_undefined = np.isnan(precision)
+        recall_undefined = np.isnan(recall)
+        if precision_undefined and recall_undefined:
+            return np.nan
+        if precision_undefined or recall_undefined:
+            return 0.0
+
         # Handle the case where both precision and recall are zero to avoid division by zero
         if precision + recall == 0:
             return 0.0  # or handle as needed (e.g., return None, raise an exception)
