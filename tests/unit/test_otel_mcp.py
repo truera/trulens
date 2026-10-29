@@ -124,6 +124,11 @@ class TestMCPInstrumentation(unittest.TestCase):
             "session_token": "session-secret",
             "access_token": "access-secret",
             "authToken": "auth-secret",
+            "apiToken": "api-secret",
+            "sessionToken": "session-secret",
+            "githubToken": "github-secret",
+            "slackToken": "slack-secret",
+            "csrfToken": "csrf-secret",
             "api_key": "key-secret",
         })
 
@@ -137,6 +142,11 @@ class TestMCPInstrumentation(unittest.TestCase):
         self.assertEqual(payload["session_token"], "[REDACTED]")
         self.assertEqual(payload["access_token"], "[REDACTED]")
         self.assertEqual(payload["authToken"], "[REDACTED]")
+        self.assertEqual(payload["apiToken"], "[REDACTED]")
+        self.assertEqual(payload["sessionToken"], "[REDACTED]")
+        self.assertEqual(payload["githubToken"], "[REDACTED]")
+        self.assertEqual(payload["slackToken"], "[REDACTED]")
+        self.assertEqual(payload["csrfToken"], "[REDACTED]")
         self.assertEqual(payload["api_key"], "[REDACTED]")
 
     def test_cancellation_propagates_and_does_not_double_wrap(self) -> None:

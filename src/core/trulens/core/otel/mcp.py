@@ -9,10 +9,10 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-import re
 import time
 from typing import Any
 
+from trulens.core.otel import privacy as otel_privacy
 from trulens.core.otel.function_call_context_manager import (
     create_function_call_context_manager,
 )
@@ -22,22 +22,11 @@ from trulens.otel.semconv.trace import SpanAttributes
 import wrapt
 
 _PATCH_FLAG = "__trulens_mcp_call_tool_instrumented__"
-_SECRET_KEY = re.compile(
-    r"(?:api[_-]?key|authorization|cookie|credential|password|"
-    r"private[_-]?key|secret|(?:^token$|[_-]token$)|"
-    r"(?:access|auth|id|refresh|bearer)[_-]?token$)",
-    re.IGNORECASE,
-)
 _DEFAULT_MAX_BYTES = 16_384
 
 
 def _capture_enabled() -> bool:
-    return os.environ.get("TRULENS_CAPTURE_TOOL_PAYLOADS", "").lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
+    return otel_privacy.is_truthy_env_var("TRULENS_CAPTURE_TOOL_PAYLOADS")
 
 
 def _max_bytes() -> int:
@@ -47,29 +36,15 @@ def _max_bytes() -> int:
         return _DEFAULT_MAX_BYTES
 
 
-def _redact(value: Any) -> Any:
-    if hasattr(value, "model_dump"):
-        value = value.model_dump(mode="json")
-    elif hasattr(value, "dict") and callable(value.dict):
-        value = value.dict()
-    if isinstance(value, dict):
-        return {
-            str(key): "[REDACTED]"
-            if _SECRET_KEY.search(str(key))
-            else _redact(item)
-            for key, item in value.items()
-        }
-    if isinstance(value, (list, tuple)):
-        return [_redact(item) for item in value]
-    return value
-
-
 def _serialize(value: Any) -> str:
     if not _capture_enabled():
         return "[content not captured]"
     try:
         encoded = json.dumps(
-            _redact(value), default=str, sort_keys=True, separators=(",", ":")
+            otel_privacy.redact_sensitive_data(value),
+            default=str,
+            sort_keys=True,
+            separators=(",", ":"),
         )
     except Exception:
         return "[content unavailable]"
