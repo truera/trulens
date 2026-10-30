@@ -550,9 +550,8 @@ class OpenAICallback(core_endpoint.EndpointCallback):
         A streamed response only carries usage when the request asked for it
         with `stream_options={"include_usage": True}`, and that chunk arrives
         after the one bearing `finish_reason == "stop"`. It reports totals for
-        the whole stream, so these counts replace rather than add to what the
-        stop chunk already flushed (which is zero, having had no usage of its
-        own to report).
+        one stream, so add them once to this callback's lifetime totals. The
+        earlier stop chunk has no usage and contributes zero tokens.
         """
         if isinstance(usage, pydantic.BaseModel):
             usage = usage.model_dump()
@@ -569,16 +568,16 @@ class OpenAICallback(core_endpoint.EndpointCallback):
         completion_details = usage.get("completion_tokens_details") or {}
         reasoning_tokens = completion_details.get("reasoning_tokens") or 0
 
-        self.cost.n_prompt_tokens = prompt_tokens
-        self.cost.n_completion_tokens = completion_tokens
-        self.cost.n_tokens = total_tokens
-        self.cost.n_reasoning_tokens = reasoning_tokens
+        self.cost.n_prompt_tokens += prompt_tokens
+        self.cost.n_completion_tokens += completion_tokens
+        self.cost.n_tokens += total_tokens
+        self.cost.n_reasoning_tokens += reasoning_tokens
 
         cost = token_cost_for_model(
             model_name, prompt_tokens, completion_tokens
         )
         if cost is not None:
-            self.cost.cost = cost
+            self.cost.cost += cost
 
     def handle_generation_chunk(self, response: Any) -> None:
         super().handle_generation_chunk(response=response)
