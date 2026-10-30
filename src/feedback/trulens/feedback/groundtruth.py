@@ -1297,7 +1297,8 @@ class GroundTruthAggregator(
         - threshold (float): The threshold to convert scores to binary predictions. Default is 0.5.
 
         Returns:
-        - float: The F1 score.
+        - float: The F1 score, or np.nan if the labels and predictions hold
+          no positives (both precision and recall are undefined).
         """
         # Calculate precision and recall
         precision = self.precision(scores, threshold)
