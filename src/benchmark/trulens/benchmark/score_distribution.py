@@ -34,6 +34,8 @@ import math
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
+from trulens.core.utils.constants import UNPARSABLE_SCORE
+from trulens.core.utils.constants import is_unparsable_score
 
 log = logging.getLogger(__name__)
 
@@ -300,11 +302,19 @@ class ScoreDistributionAnalyzer:
             result = result[0]
         if isinstance(result, dict):
             values = [v for v in result.values() if isinstance(v, (int, float))]
+            if any(is_unparsable_score(v) for v in values):
+                # One unparsable criterion has no score; averaging it with
+                # the numeric ones would turn the sentinel into a "real"
+                # score somewhere between -1 and 1.
+                return UNPARSABLE_SCORE
             result = float(np.mean(values)) if values else float("nan")
         return float(result)
 
     def run(self) -> ScoreDistributionReport:
         """Run the feedback function over the golden set.
+
+        Rows whose feedback function raises or returns an unparsable reply are
+        skipped.
 
         Returns:
             A populated
@@ -315,14 +325,28 @@ class ScoreDistributionAnalyzer:
         """
         predicted: List[float] = []
         expected: List[Optional[float]] = []
+        unparsable = 0
         for row in self.golden_set:
             try:
                 score = self._to_score(self.feedback_fn(*self.args_fn(row)))
             except Exception:
                 log.exception("feedback_fn failed on a row; skipping it")
                 continue
+            # UNPARSABLE_SCORE is "no score", not a bad score: letting it into
+            # the statistics charges a judge for every reply it failed to
+            # parse (the sentinel group is the same one Metric.run skips).
+            if is_unparsable_score(score):
+                unparsable += 1
+                continue
             predicted.append(score)
             expected.append(row.get("expected_score"))
+        if unparsable:
+            log.warning(
+                "%d of %d rows were left out because the feedback function "
+                "returned an unparsable reply",
+                unparsable,
+                len(self.golden_set),
+            )
         if not predicted:
             raise ValueError(
                 "No scores were produced; check feedback_fn and golden_set."
