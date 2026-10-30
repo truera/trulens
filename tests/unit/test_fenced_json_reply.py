@@ -97,3 +97,49 @@ def test_fenced_text_without_json_still_uses_rating_regex():
     )
 
     assert score == pytest.approx(2 / 3)
+
+
+# A fenced block that is not the verdict must not decide the score: the reply
+# falls through to the text path, as it did before fences were read.
+_NOT_VERDICT = [
+    'Evidence:\n```json\n["claim one", "claim two"]\n```\nScore: 3',
+    'Evidence:\n```json\n{"claim": "supported"}\n```\nScore: 3',
+]
+
+
+@pytest.mark.parametrize("response", _NOT_VERDICT, ids=["list", "dict"])
+def test_fenced_json_that_is_not_the_verdict_falls_back_to_text(response):
+    score = _CannedProvider(response).generate_score(
+        system_prompt="System prompt.", min_score_val=0, max_score_val=3
+    )
+
+    assert score == pytest.approx(1.0)
+
+
+def test_verdict_block_wins_over_a_later_evidence_block():
+    reply = (
+        f"```json\n{_COT}\n```\n"
+        'Evidence:\n```json\n["claim one", "claim two"]\n```'
+    )
+    provider = _CannedProvider(reply)
+
+    score = provider.generate_score(
+        system_prompt="System prompt.", min_score_val=0, max_score_val=3
+    )
+    cot_score, reasons = provider.generate_score_and_reasons(
+        system_prompt="System prompt.", min_score_val=0, max_score_val=3
+    )
+
+    assert score == pytest.approx(1.0)
+    assert cot_score == pytest.approx(1.0)
+    assert "Checked 1 claim" in reasons["reason"]
+
+
+def test_fenced_list_of_scores_is_still_averaged():
+    reply = 'Scores:\n```json\n[{"score": 1}, {"score": 3}]\n```'
+
+    score = _CannedProvider(reply).generate_score(
+        system_prompt="System prompt.", min_score_val=0, max_score_val=3
+    )
+
+    assert score == pytest.approx(2 / 3)

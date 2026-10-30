@@ -149,6 +149,21 @@ def test_fenced_json_verdicts_are_read(wrap) -> None:
     assert meta["broken_turns"] == [3]
 
 
+def test_verdicts_block_is_read_past_a_later_non_verdict_block() -> None:
+    reply = (
+        f"```json\n{_verdicts_json(True, True, False)}\n```\n"
+        'Notes:\n```json\n["turn 3 gave the answer"]\n```'
+    )
+    provider = _ScriptedJudgeProvider(reply)
+
+    score, meta = provider.role_adherence_with_cot_reasons(
+        _TUTOR_RECORDS, role=_ROLE
+    )
+
+    assert score == pytest.approx(2 / 3)
+    assert meta["broken_turns"] == [3]
+
+
 def test_structured_response_object_is_accepted() -> None:
     reply = output_schemas.RoleAdherenceResponse(
         turns=[
