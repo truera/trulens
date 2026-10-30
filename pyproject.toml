@@ -129,6 +129,7 @@ url = "https://pypi.org/simple/"
 line-length = 80
 extend-exclude = [
   "examples/expositional",
+  "tests/docs_notebooks/notebooks_to_test",
 ]
 
 [tool.ruff.format]
