@@ -91,7 +91,7 @@ class LiteLLM(llm_provider.LLMProvider):
     Args:
         model_engine: The LiteLLM model identifier (e.g.
             ``"gpt-4o-mini"``, ``"ollama/llama3.1:8b"``,
-            ``"anthropic/claude-3-5-sonnet"``).
+            ``"anthropic/claude-sonnet-5-5"``).
         completion_kwargs: Extra keyword arguments forwarded to
             every ``litellm.completion()`` call. Useful for
             ``api_base``, ``api_key``, ``api_version``, etc.

@@ -108,7 +108,7 @@ scorer = Groundedness(model="openai:/gpt-4o")
 ### Anthropic
 
 ```python
-scorer = Groundedness(model="anthropic:/claude-3-5-sonnet")
+scorer = Groundedness(model="anthropic:/claude-sonnet-5-5")
 ```
 
 ### Azure OpenAI
@@ -121,7 +121,7 @@ scorer = Groundedness(model="azure:/my-deployment-name")
 
 ```python
 # AWS Bedrock
-scorer = Groundedness(model="bedrock:/anthropic.claude-3-sonnet")
+scorer = Groundedness(model="bedrock:/anthropic.claude-sonnet-5-5")
 
 # Google Vertex AI
 scorer = Groundedness(model="vertex_ai:/gemini-pro")
