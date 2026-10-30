@@ -62,24 +62,33 @@ def _validate_score_range(
     return rating
 
 
-_JSON_FENCE = re.compile(
-    r"\A\s*```(?:json)?\s*(.*?)\s*```\s*\Z", re.DOTALL | re.IGNORECASE
-)
+_JSON_FENCE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL | re.IGNORECASE)
 
 
 def _load_json_reply(response: str) -> Any:
-    """Parse a judge reply as JSON, looking inside a markdown code fence.
+    """Parse a judge reply as JSON, looking inside markdown code fences.
 
-    Judges asked for JSON often wrap it in a ```json fence. Read as plain text,
-    that reply falls through to `re_configured_rating`, which takes the smallest
-    in-range number anywhere in it, so a count inside the reasoning wins over
-    the score.
+    Judges asked for JSON often wrap it in a ```json fence, sometimes with text
+    before or after it. Read as plain text, that reply falls through to
+    `re_configured_rating`, which takes the smallest in-range number anywhere
+    in it, so a count inside the reasoning wins over the score.
+
+    Tries the whole reply first, then each fenced block from last to first, and
+    returns the first one that parses.
 
     Raises:
-        ValueError: If the reply, or the fenced block, is not valid JSON.
+        ValueError: If neither the reply nor any fenced block is valid JSON.
     """
-    fenced = _JSON_FENCE.match(response)
-    return json.loads(fenced.group(1) if fenced else response)
+    try:
+        return json.loads(response)
+    except ValueError:
+        pass
+    for block in reversed(_JSON_FENCE.findall(response)):
+        try:
+            return json.loads(block)
+        except ValueError:
+            continue
+    raise ValueError("No JSON object in the judge's reply.")
 
 
 # `generate_score_and_reasons` returns this when it could not parse a score out
@@ -127,11 +136,11 @@ def _parse_turn_verdicts(
 
     try:
         return list(
-            feedback_output_schemas.RoleAdherenceResponse.model_validate_json(
-                response
+            feedback_output_schemas.RoleAdherenceResponse.model_validate(
+                _load_json_reply(response)
             ).turns
         )
-    except pydantic.ValidationError:
+    except ValueError:  # includes pydantic.ValidationError
         pass
 
     verdicts = []
