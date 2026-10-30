@@ -70,11 +70,8 @@ env-tests-basic:
 	make env-tests
 
 env-tests-optional: env env-tests
-	# NOTE: Excluding nemo group due to langchain 1.x incompatibility
-	# nemoguardrails requires langchain<0.4.0, but langgraph requires langchain>=1.0.0
-	# Install nemo separately with: poetry install --with nemo (requires langchain<1.0)
-	poetry install --with apps,providers --without nemo
-	poetry run pip install \
+	poetry install --with apps,providers && \
+	poetry run pip install --constraint <(poetry run pip freeze --exclude-editable) \
 		chromadb \
 	 	faiss-cpu \
 		"langchain-openai>=0.2.0" \
