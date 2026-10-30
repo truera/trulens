@@ -60,7 +60,13 @@ class TestOtelInlineEvaluations(OtelTestCase):
         workflow.add_edge("simple_node", END)
         graph = workflow.compile()
 
-        tru_app = TruApp(graph, app_name="test_app", app_version="v1")
+        # Inline evaluations run synchronously without a background evaluator.
+        tru_app = TruApp(
+            graph,
+            app_name="test_app",
+            app_version="v1",
+            start_evaluator=False,
+        )
 
         # Call the app.
         initial_state = MessagesState(messages=["Nolan"])
@@ -160,7 +166,12 @@ class TestOtelInlineEvaluations(OtelTestCase):
         workflow.add_edge("simple_node", END)
         graph = workflow.compile()
 
-        tru_app = TruApp(graph, app_name="test_app", app_version="v1")
+        tru_app = TruApp(
+            graph,
+            app_name="test_app",
+            app_version="v1",
+            start_evaluator=False,
+        )
         initial_state = MessagesState(messages=["start"])
         with tru_app:
             result = graph.invoke(initial_state)
@@ -214,7 +225,12 @@ class TestOtelInlineEvaluations(OtelTestCase):
         workflow.add_edge("node_b", END)
         graph = workflow.compile()
 
-        tru_app = TruApp(graph, app_name="test_app", app_version="v1")
+        tru_app = TruApp(
+            graph,
+            app_name="test_app",
+            app_version="v1",
+            start_evaluator=False,
+        )
         initial_state = MessagesState(messages=["start"])
         with tru_app:
             result = graph.invoke(initial_state)
