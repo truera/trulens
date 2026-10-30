@@ -1,7 +1,7 @@
 """TruLens CI/CD evaluation gate.
 
 Runs a tiny TruLens evaluation suite and exits non-zero when any feedback score
-falls below a configurable threshold. The script is intentionally self-contained
+falls below a configurable threshold or was not computed. The script is intentionally self-contained
 so it can be copied into CI systems as a quality gate.
 
 Environment variables:
@@ -18,6 +18,7 @@ from pathlib import Path
 import sys
 import xml.etree.ElementTree as ET
 
+import pandas as pd
 from trulens.apps.app import TruApp
 from trulens.core import Metric
 from trulens.core import Selector
@@ -112,28 +113,63 @@ def build_feedbacks():
     ]
 
 
-def write_junit(
-    path: str,
-    failures: list[tuple[str, float]],
-    scores: dict[str, float],
-    min_score: float,
-) -> None:
+def check_scores(
+    results: pd.DataFrame, metric_names: list[str], min_score: float
+) -> list[tuple[str, float, str | None]]:
+    """Check each configured metric against the threshold.
+
+    The scores come from the per-record results, not the leaderboard. The
+    leaderboard also has numeric columns that are not metrics, such as tool-call
+    counts, and a metric whose judge failed on every record is not numeric there.
+
+    Args:
+        results: Per-record scores from `retrieve_feedback_results`, one column
+            per metric.
+        metric_names: Names of the metrics the app was recorded with.
+        min_score: Lowest acceptable mean score.
+
+    Returns:
+        One `(metric, mean score, failure reason)` per metric. The reason is
+        `None` when the metric passes. A record without a score fails the
+        metric, because it was not evaluated.
+    """
+    checks = []
+    for name in metric_names:
+        if name in results.columns:
+            scores = pd.to_numeric(results[name], errors="coerce")
+        else:
+            scores = pd.Series(float("nan"), index=results.index)
+        mean = float(scores.mean())
+        unscored = int(scores.isna().sum())
+        if scores.empty:
+            reason = "no records were evaluated"
+        elif unscored:
+            reason = f"no score for {unscored} of {len(scores)} record(s)"
+        elif mean < min_score:
+            reason = f"{mean:.3f} < {min_score:.3f}"
+        else:
+            reason = None
+        checks.append((name, mean, reason))
+    return checks
+
+
+def write_junit(path: str, checks: list[tuple[str, float, str | None]]) -> None:
+    failures = [name for name, _, reason in checks if reason]
     suite = ET.Element(
         "testsuite",
         name="trulens-eval-gate",
-        tests=str(len(scores)),
+        tests=str(len(checks)),
         failures=str(len(failures)),
     )
-    failed = {name: score for name, score in failures}
-    for name, score in scores.items():
+    for name, mean, reason in checks:
         case = ET.SubElement(
             suite, "testcase", classname="TruLensEvalGate", name=name
         )
-        if name in failed:
+        if reason:
             failure = ET.SubElement(
-                case, "failure", message=f"{name} below threshold"
+                case, "failure", message=f"{name} failed the gate"
             )
-            failure.text = f"{name}: {score:.3f} < {min_score:.3f}"
+            failure.text = f"{name}: {reason}"
 
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -151,46 +187,41 @@ def main() -> int:
     session.reset_database()
 
     app = TinyRAG()
+    feedbacks = build_feedbacks()
     tru_app = TruApp(
         app,
         app_name="CI Eval Gate",
         app_version="v1",
-        feedbacks=build_feedbacks(),
+        feedbacks=feedbacks,
     )
 
     with tru_app as recording:
         for query, key in TEST_SET:
             app.answer(query, key)
 
-    recording.retrieve_feedback_results(timeout=300)
+    results = recording.retrieve_feedback_results(timeout=300)
 
     leaderboard = session.get_leaderboard()
     print("\nLeaderboard:\n", leaderboard.to_string())
 
-    ignore = {"latency", "total_cost", "total_tokens", "Latency", "Cost (USD)"}
-    feedback_cols = [
-        col
-        for col in leaderboard.columns
-        if col not in ignore and leaderboard[col].dtype.kind in "fi"
-    ]
-
-    scores: dict[str, float] = {}
-    failures: list[tuple[str, float]] = []
-    for col in feedback_cols:
-        score = float(leaderboard[col].mean())
-        scores[col] = score
-        status = "PASS" if score >= min_score else "FAIL"
-        print(f"  {status}  {col}: {score:.3f} (min {min_score})")
-        if score < min_score:
-            failures.append((col, score))
+    checks = check_scores(
+        results, [feedback.name for feedback in feedbacks], min_score
+    )
+    failures = [(name, reason) for name, _, reason in checks if reason]
+    for name, mean, reason in checks:
+        if reason:
+            print(f"  FAIL  {name}: {reason}")
+        else:
+            print(f"  PASS  {name}: {mean:.3f} (min {min_score})")
 
     if junit_path := os.environ.get("TRULENS_JUNIT_XML"):
-        write_junit(junit_path, failures, scores, min_score)
+        write_junit(junit_path, checks)
         print(f"\nWrote JUnit report to {junit_path}")
 
     if failures:
         print(
-            f"\nEval gate FAILED: {len(failures)} metric(s) below {min_score}.",
+            f"\nEval gate FAILED: {len(failures)} metric(s) below {min_score} "
+            "or not scored.",
             file=sys.stderr,
         )
         return 1
