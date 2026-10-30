@@ -5,6 +5,7 @@ import re
 import threading
 from typing import (
     Any,
+    Callable,
     ClassVar,
     Dict,
     Iterable,
@@ -65,7 +66,9 @@ def _validate_score_range(
 _JSON_FENCE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL | re.IGNORECASE)
 
 
-def _load_json_reply(response: str) -> Any:
+def _load_json_reply(
+    response: str, accept: Optional[Callable[[Any], bool]] = None
+) -> Any:
     """Parse a judge reply as JSON, looking inside markdown code fences.
 
     Judges asked for JSON often wrap it in a ```json fence, sometimes with text
@@ -74,10 +77,13 @@ def _load_json_reply(response: str) -> Any:
     in it, so a count inside the reasoning wins over the score.
 
     Tries the whole reply first, then each fenced block from last to first, and
-    returns the first one that parses.
+    returns the first block that parses and passes `accept`. A fenced block
+    that is not the verdict (say, a list of evidence) is skipped, so the reply
+    can still be read as text.
 
     Raises:
-        ValueError: If neither the reply nor any fenced block is valid JSON.
+        ValueError: If neither the reply nor any accepted fenced block is
+            valid JSON.
     """
     try:
         return json.loads(response)
@@ -85,10 +91,37 @@ def _load_json_reply(response: str) -> Any:
         pass
     for block in reversed(_JSON_FENCE.findall(response)):
         try:
-            return json.loads(block)
+            value = json.loads(block)
         except ValueError:
             continue
+        if accept is None or accept(value):
+            return value
     raise ValueError("No JSON object in the judge's reply.")
+
+
+def _has_score(value: Any) -> bool:
+    """A `generate_score` verdict: a dict with a score, or a list holding one."""
+    if isinstance(value, dict):
+        return "score" in value
+    return isinstance(value, list) and any(
+        isinstance(item, dict) and "score" in item for item in value
+    )
+
+
+def _is_cot_verdict(value: Any) -> bool:
+    """A chain-of-thought verdict: score, criteria and supporting evidence."""
+    return isinstance(value, dict) and all(
+        value.get(key) is not None
+        for key in ("score", "criteria", "supporting_evidence")
+    )
+
+
+def _is_role_verdict(value: Any) -> bool:
+    try:
+        feedback_output_schemas.RoleAdherenceResponse.model_validate(value)
+    except ValueError:  # includes pydantic.ValidationError
+        return False
+    return True
 
 
 # `generate_score_and_reasons` returns this when it could not parse a score out
@@ -137,7 +170,7 @@ def _parse_turn_verdicts(
     try:
         return list(
             feedback_output_schemas.RoleAdherenceResponse.model_validate(
-                _load_json_reply(response)
+                _load_json_reply(response, accept=_is_role_verdict)
             ).turns
         )
     except ValueError:  # includes pydantic.ValidationError
@@ -354,7 +387,7 @@ class LLMProvider(core_provider.Provider):
         # Attempt to parse structured JSON responses directly.
         # --------------------------------------------------------------
         try:
-            parsed_json = _load_json_reply(response)
+            parsed_json = _load_json_reply(response, accept=_has_score)
         except Exception:
             parsed_json = None
 
@@ -476,7 +509,7 @@ class LLMProvider(core_provider.Provider):
         parsed_json = None
         if isinstance(response, str):
             try:
-                parsed_json = _load_json_reply(response)
+                parsed_json = _load_json_reply(response, accept=_is_cot_verdict)
             except Exception:
                 parsed_json = None
 
@@ -569,7 +602,14 @@ class LLMProvider(core_provider.Provider):
                     return score, reasons
                 elif isinstance(ref, str):
                     try:
-                        ref_json = _load_json_reply(ref)
+                        ref_json = _load_json_reply(
+                            ref,
+                            accept=lambda v: (
+                                isinstance(v, dict)
+                                and {"criteria", "supporting_evidence", "score"}
+                                <= v.keys()
+                            ),
+                        )
                         if (
                             isinstance(ref_json, dict)
                             and "criteria" in ref_json
