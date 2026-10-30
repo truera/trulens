@@ -318,7 +318,7 @@ test-unit:
 		echo "Install with: poetry install --with dev"; \
 		echo "Attempting to run anyway (expect failures)..."; \
 		$(PYTEST) tests/unit/test_otel*.py; \
-	fi
+	fi && \
 	$(PYTEST) $(shell ls tests/unit/test_*.py tests/unit/providers/test_*.py | grep -v test_otel)
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
