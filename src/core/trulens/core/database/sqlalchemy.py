@@ -55,6 +55,8 @@ from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
+from trulens.otel.semconv.trace import ErrorAttributes
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -1429,11 +1431,54 @@ class SQLAlchemyDB(core_db.DB):
             .order_by(self.orm.Event.start_timestamp, self.orm.Event.event_id)
         )
 
+        tool_conditions = self._build_otel_conditions(
+            None, app_name=app_name, app_versions=app_versions
+        )
+        tool_conditions.append(
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.SPAN_TYPE
+            ).in_([
+                SpanAttributes.SpanType.TOOL.value,
+                SpanAttributes.SpanType.MCP.value,
+            ])
+        )
+        tool_stmt = sa.select(
+            app_name_col,
+            app_version_col,
+            app_id_col,
+            record_id_col.label("record_id"),
+            self.orm.Event.start_timestamp,
+            self.orm.Event.timestamp,
+            self.orm.Event.event_id,
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.MCP.TOOL_NAME
+            ).label("mcp_tool_name"),
+            self._json_extract_otel(
+                "record_attributes", GenAIAttributes.TOOL.NAME
+            ).label("tool_name"),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.CALL.FUNCTION
+            ).label("function_name"),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.MCP.INPUT_ARGUMENTS
+            ).label("mcp_arguments"),
+            self._json_extract_otel(
+                "record_attributes", GenAIAttributes.TOOL.CALL_ARGUMENTS
+            ).label("tool_arguments"),
+            self._json_extract_otel(
+                "record_attributes", ErrorAttributes.TYPE
+            ).label("error_type"),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.MCP.OUTPUT_IS_ERROR
+            ).label("mcp_output_is_error"),
+        ).where(sa.and_(*tool_conditions))
+
         with self.session.begin() as session:
             base_rows = session.execute(base_stmt).all()
             cost_rows = session.execute(cost_stmt).all()
             eval_rows = session.execute(eval_stmt).all()
             decision_rows = session.execute(decision_stmt).all()
+            tool_rows = session.execute(tool_stmt).all()
 
         base_df = pd.DataFrame(
             base_rows,
@@ -1460,6 +1505,77 @@ class SQLAlchemyDB(core_db.DB):
             cost_df, on=["app_name", "app_version", "app_id"], how="left"
         )
         base_df[cost_cols] = base_df[cost_cols].fillna(0.0)
+
+        tool_stat_cols = [
+            "Tool Error Rate",
+            "Average Repeated Tool Calls",
+            "Average Tool Calls per Record",
+        ]
+        if tool_rows:
+            calls_by_record: Dict[Tuple[str, str, str, str], List[dict]] = {}
+            for row in tool_rows:
+                key = (row.app_name, row.app_version, row.app_id, row.record_id)
+                calls_by_record.setdefault(key, []).append({
+                    "sort_key": (
+                        row.start_timestamp,
+                        row.timestamp,
+                        row.event_id,
+                    ),
+                    "name": row.mcp_tool_name
+                    or row.tool_name
+                    or row.function_name,
+                    "arguments": row.mcp_arguments
+                    if row.mcp_arguments is not None
+                    else row.tool_arguments,
+                    "is_error": row.error_type is not None
+                    or self._is_true_otel_attribute(row.mcp_output_is_error),
+                })
+            record_tool_rows = []
+            for key, calls in calls_by_record.items():
+                stats = self._summarize_tool_calls(calls)
+                record_tool_rows.append({
+                    "app_name": key[0],
+                    "app_version": key[1],
+                    "app_id": key[2],
+                    **stats,
+                })
+            record_tools = pd.DataFrame(record_tool_rows)
+            group_cols = ["app_name", "app_version", "app_id"]
+            tool_totals = record_tools.groupby(
+                group_cols, as_index=False, dropna=False
+            ).agg(
+                tool_calls=("tool_calls", "sum"),
+                tool_errors=("tool_errors", "sum"),
+                repeated_tool_calls=("repeated_tool_calls", "sum"),
+                unknown_repetition=(
+                    "repeated_tool_calls",
+                    lambda values: values.isna().sum(),
+                ),
+            )
+            base_df = base_df.merge(tool_totals, on=group_cols, how="left")
+            base_df["Tool Error Rate"] = (
+                base_df["tool_errors"]
+                / base_df["tool_calls"].where(base_df["tool_calls"] > 0)
+            ).fillna(0.0)
+            base_df["Average Tool Calls per Record"] = (
+                base_df["tool_calls"] / base_df["Records"]
+            ).fillna(0.0)
+            known_records = base_df["Records"] - base_df[
+                "unknown_repetition"
+            ].fillna(0)
+            base_df["Average Repeated Tool Calls"] = base_df[
+                "repeated_tool_calls"
+            ].fillna(0) / known_records.where(known_records > 0)
+            base_df = base_df.drop(
+                columns=[
+                    "tool_calls",
+                    "tool_errors",
+                    "repeated_tool_calls",
+                    "unknown_repetition",
+                ]
+            )
+        else:
+            base_df[tool_stat_cols] = 0.0
 
         if base_df.empty:
             return base_df, []
@@ -1711,6 +1827,35 @@ class SQLAlchemyDB(core_db.DB):
         records = records.sort_values("time_bucket").drop_duplicates(
             subset=["app_name", "app_version", "record_id"], keep="last"
         )
+        tool_records, _ = self._get_records_and_feedback_otel(
+            app_name=app_name,
+            app_versions=app_versions,
+            start_time=start_time,
+            end_time=end_time,
+        )
+        tool_trends = pd.DataFrame()
+        if not tool_records.empty:
+            record_tool_stats = tool_records[
+                ["record_id", "tool_calls", "tool_errors"]
+            ].drop_duplicates("record_id")
+            record_tool_stats = records[
+                ["app_name", "app_version", "time_bucket", "record_id"]
+            ].merge(record_tool_stats, on="record_id", how="left")
+            record_tool_stats[["tool_calls", "tool_errors"]] = (
+                record_tool_stats[["tool_calls", "tool_errors"]].fillna(0)
+            )
+            tool_trends = record_tool_stats.groupby(
+                ["app_name", "app_version", "time_bucket"],
+                as_index=False,
+                dropna=False,
+            ).agg(
+                tool_calls=("tool_calls", "sum"),
+                tool_errors=("tool_errors", "sum"),
+            )
+            tool_trends["tool_error_rate"] = (
+                tool_trends["tool_errors"]
+                / tool_trends["tool_calls"].where(tool_trends["tool_calls"] > 0)
+            ).fillna(0.0)
         costs = pd.DataFrame(
             cost_rows,
             columns=[
@@ -1727,7 +1872,7 @@ class SQLAlchemyDB(core_db.DB):
         records["currency"] = records["currency"].fillna("USD")
         records["cost"] = records["cost"].fillna(0.0)
         group_cols = ["app_name", "app_version", "time_bucket", "currency"]
-        return (
+        result = (
             records
             .groupby(group_cols, as_index=False, dropna=False)
             .agg(
@@ -1740,6 +1885,17 @@ class SQLAlchemyDB(core_db.DB):
             )
             .sort_values("time_bucket")
         )
+        if not tool_trends.empty:
+            result = result.merge(
+                tool_trends,
+                on=["app_name", "app_version", "time_bucket"],
+                how="left",
+            )
+        else:
+            result["tool_calls"] = 0
+            result["tool_errors"] = 0
+            result["tool_error_rate"] = 0.0
+        return result
 
     def get_eval_cost_trends(
         self,

@@ -115,6 +115,33 @@ def test_conversation_to_prompt_records() -> None:
     )
 
 
+def test_conversation_to_prompt_renders_tool_calls_between_turn_lines() -> None:
+    records = [
+        {"input": "Start", "output": "Ready"},
+        {
+            "input": "Search for the answer",
+            "tool_calls": [
+                {
+                    "name": "search",
+                    "arguments": '{"query": "answer"}',
+                    "result": "service unavailable",
+                    "error": "client_hook_error",
+                }
+            ],
+            "output": "I could not retrieve it.",
+        },
+    ]
+
+    assert templates_conversation.conversation_to_prompt(records) == (
+        "Turn 1 User: Start\n"
+        "Turn 1 Assistant: Ready\n"
+        "Turn 2 User: Search for the answer\n"
+        'Turn 2 Tool call: search(query="answer") -> '
+        '"service unavailable" [error: client_hook_error]\n'
+        "Turn 2 Assistant: I could not retrieve it."
+    )
+
+
 def test_conversation_user_turn_prompt_omits_assistant_turns() -> None:
     records = [
         {
