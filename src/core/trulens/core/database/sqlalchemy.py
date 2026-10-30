@@ -1672,6 +1672,9 @@ class SQLAlchemyDB(core_db.DB):
             app_name=app_name,
             app_versions=app_versions,
         )
+        # Judge failures are not observations: exclude them from the mean,
+        # sample count and uncertainty, including entirely ungraded buckets.
+        conditions.append(score_col != constants_utils.UNPARSABLE_SCORE)
         if start_time is not None:
             conditions.append(self.orm.Event.start_timestamp >= start_time)
         if end_time is not None:
