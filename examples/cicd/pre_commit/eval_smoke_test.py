@@ -14,6 +14,7 @@ from __future__ import annotations
 import os
 import sys
 
+import pandas as pd
 from trulens.apps.app import TruApp
 from trulens.core import Metric
 from trulens.core import Selector
@@ -77,7 +78,18 @@ def main() -> int:
         app.answer("What is TruLens used for?")
 
     results = recording.retrieve_feedback_results(timeout=120)
-    score = float(results["Answer Relevance"].mean())
+    # A failed judge call leaves the record without a score. Treat it as a
+    # failure: averaging only the scores that exist would pass an unevaluated run.
+    scores = pd.to_numeric(
+        results.get("Answer Relevance", pd.Series(dtype=float)), errors="coerce"
+    )
+    if scores.empty or scores.isna().any():
+        print(
+            "TruLens pre-commit smoke test failed: Answer Relevance was not scored.",
+            file=sys.stderr,
+        )
+        return 1
+    score = float(scores.mean())
 
     print(f"Answer Relevance: {score:.3f} (min {min_score})")
     if score < min_score:
