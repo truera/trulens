@@ -124,7 +124,7 @@ scorer = Groundedness(model="azure:/my-deployment-name")
 scorer = Groundedness(model="bedrock:/anthropic.claude-sonnet-5-5")
 
 # Google Vertex AI
-scorer = Groundedness(model="vertex_ai:/gemini-pro")
+scorer = Groundedness(model="vertex_ai:/gemini-3.8-flash")
 ```
 
 ## Threshold Configuration
