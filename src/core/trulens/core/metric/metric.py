@@ -344,29 +344,7 @@ class Metric(feedback_schema.FeedbackDefinition):
                 kwargs["aggregator"] = agg
                 agg = agg.load()
             elif kwargs.get("aggregator") is None:
-                try:
-                    # These are for serialization to/from json and for db storage.
-                    kwargs["aggregator"] = (
-                        pyschema_utils.FunctionOrMethod.of_callable(
-                            agg, loadable=True
-                        )
-                    )
-                except Exception as e:
-                    # User defined functions in script do not have a module so cannot be serialized
-                    logger.warning(
-                        "Cannot serialize aggregator %s. "
-                        "Deferred mode will default to `np.mean` as aggregator. "
-                        "If you are not using `FeedbackMode.DEFERRED`, you can safely ignore this warning. "
-                        "%s",
-                        agg,
-                        e,
-                    )
-                    # These are for serialization to/from json and for db storage.
-                    kwargs["aggregator"] = (
-                        pyschema_utils.FunctionOrMethod.of_callable(
-                            agg, loadable=False
-                        )
-                    )
+                kwargs["aggregator"] = self._serialize_aggregator(agg)
 
         else:
             agg_val = kwargs.get("aggregator")
@@ -630,6 +608,73 @@ class Metric(feedback_schema.FeedbackDefinition):
             valid_kwargs["temperature"] = kwargs["temperature"]
         return self.imp(*args, **valid_kwargs)
 
+    @staticmethod
+    def _serialize_aggregator(
+        agg: AggCallable,
+    ) -> pyschema_utils.FunctionOrMethod:
+        """Serialize an aggregator callable for json and db storage.
+
+        This is the step [__init__][trulens.core.metric.metric.Metric] uses
+        to mirror its `agg` argument into the serialized `aggregator` field;
+        [aggregate()][trulens.core.metric.metric.Metric.aggregate] reuses it
+        so the two cannot drift.
+
+        Args:
+            agg: The aggregation callable.
+
+        Returns:
+            The serialized form to store at `FeedbackDefinition.aggregator`.
+                A callable that cannot be serialized is stored without a
+                loadable reference, with a warning that deferred mode will
+                fall back to `np.mean`.
+        """
+        try:
+            # These are for serialization to/from json and for db storage.
+            return pyschema_utils.FunctionOrMethod.of_callable(
+                agg, loadable=True
+            )
+        except Exception as e:
+            # User defined functions in script do not have a module so cannot be serialized
+            logger.warning(
+                "Cannot serialize aggregator %s. "
+                "Deferred mode will default to `np.mean` as aggregator. "
+                "If you are not using `FeedbackMode.DEFERRED`, you can safely ignore this warning. "
+                "%s",
+                agg,
+                e,
+            )
+            # These are for serialization to/from json and for db storage.
+            return pyschema_utils.FunctionOrMethod.of_callable(
+                agg, loadable=False
+            )
+
+    @staticmethod
+    def _derived_feedback_definition_id(
+        metric: "Metric",
+    ) -> types_schema.FeedbackDefinitionID:
+        """The id the constructor would derive from this metric's state.
+
+        [FeedbackDefinition][trulens.core.schema.feedback.FeedbackDefinition]
+        hashes its dump while `feedback_definition_id` still holds its
+        `"temporary"` placeholder, so the dump is hashed in that state here as
+        well; hashing a finished object would fold the previous id into the
+        result and the two routes would disagree.
+
+        Args:
+            metric: The metric to read the serialized state from.
+
+        Returns:
+            The derived id, or `anonymous_feedback_definition` when the metric
+                has no implementation, matching the constructor.
+        """
+
+        dump = metric.model_dump()
+        dump["feedback_definition_id"] = "temporary"
+
+        if metric.implementation is not None:
+            return json_utils.obj_id_of_obj(dump, prefix="feedback_definition")
+        return "anonymous_feedback_definition"
+
     def aggregate(
         self,
         func: Optional[AggCallable] = None,
@@ -642,6 +687,11 @@ class Metric(feedback_schema.FeedbackDefinition):
 
         Returns a new Metric object with the given aggregation function and/or
         the given [combination mode][trulens.core.schema.feedback.FeedbackCombinations].
+
+        The serialized `aggregator` field and the `feedback_definition_id`
+        derived from it are updated the same way the constructor would have
+        updated them for `agg=func`, so json and db storage and deferred
+        feedback mode see the new aggregator.
         """
 
         if func is None and combinations is None:
@@ -652,10 +702,27 @@ class Metric(feedback_schema.FeedbackDefinition):
         updates = {}
         if func is not None:
             updates["agg"] = func
+            updates["aggregator"] = self._serialize_aggregator(func)
         if combinations is not None:
             updates["combinations"] = combinations
 
-        return Metric.model_copy(self, update=updates)
+        ret = Metric.model_copy(self, update=updates)
+
+        # model_copy skips the constructor, so a derived
+        # feedback_definition_id would keep describing the pre-aggregate
+        # definition, and two metrics differing only by aggregator would
+        # share one id. Refresh it only when it is the id the constructor
+        # derived; an id the caller supplied stays as it is.
+        if self.feedback_definition_id in (
+            None,
+            "temporary",
+            self._derived_feedback_definition_id(self),
+        ):
+            ret.feedback_definition_id = self._derived_feedback_definition_id(
+                ret
+            )
+
+        return ret
 
     @staticmethod
     def of_feedback_definition(f: feedback_schema.FeedbackDefinition):
