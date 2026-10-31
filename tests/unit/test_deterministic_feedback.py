@@ -11,6 +11,30 @@ def _records(pairs):
 
 
 class TestConversationRepetition:
+    @pytest.mark.parametrize("reply", ["नमस्ते", "வணக்கம்", "مَرْحَبًا", "สวัสดี"])
+    def test_identical_replies_with_combining_marks(self, reply):
+        score, meta = conversation_repetition([
+            {"output": reply},
+            {"output": reply},
+        ])
+        assert score == 0.0
+        assert meta["turns"][2]["overlap_with_previous"] == 1.0
+
+    def test_distinct_vowel_signs_do_not_create_identical_replies(self):
+        score, meta = conversation_repetition([
+            {"output": "की"},
+            {"output": "को"},
+        ])
+        assert score == 1.0
+        assert meta["turns"][2]["overlap_with_previous"] == 0.0
+
+    def test_combining_marks_do_not_create_low_diversity(self):
+        reply = "உங்கள் சிக்கலை விவரிக்கவும். எங்கள் ஆதரவு குழு விரைவில் தொடர்பு கொள்ளும்."
+        score, meta = conversation_repetition([{"output": reply}])
+        assert score == 1.0
+        assert meta["turns"][1]["lexical_diversity"] == 0.0
+        assert meta["turns"][1]["ngram_repetition"] == 0.0
+
     @pytest.mark.parametrize(
         "reply",
         ["Hello world", "Привет мир", "你好世界", "Hello мир 你好", "界"],
@@ -173,4 +197,21 @@ class TestConversationRepetition:
     ],
 )
 def test_tokenize_alphanumeric_text(text, expected):
+    assert deterministic_feedback._tokenize(text) == expected
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("नमस्ते", ["नमस्ते"]),
+        ("வணக்கம்", ["வணக்கம்"]),
+        ("مَرْحَبًا", ["مَرْحَبًا"]),
+        ("สวัสดี", ["สวัสดี"]),
+        ("CAFE\u0301", ["cafe\u0301"]),
+        ("1\u20dd", ["1\u20dd"]),
+        ("\u0301\u093e\u20dd", []),
+        ("\u0301a\u0301_\u0301b!\u0301c \u0301d", ["a\u0301", "b", "c", "d"]),
+    ],
+)
+def test_tokenize_combining_marks(text, expected):
     assert deterministic_feedback._tokenize(text) == expected

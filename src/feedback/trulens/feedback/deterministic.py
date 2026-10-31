@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from typing import Any, Dict, List, Optional, Sequence, Tuple
+import unicodedata
 
 __all__ = [
     "DEFAULT_FALLBACK_PHRASES",
@@ -24,9 +25,6 @@ DEFAULT_FALLBACK_PHRASES: Tuple[str, ...] = (
     "as an ai language model",
 )
 
-# Match Unicode alphanumeric characters, keeping underscores as separators.
-_TOKEN_RE = re.compile(r"[^\W_]+")
-
 _ASSISTANT_LINE_RE = re.compile(
     r"^\s*(?:turn\s+\d+\s+)?assistant\s*:\s*(.*?)\s*$",
     re.IGNORECASE,
@@ -36,8 +34,21 @@ _ASSISTANT_ROLES = frozenset({"assistant", "ai", "bot"})
 
 
 def _tokenize(text: str) -> List[str]:
-    """Split text into lowercase alphanumeric tokens."""
-    return _TOKEN_RE.findall(text.lower())
+    """Split text into lowercase alphanumeric tokens with attached marks."""
+    tokens: List[str] = []
+    token: List[str] = []
+    for char in text.lower():
+        # Marks can extend a token, but cannot start one after a separator.
+        if char.isalnum() or (
+            token and unicodedata.category(char).startswith("M")
+        ):
+            token.append(char)
+        elif token:
+            tokens.append("".join(token))
+            token = []
+    if token:
+        tokens.append("".join(token))
+    return tokens
 
 
 def _assistant_text(record: Any) -> Optional[str]:
