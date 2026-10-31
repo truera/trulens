@@ -48,6 +48,27 @@ class TestPairedPermutationPvalue(unittest.TestCase):
         p = stats_utils.paired_permutation_pvalue(diffs)
         self.assertGreater(p, 0.05)
 
+    def test_tied_permutations_count_despite_rounding(self):
+        # Scores in thirds: every sign flip gives an odd number of thirds,
+        # so no permutation mean is smaller than the observed 1/18 and the
+        # exact p-value is 1. Rounding made many ties compare as smaller.
+        diffs = np.array([1 / 3, 0.0, -2 / 3, 2 / 3, -1 / 3, 1 / 3])
+        self.assertEqual(stats_utils.paired_permutation_pvalue(diffs), 1.0)
+
+    def test_pvalue_does_not_depend_on_score_scale(self):
+        # The sign-flip test is scale-invariant. Integer differences are
+        # summed exactly, so they give the reference p-value for the same
+        # deltas expressed as Likert scores normalised to [0, 1].
+        thirds = np.array(
+            [0, -3, 0, 1, 0, 2, -2, 2, -2, 0, 0, 1, -2, -2, -2]
+            + [-1, -1, -1, 0, 1, 0, -3, 0, -1, -2, -2, 1, 1, -2, 0],
+            dtype=float,
+        )
+        self.assertEqual(
+            stats_utils.paired_permutation_pvalue(thirds / 3),
+            stats_utils.paired_permutation_pvalue(thirds),
+        )
+
 
 class TestBootstrapCi(unittest.TestCase):
     def test_empty_returns_nan(self):

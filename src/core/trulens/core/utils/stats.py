@@ -41,7 +41,13 @@ def paired_permutation_pvalue(
     rng = np.random.default_rng(seed)
     signs = rng.choice([-1.0, 1.0], size=(permutations, n))
     perm_means = np.abs((signs * diffs).mean(axis=1))
-    return float((np.sum(perm_means >= observed) + 1) / (permutations + 1))
+    # A permutation mean that equals the observed one in exact arithmetic can
+    # round to just below it (judge scores such as 1/3 are not exact in
+    # binary), so compare with a tolerance far below any real difference.
+    tolerance = 1e-9 * float(np.mean(np.abs(diffs)))
+    return float(
+        (np.sum(perm_means >= observed - tolerance) + 1) / (permutations + 1)
+    )
 
 
 def bootstrap_ci(
