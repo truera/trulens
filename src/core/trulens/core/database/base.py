@@ -32,6 +32,8 @@ from trulens.core.utils import json as json_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 from trulens.otel.semconv.trace import BASE_SCOPE
+from trulens.otel.semconv.trace import ErrorAttributes
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -76,6 +78,11 @@ class BaseAppsExtractor:
         "latency",
         "total_tokens",
         "total_cost",
+        "llm_calls",
+        "tool_calls",
+        "tool_errors",
+        "repeated_tool_calls",
+        "failed_then_retried",
         "eval_cost",
         "eval_cost_snowflake",
         "num_events",
@@ -913,6 +920,7 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                     "latency": 0.0,  # Initialize to 0.0, filled below
                     "total_tokens": 0,  # Initialize to 0, calculated below
                     "total_cost": 0.0,  # Initialize to 0.0, calculated below
+                    "llm_calls": 0,
                     # An evaluation's spend is written to the EVAL_ROOT span as
                     # the total for that metric, and to each of its EVAL child
                     # spans as that child's share. They are two measurements of
@@ -961,6 +969,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             # Check if the span has cost info (tokens, cost, currency)
             # For EVAL/EVAL_ROOT spans, track the cost separately as eval_cost.
             span_type = record_attributes.get(SpanAttributes.SPAN_TYPE)
+            if span_type == SpanAttributes.SpanType.GENERATION.value:
+                record_events[record_id]["llm_calls"] += 1
             if span_type in [
                 SpanAttributes.SpanType.EVAL.value,
                 SpanAttributes.SpanType.EVAL_ROOT.value,
@@ -999,6 +1009,13 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                     record_attributes,
                     include_tokens=True,
                 )
+
+        # Tool statistics depend on the chronological order of all tool spans
+        # in a record, so compute them after the events have been grouped.
+        for record_data in record_events.values():
+            record_data.update(
+                self._get_tool_call_stats_otel(record_data["events"])
+            )
 
         # Process feedback results
         feedback_col_names = []
@@ -1215,6 +1232,11 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 "total_tokens": record_data["total_tokens"],
                 # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                 "total_cost": record_data["total_cost"],
+                "llm_calls": record_data["llm_calls"],
+                "tool_calls": record_data["tool_calls"],
+                "tool_errors": record_data["tool_errors"],
+                "repeated_tool_calls": record_data["repeated_tool_calls"],
+                "failed_then_retried": record_data["failed_then_retried"],
                 # The EVAL_ROOT total is the authoritative figure for the
                 # record; the EVAL children are its components, so they are
                 # only used when no EVAL_ROOT span carried a cost.
@@ -1442,6 +1464,108 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         # if currency not in record_events[record_id]["total_cost"]:
         #     record_events[record_id]["total_cost"][currency] = 0.0
         # record_events[record_id]["total_cost"][currency] += cost
+
+    def _get_tool_call_stats_otel(
+        self, events: Iterable[Event]
+    ) -> Dict[str, Any]:
+        """Compute deterministic tool-use statistics for one record."""
+        tool_spans = []
+        for event in events:
+            attributes = self._get_event_record_attributes_otel(event)
+            span_type = attributes.get(SpanAttributes.SPAN_TYPE)
+            if span_type not in (
+                SpanAttributes.SpanType.TOOL.value,
+                SpanAttributes.SpanType.MCP.value,
+            ):
+                continue
+
+            if span_type == SpanAttributes.SpanType.MCP.value:
+                name = attributes.get(
+                    SpanAttributes.MCP.TOOL_NAME
+                ) or attributes.get(GenAIAttributes.TOOL.NAME)
+                arguments = attributes.get(SpanAttributes.MCP.INPUT_ARGUMENTS)
+                if arguments is None:
+                    arguments = attributes.get(
+                        GenAIAttributes.TOOL.CALL_ARGUMENTS
+                    )
+            else:
+                name = attributes.get(
+                    GenAIAttributes.TOOL.NAME
+                ) or attributes.get(SpanAttributes.CALL.FUNCTION)
+                arguments = attributes.get(GenAIAttributes.TOOL.CALL_ARGUMENTS)
+
+            is_error = attributes.get(
+                ErrorAttributes.TYPE
+            ) is not None or self._is_true_otel_attribute(
+                attributes.get(SpanAttributes.MCP.OUTPUT_IS_ERROR)
+            )
+            tool_spans.append({
+                "sort_key": (
+                    event.start_timestamp,
+                    event.timestamp,
+                    event.event_id,
+                ),
+                "name": str(name) if name is not None else None,
+                "arguments": arguments,
+                "is_error": is_error,
+            })
+        return self._summarize_tool_calls(tool_spans)
+
+    @staticmethod
+    def _summarize_tool_calls(
+        tool_spans: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """Summarize normalized tool calls ordered by their span timestamps."""
+        tool_spans.sort(key=lambda span: span["sort_key"])
+        tool_calls = len(tool_spans)
+        tool_errors = sum(1 for span in tool_spans if span["is_error"])
+        failed_then_retried = sum(
+            1
+            for current, following in zip(tool_spans, tool_spans[1:])
+            if current["is_error"]
+            and current["name"] is not None
+            and current["name"] == following["name"]
+        )
+
+        # A missing payload makes repetition unknowable, not zero. This is
+        # particularly important for coding-agent traces recorded without
+        # TRULENS_CAPTURE_TOOL_PAYLOADS.
+        repeated_tool_calls: Optional[int]
+        if any(span["arguments"] is None for span in tool_spans):
+            repeated_tool_calls = None
+        else:
+            seen = set()
+            repeated_tool_calls = 0
+            for span in tool_spans:
+                arguments = span["arguments"]
+                if not isinstance(arguments, str):
+                    arguments = json.dumps(
+                        arguments, sort_keys=True, separators=(",", ":")
+                    )
+                signature = (span["name"], arguments)
+                if signature in seen:
+                    repeated_tool_calls += 1
+                else:
+                    seen.add(signature)
+
+        return {
+            "tool_calls": tool_calls,
+            "tool_errors": tool_errors,
+            "repeated_tool_calls": repeated_tool_calls,
+            "failed_then_retried": failed_then_retried,
+        }
+
+    @staticmethod
+    def _is_true_otel_attribute(value: Any) -> bool:
+        """Interpret boolean attributes returned by different connectors."""
+        return (
+            value is True
+            or value == 1
+            or (
+                isinstance(value, str)
+                and value.strip().lower() in ("true", "1")
+            )
+        )
 
     @staticmethod
     def extract_app_and_run_info(

@@ -1,15 +1,22 @@
+import logging
 from typing import Any, List
 
 from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStoreRetriever
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.guardrails import base as guardrails_base
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
+
+logger = logging.getLogger(__name__)
 
 
 class WithFeedbackFilterDocuments(VectorStoreRetriever):
     """A VectorStoreRetriever that filters documents using a minimum threshold
     on a feedback function before returning them.
+
+    Unparsable or non-finite feedback scores exclude the affected document
+    and log a warning, matching the core context filter.
 
     Args:
         feedback: use this feedback function to score each document.
@@ -98,6 +105,14 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
                     raise TypeError(
                         "Guardrails can only be used with feedback functions that return a float."
                     )
+                try:
+                    guardrails_base._validate_feedback_score(result)
+                except ValueError:
+                    logger.warning(
+                        "Excluding document with invalid guardrail score %r.",
+                        result,
+                    )
+                    continue
                 if (
                     self.feedback.higher_is_better and result > self.threshold
                 ) or (

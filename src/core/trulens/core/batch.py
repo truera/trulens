@@ -65,6 +65,7 @@ import pandas as pd
 from trulens.core.feedback.selector import Selector
 from trulens.core.metric.metric import Metric
 from trulens.core.metric.metric import SkipEval
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import constants as constants_utils
 from trulens.core.utils import threading as threading_utils
 
@@ -280,7 +281,12 @@ class BatchEvaluator:
             return None, {"skipped": str(e)}, time.time() - start
 
         arg_names = list(arg_values.keys())
-        combinations = itertools.product(*(arg_values[a] for a in arg_names))
+        candidates = [arg_values[a] for a in arg_names]
+        if metric.combinations == feedback_schema.FeedbackCombinations.ZIP:
+            # Pair list items by position, as `Metric.aggregate` documents.
+            combinations = zip(*candidates)
+        else:
+            combinations = itertools.product(*candidates)
 
         scores: List[Any] = []
         explanations: List[Any] = []

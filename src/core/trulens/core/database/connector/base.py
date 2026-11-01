@@ -435,7 +435,28 @@ class DBConnector(ABC, text_utils.WithIdentString):
         df["app_version"] = df["app_json"].apply(lambda x: x.get("app_version"))
 
         # TODO: refactor implementation for total_cost map in OTEL implementation of _get_records_and_feedback (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
-        col_agg_list = feedback_cols + ["latency", "total_cost"]
+        mean_columns = feedback_cols + ["latency", "total_cost"]
+
+        def aggregate(group_columns: List[str]) -> pd.DataFrame:
+            grouped = df.groupby(group_columns, dropna=False)
+            leaderboard = grouped[mean_columns].mean()
+            if "tool_calls" in df.columns:
+                leaderboard["average_tool_calls"] = grouped["tool_calls"].mean()
+                total_tool_calls = grouped["tool_calls"].sum()
+                total_tool_errors = grouped["tool_errors"].sum()
+                leaderboard["tool_error_rate"] = (
+                    total_tool_errors
+                    / total_tool_calls.where(total_tool_calls > 0)
+                ).fillna(0.0)
+            if "repeated_tool_calls" in df.columns:
+                leaderboard["average_repeated_tool_calls"] = grouped[
+                    "repeated_tool_calls"
+                ].mean()
+            return (
+                leaderboard.sort_values(by=feedback_cols, ascending=False)
+                if feedback_cols
+                else leaderboard
+            )
 
         if group_by_metadata_key is not None:
             df["meta"] = [df["record_json"][i]["meta"] for i in range(len(df))]
@@ -446,23 +467,13 @@ class DBConnector(ABC, text_utils.WithIdentString):
                 else None
                 for item in df["meta"]
             ]
-            return (
-                df
-                .groupby([
-                    "app_name",
-                    "app_version",
-                    str(group_by_metadata_key),
-                ])[col_agg_list]
-                .mean()
-                .sort_values(by=feedback_cols, ascending=False)
-            )
+            return aggregate([
+                "app_name",
+                "app_version",
+                str(group_by_metadata_key),
+            ])
         else:
-            return (
-                df
-                .groupby(["app_name", "app_version"])[col_agg_list]
-                .mean()
-                .sort_values(by=feedback_cols, ascending=False)
-            )
+            return aggregate(["app_name", "app_version"])
 
     def add_event(self, event: event_schema.Event):
         """

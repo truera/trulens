@@ -60,7 +60,7 @@ class Google(llm_provider.LLMProvider):
         ```
 
     Args:
-        model_engine: Model engine to use. Defaults to `"gemini-2.5-flash"`.
+        model_engine: Model engine to use. Defaults to `"gemini-3.8-flash"`.
         api_key: API key for authenticating with the Gemini Developer API. If not provided,
             the key will be read from the environment variable `GOOGLE_API_KEY` or `GEMINI_API_KEY`, if available.
         vertexai: Whether to use Vertex AI endpoints. Set to `True` to use Vertex AI instead of the Gemini Developer API. Defaults to `False`.
@@ -69,7 +69,7 @@ class Google(llm_provider.LLMProvider):
         location: Region to send Vertex AI API requests to (e.g., `"us-central1"`). Can also be set via environment variables.
     """
 
-    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gemini-2.5-flash"
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gemini-3.8-flash"
 
     @property
     def reports_costs(self) -> bool:
