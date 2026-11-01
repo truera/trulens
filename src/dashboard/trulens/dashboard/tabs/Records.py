@@ -560,6 +560,19 @@ def _build_grid_options(
         header_name="Total Cost (App)",
         filter="agNumberColumnFilter",
     )
+    for column, header in {
+        "llm_calls": "LLM Calls (#)",
+        "tool_calls": "Tool Calls (#)",
+        "tool_errors": "Tool Errors (#)",
+        "repeated_tool_calls": "Repeated Tool Calls (#)",
+        "failed_then_retried": "Failed Then Retried (#)",
+    }.items():
+        if column in df.columns:
+            gb.configure_column(
+                column,
+                header_name=header,
+                filter="agNumberColumnFilter",
+            )
     # Dynamically include all nonzero eval cost columns and hide zero/missing ones
     has_eval_sf = (
         "eval_cost_snowflake" in df.columns
@@ -751,6 +764,11 @@ def _render_grid(
         "record_metadata",
         "total_tokens",
         "total_cost",
+        "llm_calls",
+        "tool_calls",
+        "tool_errors",
+        "repeated_tool_calls",
+        "failed_then_retried",
         *eval_cols_to_show,
         "cost_currency",
         "latency",
@@ -884,6 +902,18 @@ def _build_thread_summary(
             "cost_currency": first["cost_currency"],
             "latency": group_sorted["latency"].sum(),
         }
+        for stat in (
+            "llm_calls",
+            "tool_calls",
+            "tool_errors",
+            "failed_then_retried",
+        ):
+            if stat in group_sorted.columns:
+                row[stat] = group_sorted[stat].sum()
+        if "repeated_tool_calls" in group_sorted.columns:
+            row["repeated_tool_calls"] = group_sorted[
+                "repeated_tool_calls"
+            ].sum(min_count=1)
         if sort_col and sort_col in ranking_group.columns:
             values = pd.to_numeric(
                 ranking_group[sort_col], errors="coerce"

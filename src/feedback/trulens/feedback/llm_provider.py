@@ -85,6 +85,49 @@ def _mean_graded_score(scores: Iterable[float]) -> float:
     return float(np.mean(graded))
 
 
+_TURN_VERDICT_LINE = re.compile(
+    r"^\W*turn\s*(\d+)\s*[:.)-]\s*\**\s*(adheres|breaks)\b\**\s*[-:–—]?\s*(.*)$",
+    re.IGNORECASE,
+)
+
+
+def _parse_turn_verdicts(
+    response: Any,
+) -> Optional[List[feedback_output_schemas.TurnVerdict]]:
+    """Read per-turn role verdicts from a judge reply.
+
+    Accepts a structured response, its JSON text, or one
+    `Turn N: ADHERES|BREAKS - reason` line per turn. Returns `None` when no
+    verdicts can be read.
+    """
+    if isinstance(response, feedback_output_schemas.RoleAdherenceResponse):
+        return list(response.turns)
+    if not isinstance(response, str):
+        return None
+
+    try:
+        return list(
+            feedback_output_schemas.RoleAdherenceResponse.model_validate_json(
+                response
+            ).turns
+        )
+    except pydantic.ValidationError:
+        pass
+
+    verdicts = []
+    for line in response.splitlines():
+        match = _TURN_VERDICT_LINE.match(line.strip())
+        if match:
+            verdicts.append(
+                feedback_output_schemas.TurnVerdict(
+                    turn=int(match.group(1)),
+                    adheres=match.group(2).lower() == "adheres",
+                    reason=match.group(3).strip(),
+                )
+            )
+    return verdicts or None
+
+
 # --- Shared capability cache for LLM providers ---
 _capabilities_lock = threading.Lock()
 
@@ -4686,6 +4729,125 @@ class LLMProvider(core_provider.Provider):
             max_score_val=3,
             temperature=temperature,
         )
+
+    def role_adherence_with_cot_reasons(
+        self,
+        records: Union[List[Any], str],
+        role: str,
+        temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
+    ) -> Tuple[float, Dict]:
+        """
+        Uses chat completion model. A function that completes a template to
+        evaluate, turn by turn, whether the assistant stays in its assigned
+        role. A single judge call returns a verdict for every assistant turn;
+        the score is computed from those verdicts rather than asked of the
+        judge.
+
+        Example:
+            ```python
+            from trulens.core import Metric
+            feedback = Metric(
+                implementation=provider.role_adherence_with_cot_reasons,
+                name="Role Adherence",
+            ).with_arguments(
+                role="A math tutor who guides with questions and never states the final answer."
+            ).on_conversation()
+            ```
+
+        Args:
+            records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
+            role (str): The role or persona the assistant is expected to keep.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (no assistant turn kept the role) and 1.0 (every assistant turn kept the role), computed as adhering turns divided by assistant turns, and a dictionary with the `reason`, the per-turn `turns` verdicts and the `broken_turns` numbers. If the judge's reply cannot be read, the score is `UNPARSABLE_SCORE`.
+
+        Raises:
+            ValueError: If `role` is empty.
+        """
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        if not isinstance(role, str) or not role.strip():
+            raise ValueError(
+                "`role` is required: describe the role or persona the "
+                "assistant is expected to keep."
+            )
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        expected = templates_conversation.assistant_turn_numbers(records)
+        if expected == []:
+            return UNPARSABLE_SCORE, {
+                "reason": "The conversation has no assistant turns to judge."
+            }
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=templates_conversation.RoleAdherence.system_prompt_template.format(
+                role=role.strip()
+            ),
+            additional_instructions=additional_instructions,
+        )
+        user_prompt = (
+            templates_conversation.RoleAdherence.user_prompt_template.format(
+                transcript=transcript
+            )
+        )
+
+        extra_kwargs = {}
+        if self._is_reasoning_model():
+            extra_kwargs["reasoning_effort"] = "medium"
+        else:
+            extra_kwargs["temperature"] = temperature
+
+        response = self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            response_format=feedback_output_schemas.RoleAdherenceResponse,
+            **extra_kwargs,
+        )
+
+        verdicts = _parse_turn_verdicts(response)
+        if (
+            not verdicts
+            or len({v.turn for v in verdicts}) != len(verdicts)
+            or (
+                expected is not None
+                and sorted(v.turn for v in verdicts) != expected
+            )
+        ):
+            return UNPARSABLE_SCORE, {
+                "reason": (
+                    "Could not read one verdict per assistant turn from the "
+                    f"judge's reply: {response!r}"
+                )
+            }
+
+        verdicts.sort(key=lambda v: v.turn)
+        broken = [v for v in verdicts if not v.adheres]
+        score = (len(verdicts) - len(broken)) / len(verdicts)
+        lines = [
+            f"Role: {role.strip()}",
+            f"Adhering turns: {len(verdicts) - len(broken)} of {len(verdicts)}",
+        ]
+        lines += [
+            f"Turn {v.turn} {'adheres' if v.adheres else 'BREAKS'}: {v.reason}"
+            for v in verdicts
+        ]
+        reason = "\n".join(lines)
+        return score, {
+            "reason": reason,
+            "turns": [v.model_dump() for v in verdicts],
+            "broken_turns": [v.turn for v in broken],
+        }
 
     def agent_goal_accuracy(
         self,

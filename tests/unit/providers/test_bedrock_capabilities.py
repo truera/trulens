@@ -198,6 +198,11 @@ _CLAUDE_MESSAGES = [
     [
         ("anthropic.claude-3-haiku-20240307-v1:0", True),
         ("us.anthropic.claude-sonnet-4-5-20250929-v1:0", True),
+        ("us.anthropic.claude-haiku-4-5-20251001-v1:0", True),
+        ("us.anthropic.claude-sonnet-5", False),
+        ("us.anthropic.claude-haiku-5-5", False),
+        ("global.anthropic.claude-haiku-5-5", False),
+        ("anthropic.claude-haiku-5-5", False),
         ("us.anthropic.claude-opus-4-8", False),
         ("us.anthropic.claude-opus-5", False),
         ("us.anthropic.claude-opus-5-5", False),
@@ -207,9 +212,9 @@ _CLAUDE_MESSAGES = [
     ],
 )
 def test_anthropic_sampling_params(model_id, sends_temperature):
-    """Claude 4.5+ rejects `temperature` together with `top_p`, and Opus 4.7+
-    rejects `temperature` on its own, so `top_p` is never sent and
-    `temperature` only to the models that accept it."""
+    """Claude 4.5+ rejects `temperature` together with `top_p`, and Opus 4.7+,
+    Sonnet 5 and Haiku 5.5 reject `temperature` on its own, so `top_p` is never
+    sent and `temperature` only to the models that accept it."""
     provider = _make_provider(
         model_id, {"content": [{"type": "text", "text": "claude-ok"}]}
     )
