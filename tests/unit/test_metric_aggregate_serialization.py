@@ -14,6 +14,7 @@ import math
 import numpy as np
 from trulens.core import batch as core_batch
 from trulens.core.metric import metric as core_metric
+from trulens.core.schema.select import Select
 from trulens.core.utils import json as json_utils
 
 
@@ -137,5 +138,65 @@ def test_aggregate_keeps_a_supplied_feedback_definition_id():
     assert pinned.feedback_definition_id == "pinned-by-caller"
 
     aggregated = pinned.aggregate(np.max)
+
+    assert aggregated.feedback_definition_id == "pinned-by-caller"
+
+
+def test_aggregate_after_on_refreshes_feedback_definition_id(monkeypatch):
+    """A builder such as `on()` must not stop `aggregate()` from refreshing.
+
+    Regression for the review on #3030: `on()` copies the metric without
+    re-deriving the id, so the stored id no longer matches the id derived from
+    the current state and the refresh was skipped. Two metrics that differ
+    only by aggregator must still get their own ids.
+    """
+
+    # `Metric.on()` takes a Lens path only on the non-OTEL path; the reported
+    # chain uses a Lens path.
+    monkeypatch.setenv("TRULENS_OTEL_TRACING", "0")
+    selector = Select.RecordCalls.retrieve.rets[:]
+
+    chained = _metric().on(selector)
+    aggregated_max = chained.aggregate(np.max)
+    aggregated_min = aggregated_max.aggregate(np.min)
+
+    ctor_max = core_metric.Metric(
+        implementation=len, name="len", agg=np.max, selectors={"obj": selector}
+    )
+    ctor_min = core_metric.Metric(
+        implementation=len, name="len", agg=np.min, selectors={"obj": selector}
+    )
+
+    assert (
+        aggregated_max.feedback_definition_id != chained.feedback_definition_id
+    )
+    assert (
+        aggregated_max.feedback_definition_id == ctor_max.feedback_definition_id
+    )
+    assert (
+        aggregated_min.feedback_definition_id == ctor_min.feedback_definition_id
+    )
+    assert (
+        aggregated_min.feedback_definition_id
+        != aggregated_max.feedback_definition_id
+    )
+
+
+def test_aggregate_after_on_keeps_a_supplied_feedback_definition_id(
+    monkeypatch,
+):
+    """A builder such as `on()` must not make a supplied id get refreshed."""
+
+    monkeypatch.setenv("TRULENS_OTEL_TRACING", "0")
+
+    pinned = core_metric.Metric(
+        implementation=len,
+        name="len",
+        feedback_definition_id="pinned-by-caller",
+    )
+
+    aggregated = pinned.on(Select.RecordCalls.retrieve.rets[:]).aggregate(
+        np.max
+    )
 
     assert aggregated.feedback_definition_id == "pinned-by-caller"

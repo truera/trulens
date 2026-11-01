@@ -211,6 +211,24 @@ class Metric(feedback_schema.FeedbackDefinition):
     default behavior is used. This flag is only applicable to metrics that take
     'trace' as an input parameter."""
 
+    _feedback_definition_id_derived: Optional[bool] = pydantic.PrivateAttr(
+        default=None
+    )
+    """Whether `feedback_definition_id` may be refreshed by derived builders.
+
+    [FeedbackDefinition][trulens.core.schema.feedback.FeedbackDefinition]
+    derives the id from the serialized state only in its constructor. Builders
+    such as [on()][trulens.core.metric.metric.Metric.on] copy the model without
+    running the constructor, so a derived id would keep describing the earlier
+    state. `True` means the id was derived here (or is exactly the id this
+    state would derive), so
+    [aggregate()][trulens.core.metric.metric.Metric.aggregate] may re-derive
+    it; `False` means the caller supplied it and it must be kept as is.
+    `None` means not recorded (for example a model rebuilt without
+    `__init__`) and callers fall back to comparing the id with the derived
+    one.
+    """
+
     def __init__(
         self,
         implementation: Optional[Callable] = None,
@@ -375,6 +393,18 @@ class Metric(feedback_schema.FeedbackDefinition):
             kwargs["description"] = description
 
         super().__init__(**kwargs)
+
+        # `FeedbackDefinition.__init__` derives the id only when the caller
+        # did not supply one. Record which route was taken so builders that
+        # copy the model (and skip `__init__`) can tell a derived id from one
+        # the caller pinned. An id that already equals the id derived from this
+        # state (a json round trip) counts as derived so it stays consistent
+        # with the dumps it came from.
+        self._feedback_definition_id_derived = (
+            kwargs.get("feedback_definition_id") is None
+            or self.feedback_definition_id
+            == self._derived_feedback_definition_id(self)
+        )
 
         self.imp = implementation
         self.agg = agg
@@ -711,13 +741,18 @@ class Metric(feedback_schema.FeedbackDefinition):
         # model_copy skips the constructor, so a derived
         # feedback_definition_id would keep describing the pre-aggregate
         # definition, and two metrics differing only by aggregator would
-        # share one id. Refresh it only when it is the id the constructor
-        # derived; an id the caller supplied stays as it is.
-        if self.feedback_definition_id in (
-            None,
-            "temporary",
-            self._derived_feedback_definition_id(self),
-        ):
+        # share one id. Refresh it whenever the id was derived; an id the
+        # caller supplied stays as it is. The flag is recorded in `__init__`
+        # because a builder such as `on()` may already have copied the metric,
+        # which makes a "current id matches the derived id" comparison useless.
+        derived = self._feedback_definition_id_derived
+        if derived is None:
+            derived = self.feedback_definition_id in (
+                None,
+                "temporary",
+                self._derived_feedback_definition_id(self),
+            )
+        if derived:
             ret.feedback_definition_id = self._derived_feedback_definition_id(
                 ret
             )
