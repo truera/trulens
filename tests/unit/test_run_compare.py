@@ -64,10 +64,12 @@ class TestPairedPermutationPvalue(unittest.TestCase):
             + [-1, -1, -1, 0, 1, 0, -3, 0, -1, -2, -2, 1, 1, -2, 0],
             dtype=float,
         )
-        self.assertEqual(
-            stats_utils.paired_permutation_pvalue(thirds / 3),
-            stats_utils.paired_permutation_pvalue(thirds),
-        )
+        for seed in range(4):
+            with self.subTest(seed=seed):
+                self.assertEqual(
+                    stats_utils.paired_permutation_pvalue(thirds / 3, seed),
+                    stats_utils.paired_permutation_pvalue(thirds, seed),
+                )
 
 
 class TestBootstrapCi(unittest.TestCase):
