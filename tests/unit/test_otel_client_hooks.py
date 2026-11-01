@@ -697,9 +697,12 @@ def test_capture_policy_accepts_on_and_shares_tool_redaction(
             tool_name="MCP:example",
             tool_input={
                 "apiToken": "secret",
+                "tokenValue": "secret-value",
+                "token_id": "secret-id",
                 "usage": {"input_tokens": 10, "output_tokens": 5},
                 "token_budget": 1000,
                 "tokenizer": "cl100k_base",
+                "refresh_token_expires": 3600,
             },
         )
     )
@@ -707,10 +710,13 @@ def test_capture_policy_accepts_on_and_shares_tool_redaction(
     captured = privacy.CapturePolicy.from_environment().apply(event)
 
     assert captured.tool_input["apiToken"] == "[REDACTED]"
+    assert captured.tool_input["tokenValue"] == "[REDACTED]"
+    assert captured.tool_input["token_id"] == "[REDACTED]"
     assert captured.tool_input["usage"]["input_tokens"] == 10
     assert captured.tool_input["usage"]["output_tokens"] == 5
     assert captured.tool_input["token_budget"] == 1000
     assert captured.tool_input["tokenizer"] == "cl100k_base"
+    assert captured.tool_input["refresh_token_expires"] == 3600
 
 
 def test_assembler_defaults_identity_to_native_client_and_conversation():

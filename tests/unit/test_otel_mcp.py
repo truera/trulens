@@ -129,6 +129,9 @@ class TestMCPInstrumentation(unittest.TestCase):
             "githubToken": "github-secret",
             "slackToken": "slack-secret",
             "csrfToken": "csrf-secret",
+            "tokenValue": "value-secret",
+            "token_id": "id-secret",
+            "refresh_token_expires": 3600,
             "api_key": "key-secret",
         })
 
@@ -147,6 +150,9 @@ class TestMCPInstrumentation(unittest.TestCase):
         self.assertEqual(payload["githubToken"], "[REDACTED]")
         self.assertEqual(payload["slackToken"], "[REDACTED]")
         self.assertEqual(payload["csrfToken"], "[REDACTED]")
+        self.assertEqual(payload["tokenValue"], "[REDACTED]")
+        self.assertEqual(payload["token_id"], "[REDACTED]")
+        self.assertEqual(payload["refresh_token_expires"], 3600)
         self.assertEqual(payload["api_key"], "[REDACTED]")
 
     def test_cancellation_propagates_and_does_not_double_wrap(self) -> None:

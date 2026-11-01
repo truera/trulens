@@ -8,7 +8,7 @@ from typing import Any, Mapping
 
 _SECRET_KEY = re.compile(
     r"(?:api[_-]?key|authorization|cookie|credential|password|"
-    r"private[_-]?key|secret|token$)",
+    r"private[_-]?key|secret|token(?:$|[_-]?(?:id|value)$))",
     re.IGNORECASE,
 )
 
