@@ -18,6 +18,15 @@ def skip_if_odd(val: float):
     return float(val)
 
 
+def echo_score(val: float) -> float:
+    """Feedback function that returns its argument unchanged.
+
+    Used to select values that stand in for judge replies, including the
+    unparsable-score sentinel, without the selection machinery changing them.
+    """
+    return float(val)
+
+
 def custom_feedback_function(t1: str) -> float:
     return 0.1
 

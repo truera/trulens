@@ -13,7 +13,7 @@ class Settings:
     collection_name: str = "aircraft_systems"
     embedding_model: str = "text-embedding-3-small"
     chat_model: str = "gpt-5.6-luna"
-    eval_model: str = "gpt-4.1-nano"
+    eval_model: str = "gpt-5.6-luna"
     chunk_size: int = 1024
     chunk_overlap: int = 150
     retrieval_k: int = 3

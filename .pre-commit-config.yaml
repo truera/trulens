@@ -13,6 +13,7 @@ repos:
           )$
       - id: check-yaml
         exclude: meta.yaml
+      - id: check-symlinks
       - id: destroyed-symlinks
       - id: detect-private-key
       - id: debug-statements

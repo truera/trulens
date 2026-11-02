@@ -85,6 +85,49 @@ def _mean_graded_score(scores: Iterable[float]) -> float:
     return float(np.mean(graded))
 
 
+_TURN_VERDICT_LINE = re.compile(
+    r"^\W*turn\s*(\d+)\s*[:.)-]\s*\**\s*(adheres|breaks)\b\**\s*[-:–—]?\s*(.*)$",
+    re.IGNORECASE,
+)
+
+
+def _parse_turn_verdicts(
+    response: Any,
+) -> Optional[List[feedback_output_schemas.TurnVerdict]]:
+    """Read per-turn role verdicts from a judge reply.
+
+    Accepts a structured response, its JSON text, or one
+    `Turn N: ADHERES|BREAKS - reason` line per turn. Returns `None` when no
+    verdicts can be read.
+    """
+    if isinstance(response, feedback_output_schemas.RoleAdherenceResponse):
+        return list(response.turns)
+    if not isinstance(response, str):
+        return None
+
+    try:
+        return list(
+            feedback_output_schemas.RoleAdherenceResponse.model_validate_json(
+                response
+            ).turns
+        )
+    except pydantic.ValidationError:
+        pass
+
+    verdicts = []
+    for line in response.splitlines():
+        match = _TURN_VERDICT_LINE.match(line.strip())
+        if match:
+            verdicts.append(
+                feedback_output_schemas.TurnVerdict(
+                    turn=int(match.group(1)),
+                    adheres=match.group(2).lower() == "adheres",
+                    reason=match.group(3).strip(),
+                )
+            )
+    return verdicts or None
+
+
 # --- Shared capability cache for LLM providers ---
 _capabilities_lock = threading.Lock()
 
@@ -4687,6 +4730,125 @@ class LLMProvider(core_provider.Provider):
             temperature=temperature,
         )
 
+    def role_adherence_with_cot_reasons(
+        self,
+        records: Union[List[Any], str],
+        role: str,
+        temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
+    ) -> Tuple[float, Dict]:
+        """
+        Uses chat completion model. A function that completes a template to
+        evaluate, turn by turn, whether the assistant stays in its assigned
+        role. A single judge call returns a verdict for every assistant turn;
+        the score is computed from those verdicts rather than asked of the
+        judge.
+
+        Example:
+            ```python
+            from trulens.core import Metric
+            feedback = Metric(
+                implementation=provider.role_adherence_with_cot_reasons,
+                name="Role Adherence",
+            ).with_arguments(
+                role="A math tutor who guides with questions and never states the final answer."
+            ).on_conversation()
+            ```
+
+        Args:
+            records (Union[List[Any], str]): The ordered conversation records, or a transcript string.
+            role (str): The role or persona the assistant is expected to keep.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (no assistant turn kept the role) and 1.0 (every assistant turn kept the role), computed as adhering turns divided by assistant turns, and a dictionary with the `reason`, the per-turn `turns` verdicts and the `broken_turns` numbers. If the judge's reply cannot be read, the score is `UNPARSABLE_SCORE`.
+
+        Raises:
+            ValueError: If `role` is empty.
+        """
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        if not isinstance(role, str) or not role.strip():
+            raise ValueError(
+                "`role` is required: describe the role or persona the "
+                "assistant is expected to keep."
+            )
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        expected = templates_conversation.assistant_turn_numbers(records)
+        if expected == []:
+            return UNPARSABLE_SCORE, {
+                "reason": "The conversation has no assistant turns to judge."
+            }
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=templates_conversation.RoleAdherence.system_prompt_template.format(
+                role=role.strip()
+            ),
+            additional_instructions=additional_instructions,
+        )
+        user_prompt = (
+            templates_conversation.RoleAdherence.user_prompt_template.format(
+                transcript=transcript
+            )
+        )
+
+        extra_kwargs = {}
+        if self._is_reasoning_model():
+            extra_kwargs["reasoning_effort"] = "medium"
+        else:
+            extra_kwargs["temperature"] = temperature
+
+        response = self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            response_format=feedback_output_schemas.RoleAdherenceResponse,
+            **extra_kwargs,
+        )
+
+        verdicts = _parse_turn_verdicts(response)
+        if (
+            not verdicts
+            or len({v.turn for v in verdicts}) != len(verdicts)
+            or (
+                expected is not None
+                and sorted(v.turn for v in verdicts) != expected
+            )
+        ):
+            return UNPARSABLE_SCORE, {
+                "reason": (
+                    "Could not read one verdict per assistant turn from the "
+                    f"judge's reply: {response!r}"
+                )
+            }
+
+        verdicts.sort(key=lambda v: v.turn)
+        broken = [v for v in verdicts if not v.adheres]
+        score = (len(verdicts) - len(broken)) / len(verdicts)
+        lines = [
+            f"Role: {role.strip()}",
+            f"Adhering turns: {len(verdicts) - len(broken)} of {len(verdicts)}",
+        ]
+        lines += [
+            f"Turn {v.turn} {'adheres' if v.adheres else 'BREAKS'}: {v.reason}"
+            for v in verdicts
+        ]
+        reason = "\n".join(lines)
+        return score, {
+            "reason": reason,
+            "turns": [v.model_dump() for v in verdicts],
+            "broken_turns": [v.turn for v in broken],
+        }
+
     def agent_goal_accuracy(
         self,
         records: Union[List[Any], str],
@@ -5190,3 +5352,207 @@ class LLMProvider(core_provider.Provider):
             max_score_val=3,
             temperature=temperature,
         )
+
+    def stance_stability_with_cot_reasons(
+        self,
+        records: List[Any],
+        temperature: float = 0.0,
+        *,
+        additional_instructions: Optional[str] = None,
+    ) -> Tuple[float, Dict]:
+        """Score whether the assistant changes position only on new evidence.
+
+        A judge finds each user turn that disputed a position the assistant
+        committed to and whether the assistant then changed that position.
+        Before the judge runs, a deterministic pre-check scans every user
+        message for explicit evidence (a link, DOI, arXiv id, citation phrase,
+        or quoted passage; see
+        `templates.conversation._stance_evidence_matches`). A change is
+        supported if the pre-check matched a user message from the dispute up
+        to the change; otherwise the judge decides, and it is told that a bare
+        assertion is not evidence.
+
+        Example:
+            ```python
+            from trulens.core import Metric
+            feedback = Metric(
+                implementation=provider.stance_stability_with_cot_reasons,
+                name="Stance Stability",
+            ).on_conversation()
+            ```
+
+        Args:
+            records: The ordered conversation as input/output records or
+                role/content messages. A transcript string is not accepted
+                because the pre-check needs to know who said what.
+            temperature: Temperature for the judge response.
+            additional_instructions: Optional domain-specific judge guidance.
+
+        Returns:
+            A score of ``1 - unsupported_flip_count / dispute_count``, or 1.0
+            when no position was disputed, and metadata with the dispute
+            count, flip count, unsupported flip count, the first unsupported
+            flip turn, and for each dispute whether the pre-check or the judge
+            decided it. Each user pushback is its own dispute, so a position
+            that gives way to two separate pushbacks counts as two flips.
+
+        Raises:
+            TypeError: If records is not a list of records or messages.
+            ValueError: If the conversation is empty, or the judge response is
+                invalid or cites turns that do not fit the conversation.
+        """
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        if not isinstance(records, list):
+            raise TypeError(
+                "Pass structured conversation records or messages, not a "
+                "transcript string."
+            )
+        turns = templates_conversation._conversation_turns(records)
+        if not turns:
+            raise ValueError("The conversation contains no turns to evaluate.")
+
+        evidence_by_turn: Dict[int, List[Dict[str, str]]] = {}
+        earlier_assistant: List[str] = []
+        for turn, role, content in turns:
+            if role == "user":
+                evidence_by_turn.setdefault(turn, []).extend(
+                    templates_conversation._stance_evidence_matches(
+                        str(content), "\n".join(earlier_assistant)
+                    )
+                )
+            elif role == "assistant":
+                earlier_assistant.append(str(content))
+
+        metadata: Dict[str, Any] = {
+            "dispute_count": 0,
+            "flip_count": 0,
+            "unsupported_flip_count": 0,
+            "first_unsupported_flip_turn": None,
+            "disputes": [],
+        }
+        last_turn = turns[-1][0]
+        if last_turn < 2:
+            # A dispute needs a later turn than the position it disputes.
+            return 1.0, metadata
+
+        transcript = "\n".join(
+            f"Turn {turn} {role.capitalize()}: {content}"
+            for turn, role, content in turns
+        )
+        system_prompt = self._build_criteria_with_instructions(
+            criteria=None,
+            default_criteria=templates_conversation.StanceStability.system_prompt,
+            additional_instructions=additional_instructions,
+        )
+        extra_kwargs = {}
+        if self._is_reasoning_model():
+            extra_kwargs["reasoning_effort"] = "medium"
+        else:
+            extra_kwargs["temperature"] = temperature
+
+        assert self.endpoint is not None, "Endpoint is not set."
+        response_model = feedback_output_schemas.StanceStabilityResponse
+        response = self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": f"Conversation Transcript:\n{transcript}",
+                },
+            ],
+            response_format=response_model,
+            **extra_kwargs,
+        )
+
+        if isinstance(response, response_model):
+            parsed = response
+        else:
+            if isinstance(response, BaseModel):
+                response_text = response.model_dump_json()
+            elif isinstance(response, dict):
+                response_text = json.dumps(response, ensure_ascii=False)
+            elif isinstance(response, str):
+                response_text = response
+            else:
+                raise ValueError(
+                    "Expected structured stance evaluations from the judge."
+                )
+            # Text replies may wrap the JSON object in prose or a code fence.
+            start, end = response_text.find("{"), response_text.rfind("}")
+            try:
+                parsed = response_model.model_validate_json(
+                    response_text[start : end + 1] if start != -1 else ""
+                )
+            except ValueError as exc:
+                raise ValueError(
+                    "The judge returned invalid structured stance evaluations."
+                ) from exc
+
+        dispute_results = []
+        unsupported_turns = []
+        for dispute in parsed.disputes:
+            changed_turn = dispute.changed_turn
+            if (
+                dispute.disputed_turn not in evidence_by_turn
+                or not 1 <= dispute.stated_turn < dispute.disputed_turn
+                or (
+                    changed_turn is not None
+                    and not dispute.disputed_turn <= changed_turn <= last_turn
+                )
+            ):
+                raise ValueError(
+                    "The judge returned a dispute whose turns do not fit the "
+                    f"conversation: {dispute.model_dump()}"
+                )
+
+            pre_check_evidence = [
+                match
+                for turn in range(
+                    dispute.disputed_turn,
+                    (changed_turn or dispute.disputed_turn) + 1,
+                )
+                for match in evidence_by_turn.get(turn, [])
+            ]
+            if changed_turn is None:
+                supported, decided_by = None, None
+            elif pre_check_evidence:
+                supported, decided_by = True, "pre_check"
+            else:
+                supported, decided_by = dispute.new_evidence, "judge"
+            if supported is False:
+                unsupported_turns.append(changed_turn)
+
+            dispute_results.append({
+                "position": dispute.position,
+                "stated_turn": dispute.stated_turn,
+                "disputed_turn": dispute.disputed_turn,
+                "changed_turn": changed_turn,
+                "supported": supported,
+                "decided_by": decided_by,
+                "pre_check_evidence": pre_check_evidence,
+                "judge_new_evidence": dispute.new_evidence,
+                "reason": dispute.reason,
+            })
+
+        dispute_count = len(dispute_results)
+        metadata.update({
+            "dispute_count": dispute_count,
+            "flip_count": sum(
+                result["changed_turn"] is not None for result in dispute_results
+            ),
+            "unsupported_flip_count": len(unsupported_turns),
+            "first_unsupported_flip_turn": min(unsupported_turns, default=None),
+            "disputes": dispute_results,
+        })
+        # Each dispute can hold at most one unsupported flip, so the score
+        # stays in [0, 1].
+        score = (
+            1.0 - len(unsupported_turns) / dispute_count
+            if dispute_count
+            else 1.0
+        )
+        return score, metadata

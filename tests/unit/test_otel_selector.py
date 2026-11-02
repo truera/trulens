@@ -108,6 +108,12 @@ class TestOtelSelector(OtelTestCase):
                 conversation_attribute="records",
             ),
         )
+        tool_selector = Selector.select_conversation(
+            include_tool_calls=True,
+            max_tool_result_chars=123,
+        )
+        self.assertTrue(tool_selector.include_tool_calls)
+        self.assertEqual(tool_selector.max_tool_result_chars, 123)
         self.assertEqual(
             Selector.select_conversation_input().conversation_attribute,
             "input",
@@ -118,6 +124,10 @@ class TestOtelSelector(OtelTestCase):
         )
         with self.assertRaises(ValueError):
             Selector(trace_level=True, conversation_level=True)
+        with self.assertRaisesRegex(ValueError, "only valid"):
+            Selector(span_attribute="x", include_tool_calls=True)
+        with self.assertRaisesRegex(ValueError, "non-negative"):
+            Selector.select_conversation(max_tool_result_chars=-1)
 
     def test__split_function_name(self) -> None:
         self.assertEqual(

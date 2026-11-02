@@ -20,16 +20,20 @@ _TruLens_ can also provide reasons using [chain-of-thought methodology](https://
 
 ### When the judge reply cannot be parsed
 
-`generate_score` and `generate_score_and_reasons` return [`UNPARSABLE_SCORE`][trulens.core.utils.constants.UNPARSABLE_SCORE] (`-1.0`) when no score can be read out of the judge's reply, on both the JSON and the plain text path. Scores are otherwise normalized to the 0 to 1 range, so a negative score is never a verdict. _TruLens_ skips it in its own aggregates: `Jury` drops that juror's vote, `BatchEvaluator` leaves it out of averages, the groundedness implementation averages only the statements that were graded, and guardrails refuse to act on it.
+`generate_score` and `generate_score_and_reasons` return [`UNPARSABLE_SCORE`][trulens.core.utils.constants.UNPARSABLE_SCORE] (`-1.0`) when the judge's reply has the expected shape but its score cannot be read: a JSON reply whose `score` is not a number, or a chain-of-thought reply with criteria and supporting evidence but no score line. A reply with no recognizable score at all, such as free text without any number, raises `trulens.feedback.generated.ParseError` instead. Scores are otherwise normalized to the 0 to 1 range, so a negative score is never a verdict. _TruLens_ skips it in its own aggregates: `Jury` drops that juror's vote, `BatchEvaluator` leaves it out of averages, the groundedness implementation averages only the statements that were graded, and guardrails refuse to act on it.
 
-If you call a `_with_cot_reasons` method directly and compare the score against a threshold, check [`is_unparsable_score`][trulens.core.utils.constants.is_unparsable_score] first. Both names are also importable from `trulens.feedback`:
+If you call a `_with_cot_reasons` method directly and compare the score against a threshold, handle both outcomes: check [`is_unparsable_score`][trulens.core.utils.constants.is_unparsable_score] on the returned score and catch `ParseError`. Both `UNPARSABLE_SCORE` and `is_unparsable_score` are also importable from `trulens.feedback`:
 
 !!! example
 
     ```python
-    from trulens.feedback import UNPARSABLE_SCORE, is_unparsable_score
+    from trulens.feedback import is_unparsable_score
+    from trulens.feedback.generated import ParseError
 
-    score, reasons = provider.coherence_with_cot_reasons(text)
+    try:
+        score, reasons = provider.coherence_with_cot_reasons(text)
+    except ParseError as e:
+        raise RuntimeError("judge reply had no score") from e
     if is_unparsable_score(score):
         raise RuntimeError(f"judge produced no score: {reasons}")
     ```
