@@ -135,6 +135,25 @@ def test_verdict_block_wins_over_a_later_evidence_block():
     assert "Checked 1 claim" in reasons["reason"]
 
 
+def test_last_verdict_block_wins_over_an_earlier_draft():
+    draft = _COT.replace('"score": 3', '"score": 0')
+    reply = f"Draft:\n```json\n{draft}\n```\nFinal:\n```json\n{_COT}\n```"
+    provider = _CannedProvider(reply)
+
+    score = provider.generate_score(
+        system_prompt="System prompt.", min_score_val=0, max_score_val=3
+    )
+
+    assert score == pytest.approx(1.0)
+
+
+def test_reply_without_json_says_text_parsing_comes_next():
+    with pytest.raises(ValueError, match="will try text parsing"):
+        llm_provider._load_json_reply(
+            "Score: 2", accept=llm_provider._has_score
+        )
+
+
 def test_fenced_list_of_scores_is_still_averaged():
     reply = 'Scores:\n```json\n[{"score": 1}, {"score": 3}]\n```'
 
