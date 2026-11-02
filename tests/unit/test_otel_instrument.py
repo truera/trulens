@@ -1093,6 +1093,155 @@ class TestOtelInstrumentAsyncBehindDecorator(unittest.TestCase):
             spans[0].attributes[SpanAttributes.RECORD_ROOT.OUTPUT], "Kojikun"
         )
 
+    def test_async_generator_behind_sync_decorator(self) -> None:
+        @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
+        async def retrieve(name: str) -> str:
+            return name.upper()
+
+        @instrument()
+        @_passthrough
+        async def stream(question: str):
+            await asyncio.sleep(0.05)
+            yield await retrieve("Kojikun")
+            yield await retrieve("Nolan")
+
+        async def run():
+            return [chunk async for chunk in stream("q")]
+
+        self.assertEqual(asyncio.run(run()), ["KOJIKUN", "NOLAN"])
+
+        self.assertIsNone(baggage.get_baggage(SpanAttributes.RECORD_ID))
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 3)
+        stream_span = spans[-1]
+        self.assertEqual(len(self.recording), 1)
+        self.assertEqual(
+            stream_span.attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+            "['KOJIKUN', 'NOLAN']",
+        )
+        self.assertTrue(
+            stream_span.attributes[SpanAttributes.GENERATION.IS_STREAMING]
+        )
+        self.assertEqual(
+            stream_span.attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED],
+            2,
+        )
+        self.assertGreaterEqual(
+            stream_span.end_time - stream_span.start_time, 50_000_000
+        )
+        for inner_span in spans[:2]:
+            self.assertEqual(
+                inner_span.parent.span_id, stream_span.context.span_id
+            )
+
+    def test_async_generator_behind_sync_decorator_abandoned(self) -> None:
+        @instrument()
+        @_passthrough
+        async def stream(question: str):
+            yield "Kojikun"
+            yield "Nolan"
+
+        async def run():
+            async for chunk in stream("q"):
+                self.assertEqual(chunk, "Kojikun")
+                break
+            self.assertIsNone(baggage.get_baggage(SpanAttributes.RECORD_ID))
+
+        with self.assertNoLogs("opentelemetry.context", level="ERROR"):
+            asyncio.run(run())
+            gc.collect()
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+            "['Kojikun']",
+        )
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED], 1
+        )
+
+    def test_async_generator_behind_sync_decorator_error_marks_span(
+        self,
+    ) -> None:
+        @instrument()
+        @_passthrough
+        async def stream(question: str):
+            yield "Kojikun"
+            raise ValueError("no more babies")
+
+        async def run():
+            return [chunk async for chunk in stream("q")]
+
+        with self.assertRaises(ValueError):
+            asyncio.run(run())
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].status.status_code, trace.StatusCode.ERROR)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.CALL.ERROR], "no more babies"
+        )
+
+    def _assert_stream_protocol_forwarded(self, make_stream) -> None:
+        # `asend`, `athrow`, and `aclose` reach the inner generator, as they
+        # would without instrumentation.
+        events = []
+
+        async def source():
+            try:
+                value = yield "ready"
+                events.append(("received", value))
+                try:
+                    yield value
+                except KeyError as e:
+                    events.append(("thrown", e.args[0]))
+                    yield "recovered"
+                yield "unreached"
+            finally:
+                events.append(("closed",))
+
+        async def run():
+            stream = await make_stream(source)
+            self.assertEqual(await stream.__anext__(), "ready")
+            self.assertEqual(await stream.asend("Kojikun"), "Kojikun")
+            self.assertEqual(
+                await stream.athrow(KeyError("Nolan")), "recovered"
+            )
+            await stream.aclose()
+
+        asyncio.run(run())
+
+        self.assertEqual(
+            events,
+            [("received", "Kojikun"), ("thrown", "Nolan"), ("closed",)],
+        )
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED], 3
+        )
+
+    def test_async_generator_behind_sync_decorator_forwards_protocol(
+        self,
+    ) -> None:
+        async def make_stream(source):
+            return instrument()(_passthrough(source))()
+
+        self._assert_stream_protocol_forwarded(make_stream)
+
+    def test_async_generator_returned_by_function_forwards_protocol(
+        self,
+    ) -> None:
+        async def make_stream(source):
+            @instrument()
+            async def my_function():
+                return source()
+
+            return await my_function()
+
+        self._assert_stream_protocol_forwarded(make_stream)
+
     def test_plain_async_function_unchanged(self) -> None:
         @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
         async def retrieve(query: str) -> list:
