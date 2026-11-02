@@ -27,6 +27,11 @@
 # role is granted. Uncomment in the same PR that adds them to MAINTAINERS.md.
 
 areas:
+
+  - name: Bedrock provider
+    paths:
+      - src/providers/bedrock/
+    reviewers: [kimnamu]
   - name: Shared core code
     paths:
       - src/core/
