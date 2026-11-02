@@ -1494,10 +1494,14 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 ) or attributes.get(SpanAttributes.CALL.FUNCTION)
                 arguments = attributes.get(GenAIAttributes.TOOL.CALL_ARGUMENTS)
 
-            is_error = attributes.get(
-                ErrorAttributes.TYPE
-            ) is not None or self._is_true_otel_attribute(
-                attributes.get(SpanAttributes.MCP.OUTPUT_IS_ERROR)
+            is_error = (
+                attributes.get(ErrorAttributes.TYPE) is not None
+                or self._is_call_error_otel_attribute(
+                    attributes.get(SpanAttributes.CALL.ERROR)
+                )
+                or self._is_true_otel_attribute(
+                    attributes.get(SpanAttributes.MCP.OUTPUT_IS_ERROR)
+                )
             )
             tool_spans.append({
                 "sort_key": (
@@ -1566,6 +1570,19 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 and value.strip().lower() in ("true", "1")
             )
         )
+
+    @staticmethod
+    def _is_call_error_otel_attribute(value: Any) -> bool:
+        """Whether a `CALL.ERROR` attribute records a raised exception.
+
+        `@instrument` stores the exception text there. Empty and false-like
+        values mean no error, as in the conversation tool-call selector.
+        """
+        if value is None or value is False:
+            return False
+        if isinstance(value, str):
+            return value.strip().lower() not in ("", "false", "0")
+        return bool(value)
 
     @staticmethod
     def extract_app_and_run_info(
