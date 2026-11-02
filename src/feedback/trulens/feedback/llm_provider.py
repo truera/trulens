@@ -79,7 +79,8 @@ def _load_json_reply(
     Tries the whole reply first, then each fenced block from last to first, and
     returns the first block that parses and passes `accept`. A fenced block
     that is not the verdict (say, a list of evidence) is skipped, so the reply
-    can still be read as text.
+    can still be read as text. Blocks are tried last to first so that when a
+    judge drafts a verdict and then revises it, the final one wins.
 
     Raises:
         ValueError: If neither the reply nor any accepted fenced block is
@@ -96,7 +97,9 @@ def _load_json_reply(
             continue
         if accept is None or accept(value):
             return value
-    raise ValueError("No JSON object in the judge's reply.")
+    raise ValueError(
+        "No valid JSON object found in reply (will try text parsing)."
+    )
 
 
 def _has_score(value: Any) -> bool:
