@@ -135,7 +135,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
                     for record in records:
                         self.batch_record_queue.put(record)
                     logger.error(
-                        "Re-queued records due to insertion error {}", e
+                        "Re-queued records due to insertion error %s", e
                     )
                     continue
                 feedback_results = []
@@ -158,7 +158,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
                 try:
                     self.db.batch_insert_feedback(feedback_results)
                 except Exception as e:
-                    logger.error("Failed to insert feedback results {}", e)
+                    logger.error("Failed to insert feedback results %s", e)
 
     def add_app(self, app: app_schema.AppDefinition) -> types_schema.AppID:
         """
