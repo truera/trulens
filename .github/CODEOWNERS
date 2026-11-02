@@ -38,7 +38,7 @@
 /src/benchmark/                         @truera/trulens_maintainers @alimtaha
 
 # OpenTelemetry semantic conventions.
-/src/otel/                              @truera/trulens_maintainers @alimtaha
+/src/otel/                              @truera/trulens_maintainers @alimtaha @Abelo9996
 
 # ---------------------------------------------------------------------------
 # Narrower areas — must stay below the broad entries above
@@ -65,6 +65,11 @@
 # Runs and online evaluation sampling.
 /src/core/trulens/core/run.py           @truera/trulens_maintainers @alimtaha
 /src/core/trulens/core/sampling.py      @truera/trulens_maintainers @alimtaha
+
+# OpenTelemetry instrumentation and the database layer in core. The rest of
+# src/core/ stays with maintainers.
+/src/core/trulens/core/otel/            @truera/trulens_maintainers @alimtaha @Abelo9996
+/src/core/trulens/core/database/        @truera/trulens_maintainers @alimtaha @Abelo9996
 
 # Cortex provider. Tracks unreleased Snowflake API changes, so it is carved out
 # of the providers area and kept with maintainers.
