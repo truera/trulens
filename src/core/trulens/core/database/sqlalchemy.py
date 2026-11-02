@@ -1469,6 +1469,9 @@ class SQLAlchemyDB(core_db.DB):
                 "record_attributes", ErrorAttributes.TYPE
             ).label("error_type"),
             self._json_extract_otel(
+                "record_attributes", SpanAttributes.CALL.ERROR
+            ).label("call_error"),
+            self._json_extract_otel(
                 "record_attributes", SpanAttributes.MCP.OUTPUT_IS_ERROR
             ).label("mcp_output_is_error"),
         ).where(sa.and_(*tool_conditions))
@@ -1528,6 +1531,7 @@ class SQLAlchemyDB(core_db.DB):
                     if row.mcp_arguments is not None
                     else row.tool_arguments,
                     "is_error": row.error_type is not None
+                    or self._is_call_error_otel_attribute(row.call_error)
                     or self._is_true_otel_attribute(row.mcp_output_is_error),
                 })
             record_tool_rows = []
