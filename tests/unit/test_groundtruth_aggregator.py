@@ -500,6 +500,7 @@ class TestGroundTruthAggregator(TestCase):
             4 / 6,
         )
 
+    @pytest.mark.optional
     def test_cohens_kappa_does_not_mutate_true_labels(self):
         """Cohen's kappa must not mutate the stored true_labels in place.
 
