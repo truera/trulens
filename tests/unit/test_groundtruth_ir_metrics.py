@@ -9,6 +9,7 @@ yielding NDCG > 1. Both metrics are ratios bounded to [0, 1].
 
 from __future__ import annotations
 
+import math
 import unittest
 
 from trulens.feedback.dummy.provider import DummyProvider
@@ -66,6 +67,39 @@ class TestIRMetricDuplicateChunks(unittest.TestCase):
             {"text": "A", "expect_score": 0.5},
         ])
         self.assertAlmostEqual(a.ndcg_at_k("q", ["A", "X"], k=2), 1.0)
+
+
+class TestIRMetricZeroScoreGoldenChunks(unittest.TestCase):
+    """A golden chunk with expect_score 0 was judged not relevant.
+
+    ndcg_at_k gives it no gain; the other IR metrics counted it as relevant,
+    so retrieving only that chunk scored a perfect hit rate, MRR and precision.
+    """
+
+    def setUp(self):
+        self.a = _agreement([
+            {"text": "A", "expect_score": 1},
+            {"text": "B", "expect_score": 0},
+        ])
+
+    def test_retrieving_only_the_irrelevant_chunk_is_a_miss(self):
+        self.assertEqual(self.a.ndcg_at_k("q", ["B"], k=1), 0.0)
+        self.assertEqual(self.a.ir_hit_rate("q", ["B"], k=1), 0.0)
+        self.assertEqual(self.a.mrr("q", ["B"]), 0.0)
+        self.assertEqual(self.a.precision_at_k("q", ["B"], k=1), 0.0)
+
+    def test_retrieving_the_only_relevant_chunk_is_full_recall(self):
+        self.assertEqual(self.a.recall_at_k("q", ["A"], k=1), 1.0)
+
+    def test_relevant_chunk_ranked_after_the_irrelevant_one(self):
+        self.assertEqual(self.a.mrr("q", ["B", "A"]), 0.5)
+        self.assertEqual(self.a.precision_at_k("q", ["B", "A"], k=2), 0.5)
+
+    def test_only_irrelevant_golden_chunks_is_undefined(self):
+        a = _agreement([{"text": "B", "expect_score": 0}])
+        self.assertTrue(math.isnan(a.recall_at_k("q", ["B"], k=1)))
+        self.assertTrue(math.isnan(a.mrr("q", ["B"])))
+        self.assertTrue(math.isnan(a.ir_hit_rate("q", ["B"], k=1)))
 
 
 if __name__ == "__main__":
