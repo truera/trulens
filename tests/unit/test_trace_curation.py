@@ -12,6 +12,7 @@ import tempfile
 import unittest
 from unittest import mock
 
+import numpy as np
 import pandas as pd
 from trulens.core import dataset as core_dataset
 from trulens.core import session as core_session
@@ -213,12 +214,44 @@ class TestNormalization(unittest.TestCase):
         for value in (None, float("nan"), "", []):
             self.assertIsNone(core_dataset._normalize_contexts(value))
 
+    def test_contexts_from_numpy_array(self):
+        # A list column read back from a parquet export is a numpy array, not
+        # a list; each element is its own chunk.
+        self.assertEqual(
+            core_dataset._normalize_contexts(
+                np.array(["a", "b"], dtype=object)
+            ),
+            [{"text": "a"}, {"text": "b"}],
+        )
+
+    def test_contexts_from_numpy_array_of_dicts(self):
+        self.assertEqual(
+            core_dataset._normalize_contexts(
+                np.array([{"text": "a"}, {"text": "b"}], dtype=object)
+            ),
+            [{"text": "a"}, {"text": "b"}],
+        )
+
+    def test_contexts_from_empty_numpy_array(self):
+        self.assertIsNone(core_dataset._normalize_contexts(np.array([])))
+
     def test_json_safe_coerces_numpy_scalars(self):
         value = core_dataset._json_safe(pd.Series([1.5]).iloc[0])
         self.assertIsInstance(value, float)
         self.assertEqual(value, 1.5)
         # The result must survive a json round trip.
         self.assertEqual(json.loads(json.dumps({"v": value}))["v"], 1.5)
+
+    def test_json_safe_keeps_numpy_array_as_list(self):
+        value = core_dataset._json_safe(np.array(["geo", "capital"]))
+        self.assertEqual(value, ["geo", "capital"])
+        self.assertEqual(
+            json.loads(json.dumps({"v": value}))["v"], ["geo", "capital"]
+        )
+
+    def test_json_safe_keeps_single_element_numpy_array_as_list(self):
+        # `.item()` would collapse a one-element array to a bare scalar.
+        self.assertEqual(core_dataset._json_safe(np.array(["lit"])), ["lit"])
 
     def test_json_safe_maps_nan_to_none(self):
         self.assertIsNone(core_dataset._json_safe(float("nan")))

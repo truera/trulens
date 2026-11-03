@@ -240,12 +240,40 @@ def _normalize_text(value: Any) -> str | None:
     return text
 
 
+def _as_elements(value: Any) -> list | None:
+    """The elements of an array-like value, or `None` if it is not one.
+
+    A list column read from a parquet export comes back as a numpy array
+    rather than a list, so the curation code cannot test for `list` alone.
+    Strings, bytes and dicts are containers too, but their elements are not
+    what the caller meant to pass as a sequence, so they are excluded.
+    """
+
+    if isinstance(value, (list, tuple)):
+        return list(value)
+
+    if isinstance(value, (str, bytes, bytearray, dict)):
+        return None
+
+    if hasattr(value, "tolist"):
+        try:
+            converted = value.tolist()
+        except (AttributeError, TypeError, ValueError):
+            return None
+        if isinstance(converted, list):
+            return converted
+
+    return None
+
+
 def _normalize_contexts(value: Any) -> list[dict[str, Any]] | None:
     """Normalize expected contexts into `GroundTruth.expected_chunks` shape.
 
     Accepts a list of dicts, a list of strings, a single string or dict, or a
     JSON encoding of any of those. Plain text becomes `{"text": ...}` so that
     every chunk is a dict, which is what `expected_chunks` is typed as.
+    Array-like values such as the numpy arrays a parquet export yields are
+    treated as the list they represent.
     """
 
     if _is_missing(value):
@@ -264,9 +292,10 @@ def _normalize_contexts(value: Any) -> list[dict[str, Any]] | None:
     if isinstance(value, dict):
         return [_json_safe(value)]
 
-    if isinstance(value, (list, tuple)):
+    elements = _as_elements(value)
+    if elements is not None:
         chunks = []
-        for element in value:
+        for element in elements:
             if _is_missing(element):
                 continue
             if isinstance(element, dict):
@@ -282,15 +311,18 @@ def _json_safe(value: Any) -> Any:
     """Coerce a value read out of a dataframe into something serializable.
 
     Pandas hands back numpy scalars and `NaT`, neither of which survives the
-    json encoding that ground truth metadata goes through.
+    json encoding that ground truth metadata goes through. Array-like values,
+    such as the numpy arrays a parquet export yields for a list column, are
+    preserved as lists instead of being reduced to their repr.
     """
 
     if _is_missing(value):
         return None
     if isinstance(value, dict):
         return {str(k): _json_safe(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_json_safe(v) for v in value]
+    elements = _as_elements(value)
+    if elements is not None:
+        return [_json_safe(element) for element in elements]
     if isinstance(value, (str, bool, int, float)):
         return value
     if hasattr(value, "item"):  # numpy scalar
