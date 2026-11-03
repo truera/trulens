@@ -1318,39 +1318,73 @@ def _render_thread(
     total_cost = subset[subset["cost_currency"] == cost_currency][
         "total_cost"
     ].sum()
-    total_time = subset["latency"].sum()
+    starts = pd.to_datetime(subset["ts"])
+    ends = starts + pd.to_timedelta(subset["latency"].fillna(0.0), unit="s")
+    duration = (ends.max() - starts.min()).total_seconds()
     total_tokens = int(subset["total_tokens"].sum())
+    llm_calls = int(subset.get("llm_calls", pd.Series(dtype=int)).sum())
+    tool_calls = int(subset.get("tool_calls", pd.Series(dtype=int)).sum())
+    tool_errors = int(subset.get("tool_errors", pd.Series(dtype=int)).sum())
+    models_used = sorted({
+        model
+        for models in subset.get("models_used", pd.Series(dtype=object))
+        if isinstance(models, (list, tuple, set))
+        for model in models
+    })
 
     # Left: chat-style timeline. Right: conversation-level stats.
     timeline_col, stats_col = st.columns(2)
     with timeline_col:
         _render_conversation_timeline(subset)
     with stats_col:
-        stat_top = st.columns(2)
-        stat_bottom = st.columns(2)
-        with stat_top[0].container(height=128, border=True):
+        stat_rows = [st.columns(2) for _ in range(4)]
+        with stat_rows[0][0].container(height=128, border=True):
             st.metric(
                 label="Turns (#)",
                 value=len(subset),
                 help="Number of messages (records) in this conversation.",
             )
-        with stat_top[1].container(height=128, border=True):
+        with stat_rows[0][1].container(height=128, border=True):
             st.metric(
-                label="Total time (s)",
-                value=f"{total_time:.3g}",
-                help="Sum of per-turn latency across the conversation.",
+                label="Duration (s)",
+                value=f"{duration:.3g}",
+                help="Elapsed time from the first turn's start to the last turn's end.",
             )
-        with stat_bottom[0].container(height=128, border=True):
+        with stat_rows[1][0].container(height=128, border=True):
             st.metric(
                 label=f"Total cost ({cost_currency})",
                 value=_format_cost(total_cost, cost_currency),
                 help="Sum of app execution cost across all turns (excludes eval cost).",
             )
-        with stat_bottom[1].container(height=128, border=True):
+        with stat_rows[1][1].container(height=128, border=True):
             st.metric(
                 label="Total AI tokens (#)",
                 value=f"{total_tokens:,}",
                 help="Sum of tokens generated across all turns.",
+            )
+        with stat_rows[2][0].container(height=128, border=True):
+            st.metric(
+                label="LLM calls (#)",
+                value=f"{llm_calls:,}",
+                help="Number of generation spans in this conversation.",
+            )
+        with stat_rows[2][1].container(height=128, border=True):
+            st.metric(
+                label="Models used",
+                value=", ".join(models_used) if models_used else "—",
+                help="Distinct models reported by generation spans.",
+            )
+        with stat_rows[3][0].container(height=128, border=True):
+            st.metric(
+                label="Tool calls (#)",
+                value=f"{tool_calls:,}",
+                help="Number of TOOL and MCP spans in this conversation.",
+            )
+        with stat_rows[3][1].container(height=128, border=True):
+            st.metric(
+                label="Tool errors (#)",
+                value=f"{tool_errors:,}",
+                help="Tool spans that reported an error type.",
             )
 
     available_metrics = [

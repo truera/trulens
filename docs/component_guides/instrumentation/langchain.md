@@ -44,7 +44,7 @@ First, this requires loading data into a vector store.
     retriever = vectorstore.as_retriever()
 
     prompt = hub.pull("rlm/rag-prompt")
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+    llm = ChatOpenAI(model_name="gpt-5.6-terra")
 
 
     def format_docs(docs):

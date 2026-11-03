@@ -33,6 +33,7 @@ except ImportError:
     # Backwards compatibility with trulens-core < 2.5.0
     from trulens.core.feedback.feedback import Feedback as Metric
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils.constants import is_unparsable_score
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import (
@@ -151,7 +152,8 @@ def compute_feedback_by_span_group(
     Args:
         events: DataFrame containing trace events.
         feedback: Feedback object to compute feedback. Its `name`,
-            `higher_is_better`, and `aggregator` will be used.
+            `higher_is_better`, `aggregator`, and `combinations` will be
+            used.
         raise_error_on_no_feedbacks_computed:
             Raise an error if no feedbacks were computed. Default is True.
             Not raised when every input's feedback was already computed.
@@ -167,6 +169,9 @@ def compute_feedback_by_span_group(
         selectors if selectors is not None else feedback.selectors
     )
     feedback_aggregator = feedback.agg
+    combinations = (
+        feedback.combinations or feedback_schema.FeedbackCombinations.PRODUCT
+    )
 
     if _is_conversation_level(kwarg_to_selector):
         _compute_feedback_by_conversation(
@@ -192,8 +197,11 @@ def compute_feedback_by_span_group(
         kwarg_groups,
         list(record_id_to_record_root.keys()),
         feedback_name,
+        combinations=combinations,
     )
-    flattened_inputs = _flatten_inputs(unflattened_inputs)
+    flattened_inputs = _flatten_inputs(
+        unflattened_inputs, combinations=combinations
+    )
     num_inputs = len(flattened_inputs)
     flattened_inputs = _remove_already_computed_feedbacks(
         events, feedback_name, flattened_inputs
@@ -740,6 +748,9 @@ def _validate_unflattened_inputs(
     kwarg_groups: List[Tuple[str]],
     record_ids_with_record_roots: List[str],
     feedback_name: str,
+    combinations: feedback_schema.FeedbackCombinations = (
+        feedback_schema.FeedbackCombinations.PRODUCT
+    ),
 ) -> Dict[
     Tuple[str, Optional[str]],
     Dict[Tuple[str], List[Dict[str, FeedbackFunctionInput]]],
@@ -755,6 +766,10 @@ def _validate_unflattened_inputs(
         record_ids_with_record_roots:
             List of record ids that have record roots.
         feedback_name: Name of the feedback function.
+        combinations:
+            How argument values from several multi-value kwarg groups are
+            combined. Under `PRODUCT` such inputs are ambiguous and are
+            dropped; under `ZIP` they are paired by position.
 
     Returns:
         Validated mapping from (record_id, span_group) to kwarg group to inputs.
@@ -768,6 +783,11 @@ def _validate_unflattened_inputs(
         ), kwarg_group_to_inputs in unflattened_inputs.items():
             if len(kwarg_group_to_inputs) != len(kwarg_groups):
                 keys_to_remove.append((record_id, span_group))
+                continue
+
+            if combinations == feedback_schema.FeedbackCombinations.ZIP:
+                # ZIP pairs values by position, so multiple multi-value
+                # groups are well defined instead of ambiguous.
                 continue
 
             # Check for ambiguous inputs (multiple possible values).
@@ -800,11 +820,18 @@ def _flatten_inputs(
         Tuple[str, Optional[str]],
         Dict[Tuple[str], List[Dict[str, FeedbackFunctionInput]]],
     ],
+    combinations: feedback_schema.FeedbackCombinations = (
+        feedback_schema.FeedbackCombinations.PRODUCT
+    ),
 ) -> List[Tuple[str, Optional[str], Dict[str, FeedbackFunctionInput]]]:
-    """Flatten inputs via cartesian product.
+    """Flatten inputs using the given combination mode.
 
     Args:
         unflattened_inputs: Mapping from (record_id, span_group) to kwarg group to inputs to flatten.
+        combinations:
+            How to combine the inputs of the kwarg groups: `PRODUCT` takes
+            the cartesian product, `ZIP` pairs values by position and
+            truncates to the shortest group, as Python `zip` does.
 
     Returns:
         Flattened inputs. Each entry is a tuple of (record_id, span_group, inputs).
@@ -814,12 +841,16 @@ def _flatten_inputs(
         record_id,
         span_group,
     ), kwarg_group_to_inputs in unflattened_inputs.items():
-        # Create a list of dictionaries to use in the product.
+        # Create a list of dictionaries to combine.
         input_dicts = list(kwarg_group_to_inputs.values())
         if not input_dicts:
             continue
+        if combinations == feedback_schema.FeedbackCombinations.ZIP:
+            combinations_iter = zip(*input_dicts)
+        else:
+            combinations_iter = itertools.product(*input_dicts)
         # For each combination, merge the dictionaries.
-        for combination in itertools.product(*input_dicts):
+        for combination in combinations_iter:
             merged_input = {}
             for input_dict in combination:
                 merged_input.update(input_dict)
