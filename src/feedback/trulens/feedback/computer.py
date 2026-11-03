@@ -536,6 +536,19 @@ def _collect_inputs_from_events(
         if curr["record_attributes"].get(SpanAttributes.SPAN_TYPE)
         == SpanAttributes.SpanType.RECORD_ROOT
     ]
+
+    # `get_events` has no ORDER BY, so rows can arrive in any order. ZIP
+    # combinations pair inputs by position, so traverse in start-timestamp
+    # order (like the conversation tool spans above) instead of row order.
+    def _span_sort_key(event: pd.Series) -> Tuple[Any, str]:
+        return (
+            event["start_timestamp"],
+            event["trace"].get("span_id", ""),
+        )
+
+    for child_events in span_id_to_child_events.values():
+        child_events.sort(key=_span_sort_key)
+    record_roots.sort(key=_span_sort_key)
     if _is_trace_level(kwarg_to_selector):
         sole_kwarg = kwarg_groups[0][0]
         ret = defaultdict(
