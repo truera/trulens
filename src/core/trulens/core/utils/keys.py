@@ -126,8 +126,10 @@ RE_KEY_TO_REDACT: re.Pattern = re.compile(
         r"KAGGLE_KEY",
         r"SLACK_(TOKEN|SIGNING_SECRET)",
         # Covers slack-related keys.
-        r".*PASSWORD.*",
-        # Cover user credentials for i.e. Snowflake connection session
+        r"(?i:.*password.*)",
+        # Cover user credentials for i.e. Snowflake connection session, in
+        # any case: "password" in connection parameters, "PASSWORD" in env
+        # vars.
     ])
 )
 
