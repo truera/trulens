@@ -1147,13 +1147,17 @@ class GroundTruthAggregator(
 
         return stats.pearsonr(x, y)[0]
 
-    def matthews_correlation(self, scores: list[float] | list[list]) -> float:
+    def matthews_correlation(
+        self, scores: list[float] | list[list], threshold=0.5
+    ) -> float:
         """
         Calculate the Matthews correlation coefficient. Can be used for meta-evaluation.
         The Matthews correlation coefficient is used in machine learning as a measure of the quality of binary and multiclass classifications.
 
         Args:
             scores (List[float]): scores returned by feedback function
+            threshold (float): float scores and labels are binarized at this
+                threshold, as in `cohens_kappa`
 
         Returns:
             float: Matthews correlation coefficient
@@ -1161,8 +1165,17 @@ class GroundTruthAggregator(
         """
         if isinstance(scores[0], list):
             scores = [score for score, _ in scores]
+        self._check_length(scores)
+        if any(isinstance(score, float) for score in scores):
+            scores = [1 if score >= threshold else 0 for score in scores]
+        # binarize into a local list so that self.true_labels is not mutated
+        true_labels = self.true_labels
+        if any(isinstance(label, float) for label in true_labels):
+            true_labels = [
+                1 if label >= threshold else 0 for label in true_labels
+            ]
         x = np.array(scores)
-        y = np.array(self.true_labels)
+        y = np.array(true_labels)
 
         return matthews_corrcoef(y, x)
 
