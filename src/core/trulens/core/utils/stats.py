@@ -36,8 +36,8 @@ def paired_permutation_pvalue(
     """
     diffs = np.asarray(diffs, dtype=float)
     if not np.all(np.isfinite(diffs)):
-        # Comparisons with nan are all False, which used to give the
-        # smallest possible p-value for a missing score.
+        # Every comparison with nan is False, so a missing score would
+        # otherwise produce the smallest possible p-value.
         return float("nan")
     n = len(diffs)
     if n == 0 or np.allclose(diffs, 0.0):
