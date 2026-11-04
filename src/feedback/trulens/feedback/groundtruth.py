@@ -1148,7 +1148,7 @@ class GroundTruthAggregator(
         return stats.pearsonr(x, y)[0]
 
     def matthews_correlation(
-        self, scores: list[float] | list[list], threshold=0.5
+        self, scores: list[float] | list[list], threshold: float = 0.5
     ) -> float:
         """
         Calculate the Matthews correlation coefficient. Can be used for meta-evaluation.
