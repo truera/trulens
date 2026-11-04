@@ -27,6 +27,12 @@
 # role is granted. Uncomment in the same PR that adds them to MAINTAINERS.md.
 
 areas:
+
+  - name: Batch and guardrail correctness
+    paths:
+      - src/core/trulens/core/batch.py
+      - src/feedback/
+    reviewers: [Garyouki]
   - name: Shared core code
     paths:
       - src/core/
