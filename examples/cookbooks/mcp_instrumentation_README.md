@@ -54,12 +54,11 @@ initializes the connection, lists the available tools, and performs every tool
 invocation.
 
 Thin LangChain `StructuredTool` wrappers make the discovered MCP tools
-available to LangGraph. The wrappers call an instrumented `call_mcp_tool`
-function, which delegates execution to `ClientSession.call_tool`. The
-instrumented function preserves the SDK result for tracing, including its
-content types, text, and error status. The wrapper returns only the joined text
-to LangGraph. This records the structured MCP response while keeping the
-protocol integration on the official SDK.
+available to LangGraph. The notebook opts into `instrument_mcp()`, which
+instruments the official `ClientSession.call_tool` boundary directly. The
+wrapper returns only joined text to LangGraph while TruLens records the
+structured SDK result, error status, and execution time without a
+framework-specific extractor.
 
 For the example question, the agent should:
 
