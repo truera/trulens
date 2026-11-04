@@ -1,3 +1,4 @@
+import collections.abc
 import json
 
 import pandas as pd
@@ -29,8 +30,18 @@ class TestOtelAppsTable(OtelTestCase):
         self.assertEqual(1, len(rows))
         self.assertEqual("MyCustomApp", rows["app_name"].iloc[0])
         self.assertEqual("v1", rows["app_version"].iloc[0])
+        app_json = json.loads(rows["app_json"].iloc[0])
+        # collections.abc package metadata varies across Python versions.
+        self.assertEqual(
+            collections.abc.__package__,
+            app_json["tru_class_info"]["bases"][7]["module"]["package_name"],
+        )
         self.assertGoldenJSONEqual(
-            json.loads(rows["app_json"].iloc[0]),
+            app_json,
             "tests/unit/data/test_otel_apps_table/test_smoke.json",
-            skips=["app_id", "app.__tru_non_serialized_object.id"],
+            skips=[
+                "app_id",
+                "app.__tru_non_serialized_object.id",
+                "tru_class_info.bases[7].module.package_name",
+            ],
         )
