@@ -218,10 +218,13 @@ def _normalize_text(value: Any) -> str | None:
     ordering does not change the content-addressed ground truth id.
 
     A dataframe hands back a parquet list column as a numpy array and a struct
-    column as a dict whose values may still be arrays, so containers are
-    coerced before serializing. Both would otherwise reach `str()`, where an
-    array prints as `['a' 'b']` rather than as the JSON a list produces, and a
-    nested array raises out of the encoder.
+    column as a dict whose values may still be arrays. Those reach the encoder
+    as types it does not know, so it is given a fallback that renders them as
+    the list they represent; without it an array goes through `str()` and
+    prints as `['a' 'b']` rather than as the JSON a list produces, and a nested
+    array raises. The fallback only converts what the encoder cannot already
+    handle, so values it does accept — empty strings and NaN among them — keep
+    the text they had before and existing curated ids do not change.
 
     Mirrors the normalization used for run comparison in
     `trulens.core.run`.
@@ -231,12 +234,20 @@ def _normalize_text(value: Any) -> str | None:
         return None
 
     if isinstance(value, (dict, list)):
-        return json.dumps(_json_safe(value), sort_keys=True, ensure_ascii=False)
+        return json.dumps(
+            value,
+            sort_keys=True,
+            ensure_ascii=False,
+            default=_json_default,
+        )
 
     elements = _as_elements(value)
     if elements is not None:
         return json.dumps(
-            _json_safe(elements), sort_keys=True, ensure_ascii=False
+            elements,
+            sort_keys=True,
+            ensure_ascii=False,
+            default=_json_default,
         )
 
     text = str(value).strip()
@@ -276,6 +287,29 @@ def _as_elements(value: Any) -> list | None:
             return converted
 
     return None
+
+
+def _json_default(value: Any) -> Any:
+    """Render one value the JSON encoder has no rule for, or refuse it.
+
+    Only parquet's array-likes and numpy scalars reach this: a list column is
+    read back as a numpy array, and a struct column's fields may still be
+    arrays. Returning the list an array represents is what makes the cell
+    serialize the same way an equivalent Python list would, so the same row
+    curated from a parquet export and from a JSON export yields one ground
+    truth id. Anything else is genuinely unserializable and keeps raising.
+    """
+
+    elements = _as_elements(value)
+    if elements is not None:
+        return elements
+
+    if hasattr(value, "item"):  # numpy scalar
+        return value.item()
+
+    raise TypeError(
+        f"Object of type {type(value).__name__} is not JSON serializable"
+    )
 
 
 def _normalize_contexts(value: Any) -> list[dict[str, Any]] | None:

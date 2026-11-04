@@ -194,6 +194,27 @@ class TestNormalization(unittest.TestCase):
             '{"text": ["hi", "there"]}',
         )
 
+    def test_serializing_an_array_does_not_change_plain_values(self):
+        # The encoder fallback must touch only what it cannot already handle.
+        # Coercing the whole container up front would turn an empty string
+        # into null, so a row curated before this change and the same row
+        # curated after it would get different ground truth ids.
+        self.assertEqual(
+            core_dataset._normalize_text({"question": "q", "context": ""}),
+            '{"context": "", "question": "q"}',
+        )
+        self.assertEqual(
+            core_dataset._normalize_text({"score": float("nan")}),
+            '{"score": NaN}',
+        )
+        self.assertEqual(
+            core_dataset._normalize_text({
+                "context": "",
+                "parts": np.array(["hi"]),
+            }),
+            '{"context": "", "parts": ["hi"]}',
+        )
+
     def test_contexts_from_list_of_dicts(self):
         self.assertEqual(
             core_dataset._normalize_contexts([{"text": "a"}, {"text": "b"}]),
