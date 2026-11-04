@@ -217,6 +217,12 @@ def _normalize_text(value: Any) -> str | None:
     encoded as a JSON string — are re-serialized with sorted keys so that key
     ordering does not change the content-addressed ground truth id.
 
+    A dataframe hands back a parquet list column as a numpy array and a struct
+    column as a dict whose values may still be arrays, so containers are
+    coerced before serializing. Both would otherwise reach `str()`, where an
+    array prints as `['a' 'b']` rather than as the JSON a list produces, and a
+    nested array raises out of the encoder.
+
     Mirrors the normalization used for run comparison in
     `trulens.core.run`.
     """
@@ -225,7 +231,13 @@ def _normalize_text(value: Any) -> str | None:
         return None
 
     if isinstance(value, (dict, list)):
-        return json.dumps(value, sort_keys=True, ensure_ascii=False)
+        return json.dumps(_json_safe(value), sort_keys=True, ensure_ascii=False)
+
+    elements = _as_elements(value)
+    if elements is not None:
+        return json.dumps(
+            _json_safe(elements), sort_keys=True, ensure_ascii=False
+        )
 
     text = str(value).strip()
 

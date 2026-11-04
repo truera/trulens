@@ -175,6 +175,25 @@ class TestNormalization(unittest.TestCase):
     def test_non_string_scalars_become_text(self):
         self.assertEqual(core_dataset._normalize_text(7), "7")
 
+    def test_numpy_array_serializes_like_the_list_it_represents(self):
+        # A parquet list column arrives as an array; `str()` on it yields
+        # "['hi' 'there']", which is not what a JSON export of the same row
+        # gives, so the two exports would curate to different queries.
+        value = np.array(["hi", "there"], dtype=object)
+        self.assertEqual(
+            core_dataset._normalize_text(value),
+            core_dataset._normalize_text(["hi", "there"]),
+        )
+        self.assertEqual(core_dataset._normalize_text(value), '["hi", "there"]')
+
+    def test_nested_array_serializes(self):
+        # A struct column keeps arrays inside the dict; an uncoerced array
+        # raises out of the json encoder instead of producing text.
+        self.assertEqual(
+            core_dataset._normalize_text({"text": np.array(["hi", "there"])}),
+            '{"text": ["hi", "there"]}',
+        )
+
     def test_contexts_from_list_of_dicts(self):
         self.assertEqual(
             core_dataset._normalize_contexts([{"text": "a"}, {"text": "b"}]),
@@ -511,6 +530,24 @@ class TestErrorModes(CurationTestCase):
         records = RECORDS.assign(input=["what is trulens?", "   "])
         result = self.curate(records=records, on_error="collect")
         self.assertEqual(result.rejected, 1)
+
+    def test_structured_query_with_an_array_field_is_accepted(self):
+        # A struct column read back from parquet holds arrays, and the error
+        # used to escape `collect` mode because the query is normalized
+        # outside the per-row error handling.
+        records = RECORDS.assign(
+            input=[
+                {"question": np.array(["what", "is", "trulens?"])},
+                {"question": np.array(["and", "this?"])},
+            ]
+        )
+        result = self.curate(records=records, on_error="collect")
+
+        self.assertEqual((result.accepted, result.rejected), (2, 0))
+        self.assertEqual(
+            self.ground_truths().iloc[0]["query"],
+            '{"question": ["what", "is", "trulens?"]}',
+        )
 
 
 class TestIdempotency(CurationTestCase):
