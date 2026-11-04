@@ -12,6 +12,7 @@ import tempfile
 import unittest
 from unittest import mock
 
+import numpy as np
 import pandas as pd
 from trulens.core import dataset as core_dataset
 from trulens.core import session as core_session
@@ -174,6 +175,95 @@ class TestNormalization(unittest.TestCase):
     def test_non_string_scalars_become_text(self):
         self.assertEqual(core_dataset._normalize_text(7), "7")
 
+    def test_numpy_array_serializes_like_the_list_it_represents(self):
+        # A parquet list column arrives as an array; `str()` on it yields
+        # "['hi' 'there']", which is not what a JSON export of the same row
+        # gives, so the two exports would curate to different queries.
+        value = np.array(["hi", "there"], dtype=object)
+        self.assertEqual(
+            core_dataset._normalize_text(value),
+            core_dataset._normalize_text(["hi", "there"]),
+        )
+        self.assertEqual(core_dataset._normalize_text(value), '["hi", "there"]')
+
+    def test_nested_array_serializes(self):
+        # A struct column keeps arrays inside the dict; an uncoerced array
+        # raises out of the json encoder instead of producing text.
+        self.assertEqual(
+            core_dataset._normalize_text({"text": np.array(["hi", "there"])}),
+            '{"text": ["hi", "there"]}',
+        )
+
+    def test_datetime_array_serializes_as_text_not_nanoseconds(self):
+        # numpy cannot hold ns precision as datetime objects, so a 1-D
+        # `.tolist()` returns int nanoseconds and the same logical timestamp
+        # curates to different text (and a different ground truth id) than
+        # the equivalent Python list. Review: #3052 follow-up.
+        value = np.array(["2024-01-01", "2024-01-02"], dtype="datetime64[ns]")
+        python_list = [pd.Timestamp("2024-01-01"), pd.Timestamp("2024-01-02")]
+        self.assertEqual(
+            core_dataset._normalize_text(value),
+            core_dataset._normalize_text(python_list),
+        )
+        self.assertEqual(
+            core_dataset._normalize_text(value),
+            '["2024-01-01 00:00:00", "2024-01-02 00:00:00"]',
+        )
+
+    def test_datetime_in_a_plain_list_serializes_as_text(self):
+        # The JSON fallback renders datetimes as text too, so the plain
+        # Python path matches the array path instead of crashing the encoder.
+        self.assertEqual(
+            core_dataset._normalize_text([pd.Timestamp("2024-01-01")]),
+            '["2024-01-01 00:00:00"]',
+        )
+
+    def test_parquet_round_trip_of_a_timestamp_list_column_curates_stably(self):
+        # A parquet list<timestamp[ns]> cell and the equivalent Python list
+        # must produce the same context text (hence the same content
+        # addressed ground truth id), mirroring the #2987 round trip shape.
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        stamps = [pd.Timestamp("2024-01-01"), pd.Timestamp("2024-01-02")]
+        work = tempfile.mkdtemp()
+        path = os.path.join(work, "cells.parquet")
+        table = pa.table({
+            "ctx": pa.array([stamps], type=pa.list_(pa.timestamp("ns")))
+        })
+        pq.write_table(table, path)
+        cell = pd.read_parquet(path)["ctx"].iloc[0]
+
+        self.assertEqual(
+            core_dataset._normalize_text(cell),
+            core_dataset._normalize_text(stamps),
+        )
+        self.assertEqual(
+            core_dataset._normalize_text(cell),
+            '["2024-01-01 00:00:00", "2024-01-02 00:00:00"]',
+        )
+
+    def test_serializing_an_array_does_not_change_plain_values(self):
+        # The encoder fallback must touch only what it cannot already handle.
+        # Coercing the whole container up front would turn an empty string
+        # into null, so a row curated before this change and the same row
+        # curated after it would get different ground truth ids.
+        self.assertEqual(
+            core_dataset._normalize_text({"question": "q", "context": ""}),
+            '{"context": "", "question": "q"}',
+        )
+        self.assertEqual(
+            core_dataset._normalize_text({"score": float("nan")}),
+            '{"score": NaN}',
+        )
+        self.assertEqual(
+            core_dataset._normalize_text({
+                "context": "",
+                "parts": np.array(["hi"]),
+            }),
+            '{"context": "", "parts": ["hi"]}',
+        )
+
     def test_contexts_from_list_of_dicts(self):
         self.assertEqual(
             core_dataset._normalize_contexts([{"text": "a"}, {"text": "b"}]),
@@ -213,12 +303,44 @@ class TestNormalization(unittest.TestCase):
         for value in (None, float("nan"), "", []):
             self.assertIsNone(core_dataset._normalize_contexts(value))
 
+    def test_contexts_from_numpy_array(self):
+        # A list column read back from a parquet export is a numpy array, not
+        # a list; each element is its own chunk.
+        self.assertEqual(
+            core_dataset._normalize_contexts(
+                np.array(["a", "b"], dtype=object)
+            ),
+            [{"text": "a"}, {"text": "b"}],
+        )
+
+    def test_contexts_from_numpy_array_of_dicts(self):
+        self.assertEqual(
+            core_dataset._normalize_contexts(
+                np.array([{"text": "a"}, {"text": "b"}], dtype=object)
+            ),
+            [{"text": "a"}, {"text": "b"}],
+        )
+
+    def test_contexts_from_empty_numpy_array(self):
+        self.assertIsNone(core_dataset._normalize_contexts(np.array([])))
+
     def test_json_safe_coerces_numpy_scalars(self):
         value = core_dataset._json_safe(pd.Series([1.5]).iloc[0])
         self.assertIsInstance(value, float)
         self.assertEqual(value, 1.5)
         # The result must survive a json round trip.
         self.assertEqual(json.loads(json.dumps({"v": value}))["v"], 1.5)
+
+    def test_json_safe_keeps_numpy_array_as_list(self):
+        value = core_dataset._json_safe(np.array(["geo", "capital"]))
+        self.assertEqual(value, ["geo", "capital"])
+        self.assertEqual(
+            json.loads(json.dumps({"v": value}))["v"], ["geo", "capital"]
+        )
+
+    def test_json_safe_keeps_single_element_numpy_array_as_list(self):
+        # `.item()` would collapse a one-element array to a bare scalar.
+        self.assertEqual(core_dataset._json_safe(np.array(["lit"])), ["lit"])
 
     def test_json_safe_maps_nan_to_none(self):
         self.assertIsNone(core_dataset._json_safe(float("nan")))
@@ -478,6 +600,24 @@ class TestErrorModes(CurationTestCase):
         records = RECORDS.assign(input=["what is trulens?", "   "])
         result = self.curate(records=records, on_error="collect")
         self.assertEqual(result.rejected, 1)
+
+    def test_structured_query_with_an_array_field_is_accepted(self):
+        # A struct column read back from parquet holds arrays, and the error
+        # used to escape `collect` mode because the query is normalized
+        # outside the per-row error handling.
+        records = RECORDS.assign(
+            input=[
+                {"question": np.array(["what", "is", "trulens?"])},
+                {"question": np.array(["and", "this?"])},
+            ]
+        )
+        result = self.curate(records=records, on_error="collect")
+
+        self.assertEqual((result.accepted, result.rejected), (2, 0))
+        self.assertEqual(
+            self.ground_truths().iloc[0]["query"],
+            '{"question": ["what", "is", "trulens?"]}',
+        )
 
 
 class TestIdempotency(CurationTestCase):
