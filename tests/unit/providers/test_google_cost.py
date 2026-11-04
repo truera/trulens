@@ -100,6 +100,50 @@ class TestGoogleCost(unittest.TestCase):
             self._expected(prompt=100, output=50),
         )
 
+    def test_cost_computer_counts_tool_use_prompt_tokens(self):
+        response = SimpleNamespace(
+            model_version=_MODEL,
+            usage_metadata=SimpleNamespace(
+                total_token_count=550,
+                prompt_token_count=100,
+                tool_use_prompt_token_count=400,
+                candidates_token_count=50,
+                thoughts_token_count=None,
+            ),
+        )
+
+        with mock.patch.dict("os.environ", clear=True):
+            attributes = google_endpoint.GoogleCostComputer.handle_response(
+                response
+            )
+
+        self.assertEqual(attributes[SpanAttributes.COST.NUM_PROMPT_TOKENS], 500)
+        self.assertAlmostEqual(
+            attributes[SpanAttributes.COST.COST],
+            self._expected(prompt=500, output=50),
+        )
+
+    def test_callback_counts_tool_use_prompt_tokens(self):
+        callback = google_endpoint.GoogleCallback.model_construct(
+            cost=base_schema.Cost()
+        )
+        response = {
+            "model_version": _MODEL,
+            "usage_metadata": {
+                "total_token_count": 550,
+                "prompt_token_count": 100,
+                "tool_use_prompt_token_count": 400,
+                "candidates_token_count": 50,
+            },
+        }
+
+        callback.handle_generation(response)
+
+        self.assertEqual(callback.cost.n_prompt_tokens, 500)
+        self.assertAlmostEqual(
+            callback.cost.cost, self._expected(prompt=500, output=50)
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
