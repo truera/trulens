@@ -452,7 +452,17 @@ for a namespace rather than a leaf attribute.
 | `ai.observability.workflow.output_event` | Output event from the workflow. | Never | | Any |
 | `ai.observability.workflow.error` | Error raised during workflow execution. | Never | | Any (but usually str) |
 | `ai.observability.workflow.agent_name` | Name of the agent executing in the workflow. | Never | | str |
+| `ai.observability.workflow.speaker_selection_method` | How the next agent to act was chosen, such as an AutoGen group chat's `auto`, `round_robin`, `random`, `manual`, or a custom selection function's name. | Never | | str |
+| `ai.observability.workflow.participant_agent_names` | Names of the agents taking part in the workflow step. | Never | | List[str] |
 | `ai.observability.agent` | Namespace for attributes specific to an agent execution span. | | Y | |
+| `ai.observability.agent.name` | Name of the agent producing the reply. | Never | | str |
+| `ai.observability.agent.description` | Description of the agent, as advertised to other agents. | Never | | str |
+| `ai.observability.agent.system_message` | System message the agent is configured with. | Never | | str |
+| `ai.observability.agent.input_messages` | Message history the agent was given for this turn. | Never | | Any (but usually str) |
+| `ai.observability.agent.input_message` | Content of the most recent message the agent was given. | Never | | str |
+| `ai.observability.agent.input_message_role` | Role of the most recent message the agent was given. | Never | | str |
+| `ai.observability.agent.output_message` | Content of the reply the agent produced. | Never | | str |
+| `ai.observability.agent.error` | Error raised while the agent was producing a reply. | Never | | Any (but usually str) |
 | `ai.observability.tool` | Namespace for attributes specific to a tool/function call execution span. | | Y | |
 | `ai.observability.reranking` | Namespace for attributes specific to a reranking operation span. | | Y | |
 | `ai.observability.reranking.query_text` | Query text used for reranking. | Never | | str |
