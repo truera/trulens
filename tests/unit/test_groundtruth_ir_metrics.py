@@ -100,6 +100,19 @@ class TestIRMetricZeroScoreGoldenChunks(unittest.TestCase):
         self.assertTrue(math.isnan(a.recall_at_k("q", ["B"], k=1)))
         self.assertTrue(math.isnan(a.mrr("q", ["B"])))
         self.assertTrue(math.isnan(a.ir_hit_rate("q", ["B"], k=1)))
+        # Precision stays defined: none of the retrieved chunks is relevant.
+        self.assertEqual(a.precision_at_k("q", ["B"], k=1), 0.0)
+
+    def test_chunk_annotated_twice_keeps_its_first_score_as_in_ndcg(self):
+        a = _agreement([
+            {"text": "A", "expect_score": 1},
+            {"text": "B", "expect_score": 0},
+            {"text": "B", "expect_score": 1},
+        ])
+        self.assertEqual(a.ndcg_at_k("q", ["B"], k=1), 0.0)
+        self.assertEqual(a.mrr("q", ["B"]), 0.0)
+        self.assertEqual(a.ir_hit_rate("q", ["B"], k=1), 0.0)
+        self.assertEqual(a.precision_at_k("q", ["B"], k=1), 0.0)
 
 
 if __name__ == "__main__":
