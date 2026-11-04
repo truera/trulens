@@ -42,6 +42,7 @@ Issue and pull request triage in a named area. No write access to the codebase.
 | Nikhil Thakur | InviGrid | bashward | Ensemble judges and prompt optimization |
 | Payal Nagaonkar | Peeker AI | Payal2000 | Feedback functions and metrics; OpenTelemetry semantic conventions |
 | Sudhindra Desai | Not declared | connectsudhindra | Dashboard; Ollama provider |
+| Bhargavi Kalicheti | Not declared | bhargavikalicheti | Conversation and tool-call evaluation |
 
 ## Emeritus
 

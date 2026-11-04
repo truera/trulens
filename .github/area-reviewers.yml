@@ -27,6 +27,14 @@
 # role is granted. Uncomment in the same PR that adds them to MAINTAINERS.md.
 
 areas:
+
+  - name: Conversation and tool-call evaluation
+    paths:
+      - src/core/trulens/core/schema/conversation.py
+      - src/core/trulens/core/feedback/
+      - src/feedback/
+      - src/otel/
+    reviewers: [bhargavikalicheti]
   - name: Shared core code
     paths:
       - src/core/
