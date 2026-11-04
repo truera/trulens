@@ -35,6 +35,7 @@ Integrations for running feedback functions with different LLM providers:
   native API
 - `trulens-providers-litellm` - LiteLLM (supports Ollama and many others)
 - `trulens-providers-huggingface` - HuggingFace models
+- `trulens-providers-typesafe` - TypeSafe Jev decision models
 - `trulens-providers-bedrock` - AWS Bedrock models
 - `trulens-providers-cortex` - Snowflake Cortex models
 - `trulens-providers-langchain` - LangChain-wrapped models
