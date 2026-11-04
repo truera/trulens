@@ -10,6 +10,7 @@ the existing dataset APIs.
 
 from __future__ import annotations
 
+import datetime
 import json
 import logging
 import math
@@ -280,7 +281,16 @@ def _as_elements(value: Any) -> list | None:
 
     if hasattr(value, "tolist"):
         try:
-            converted = value.tolist()
+            # A 1-D nanosecond datetime array's `.tolist()` returns int
+            # nanoseconds (numpy cannot represent ns as datetime objects),
+            # which would curate the same timestamp to different text — and a
+            # different ground truth id — than the equivalent Python list.
+            # pandas keeps the timestamps; `_json_default` renders them as
+            # text. Higher-dimensional arrays keep the plain `.tolist()`.
+            if getattr(value, "ndim", 1) == 1:
+                converted = pd.Series(value).tolist()
+            else:
+                converted = value.tolist()
         except (AttributeError, TypeError, ValueError):
             return None
         if isinstance(converted, list):
@@ -299,6 +309,11 @@ def _json_default(value: Any) -> Any:
     curated from a parquet export and from a JSON export yields one ground
     truth id. Anything else is genuinely unserializable and keeps raising.
     """
+
+    if isinstance(value, (datetime.datetime, datetime.date)):
+        # Timestamps from array elements render as text so every export
+        # format curates the same logical value to the same id.
+        return str(value)
 
     elements = _as_elements(value)
     if elements is not None:

@@ -194,6 +194,55 @@ class TestNormalization(unittest.TestCase):
             '{"text": ["hi", "there"]}',
         )
 
+    def test_datetime_array_serializes_as_text_not_nanoseconds(self):
+        # numpy cannot hold ns precision as datetime objects, so a 1-D
+        # `.tolist()` returns int nanoseconds and the same logical timestamp
+        # curates to different text (and a different ground truth id) than
+        # the equivalent Python list. Review: #3052 follow-up.
+        value = np.array(["2024-01-01", "2024-01-02"], dtype="datetime64[ns]")
+        python_list = [pd.Timestamp("2024-01-01"), pd.Timestamp("2024-01-02")]
+        self.assertEqual(
+            core_dataset._normalize_text(value),
+            core_dataset._normalize_text(python_list),
+        )
+        self.assertEqual(
+            core_dataset._normalize_text(value),
+            '["2024-01-01 00:00:00", "2024-01-02 00:00:00"]',
+        )
+
+    def test_datetime_in_a_plain_list_serializes_as_text(self):
+        # The JSON fallback renders datetimes as text too, so the plain
+        # Python path matches the array path instead of crashing the encoder.
+        self.assertEqual(
+            core_dataset._normalize_text([pd.Timestamp("2024-01-01")]),
+            '["2024-01-01 00:00:00"]',
+        )
+
+    def test_parquet_round_trip_of_a_timestamp_list_column_curates_stably(self):
+        # A parquet list<timestamp[ns]> cell and the equivalent Python list
+        # must produce the same context text (hence the same content
+        # addressed ground truth id), mirroring the #2987 round trip shape.
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        stamps = [pd.Timestamp("2024-01-01"), pd.Timestamp("2024-01-02")]
+        work = tempfile.mkdtemp()
+        path = os.path.join(work, "cells.parquet")
+        table = pa.table({
+            "ctx": pa.array([stamps], type=pa.list_(pa.timestamp("ns")))
+        })
+        pq.write_table(table, path)
+        cell = pd.read_parquet(path)["ctx"].iloc[0]
+
+        self.assertEqual(
+            core_dataset._normalize_text(cell),
+            core_dataset._normalize_text(stamps),
+        )
+        self.assertEqual(
+            core_dataset._normalize_text(cell),
+            '["2024-01-01 00:00:00", "2024-01-02 00:00:00"]',
+        )
+
     def test_serializing_an_array_does_not_change_plain_values(self):
         # The encoder fallback must touch only what it cannot already handle.
         # Coercing the whole container up front would turn an empty string
