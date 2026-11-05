@@ -251,6 +251,12 @@ class HuggingfaceBase(core_provider.Provider):
         if isinstance(source, list):
             source = " ".join(map(str, source))
         hypotheses = sent_tokenize(statement)
+        if not hypotheses:
+            # An empty or whitespace-only statement tokenizes to no sentences,
+            # so there is nothing to score. Averaging the empty score list
+            # returns ``nan``, which silently drops out of aggregate scores
+            # instead of counting as ungrounded. Mirror the LLM providers.
+            return 0.0, {"reasons": "No non-trivial statements to evaluate"}
         for i, hypothesis in enumerate(hypotheses):
             score = self._doc_groundedness(
                 premise=source, hypothesis=hypothesis
