@@ -31,7 +31,7 @@ sys.path.insert(0, dev_path)
 os.environ["OPENAI_API_KEY"] = "..."
 
 # Set up GPT-3 model
-model_name = "gpt-3.5-turbo"
+model_name = "gpt-5.6-terra"
 session = core_session.TruSession()
 
 
@@ -46,7 +46,7 @@ def setup_chain():
     )
     chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
 
-    chat = ChatOpenAI(model_name=model_name, temperature=0.9)
+    chat = ChatOpenAI(model_name=model_name)
     chain = chat_prompt_template | chat | StrOutputParser()
 
     tc = mod_tru_chain.TruChain(chain, app_name="Streamlit App")

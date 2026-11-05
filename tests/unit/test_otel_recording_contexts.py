@@ -1,11 +1,14 @@
+import json
 import time
 from typing import Optional
 from unittest.mock import MagicMock
 
 from trulens.apps.app import TruApp
 from trulens.core import Metric
+from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -19,6 +22,28 @@ class _TestApp:
     @instrument()
     def capitalize(self, s: str) -> str:
         return s.upper()
+
+    @instrument(
+        span_type=SpanAttributes.SpanType.TOOL,
+        attributes=lambda ret, exception, *args, **kwargs: {
+            GenAIAttributes.TOOL.NAME: "search",
+            GenAIAttributes.TOOL.CALL_ARGUMENTS: json.dumps({
+                "query": kwargs["query"]
+            }),
+            GenAIAttributes.TOOL.CALL_RESULT: ret,
+        },
+    )
+    def search(self, *, query: str, fail: bool = False) -> str:
+        if fail:
+            raise RuntimeError("search unavailable")
+        return f"Result for {query}"
+
+    def greet_with_search(self, *, name: str, fail: bool = False) -> str:
+        try:
+            result = self.search(query=name, fail=fail)
+        except RuntimeError:
+            return f"Sorry {name}, search failed."
+        return f"Hello {name}: {result}"
 
 
 class TestOtelRecordingContexts(OtelTestCase):
@@ -277,6 +302,48 @@ class TestOtelRecordingContexts(OtelTestCase):
         recorder.compute_feedbacks(raise_error_on_no_feedbacks_computed=False)
         TruSession().force_flush()
         self.assertEqual(len(self._get_events()), old_event_count)
+
+    def test_conversation_feedback_includes_tool_calls(self):
+        received_conversations = []
+
+        def conversation_score(records: list) -> float:
+            received_conversations.append(records)
+            return 1.0
+
+        metric = Metric(
+            implementation=conversation_score,
+            name="conversation_tools",
+        ).on({"records": Selector.select_conversation(include_tool_calls=True)})
+        recorder = TruApp(
+            self._app,
+            app_name="Conversation Search",
+            app_version="v1",
+            main_method=self._app.greet_with_search,
+            feedbacks=[metric],
+            start_evaluator=False,
+        )
+
+        with recorder(conversation_id="conversation-tools"):
+            self._app.greet_with_search(name="first")
+        with recorder(conversation_id="conversation-tools"):
+            self._app.greet_with_search(name="second", fail=True)
+        TruSession().force_flush()
+
+        recorder.compute_feedbacks()
+
+        self.assertEqual(len(received_conversations), 1)
+        records = received_conversations[0]
+        self.assertEqual(len(records), 2)
+        self.assertTrue(records[0]["tool_calls"][0]["name"].endswith(".search"))
+        self.assertEqual(
+            records[0]["tool_calls"][0]["arguments"],
+            '{"query": "first"}',
+        )
+        self.assertEqual(
+            records[0]["tool_calls"][0]["result"], "Result for first"
+        )
+        self.assertIsNone(records[0]["tool_calls"][0]["error"])
+        self.assertIsNotNone(records[1]["tool_calls"][0]["error"])
 
     def test_conversation_feedback_runs_once_after_context_exit(self):
         received_conversations = []
