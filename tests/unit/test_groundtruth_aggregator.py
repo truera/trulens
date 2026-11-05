@@ -584,12 +584,14 @@ class TestGroundTruthAggregator(TestCase):
             result, 0.0, msg="Imperfect calibration should give ECE > 0.0"
         )
 
-        # Perfect calibration test
+        # Perfect calibration test: correct predictions at confidence 1.0.
+        # Confidence 0 on a correct row is NOT perfect — it used to score 0
+        # only because ece dropped those rows entirely (see #3054).
         perfect_tuples = [
             (1.0, 1.0),
-            (0.0, 0.0),
+            (0.0, 1.0),
             (1.0, 1.0),
-            (0.0, 0.0),
+            (0.0, 1.0),
             (1.0, 1.0),
         ]
         perfect_result = self.aggregator.ece(perfect_tuples)
@@ -611,6 +613,49 @@ class TestGroundTruthAggregator(TestCase):
             AssertionError, msg="Mismatched lengths should raise AssertionError"
         ):
             self.aggregator.ece([(0.8, 0.9), (0.3, 0.7)])
+
+    @pytest.mark.optional
+    def test_ece_includes_zero_confidence(self):
+        """Confidence 0 must enter the first bin (issue #3054).
+
+        A right answer at confidence 0 is badly calibrated, not invisible.
+        Before the fix those rows were left out of every bin, so this set
+        scored ECE 0.0; with the first bin closed on the left it scores 0.4.
+        """
+        aggregator = GroundTruthAggregator(true_labels=[1, 0, 1, 0, 1])
+        zero_conf_right = [
+            (1.0, 1.0),
+            (0.0, 0.0),
+            (1.0, 1.0),
+            (0.0, 0.0),
+            (1.0, 1.0),
+        ]
+        near_zero_conf_right = [
+            (1.0, 1.0),
+            (0.0, 0.01),
+            (1.0, 1.0),
+            (0.0, 0.01),
+            (1.0, 1.0),
+        ]
+        zero_ece = aggregator.ece(zero_conf_right)
+        near_zero_ece = aggregator.ece(near_zero_conf_right)
+        self.assertEqual(
+            zero_ece,
+            0.4,
+            msg="Right answers at confidence 0 should contribute to ECE",
+        )
+        self.assertGreater(
+            zero_ece,
+            0.0,
+            msg="Confidence 0 rows must not be dropped from every bin",
+        )
+        # Moving from 0.01 to 0.0 should not collapse ECE to a fake 0.
+        self.assertAlmostEqual(
+            zero_ece,
+            near_zero_ece,
+            delta=0.05,
+            msg="ECE at confidence 0 should stay near ECE at confidence 0.01",
+        )
 
     @pytest.mark.optional
     def test_edge_cases(self):
@@ -938,12 +983,13 @@ class TestGroundTruthAggregator(TestCase):
     @pytest.mark.optional
     def test_calibration_scenarios(self):
         """Test ECE with different calibration scenarios."""
-        # Well-calibrated model: confidence matches accuracy
+        # Well-calibrated model: confidence-in-prediction roughly matches
+        # whether the predicted label is right.
         well_calibrated_tuples = [
             (1, 0.9),
             (1, 0.8),
             (0, 0.2),
-            (0, 0.1),  # High confidence, correct
+            (0, 0.1),  # Low confidence on correct negatives
             (1, 0.6),
             (0, 0.4),
             (1, 0.7),
@@ -979,17 +1025,18 @@ class TestGroundTruthAggregator(TestCase):
             msg="Overconfident model should have higher ECE than well-calibrated",
         )
 
-        # Test that truly perfect calibration gives minimum ECE
-        # Use actual perfect calibration where predictions match labels exactly
+        # Truly perfect calibration: every correct prediction at confidence 1.0.
+        # conf=0 on a correct row would land in the first bin with accuracy 1
+        # and mean confidence 0, which is badly calibrated, not perfect.
         perfect_calibration_tuples = [
             (1, 1.0),
             (1, 1.0),
-            (0, 0.0),
-            (0, 0.0),  # Perfect confidence matching
+            (0, 1.0),
+            (0, 1.0),
             (1, 1.0),
-            (0, 0.0),
+            (0, 1.0),
             (1, 1.0),
-            (0, 0.0),
+            (0, 1.0),
         ]
 
         perfect_ece = well_calibrated_aggregator.ece(perfect_calibration_tuples)

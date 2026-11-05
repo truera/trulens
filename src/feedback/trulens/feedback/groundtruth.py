@@ -1365,11 +1365,19 @@ class GroundTruthAggregator(
         accuracies = predicted_labels == true_labels
 
         ece = 0.0
-        for bin_lower, bin_upper in zip(bin_lowers, bin_uppers):
-            # determine if sample is in bin m (between bin lower & upper)
-            in_bin = np.logical_and(
-                confidences > bin_lower, confidences <= bin_upper
-            )
+        for bin_index, (bin_lower, bin_upper) in enumerate(
+            zip(bin_lowers, bin_uppers)
+        ):
+            # First bin is closed on the left so confidence 0 is scored.
+            # Later bins stay (lower, upper] so boundary values land in one bin.
+            if bin_index == 0:
+                in_bin = np.logical_and(
+                    confidences >= bin_lower, confidences <= bin_upper
+                )
+            else:
+                in_bin = np.logical_and(
+                    confidences > bin_lower, confidences <= bin_upper
+                )
             # calculate the empirical probability of a sample falling into bin m: (|Bm|/n)
             prob_in_bin = in_bin.mean()
 
