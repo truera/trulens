@@ -142,6 +142,69 @@ def test_conversation_to_prompt_renders_tool_calls_between_turn_lines() -> None:
     )
 
 
+# Messages with no text. In the OpenAI chat format, an assistant message that
+# only calls a tool has `content: None`.
+_EMPTY_MESSAGES = {
+    "tool_call_only": {
+        "role": "assistant",
+        "content": None,
+        "tool_calls": [
+            {
+                "id": "call_1",
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "arguments": '{"city": "Paris"}',
+                },
+            }
+        ],
+    },
+    "empty": {"role": "assistant", "content": ""},
+    "blank": {"role": "assistant", "content": "   "},
+    "no_content_key": {"role": "assistant"},
+    "other_role": {"role": "system", "content": None},
+}
+
+
+@pytest.mark.parametrize(
+    "empty_message",
+    list(_EMPTY_MESSAGES.values()),
+    ids=list(_EMPTY_MESSAGES),
+)
+def test_conversation_to_prompt_skips_messages_without_content(
+    empty_message,
+) -> None:
+    messages = [
+        {"role": "user", "content": "What's the weather in Paris?"},
+        empty_message,
+        {"role": "tool", "tool_call_id": "call_1", "content": '{"temp_c": 18}'},
+        {"role": "assistant", "content": "It is 18 C in Paris."},
+    ]
+
+    assert templates_conversation.conversation_to_prompt(messages) == (
+        "User: What's the weather in Paris?\n"
+        'Tool: {"temp_c": 18}\n'
+        "Assistant: It is 18 C in Paris."
+    )
+
+
+def test_conversation_to_prompt_accepts_none_tool_calls() -> None:
+    records = [{"input": "Hi", "output": "Hello", "tool_calls": None}]
+
+    assert templates_conversation.conversation_to_prompt(records) == (
+        "Turn 1 User: Hi\nTurn 1 Assistant: Hello"
+    )
+
+
+def test_conversation_turns_accepts_none_tool_calls() -> None:
+    records = [{"input": "Hi", "output": "Hello", "tool_calls": None}]
+
+    assert templates_conversation._conversation_turns(records) == [
+        (1, "user", "Hi"),
+        (1, "assistant", "Hello"),
+    ]
+
+
 def test_conversation_user_turn_prompt_omits_assistant_turns() -> None:
     records = [
         {
