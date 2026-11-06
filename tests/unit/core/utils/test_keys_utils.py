@@ -13,13 +13,25 @@ from trulens.core.utils import keys as key_utils
         "api_key",
         "openai_api_key",
         "OPENAI_API_KEY",
+        "API_KEY",
+        "Api_Key",
+        "OpenAI_API_Key",
+        "hf_api_token",
+        "HF_API_TOKEN",
+        "KAGGLE_KEY",
+        "kaggle_key",
+        "SLACK_TOKEN",
+        "slack_token",
+        "slack_signing_secret",
     ],
 )
 def test_should_redact_key(key: str):
     assert key_utils.should_redact_key(key)
 
 
-@pytest.mark.parametrize("key", ["user", "account", "max_tokens", None])
+@pytest.mark.parametrize(
+    "key", ["user", "account", "max_tokens", "token", "kaggle_user", None]
+)
 def test_should_not_redact_key(key):
     assert not key_utils.should_redact_key(key)
 
