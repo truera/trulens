@@ -22,10 +22,11 @@ class TestInstrumentDebugLogging(mod_test.TruTestCase):
         with self.assertLogs(self.logger, level="DEBUG") as logs:
             core_instruments.instrument(Component.run)
 
-        self.assertEqual(
-            [record.getMessage() for record in logs.records],
-            [f"decorating {Component.run}"],
-        )
+        self.assertEqual(len(logs.records), 1)
+        message = logs.records[0].getMessage()
+        self.assertEqual(message, f"decorating {Component.run}")
+        # Explicitly assert the formatted message includes the function name/repr.
+        self.assertIn("Component.run", message)
 
     def test_adding_method_message(self):
         default = core_instruments.Instrument.Default
@@ -37,7 +38,12 @@ class TestInstrumentDebugLogging(mod_test.TruTestCase):
         ):
             core_instruments.instrument.method(Component, "run")
 
+        self.assertEqual(len(logs.records), 1)
+        message = logs.records[0].getMessage()
         self.assertEqual(
-            [record.getMessage() for record in logs.records],
-            [f"adding method run of {Component} from module {__name__}"],
+            message,
+            f"adding method run of {Component} from module {__name__}",
         )
+        # Explicitly assert the formatted message includes the method name and class.
+        self.assertIn("run", message)
+        self.assertIn("Component", message)
