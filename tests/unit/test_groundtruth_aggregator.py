@@ -532,6 +532,47 @@ class TestGroundTruthAggregator(TestCase):
         )
 
     @pytest.mark.optional
+    def test_precision_recall_threshold_graded_labels(self):
+        """Graded labels are thresholded like the scores, as in cohens_kappa.
+
+        A label that is neither exactly 0 nor 1 used to count as neither
+        positive nor negative, so its row was left out of precision and recall.
+        """
+        true_labels = [1, 0.8, 0, 0.1, 1, 0.9]
+        scores = [0.9, 0.2, 0.1, 0.7, 0.8, 0.3]
+        aggregator = GroundTruthAggregator(true_labels=true_labels)
+
+        # t=0.5: true=[1,1,0,0,1,1], pred=[1,0,0,1,1,0] -> tp=2, fp=1, fn=2
+        self.assertAlmostEqual(aggregator.precision(scores), 2 / 3)
+        self.assertAlmostEqual(aggregator.recall(scores), 1 / 2)
+        self.assertAlmostEqual(aggregator.f1_score(scores), 4 / 7)
+        self.assertEqual(aggregator.true_labels, true_labels)
+
+        # t=0.85: true=[1,0,0,0,1,1], pred=[1,0,0,0,0,0] -> tp=1, fp=0, fn=2
+        self.assertEqual(aggregator.precision(scores, threshold=0.85), 1.0)
+        self.assertAlmostEqual(aggregator.recall(scores, threshold=0.85), 1 / 3)
+
+    @pytest.mark.optional
+    def test_precision_recall_only_graded_labels_are_defined(self):
+        """Labels with no exact 0 or 1 used to make both metrics nan."""
+        aggregator = GroundTruthAggregator(true_labels=[0.9, 0.1, 0.8, 0.0])
+        scores = [0.9, 0.2, 0.7, 0.4]
+
+        self.assertEqual(aggregator.precision(scores), 1.0)
+        self.assertEqual(aggregator.recall(scores), 1.0)
+
+    @pytest.mark.optional
+    def test_precision_recall_binary_labels_ignore_the_threshold(self):
+        """A label of exactly 0 or 1 is not re-thresholded."""
+        aggregator = GroundTruthAggregator(true_labels=[1, 0, 1.0, 0.0])
+        scores = [0.9, 0.2, 0.0, 0.4]
+
+        # t=0: every prediction is 1, and the two 0 labels stay negative
+        self.assertEqual(aggregator.precision(scores, threshold=0.0), 0.5)
+        # t=1.5: no prediction is 1, and the two 1 labels stay positive
+        self.assertEqual(aggregator.recall(scores, threshold=1.5), 0.0)
+
+    @pytest.mark.optional
     def test_mae(self):
         """Test Mean Absolute Error."""
         # Perfect predictions

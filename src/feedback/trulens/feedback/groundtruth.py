@@ -1077,6 +1077,20 @@ class GroundTruthAggregator(
                 f"got {len(self.true_labels)} labels and {len(scores)} scores."
             )
 
+    def _binary_labels(self, threshold: float) -> list[int]:
+        """The true labels as 0 or 1, thresholded like the scores.
+
+        Graded labels (e.g. 0.8 for a mostly relevant context) would otherwise
+        be neither positive nor negative, and their rows would be left out of
+        precision and recall. Labels that are already 0 or 1 are kept as they
+        are, whatever the threshold. self.true_labels is not modified (see
+        cohens_kappa).
+        """
+        return [
+            int(label) if label in (0, 1) else int(label >= threshold)
+            for label in self.true_labels
+        ]
+
     def auc(self, scores: list[float]) -> float:
         """
         Calculate the area under the ROC curve. Can be used for meta-evaluation.
@@ -1221,18 +1235,20 @@ class GroundTruthAggregator(
             scores = [score for score, _ in scores]
         self._check_length(scores)
 
+        true_labels = self._binary_labels(threshold)
+
         # Convert scores to binary predictions based on the threshold
         predictions = [1 if score >= threshold else 0 for score in scores]
 
         # Calculate true positives and false negatives
         true_positives = sum(
             1
-            for true, pred in zip(self.true_labels, predictions)
+            for true, pred in zip(true_labels, predictions)
             if true == 1 and pred == 1
         )
         false_negatives = sum(
             1
-            for true, pred in zip(self.true_labels, predictions)
+            for true, pred in zip(true_labels, predictions)
             if true == 1 and pred == 0
         )
 
@@ -1262,18 +1278,20 @@ class GroundTruthAggregator(
             scores = [score for score, _ in scores]
         self._check_length(scores)
 
+        true_labels = self._binary_labels(threshold)
+
         # Convert scores to binary predictions based on the threshold
         predictions = [1 if score >= threshold else 0 for score in scores]
 
         # Calculate true positives and false positives
         true_positives = sum(
             1
-            for true, pred in zip(self.true_labels, predictions)
+            for true, pred in zip(true_labels, predictions)
             if true == 1 and pred == 1
         )
         false_positives = sum(
             1
-            for true, pred in zip(self.true_labels, predictions)
+            for true, pred in zip(true_labels, predictions)
             if true == 0 and pred == 1
         )
 
