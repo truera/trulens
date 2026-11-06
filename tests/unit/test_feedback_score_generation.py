@@ -102,6 +102,28 @@ def test_re_configured_rating_stripped_text_used_throughout(
     )
 
 
+# Raised in review on #3008: a rating outside the stated scale fell back to the whole
+# string, so the stated bounds came back and the floor won.
+out_of_range_after_scale_data = [
+    ("Rating (0-3): -1", 0, 3),
+    ("On a scale of 0 to 3, I rate this 5", 0, 3),
+]
+
+
+@pytest.mark.parametrize(
+    "test_input,min_score_val,max_score_val", out_of_range_after_scale_data
+)
+def test_re_configured_rating_raises_on_out_of_range_rating_after_scale(
+    test_input, min_score_val, max_score_val
+):
+    """The stated bounds are not read when the rating is out of range."""
+
+    with pytest.raises(feedback_generated.ParseError):
+        feedback_generated.re_configured_rating(
+            test_input, min_score_val, max_score_val
+        )
+
+
 out_of_data = [
     ("The rating is 1 out of 3.", 1),
 ]

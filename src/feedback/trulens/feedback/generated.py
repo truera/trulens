@@ -150,7 +150,11 @@ def re_configured_rating(
     vals = _ratings_in_range(
         considered, min_score_val, max_score_val, allow_decimal
     )
-    if not vals and considered is not s:
+    if (
+        not vals
+        and considered is not s
+        and not PATTERN_NUMBER.search(considered)
+    ):
         # Stripping took the only numbers with it, so fall back to the whole string
         # rather than raising on text the old behaviour could read.
         considered = s
