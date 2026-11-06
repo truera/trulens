@@ -109,26 +109,28 @@ logger = logging.getLogger(__name__)
 # determine whether it should be redacted.
 values_to_redact: Set[str] = set()
 
-# Regex of keys (into dict/json) that should be redacted.
+# Regex of keys (into dict/json) that should be redacted. Matching ignores case,
+# so each pattern covers both attribute names such as "openai_api_key" and env
+# vars such as "OPENAI_API_KEY".
 RE_KEY_TO_REDACT: re.Pattern = re.compile(
     "|".join([
         r"api_key",
         # Covers OpenAI, Cohere, Anthropic class key 'api_key'
         r".+_api_key",
-        # Covers langchain llm attributes for keys such as 'openai_api_key'.
+        # Covers langchain llm attributes for keys such as 'openai_api_key' and
+        # env vars ending in "_API_KEY", including openai, cohere, anthropic,
+        # bard.
         # r'token',
         # Would cover bard unofficial api field "token" but this is a
         # bit too general of a key; TODO: need another solution to redact.
-        r".+_API_KEY",
-        r".+_API_TOKEN",
-        # Covers env vars ending in "_API_KEY", including openai, cohere, anthropic,
-        # bard
-        r"KAGGLE_KEY",
-        r"SLACK_(TOKEN|SIGNING_SECRET)",
+        r".+_api_token",
+        r"kaggle_key",
+        r"slack_(token|signing_secret)",
         # Covers slack-related keys.
-        r".*PASSWORD.*",
-        # Cover user credentials for i.e. Snowflake connection session
-    ])
+        r".*password.*",
+        # Cover user credentials for i.e. Snowflake connection session.
+    ]),
+    re.IGNORECASE,
 )
 
 # Env vars not covered as they are assumed non-sensitive:
