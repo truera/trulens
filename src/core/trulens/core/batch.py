@@ -65,6 +65,7 @@ import pandas as pd
 from trulens.core.feedback.selector import Selector
 from trulens.core.metric.metric import Metric
 from trulens.core.metric.metric import SkipEval
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import constants as constants_utils
 from trulens.core.utils import threading as threading_utils
 
@@ -75,6 +76,23 @@ Row = Mapping[str, Any]
 
 # Accepted dataset input types.
 DatasetLike = Union[pd.DataFrame, Sequence[Row]]
+
+
+def _is_missing_value(value: Any) -> bool:
+    """Whether a cell value is a scalar missing value.
+
+    `None`, `NaN`, `pd.NA` and `pd.NaT` count as missing. A DataFrame stores a
+    missing cell as `NaN` (or `pd.NaT`) rather than `None`, so this keeps
+    `ignore_none_values` working for DataFrame input. A 0-d numpy array holding
+    `NaN` is missing too. Containers such as lists are never missing, even when
+    they hold `NaN` items.
+    """
+    if value is None:
+        return True
+    if isinstance(value, np.ndarray):
+        # `np.ndim` would also cover this, but it raises on ragged lists.
+        return value.ndim == 0 and bool(pd.isna(value))
+    return pd.api.types.is_scalar(value) and bool(pd.isna(value))
 
 
 class BatchEvaluator:
@@ -235,9 +253,9 @@ class BatchEvaluator:
                     f"row. Available columns: {sorted(row.keys())}."
                 )
             value = row[column]
-            if value is None and selector.ignore_none_values:
+            if selector.ignore_none_values and _is_missing_value(value):
                 raise SkipEval(
-                    reason=f"column {column!r} is None", metric=metric
+                    reason=f"column {column!r} is {value!r}", metric=metric
                 )
             if isinstance(value, list) and not selector.collect_list:
                 arg_values[arg_name] = list(value)
@@ -263,7 +281,12 @@ class BatchEvaluator:
             return None, {"skipped": str(e)}, time.time() - start
 
         arg_names = list(arg_values.keys())
-        combinations = itertools.product(*(arg_values[a] for a in arg_names))
+        candidates = [arg_values[a] for a in arg_names]
+        if metric.combinations == feedback_schema.FeedbackCombinations.ZIP:
+            # Pair list items by position, as `Metric.aggregate` documents.
+            combinations = zip(*candidates)
+        else:
+            combinations = itertools.product(*candidates)
 
         scores: List[Any] = []
         explanations: List[Any] = []
@@ -417,9 +440,17 @@ class BatchEvaluator:
             persist evaluations of pre-collected data.
         """
         rows = self._normalize_rows(data, column_map=column_map)
-        metric_names = self._unique_metric_names(
-            column for row in rows for column in row
-        )
+        if not rows and isinstance(data, pd.DataFrame):
+            columns = list(dict.fromkeys(data.columns))
+            if column_map:
+                for src, dst in column_map.items():
+                    if src in data.columns and dst not in columns:
+                        columns.append(dst)
+        else:
+            columns = list(
+                dict.fromkeys(column for row in rows for column in row)
+            )
+        metric_names = self._unique_metric_names(columns)
 
         # Pre-allocate the result grid so out-of-order completion is fine.
         n_rows = len(rows)
@@ -459,7 +490,7 @@ class BatchEvaluator:
             explanations[metric_idx][row_idx] = explanation
             latencies[metric_idx][row_idx] = latency
 
-        result_df = pd.DataFrame(rows)
+        result_df = pd.DataFrame(rows, columns=columns)
         for metric_idx, name in enumerate(metric_names):
             result_df[name] = scores[metric_idx]
             result_df[f"{name}_explanation"] = explanations[metric_idx]

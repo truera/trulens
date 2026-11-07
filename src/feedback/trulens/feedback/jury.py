@@ -105,7 +105,7 @@ class Jury:
             jurors=[
                 OpenAI(model_engine="gpt-4o-mini"),
                 OpenAI(model_engine="gpt-4.1-mini"),
-                LiteLLM(model_engine="anthropic/claude-3-haiku-20240307"),
+                LiteLLM(model_engine="anthropic/claude-haiku-5-5"),
             ],
             method="relevance",
             aggregation="median",
@@ -286,7 +286,7 @@ class Jury:
                     else:
                         score = float(raw)
                         reason = None
-                    if score == llm_provider.UNPARSABLE_SCORE:
+                    if llm_provider.is_unparsable_score(score):
                         # The judge answered without a score a parser could
                         # find. That is a failure to grade, not a verdict at
                         # the bottom of the scale, so this juror gets no vote

@@ -1,3 +1,4 @@
+import logging
 from typing import Any, List
 
 from llama_index.core.indices.query.schema import QueryBundle
@@ -6,13 +7,19 @@ from llama_index.core.query_engine.retriever_query_engine import (
 )
 from llama_index.core.schema import NodeWithScore
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.guardrails import base as guardrails_base
 from trulens.core.utils.threading import ThreadPoolExecutor
+
+logger = logging.getLogger(__name__)
 
 
 class WithFeedbackFilterNodes(RetrieverQueryEngine):
     """
     A BaseQueryEngine that filters documents using a minimum threshold
     on a feedback function before returning them.
+
+    Unparsable or non-finite feedback scores exclude the affected node and
+    log a warning, matching the core context filter.
 
     Args:
         feedback: use this feedback function to score each document.
@@ -98,6 +105,14 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
                     raise ValueError(
                         "Guardrails can only be used with feedback functions that return a float."
                     )
+                try:
+                    guardrails_base._validate_feedback_score(result)
+                except ValueError:
+                    logger.warning(
+                        "Excluding node with invalid guardrail score %r.",
+                        result,
+                    )
+                    continue
                 if (
                     self.feedback.higher_is_better and result > self.threshold
                 ) or (

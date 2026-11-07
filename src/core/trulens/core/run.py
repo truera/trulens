@@ -21,6 +21,7 @@ from trulens.core.dao.run import RunDaoBase
 from trulens.core.enums import Mode
 from trulens.core.feedback.custom_metric import MetricConfig
 from trulens.core.metric import metric as metric_module
+from trulens.core.utils import constants as constants_utils
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -1787,6 +1788,13 @@ def compare_runs(
       disagree marginally near the significance boundary; this is
       expected.
 
+    Scores equal to ``UNPARSABLE_SCORE`` (-1.0), the sentinel stored when
+    a judge produces nothing parseable, are treated like missing values:
+    they neither form a delta, nor count as a regression, nor enter the
+    aggregates.  This mirrors ``BatchEvaluator._aggregate_scores`` and
+    the leaderboard's ``_avg_score_excluding_sentinel``.  Genuine
+    negative scores other than the sentinel itself are still compared.
+
     Args:
         run_a: Baseline run.
         run_b: Candidate run.
@@ -1880,13 +1888,22 @@ def compare_runs(
                     col,
                 )
 
-        # Build per-item diffs, skipping NaN scores.
+        # Build per-item diffs, skipping NaN scores and the
+        # UNPARSABLE_SCORE sentinel (a judge failure is not a score of
+        # -1.0).
         items: List[ItemDiff] = []
         valid_deltas: List[float] = []
+        n_unparsable = 0
 
         for _, row in merged.iterrows():
             sa = row[col_a]
             sb = row[col_b]
+            if pd.notna(sa) and sa == constants_utils.UNPARSABLE_SCORE:
+                sa = float("nan")
+                n_unparsable += 1
+            if pd.notna(sb) and sb == constants_utils.UNPARSABLE_SCORE:
+                sb = float("nan")
+                n_unparsable += 1
             sa_f = float(sa) if pd.notna(sa) else None
             sb_f = float(sb) if pd.notna(sb) else None
 
@@ -1909,6 +1926,17 @@ def compare_runs(
                     delta=delta,
                     regressed=regressed,
                 )
+            )
+
+        if n_unparsable:
+            logger.warning(
+                "Metric %r: dropping %d score side(s) equal to the "
+                "unparsable sentinel (%s) from the comparison; a judge "
+                "failure is not a score of %s.",
+                col,
+                n_unparsable,
+                constants_utils.UNPARSABLE_SCORE,
+                constants_utils.UNPARSABLE_SCORE,
             )
 
         deltas_arr = np.array(valid_deltas, dtype=float)

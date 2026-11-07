@@ -1362,3 +1362,68 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 for _, row in df.iterrows()
             )
         )
+
+    def test_unparsable_sentinel_is_left_out_of_the_record_mean(self):
+        """A judge failure must not decide the record's score.
+
+        The record's score is the mean over inputs, so letting the
+        UNPARSABLE_SCORE sentinel into that mean lets it set the score:
+        inputs of 1.0 and -1.0 arrived as 0.0, which compare_runs then
+        reports as a real -1.0 regression. The sentinel is left out here
+        for the same reason a missing score is.
+        """
+        from trulens.core.utils import constants as constants_utils
+
+        record_id = "dd121e81-ccc2-449f-a3ba-e12467d0d671"
+        feedback_name = "answer_relevance"
+        template_path = (
+            Path(__file__).parent
+            / "data"
+            / "test_otel_spans"
+            / "eval_root_span.json"
+        )
+        template = json.loads(template_path.read_text())
+
+        def eval_root_event(span_id: str, input_span_id: str, score: float):
+            data = json.loads(json.dumps(template))
+            data["event_id"] = span_id
+            data["trace"]["span_id"] = span_id
+            attrs = data["record_attributes"]
+            attrs[SpanAttributes.EVAL_ROOT.SCORE] = score
+            attrs[SpanAttributes.RECORD_ID] = record_id
+            attrs[SpanAttributes.EVAL_ROOT.METRIC_NAME] = feedback_name
+            attrs[SpanAttributes.EVAL_ROOT.SPAN_GROUP] = "span_group1"
+            # Same span group, different source span: two inputs of the
+            # same feedback call.
+            args_key = SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".a"
+            attrs[args_key] = input_span_id
+            return Event.model_validate(data)
+
+        # The paginated record-id query needs the record root, so the record
+        # has to be there before its eval spans are.
+        root = json.loads(
+            (
+                Path(__file__).parent
+                / "data"
+                / "test_otel_spans"
+                / "record_root_span.json"
+            ).read_text()
+        )
+        root["record_attributes"][SpanAttributes.RECORD_ID] = record_id
+        self.db.insert_event(Event.model_validate(root))
+
+        self.db.insert_event(eval_root_event("span_real", "input_a", 1.0))
+        self.db.insert_event(
+            eval_root_event(
+                "span_unparsable",
+                "input_b",
+                constants_utils.UNPARSABLE_SCORE,
+            )
+        )
+
+        df, feedback_cols = self.db._get_records_and_feedback_otel()
+        self.assertIn(feedback_name, feedback_cols)
+        self.assertEqual(len(df), 1)
+
+        # 1.0 alone, not (1.0 + -1.0) / 2 == 0.0.
+        self.assertEqual(df.iloc[0][feedback_name], 1.0)

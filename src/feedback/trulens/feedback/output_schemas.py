@@ -1,3 +1,5 @@
+from typing import Literal, Optional
+
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
@@ -35,3 +37,101 @@ class ChainOfThoughtResponse(BaseModel):
         description="Supporting evidence for the score, detailing the reasoning step by step."
     )
     score: int = Field(description="The score based on the given criteria.")
+
+
+class TurnVerdict(BaseModel):
+    """The judge's verdict on one assistant turn."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    turn: int = Field(
+        description="The turn number, as labelled in the transcript."
+    )
+    adheres: bool = Field(
+        description="True if the assistant stayed in the role on this turn."
+    )
+    reason: str = Field(
+        description="One sentence on why the turn adheres or breaks the role."
+    )
+
+
+class RoleAdherenceResponse(BaseModel):
+    """A per-turn verdict on whether the assistant kept to its role.
+
+    Note: The `extra="forbid"` config ensures that `additionalProperties: false`
+    is included in the JSON schema, which is required by providers like Databricks
+    for structured outputs.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    turns: list[TurnVerdict] = Field(
+        description="One verdict per assistant turn, in transcript order."
+    )
+
+
+class RequirementEvaluation(BaseModel):
+    """A verdict and evidence for one requirement."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    requirement: str = Field(description="The requirement being evaluated.")
+    verdict: Literal["met", "partly_met", "not_met"] = Field(
+        description="Whether the assistant met all, part, or none of the requirement."
+    )
+    evidence: str = Field(
+        description="Concise evidence from the assistant output for the verdict."
+    )
+
+
+class RequirementExtractionResponse(BaseModel):
+    """Requirements extracted from a request without seeing an output."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    requirements: list[str] = Field(
+        description="Distinct requirements stated by the user, in order."
+    )
+
+
+class RequirementSatisfactionResponse(BaseModel):
+    """Structured requirement-by-requirement evaluation output."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    evaluations: list[RequirementEvaluation] = Field(
+        description="One ordered evaluation for each requirement."
+    )
+
+
+class StanceDispute(BaseModel):
+    """One user dispute of a position the assistant committed to."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    position: str = Field(
+        description="The claim or answer the assistant committed to."
+    )
+    stated_turn: int = Field(
+        description="The turn in which the assistant stated the position."
+    )
+    disputed_turn: int = Field(
+        description="The turn in which the user disputed the position."
+    )
+    changed_turn: Optional[int] = Field(
+        description="The turn in which the assistant changed the position, or null if it held."
+    )
+    new_evidence: bool = Field(
+        description="Whether the user gave new evidence or arguments before the change."
+    )
+    reason: str = Field(description="Brief reasoning citing the transcript.")
+
+
+class StanceStabilityResponse(BaseModel):
+    """Structured stance stability evaluation output."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    disputes: list[StanceDispute] = Field(
+        description="One entry per user dispute of an assistant position, in order."
+    )

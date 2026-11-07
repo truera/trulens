@@ -1,5 +1,6 @@
 import asyncio
 from collections import defaultdict
+import functools
 import gc
 from typing import Callable
 import unittest
@@ -15,6 +16,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
 )
 from opentelemetry.trace import SpanKind
 import pandas as pd
+from trulens.core.otel import instrument as core_instrument
 from trulens.core.otel.instrument import get_func_name
 from trulens.core.otel.instrument import instrument
 from trulens.core.otel.instrument import instrument_method
@@ -203,6 +205,70 @@ class TestOtelInstrument(unittest.TestCase):
         self.assertEqual(
             spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.best_baby"],
             "Kojikun",
+        )
+
+    def test_async_generator_passed_through_function(self) -> None:
+        # Set up instrumented function.
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                f"{SpanAttributes.UNKNOWN.base}.best_babies": ret
+            }
+        )
+        async def my_function():
+            return my_generator()
+
+        async def my_generator():
+            yield "Kojikun"
+            yield "Nolan"
+            yield "Sachiboy"
+
+        # Helper to run the function.
+        async def consume_async_generator(num_iters):
+            async_generator = await my_function()
+            i = 0
+            async for curr in async_generator:
+                print(f"\t{curr}")
+                i += 1
+                if i == num_iters:
+                    break
+
+        # Run the generator to completion.
+        asyncio.run(consume_async_generator(100))
+        # Verify that the span is emitted correctly.
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].name,
+            "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_generator_passed_through_function.<locals>.my_function",
+        )
+        self.assertTupleEqual(
+            spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
+            ("Kojikun", "Nolan", "Sachiboy"),
+        )
+        self.assertTrue(
+            spans[0].attributes[SpanAttributes.GENERATION.IS_STREAMING]
+        )
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED],
+            3,
+        )
+        # Run the generator partially.
+        asyncio.run(consume_async_generator(2))
+        gc.collect()
+        # Verify that the span is emitted correctly.
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 2)
+        self.assertEqual(
+            spans[1].name,
+            "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_generator_passed_through_function.<locals>.my_function",
+        )
+        self.assertTupleEqual(
+            spans[1].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
+            ("Kojikun", "Nolan"),
+        )
+        self.assertEqual(
+            spans[1].attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED],
+            2,
         )
 
     def test_async_generator_function(self) -> None:
@@ -681,6 +747,47 @@ class TestOtelInstrument(unittest.TestCase):
         proto = convert_readable_span_to_proto(spans[0])
         self.assertEqual(proto.kind, SpanProto.SpanKind.SPAN_KIND_CLIENT)
 
+    def _assert_one_tool_span(self, name: str) -> None:
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].name, name)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.SPAN_TYPE],
+            SpanAttributes.SpanType.TOOL,
+        )
+
+    def test_instrument_tools_invoke(self) -> None:
+        tools_by_name = {"add": _AddTool()}
+        core_instrument.instrument_tools(tools_by_name)
+
+        self.assertEqual(tools_by_name["add"].invoke({"a": 1, "b": 2}), 3)
+        self._assert_one_tool_span("add")
+
+    def test_instrument_tools_ainvoke(self) -> None:
+        tools_by_name = {"add": _AddTool()}
+        core_instrument.instrument_tools(tools_by_name, invoke_method="ainvoke")
+        tool = tools_by_name["add"]
+
+        self.assertEqual(asyncio.run(tool.ainvoke({"a": 1, "b": 2})), 3)
+        self._assert_one_tool_span("add")
+        # The sync path is passed through to the tool, untraced.
+        self.assertEqual(tool.invoke({"a": 1, "b": 2}), 3)
+        self.assertEqual(len(self.exporter.get_finished_spans()), 1)
+        self.assertEqual(tool.name, "add")
+
+
+class _AddTool:
+    """Just enough of a LangChain tool for `instrument_tools`."""
+
+    name = "add"
+
+    def invoke(self, args: dict) -> int:
+        return args["a"] + args["b"]
+
+    async def ainvoke(self, args: dict) -> int:
+        await asyncio.sleep(0)
+        return args["a"] + args["b"]
+
 
 class _StubApp:
     """Just enough of an app for record root spans to be finalized."""
@@ -898,4 +1005,368 @@ class TestOtelInstrumentGeneratorContext(unittest.TestCase):
         self.assertEqual(spans[0].status.status_code, trace.StatusCode.ERROR)
         self.assertEqual(
             spans[0].attributes[SpanAttributes.CALL.ERROR], "no more babies"
+        )
+
+
+def _passthrough(func):
+    """A plain sync decorator, shaped like OpenAI's `required_args`."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def _run_to_completion(func):
+    """A sync decorator that runs the coroutine itself."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(func(*args, **kwargs))
+
+    return wrapper
+
+
+class TestOtelInstrumentAsyncBehindDecorator(unittest.TestCase):
+    """An `async def` behind a sync decorator is traced like an `async def`.
+
+    As in `TestOtelInstrumentGeneratorContext`, every top level instrumented
+    call starts a record of its own.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        instrument.enable_all_instrumentation()
+        return super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        instrument.disable_all_instrumentation()
+        return super().tearDownClass()
+
+    def setUp(self) -> None:
+        self.exporter = InMemorySpanExporter()
+        _set_up_tracer_provider()
+        self.span_processor = SimpleSpanProcessor(self.exporter)
+        trace.get_tracer_provider().add_span_processor(self.span_processor)
+        self.recording = Recording(None)
+        context = set_baggage("__trulens_recording__", self.recording)
+        context = set_baggage("__trulens_app__", _StubApp(), context=context)
+        self.token = context_api.attach(context)
+        return super().setUp()
+
+    def tearDown(self) -> None:
+        self.span_processor.shutdown()
+        context_api.detach(self.token)
+        return super().tearDown()
+
+    def _spans_by_name(self) -> dict:
+        return {
+            span.name.rsplit(".", 1)[-1]: span
+            for span in self.exporter.get_finished_spans()
+        }
+
+    def _assert_nested_child(self, outer_span, inner_span) -> None:
+        self.assertEqual(len(self.recording), 1)
+        self.assertEqual(
+            outer_span.attributes[SpanAttributes.SPAN_TYPE],
+            SpanAttributes.SpanType.RECORD_ROOT,
+        )
+        self.assertEqual(inner_span.parent.span_id, outer_span.context.span_id)
+        self.assertEqual(
+            inner_span.attributes[SpanAttributes.SPAN_TYPE],
+            SpanAttributes.SpanType.RETRIEVAL,
+        )
+        self.assertEqual(
+            inner_span.attributes[SpanAttributes.RECORD_ID],
+            outer_span.attributes[SpanAttributes.RECORD_ID],
+        )
+
+    def test_async_method_behind_sync_decorator(self) -> None:
+        @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
+        async def retrieve(query: str) -> list:
+            return ["Kojikun"]
+
+        class App:
+            @instrument()
+            @_passthrough
+            async def query(self, question: str) -> str:
+                await asyncio.sleep(0.05)
+                return str(await retrieve(question))
+
+        self.assertEqual(asyncio.run(App().query("q")), "['Kojikun']")
+
+        self.assertIsNone(baggage.get_baggage(SpanAttributes.RECORD_ID))
+        spans = self._spans_by_name()
+        self.assertEqual(len(spans), 2)
+        self._assert_nested_child(spans["query"], spans["retrieve"])
+        self.assertEqual(
+            spans["query"].attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+            "['Kojikun']",
+        )
+        self.assertGreaterEqual(
+            spans["query"].end_time - spans["query"].start_time, 50_000_000
+        )
+
+    def test_async_behind_sync_decorator_error_marks_span(self) -> None:
+        @instrument()
+        @_passthrough
+        async def query(question: str) -> str:
+            await asyncio.sleep(0.00001)
+            raise ValueError("no more babies")
+
+        with self.assertRaises(ValueError):
+            asyncio.run(query("q"))
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].status.status_code, trace.StatusCode.ERROR)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.CALL.ERROR], "no more babies"
+        )
+
+    def test_async_behind_sync_decorator_cancelled_ends_span(self) -> None:
+        @instrument()
+        @_passthrough
+        async def query(question: str) -> str:
+            await asyncio.sleep(10)
+            return "Kojikun"
+
+        async def run():
+            task = asyncio.ensure_future(query("q"))
+            await asyncio.sleep(0.01)
+            task.cancel()
+            await task
+
+        with self.assertRaises(asyncio.CancelledError):
+            asyncio.run(run())
+
+        self.assertIsNone(baggage.get_baggage(SpanAttributes.RECORD_ID))
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(len(self.recording), 1)
+
+    def test_sync_decorator_that_runs_the_coroutine(self) -> None:
+        @instrument()
+        @_run_to_completion
+        async def query(question: str) -> str:
+            await asyncio.sleep(0.00001)
+            return "Kojikun"
+
+        self.assertEqual(query("q"), "Kojikun")
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.RECORD_ROOT.OUTPUT], "Kojikun"
+        )
+
+    def test_async_generator_behind_sync_decorator(self) -> None:
+        @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
+        async def retrieve(name: str) -> str:
+            return name.upper()
+
+        @instrument()
+        @_passthrough
+        async def stream(question: str):
+            await asyncio.sleep(0.05)
+            yield await retrieve("Kojikun")
+            yield await retrieve("Nolan")
+
+        async def run():
+            return [chunk async for chunk in stream("q")]
+
+        self.assertEqual(asyncio.run(run()), ["KOJIKUN", "NOLAN"])
+
+        self.assertIsNone(baggage.get_baggage(SpanAttributes.RECORD_ID))
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 3)
+        stream_span = spans[-1]
+        self.assertEqual(len(self.recording), 1)
+        self.assertEqual(
+            stream_span.attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+            "['KOJIKUN', 'NOLAN']",
+        )
+        self.assertTrue(
+            stream_span.attributes[SpanAttributes.GENERATION.IS_STREAMING]
+        )
+        self.assertEqual(
+            stream_span.attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED],
+            2,
+        )
+        self.assertGreaterEqual(
+            stream_span.end_time - stream_span.start_time, 50_000_000
+        )
+        for inner_span in spans[:2]:
+            self.assertEqual(
+                inner_span.parent.span_id, stream_span.context.span_id
+            )
+
+    def test_async_generator_behind_sync_decorator_abandoned(self) -> None:
+        @instrument()
+        @_passthrough
+        async def stream(question: str):
+            yield "Kojikun"
+            yield "Nolan"
+
+        async def run():
+            async for chunk in stream("q"):
+                self.assertEqual(chunk, "Kojikun")
+                break
+            self.assertIsNone(baggage.get_baggage(SpanAttributes.RECORD_ID))
+
+        with self.assertNoLogs("opentelemetry.context", level="ERROR"):
+            asyncio.run(run())
+            gc.collect()
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+            "['Kojikun']",
+        )
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED], 1
+        )
+
+    def test_async_generator_behind_sync_decorator_error_marks_span(
+        self,
+    ) -> None:
+        @instrument()
+        @_passthrough
+        async def stream(question: str):
+            yield "Kojikun"
+            raise ValueError("no more babies")
+
+        async def run():
+            return [chunk async for chunk in stream("q")]
+
+        with self.assertRaises(ValueError):
+            asyncio.run(run())
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].status.status_code, trace.StatusCode.ERROR)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.CALL.ERROR], "no more babies"
+        )
+
+    def _assert_stream_protocol_forwarded(
+        self, make_stream, traced: bool = True
+    ) -> None:
+        # `asend`, `athrow`, and `aclose` reach the inner generator, as they
+        # would without instrumentation.
+        events = []
+
+        async def source():
+            try:
+                value = yield "ready"
+                events.append(("received", value))
+                try:
+                    yield value
+                except KeyError as e:
+                    events.append(("thrown", e.args[0]))
+                    yield "recovered"
+                yield "unreached"
+            finally:
+                events.append(("closed",))
+
+        async def run():
+            stream = await make_stream(source)
+            self.assertEqual(await stream.__anext__(), "ready")
+            self.assertEqual(await stream.asend("Kojikun"), "Kojikun")
+            self.assertEqual(
+                await stream.athrow(KeyError("Nolan")), "recovered"
+            )
+            await stream.aclose()
+
+        asyncio.run(run())
+
+        self.assertEqual(
+            events,
+            [("received", "Kojikun"), ("thrown", "Nolan"), ("closed",)],
+        )
+        spans = self.exporter.get_finished_spans()
+        if not traced:
+            self.assertEqual(len(spans), 0)
+            return
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED], 3
+        )
+
+    def test_async_generator_function_forwards_protocol(self) -> None:
+        async def make_stream(source):
+            return instrument()(source)()
+
+        self._assert_stream_protocol_forwarded(make_stream)
+
+    def test_async_generator_function_forwards_protocol_outside_recording(
+        self,
+    ) -> None:
+        async def make_stream(source):
+            return instrument()(source)()
+
+        token = context_api.attach(remove_baggage("__trulens_recording__"))
+        try:
+            self._assert_stream_protocol_forwarded(make_stream, traced=False)
+        finally:
+            context_api.detach(token)
+
+    def test_async_generator_behind_sync_decorator_forwards_protocol(
+        self,
+    ) -> None:
+        async def make_stream(source):
+            return instrument()(_passthrough(source))()
+
+        self._assert_stream_protocol_forwarded(make_stream)
+
+    def test_async_generator_returned_by_function_forwards_protocol(
+        self,
+    ) -> None:
+        async def make_stream(source):
+            @instrument()
+            async def my_function():
+                return source()
+
+            return await my_function()
+
+        self._assert_stream_protocol_forwarded(make_stream)
+
+    def test_plain_async_function_unchanged(self) -> None:
+        @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
+        async def retrieve(query: str) -> list:
+            return ["Kojikun"]
+
+        @instrument()
+        async def query(question: str) -> str:
+            await asyncio.sleep(0.00001)
+            return str(await retrieve(question))
+
+        self.assertEqual(asyncio.run(query("q")), "['Kojikun']")
+
+        spans = self._spans_by_name()
+        self._assert_nested_child(spans["query"], spans["retrieve"])
+        self.assertEqual(
+            spans["query"].attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+            "['Kojikun']",
+        )
+
+    def test_plain_sync_function_unchanged(self) -> None:
+        @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
+        def retrieve(query: str) -> list:
+            return ["Kojikun"]
+
+        @instrument()
+        def query(question: str) -> str:
+            return str(retrieve(question))
+
+        self.assertEqual(query("q"), "['Kojikun']")
+
+        spans = self._spans_by_name()
+        self._assert_nested_child(spans["query"], spans["retrieve"])
+        self.assertEqual(
+            spans["query"].attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+            "['Kojikun']",
         )

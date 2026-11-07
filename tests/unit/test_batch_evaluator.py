@@ -1,10 +1,15 @@
 """Tests for batch / offline evaluation (`trulens.core.batch.BatchEvaluator`)."""
 
+import io
+import math
+
+import numpy as np
 import pandas as pd
 import pytest
 from trulens.core import BatchEvaluator
 from trulens.core import Metric
 from trulens.core import Selector
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import constants as constants_utils
 from trulens.feedback.llm_provider import UNPARSABLE_SCORE
 
@@ -38,6 +43,11 @@ def contains_answer(context: str, answer: str) -> float:
 def num_contexts(context: list) -> float:
     """Score using the whole list of contexts at once."""
     return float(len(context))
+
+
+def starts_with_label(context: str, label: str) -> float:
+    """Score 1.0 when a context starts with its label."""
+    return 1.0 if context.startswith(label) else 0.0
 
 
 def custom_quality(doc: str, summary: str) -> float:
@@ -230,6 +240,60 @@ def test_collect_list_true_passes_whole_list():
     assert res["nctx"].iloc[0] == pytest.approx(3.0)
 
 
+def _label_metric(**aggregate_kwargs) -> Metric:
+    metric = Metric(
+        name="match",
+        implementation=starts_with_label,
+        selectors={
+            "context": Selector.from_column("contexts", collect_list=False),
+            "label": Selector.from_column("labels", collect_list=False),
+        },
+    )
+    if aggregate_kwargs:
+        metric = metric.aggregate(**aggregate_kwargs)
+    return metric
+
+
+@pytest.mark.parametrize(
+    "combinations, expected_calls, expected_score",
+    [
+        pytest.param(None, 9, 1 / 3, id="default-product"),
+        pytest.param(
+            feedback_schema.FeedbackCombinations.PRODUCT,
+            9,
+            1 / 3,
+            id="product",
+        ),
+        pytest.param(
+            feedback_schema.FeedbackCombinations.ZIP, 3, 1.0, id="zip"
+        ),
+    ],
+)
+def test_collect_list_false_honors_metric_combinations(
+    combinations, expected_calls, expected_score
+):
+    metric = _label_metric(
+        **({"combinations": combinations} if combinations else {})
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+    data = [{"contexts": ["a1", "b1", "c1"], "labels": ["a", "b", "c"]}]
+    res = ev.evaluate(data)
+    assert len(res["match_explanation"].iloc[0]) == expected_calls
+    assert res["match"].iloc[0] == pytest.approx(expected_score)
+
+
+def test_collect_list_false_zip_stops_at_shortest_list():
+    metric = _label_metric(
+        combinations=feedback_schema.FeedbackCombinations.ZIP
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+    # Like Python zip (non-strict), as FeedbackCombinations.ZIP documents.
+    data = [{"contexts": ["a1", "x1", "c1"], "labels": ["a", "b"]}]
+    res = ev.evaluate(data)
+    assert len(res["match_explanation"].iloc[0]) == 2
+    assert res["match"].iloc[0] == pytest.approx(0.5)
+
+
 # --- metric returning a plain float, multiple metrics -------------------------
 
 
@@ -380,11 +444,209 @@ def test_ignore_none_values_skips_row():
     assert pd.isna(res["overlap"].iloc[1])
 
 
+def _ignore_none_overlap_metric() -> Metric:
+    return Metric(
+        name="overlap",
+        implementation=word_overlap,
+        selectors={
+            "query": Selector.from_column("q", ignore_none_values=True),
+            "answer": Selector.from_column("a", ignore_none_values=True),
+        },
+    )
+
+
+def nan_input(text) -> float:
+    """Return 1.0 when the metric receives a float NaN, else 0.0."""
+    return 1.0 if isinstance(text, float) and math.isnan(text) else 0.0
+
+
+@pytest.mark.parametrize(
+    "df",
+    [
+        pd.DataFrame({"q": ["the fox", "the fox"], "a": ["the fox", np.nan]}),
+        # Building a DataFrame from a dict row without the key fills a NaN cell.
+        pd.DataFrame([{"q": "the fox", "a": "the fox"}, {"q": "the fox"}]),
+        # An empty CSV cell is read as NaN.
+        pd.read_csv(io.StringIO("q,a\nthe fox,the fox\nthe fox,\n")),
+        pd.DataFrame({
+            "q": ["the fox", "the fox"],
+            "a": pd.Series(["the fox", pd.NaT], dtype=object),
+        }),
+    ],
+    ids=["nan", "dict_row_without_key", "csv_empty_cell", "nat"],
+)
+def test_ignore_none_values_skips_missing_dataframe_cell(df):
+    ev = BatchEvaluator(metrics=[_ignore_none_overlap_metric()], max_workers=1)
+    res = ev.evaluate(df)
+    expected = ev.evaluate([
+        {"q": "the fox", "a": "the fox"},
+        {"q": "the fox", "a": None},
+    ])
+    assert res["overlap"].iloc[0] == pytest.approx(1.0)
+    assert pd.isna(res["overlap"].iloc[1])
+    assert "skipped" in res["overlap_explanation"].iloc[1]
+    pd.testing.assert_series_equal(res["overlap"], expected["overlap"])
+
+
+@pytest.mark.parametrize(
+    "missing",
+    [float("nan"), np.nan, pd.NA, pd.NaT, np.array(np.nan)],
+    ids=["float_nan", "np_nan", "pd_na", "pd_nat", "zero_dim_array_nan"],
+)
+def test_ignore_none_values_skips_missing_scalar_in_rows(missing):
+    ev = BatchEvaluator(metrics=[_ignore_none_overlap_metric()], max_workers=1)
+    res = ev.evaluate([
+        {"q": "the fox", "a": "the fox"},
+        {"q": "the fox", "a": missing},
+    ])
+    assert res["overlap"].iloc[0] == pytest.approx(1.0)
+    assert pd.isna(res["overlap"].iloc[1])
+    assert "skipped" in res["overlap_explanation"].iloc[1]
+
+
+def test_ignore_none_values_skips_row_without_the_key():
+    ev = BatchEvaluator(metrics=[_ignore_none_overlap_metric()], max_workers=1)
+    res = ev.evaluate([{"q": "the fox", "a": "the fox"}, {"q": "the fox"}])
+    assert res["overlap"].iloc[0] == pytest.approx(1.0)
+    assert pd.isna(res["overlap"].iloc[1])
+    assert "missing from row" in str(res["overlap_explanation"].iloc[1])
+
+
+def test_ignore_none_values_keeps_ragged_list_cell():
+    metric = Metric(
+        name="nctx",
+        implementation=num_contexts,
+        selectors={
+            "context": Selector.from_column(
+                "contexts", collect_list=True, ignore_none_values=True
+            ),
+        },
+    )
+    data = [{"contexts": [["a"], ["b", "c"]]}]
+    res = BatchEvaluator(metrics=[metric], max_workers=1).evaluate(data)
+    assert res["nctx"].iloc[0] == pytest.approx(2.0)
+
+
+@pytest.mark.parametrize("as_dataframe", [False, True])
+def test_ignore_none_values_keeps_list_containing_nan(as_dataframe):
+    metric = Metric(
+        name="nctx",
+        implementation=num_contexts,
+        selectors={
+            "context": Selector.from_column(
+                "contexts", collect_list=True, ignore_none_values=True
+            ),
+        },
+    )
+    data = [{"contexts": ["a", float("nan")]}]
+    if as_dataframe:
+        data = pd.DataFrame(data)
+    res = BatchEvaluator(metrics=[metric], max_workers=1).evaluate(data)
+    assert res["nctx"].iloc[0] == pytest.approx(2.0)
+
+
+def test_without_ignore_none_values_nan_cell_reaches_metric():
+    metric = Metric(
+        name="nan_input",
+        implementation=nan_input,
+        selectors={"text": Selector.from_column("t")},
+    )
+    df = pd.DataFrame({"t": ["the fox", np.nan]})
+    res = BatchEvaluator(metrics=[metric], max_workers=1).evaluate(df)
+    assert list(res["nan_input"]) == [0.0, 1.0]
+
+
 def test_empty_dataset_returns_empty_frame():
     ev = BatchEvaluator(metrics=[_overlap_metric()])
     res = ev.evaluate([])
     assert len(res) == 0
     assert "overlap" in res.columns
+
+
+@pytest.mark.parametrize(
+    "column", ["overlap", "overlap_explanation", "overlap_latency"]
+)
+def test_empty_dataframe_preserves_dataset_columns(column):
+    df = pd.DataFrame(columns=["q", "a", column])
+    ev = BatchEvaluator(metrics=[_overlap_metric()], max_workers=1)
+
+    res = ev.evaluate(df)
+
+    assert len(res) == 0
+    assert list(res.columns) == [
+        "q",
+        "a",
+        column,
+        "overlap_1",
+        "overlap_1_explanation",
+        "overlap_1_latency",
+    ]
+    assert list(df.columns) == ["q", "a", column]
+
+
+@pytest.mark.parametrize(
+    "metric_name, result_name", [("overlap", "overlap_1"), ("q", "q_1")]
+)
+def test_empty_dataframe_preserves_mapped_columns(metric_name, result_name):
+    df = pd.DataFrame(columns=["question", "answer", "overlap"])
+    metric = Metric(
+        name=metric_name,
+        implementation=word_overlap,
+        selectors={
+            "query": Selector.from_column("q"),
+            "answer": Selector.from_column("a"),
+        },
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+
+    res = ev.evaluate(
+        df,
+        column_map={"question": "q", "answer": "a", "missing": "unused"},
+    )
+
+    assert len(res) == 0
+    assert list(res.columns) == [
+        "question",
+        "answer",
+        "overlap",
+        "q",
+        "a",
+        result_name,
+        f"{result_name}_explanation",
+        f"{result_name}_latency",
+    ]
+    assert list(df.columns) == ["question", "answer", "overlap"]
+
+
+@pytest.mark.parametrize("column_map", [None, {"q": "query", "a": "answer"}])
+@pytest.mark.filterwarnings("ignore:DataFrame columns are not unique")
+def test_empty_dataframe_duplicate_columns_match_populated(column_map):
+    df = pd.DataFrame(
+        [["cats", "discarded", 0.1, "cats", 0.2]],
+        columns=["q", "a", "overlap", "a", "overlap"],
+    )
+    empty = df.iloc[:0].copy()
+    original = empty.copy(deep=True)
+    ev = BatchEvaluator(metrics=[_overlap_metric()], max_workers=1)
+
+    populated = ev.evaluate(df, column_map=column_map)
+    res = ev.evaluate(empty, column_map=column_map)
+
+    expected = ["q", "a", "overlap"]
+    if column_map:
+        expected.extend(["query", "answer"])
+    expected.extend([
+        "overlap_1",
+        "overlap_1_explanation",
+        "overlap_1_latency",
+    ])
+    assert list(populated.columns) == expected
+    assert list(res.columns) == expected
+    assert len(res) == 0
+    assert populated.loc[0, "a"] == "cats"
+    assert populated.loc[0, "overlap"] == 0.2
+    assert populated.loc[0, "overlap_1"] == 1.0
+    pd.testing.assert_frame_equal(empty, original)
 
 
 # --- metric return contract / aggregation failures ----------------------------

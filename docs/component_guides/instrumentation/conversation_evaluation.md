@@ -98,6 +98,78 @@ f_conversation_coherence = Metric(
 ).on_conversation()
 ```
 
+Requirement Satisfaction evaluates each distinct user requirement and returns
+`1.0` for met, `0.5` for partly met, and `0.0` for not met. When bound to a
+conversation, requirements are extracted from every user turn, including later
+turns. Its metadata includes the requirement count, verdicts, and supporting
+evidence, so the aggregate score can be audited. This differs from
+`agent_goal_accuracy`, which gives one binary score for the overall goal.
+Use `requirement_satisfaction_with_cot_reasons` to configure this metric.
+Pass multi-turn conversations as structured records; a string `request` is one
+user message and should be paired with an `output`. When evaluating a trace,
+select the spans and fields that contain the evidence you want the judge to see.
+Selected trace output over 400,000 characters is rejected, so narrow the
+selector when a trace is too large.
+
+```python
+f_requirement_satisfaction = Metric(
+    implementation=provider.requirement_satisfaction_with_cot_reasons,
+    name="Requirement Satisfaction",
+).on_conversation()
+```
+
+For a single request and output, bind the selected values directly:
+
+```python
+f_requirement_satisfaction = Metric(
+    implementation=provider.requirement_satisfaction_with_cot_reasons,
+    name="Requirement Satisfaction",
+).on({
+    "request": Selector.select_record_input(),
+    "output": Selector(trace_level=True),
+})
+```
+
+When no request is available, bind an explicit requirement list and select only
+the output:
+
+```python
+f_explicit_requirements = Metric(
+    implementation=provider.requirement_satisfaction_with_cot_reasons,
+    name="Requirement Satisfaction",
+).with_arguments(
+    reference_requirements=["Return JSON.", "Include a summary."],
+).on({"output": Selector(trace_level=True)})
+```
+
+If the request is available, omit `reference_requirements`; TruLens extracts
+requirements from the request first, then evaluates them against the output.
+
+Stance Stability checks whether the assistant changes a position only when the
+user gives new evidence. A judge finds each user turn that disputed a claim or
+answer the assistant committed to, and whether the assistant then changed it.
+Before the judge runs, a deterministic pre-check marks a user message as new
+evidence if it contains a link, a DOI, an arXiv id, a citation phrase such as
+"according to" or "source:", or a quoted passage of at least five words that
+is not a quote of the assistant. A change of position that follows such a
+message is treated as supported; for every other change the judge decides, and
+it is told that a bare assertion ("are you sure?", "I think it's later") is not
+evidence. When the records include tool calls (see `include_tool_calls`
+below), the judge sees them too, and a change that follows a tool result the
+assistant had not considered counts as supported. The score is
+`1 - unsupported_flip_count / dispute_count`, or `1.0` when nothing was
+disputed. Its metadata includes the flip count, the first unsupported flip
+turn, and for each dispute whether the pre-check or the judge decided it. A
+coherence judge does not penalize a flip because the new answer agrees with
+the user, so this measures something `coherence_across_turns` does not.
+
+```python
+f_stance_stability = Metric(
+    implementation=provider.stance_stability_with_cot_reasons,
+    name="Stance Stability",
+).on_conversation()
+```
+
 The selected value has this shape:
 
 ```python
@@ -115,6 +187,28 @@ Selector.select_conversation()  # Ordered input/output records
 Selector.select_conversation_input()  # Ordered record inputs
 Selector.select_conversation_output()  # Ordered record outputs
 ```
+
+By default, conversation records contain only the user input and assistant
+output. Opt in to the TOOL and MCP calls associated with each turn when the
+judge needs to evaluate tool-grounded answers or coding-agent actions:
+
+```python
+f_goal_accuracy = Metric(
+    implementation=provider.agent_goal_accuracy_with_cot_reasons,
+    name="Goal Accuracy",
+).on({
+    "conversation": Selector.select_conversation(
+        include_tool_calls=True,
+        max_tool_result_chars=2_000,
+    )
+})
+```
+
+Each record then includes an ordered `tool_calls` list with `name`,
+`arguments`, `result`, and `error`. Tool results longer than
+`max_tool_result_chars` are truncated with a marker to control judge token
+usage. The option is disabled by default, so existing conversation metrics see
+the same records and prompts as before.
 
 Conversation selectors cannot be mixed with record or span selectors in the same
 `Metric`. Attach separate metrics at each scope instead.
@@ -152,8 +246,31 @@ f_conversation_coherence = Metric(
 ```
 
 The conversation-level metrics are `coherence_across_turns`,
-`conversation_helpfulness`, `topic_adherence`, `agent_goal_accuracy`, and
-the deterministic `conversation_repetition` (no LLM calls). Each of the LLM-based ones has a matching `_with_cot_reasons` variant.
+`conversation_helpfulness`, `topic_adherence`, `agent_goal_accuracy`,
+`requirement_satisfaction`, `role_adherence_with_cot_reasons`, `stance_stability`,
+and the deterministic `conversation_repetition` (no LLM calls).
+`requirement_satisfaction` and `stance_stability` are available only as
+`_with_cot_reasons` methods, as `role_adherence_with_cot_reasons` is; each other
+LLM-based metric also has a matching `_with_cot_reasons` variant.
+
+`role_adherence_with_cot_reasons` checks whether the assistant keeps an assigned
+role or persona. It requires a `role` argument. One judge call returns a verdict
+for every assistant turn, and the score is the share of assistant turns that
+adhered, computed in code rather than asked of the judge. The returned reasons
+list each turn's verdict, and `broken_turns` holds the turn numbers that broke
+the role:
+
+```python
+f_role_adherence = Metric(
+    implementation=provider.role_adherence_with_cot_reasons,
+    name="Role Adherence",
+).with_arguments(
+    role="A math tutor who guides with questions and never states the final answer."
+).on_conversation()
+```
+
+If the judge's reply does not contain exactly one verdict per assistant turn,
+the metric returns `UNPARSABLE_SCORE` instead of guessing.
 
 ## Attach both metrics to an app
 

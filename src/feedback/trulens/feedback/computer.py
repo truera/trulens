@@ -33,6 +33,8 @@ except ImportError:
     # Backwards compatibility with trulens-core < 2.5.0
     from trulens.core.feedback.feedback import Feedback as Metric
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.utils.constants import is_unparsable_score
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import (
     set_function_call_attributes,
@@ -43,12 +45,16 @@ from trulens.experimental.otel_tracing.core.span import (
 from trulens.experimental.otel_tracing.core.span import (
     set_span_attribute_safely,
 )
+from trulens.otel.semconv.trace import ErrorAttributes
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 _logger = logging.getLogger(__name__)
 
 
 _EXPLANATION_KEYS = ["explanation", "explanations", "reason", "reasons"]
+
+_TOOL_RESULT_TRUNCATION_MARKER = "... [truncated]"
 
 
 # If we could just have `opentelemetry.sdk.trace.ReadableSpan` it would be
@@ -146,9 +152,11 @@ def compute_feedback_by_span_group(
     Args:
         events: DataFrame containing trace events.
         feedback: Feedback object to compute feedback. Its `name`,
-            `higher_is_better`, and `aggregator` will be used.
+            `higher_is_better`, `aggregator`, and `combinations` will be
+            used.
         raise_error_on_no_feedbacks_computed:
             Raise an error if no feedbacks were computed. Default is True.
+            Not raised when every input's feedback was already computed.
         selectors: Optional dict of selectors for OTEL mode. If not provided,
             will use feedback.selectors.
         max_workers: Max threads for parallel per-record evaluation.
@@ -161,9 +169,12 @@ def compute_feedback_by_span_group(
         selectors if selectors is not None else feedback.selectors
     )
     feedback_aggregator = feedback.agg
+    combinations = (
+        feedback.combinations or feedback_schema.FeedbackCombinations.PRODUCT
+    )
 
     if _is_conversation_level(kwarg_to_selector):
-        num_feedbacks_computed = _compute_feedback_by_conversation(
+        _compute_feedback_by_conversation(
             events,
             feedback_name,
             feedback.feedback_definition_id,
@@ -172,9 +183,8 @@ def compute_feedback_by_span_group(
             feedback_aggregator,
             kwarg_to_selector,
             max_workers,
+            raise_error_on_no_feedbacks_computed,
         )
-        if raise_error_on_no_feedbacks_computed and num_feedbacks_computed == 0:
-            raise ValueError("No feedbacks were computed!")
         return
 
     kwarg_groups = _group_kwargs_by_selectors(kwarg_to_selector)
@@ -187,8 +197,12 @@ def compute_feedback_by_span_group(
         kwarg_groups,
         list(record_id_to_record_root.keys()),
         feedback_name,
+        combinations=combinations,
     )
-    flattened_inputs = _flatten_inputs(unflattened_inputs)
+    flattened_inputs = _flatten_inputs(
+        unflattened_inputs, combinations=combinations
+    )
+    num_inputs = len(flattened_inputs)
     flattened_inputs = _remove_already_computed_feedbacks(
         events, feedback_name, flattened_inputs
     )
@@ -201,7 +215,44 @@ def compute_feedback_by_span_group(
         record_id_to_record_root,
         max_workers=max_workers,
     )
-    if raise_error_on_no_feedbacks_computed and num_feedbacks_computed == 0:
+    if raise_error_on_no_feedbacks_computed:
+        _raise_if_no_feedbacks_computed(
+            feedback_name,
+            num_inputs,
+            len(flattened_inputs),
+            num_feedbacks_computed,
+        )
+
+
+def _raise_if_no_feedbacks_computed(
+    feedback_name: str,
+    num_inputs: int,
+    num_inputs_to_compute: int,
+    num_feedbacks_computed: int,
+) -> None:
+    """Raise if there was feedback to compute but none was computed.
+
+    Inputs whose feedback is already computed are skipped, so rerunning on
+    events that are fully evaluated has nothing left to compute. That is not
+    an error, unlike having no inputs at all (e.g. selectors that match no
+    spans) or every remaining computation failing.
+
+    Args:
+        feedback_name: Name of the feedback function.
+        num_inputs: Number of inputs found in the events.
+        num_inputs_to_compute: Number of inputs left after removing those
+            whose feedback is already computed.
+        num_feedbacks_computed: Number of feedbacks computed.
+    """
+    if num_inputs > 0 and num_inputs_to_compute == 0:
+        _logger.info(
+            "feedback_name=%s is already computed for all %d inputs, "
+            "nothing left to compute.",
+            feedback_name,
+            num_inputs,
+        )
+        return
+    if num_feedbacks_computed == 0:
         raise ValueError("No feedbacks were computed!")
 
 
@@ -218,6 +269,72 @@ def _is_conversation_level(
     return levels == {True}
 
 
+def _truncate_tool_result(value: Any, max_chars: int) -> Any:
+    """Truncate a tool result while preserving non-string values."""
+    if not isinstance(value, str) or len(value) <= max_chars:
+        return value
+    return value[:max_chars] + _TOOL_RESULT_TRUNCATION_MARKER
+
+
+def _conversation_tool_spans_by_record_id(
+    events: pd.DataFrame,
+) -> Dict[str, List[pd.Series]]:
+    """Group TOOL and MCP event rows by record id in execution order."""
+    tool_spans = defaultdict(list)
+    for _, row in events.iterrows():
+        attributes = row["record_attributes"]
+        if attributes.get(SpanAttributes.SPAN_TYPE) not in {
+            SpanAttributes.SpanType.TOOL,
+            SpanAttributes.SpanType.MCP,
+        }:
+            continue
+        record_id = attributes.get(SpanAttributes.RECORD_ID)
+        if record_id is not None:
+            tool_spans[record_id].append(row)
+
+    for spans in tool_spans.values():
+        spans.sort(
+            key=lambda row: (
+                row["start_timestamp"],
+                row["trace"].get("span_id", ""),
+            )
+        )
+    return tool_spans
+
+
+def _tool_call_from_span(
+    span: pd.Series, max_tool_result_chars: int
+) -> Dict[str, Any]:
+    """Convert a TOOL or MCP span into a conversation tool-call value."""
+    attributes = span["record_attributes"]
+    name = attributes.get(GenAIAttributes.TOOL.NAME)
+    if name is None:
+        name = attributes.get(SpanAttributes.MCP.TOOL_NAME)
+
+    arguments = attributes.get(GenAIAttributes.TOOL.CALL_ARGUMENTS)
+    if arguments is None:
+        arguments = attributes.get(SpanAttributes.MCP.INPUT_ARGUMENTS)
+
+    result = attributes.get(GenAIAttributes.TOOL.CALL_RESULT)
+    if result is None:
+        result = attributes.get(SpanAttributes.MCP.OUTPUT_CONTENT)
+
+    error = attributes.get(ErrorAttributes.TYPE)
+    if error is None:
+        error = attributes.get(SpanAttributes.CALL.ERROR)
+    if not error:
+        error = None
+    if error is None and attributes.get(SpanAttributes.MCP.OUTPUT_IS_ERROR):
+        error = "mcp_tool_error"
+
+    return {
+        "name": name,
+        "arguments": arguments,
+        "result": _truncate_tool_result(result, max_tool_result_chars),
+        "error": error,
+    }
+
+
 def _compute_feedback_by_conversation(
     events: pd.DataFrame,
     feedback_name: str,
@@ -227,7 +344,8 @@ def _compute_feedback_by_conversation(
     feedback_aggregator: Optional[Callable[[List[float]], float]],
     kwarg_to_selector: Dict[str, Selector],
     max_workers: Optional[int],
-) -> int:
+    raise_error_on_no_feedbacks_computed: bool,
+) -> None:
     record_roots = [
         row
         for _, row in events.iterrows()
@@ -253,6 +371,16 @@ def _compute_feedback_by_conversation(
     flattened_inputs = []
     target_record_id_to_conversation_id = {}
     record_id_to_record_root = _map_record_id_to_record_roots(events)
+    include_tool_calls = any(
+        selector.conversation_attribute == "records"
+        and selector.include_tool_calls
+        for selector in kwarg_to_selector.values()
+    )
+    tool_spans_by_record_id = (
+        _conversation_tool_spans_by_record_id(events)
+        if include_tool_calls
+        else {}
+    )
     for key, roots in conversations.items():
         roots.sort(
             key=lambda root: (
@@ -277,7 +405,24 @@ def _compute_feedback_by_conversation(
         inputs = {}
         for arg, selector in kwarg_to_selector.items():
             if selector.conversation_attribute == "records":
-                value = records
+                if selector.include_tool_calls:
+                    value = []
+                    for record, root in zip(records, roots, strict=True):
+                        record_with_tools = dict(record)
+                        record_id = root["record_attributes"].get(
+                            SpanAttributes.RECORD_ID
+                        )
+                        record_with_tools["tool_calls"] = [
+                            _tool_call_from_span(
+                                span, selector.max_tool_result_chars
+                            )
+                            for span in tool_spans_by_record_id.get(
+                                record_id, []
+                            )
+                        ]
+                        value.append(record_with_tools)
+                else:
+                    value = records
                 span_attribute = "conversation.records"
             elif selector.conversation_attribute == "input":
                 value = [
@@ -311,10 +456,11 @@ def _compute_feedback_by_conversation(
             inputs,
         ))
 
+    num_inputs = len(flattened_inputs)
     flattened_inputs = _remove_already_computed_feedbacks(
         events, feedback_name, flattened_inputs
     )
-    return _run_feedback_on_inputs(
+    num_feedbacks_computed = _run_feedback_on_inputs(
         flattened_inputs,
         feedback_name,
         feedback_function,
@@ -325,6 +471,13 @@ def _compute_feedback_by_conversation(
         record_id_to_conversation_id=target_record_id_to_conversation_id,
         raise_worker_errors=True,
     )
+    if raise_error_on_no_feedbacks_computed:
+        _raise_if_no_feedbacks_computed(
+            feedback_name,
+            num_inputs,
+            len(flattened_inputs),
+            num_feedbacks_computed,
+        )
 
 
 def _group_kwargs_by_selectors(
@@ -595,6 +748,9 @@ def _validate_unflattened_inputs(
     kwarg_groups: List[Tuple[str]],
     record_ids_with_record_roots: List[str],
     feedback_name: str,
+    combinations: feedback_schema.FeedbackCombinations = (
+        feedback_schema.FeedbackCombinations.PRODUCT
+    ),
 ) -> Dict[
     Tuple[str, Optional[str]],
     Dict[Tuple[str], List[Dict[str, FeedbackFunctionInput]]],
@@ -610,6 +766,10 @@ def _validate_unflattened_inputs(
         record_ids_with_record_roots:
             List of record ids that have record roots.
         feedback_name: Name of the feedback function.
+        combinations:
+            How argument values from several multi-value kwarg groups are
+            combined. Under `PRODUCT` such inputs are ambiguous and are
+            dropped; under `ZIP` they are paired by position.
 
     Returns:
         Validated mapping from (record_id, span_group) to kwarg group to inputs.
@@ -623,6 +783,11 @@ def _validate_unflattened_inputs(
         ), kwarg_group_to_inputs in unflattened_inputs.items():
             if len(kwarg_group_to_inputs) != len(kwarg_groups):
                 keys_to_remove.append((record_id, span_group))
+                continue
+
+            if combinations == feedback_schema.FeedbackCombinations.ZIP:
+                # ZIP pairs values by position, so multiple multi-value
+                # groups are well defined instead of ambiguous.
                 continue
 
             # Check for ambiguous inputs (multiple possible values).
@@ -655,11 +820,18 @@ def _flatten_inputs(
         Tuple[str, Optional[str]],
         Dict[Tuple[str], List[Dict[str, FeedbackFunctionInput]]],
     ],
+    combinations: feedback_schema.FeedbackCombinations = (
+        feedback_schema.FeedbackCombinations.PRODUCT
+    ),
 ) -> List[Tuple[str, Optional[str], Dict[str, FeedbackFunctionInput]]]:
-    """Flatten inputs via cartesian product.
+    """Flatten inputs using the given combination mode.
 
     Args:
         unflattened_inputs: Mapping from (record_id, span_group) to kwarg group to inputs to flatten.
+        combinations:
+            How to combine the inputs of the kwarg groups: `PRODUCT` takes
+            the cartesian product, `ZIP` pairs values by position and
+            truncates to the shortest group, as Python `zip` does.
 
     Returns:
         Flattened inputs. Each entry is a tuple of (record_id, span_group, inputs).
@@ -669,12 +841,16 @@ def _flatten_inputs(
         record_id,
         span_group,
     ), kwarg_group_to_inputs in unflattened_inputs.items():
-        # Create a list of dictionaries to use in the product.
+        # Create a list of dictionaries to combine.
         input_dicts = list(kwarg_group_to_inputs.values())
         if not input_dicts:
             continue
+        if combinations == feedback_schema.FeedbackCombinations.ZIP:
+            combinations_iter = zip(*input_dicts)
+        else:
+            combinations_iter = itertools.product(*input_dicts)
         # For each combination, merge the dictionaries.
-        for combination in itertools.product(*input_dicts):
+        for combination in combinations_iter:
             merged_input = {}
             for input_dict in combination:
                 merged_input.update(input_dict)
@@ -714,20 +890,23 @@ def _remove_already_computed_feedbacks(
             )
         )
     ]
-    record_id_to_eval_root_attributes = eval_root_attributes.groupby(
-        by=eval_root_attributes.apply(
-            lambda curr: curr.get(SpanAttributes.RECORD_ID)
-        )
+    # Group in plain Python rather than with `groupby(...).get_group(...)`:
+    # when there is exactly one eval root, pandas treats the length-1 grouping
+    # Series as a length-1 list-like key, and pandas 3 then only accepts a
+    # tuple in `get_group`, raising `KeyError` for the plain record id.
+    record_id_to_eval_root_attributes: Dict[Any, List[Dict[str, Any]]] = (
+        defaultdict(list)
     )
+    for curr in eval_root_attributes:
+        eval_root_record_id = curr.get(SpanAttributes.RECORD_ID)
+        # Like `groupby`, leave out eval roots that have no record id.
+        if eval_root_record_id is not None:
+            record_id_to_eval_root_attributes[eval_root_record_id].append(curr)
     ret = []
     for record_id, span_group, inputs in flattened_inputs:
-        curr_eval_root_attributes = []
-        if record_id in record_id_to_eval_root_attributes.groups:
-            curr_eval_root_attributes = (
-                record_id_to_eval_root_attributes.get_group(record_id)
-                # DEV NOTE: In pandas 2.1.0: `get_group` deprecated grouping on
-                # non-tuple keys.
-            )
+        curr_eval_root_attributes = record_id_to_eval_root_attributes.get(
+            record_id, []
+        )
         if not _feedback_already_computed(
             span_group, inputs, feedback_name, curr_eval_root_attributes
         ):
@@ -761,7 +940,11 @@ def _feedback_already_computed(
         valid = valid and feedback_name == curr.get(
             SpanAttributes.EVAL_ROOT.METRIC_NAME
         )
-        valid = valid and curr.get(SpanAttributes.EVAL_ROOT.SCORE) is not None
+        # A judge that could not be parsed writes UNPARSABLE_SCORE into the
+        # eval root. That sentinel means "no score", not "computed", so the
+        # record must be offered for computation again.
+        score = curr.get(SpanAttributes.EVAL_ROOT.SCORE)
+        valid = valid and score is not None and not is_unparsable_score(score)
         for k, v in kwarg_inputs.items():
             if not valid:
                 break
