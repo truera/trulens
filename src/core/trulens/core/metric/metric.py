@@ -450,7 +450,12 @@ class Metric(feedback_schema.FeedbackDefinition):
             )
         sig: Signature = signature(self.imp)
         num_remaining_parameters = len(
-            list(k for k in sig.parameters.keys() if k not in self.selectors)
+            list(
+                k
+                for k in sig.parameters.keys()
+                if k not in self.selectors
+                and k not in self.implementation_kwargs
+            )
         )
         if num_remaining_parameters == 0:
             return self
