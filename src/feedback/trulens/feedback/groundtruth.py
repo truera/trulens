@@ -1077,17 +1077,23 @@ class GroundTruthAggregator(
                 f"got {len(self.true_labels)} labels and {len(scores)} scores."
             )
 
-    def _binary_labels(self, threshold: float) -> list[int]:
+    def _binary_labels(self, threshold: float) -> list[int | None]:
         """The true labels as 0 or 1, thresholded like the scores.
 
         Graded labels (e.g. 0.8 for a mostly relevant context) would otherwise
         be neither positive nor negative, and their rows would be left out of
         precision and recall. Labels that are already 0 or 1 are kept as they
-        are, whatever the threshold. self.true_labels is not modified (see
-        cohens_kappa).
+        are, whatever the threshold; any other label at or above the threshold
+        (including one above 1) is positive. A NaN label has no class and
+        becomes None, so its row is still left out. self.true_labels is not
+        modified (see cohens_kappa).
         """
         return [
-            int(label) if label in (0, 1) else int(label >= threshold)
+            None
+            if np.isnan(label)
+            else int(label)
+            if label in (0, 1)
+            else int(label >= threshold)
             for label in self.true_labels
         ]
 
@@ -1226,6 +1232,8 @@ class GroundTruthAggregator(
         Parameters:
         - scores (list of float): A list of model-generated scores (0 to 1.0).
         - threshold (float): The threshold to convert scores to binary predictions. Default is 0.5.
+          Graded true labels (other than exactly 0 or 1) are thresholded the same way, as in
+          cohens_kappa; rows with a NaN label are left out.
 
         Returns:
         - float: The recall score.
@@ -1270,6 +1278,8 @@ class GroundTruthAggregator(
         Parameters:
         - scores (list of float): A list of model-generated scores (0 to 1.0).
         - threshold (float): The threshold to convert scores to binary predictions. Default is 0.5.
+          Graded true labels (other than exactly 0 or 1) are thresholded the same way, as in
+          cohens_kappa; rows with a NaN label are left out.
 
         Returns:
         - float: The precision score.
@@ -1313,6 +1323,8 @@ class GroundTruthAggregator(
         Parameters:
         - scores (list of float): A list of model-generated scores (0 to 1.0).
         - threshold (float): The threshold to convert scores to binary predictions. Default is 0.5.
+          Graded true labels (other than exactly 0 or 1) are thresholded the same way, as in
+          cohens_kappa; rows with a NaN label are left out.
 
         Returns:
         - float: The F1 score.

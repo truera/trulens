@@ -562,6 +562,15 @@ class TestGroundTruthAggregator(TestCase):
         self.assertEqual(aggregator.recall(scores), 1.0)
 
     @pytest.mark.optional
+    def test_precision_recall_leave_out_nan_labels(self):
+        """A NaN label has no class, so its row is left out, as before."""
+        aggregator = GroundTruthAggregator(true_labels=[1, float("nan"), 0])
+        scores = [0.9, 0.9, 0.2]
+
+        self.assertEqual(aggregator.precision(scores), 1.0)
+        self.assertEqual(aggregator.recall(scores), 1.0)
+
+    @pytest.mark.optional
     def test_precision_recall_binary_labels_ignore_the_threshold(self):
         """A label of exactly 0 or 1 is not re-thresholded."""
         aggregator = GroundTruthAggregator(true_labels=[1, 0, 1.0, 0.0])
