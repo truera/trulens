@@ -26,6 +26,10 @@ DEFAULT_FALLBACK_PHRASES: Tuple[str, ...] = (
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
 
+# Typographic apostrophes (U+2018, U+2019, U+02BC) read as "'" when matching
+# fallback phrases, so "I\u2019m sorry" matches "i'm sorry".
+_APOSTROPHES = str.maketrans({"\u2018": "'", "\u2019": "'", "\u02bc": "'"})
+
 _ASSISTANT_LINE_RE = re.compile(
     r"^\s*(?:turn\s+\d+\s+)?assistant\s*:\s*(.*?)\s*$",
     re.IGNORECASE,
@@ -119,7 +123,7 @@ def _rouge_l_f1(first: Sequence[str], second: Sequence[str]) -> float:
 
 def _fallback_signal(text: str, phrases: Sequence[str]) -> float:
     """1.0 if `text` contains a known fallback phrase, else 0.0."""
-    lowered = text.lower()
+    lowered = text.lower().translate(_APOSTROPHES)
     return 1.0 if any(phrase in lowered for phrase in phrases) else 0.0
 
 
@@ -198,7 +202,7 @@ def conversation_repetition(
             breakdown, the worst turn, and the number of assistant turns.
     """
     phrases = tuple(
-        phrase.lower()
+        phrase.lower().translate(_APOSTROPHES)
         for phrase in (fallback_phrases or DEFAULT_FALLBACK_PHRASES)
     )
     replies = _assistant_turns(records)

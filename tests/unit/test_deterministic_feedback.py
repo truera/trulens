@@ -107,6 +107,22 @@ class TestConversationRepetition:
         assert custom_score < 0.5
         assert custom_meta["turns"][2]["fallback_phrase"] == 1.0
 
+    def test_fallback_phrase_with_typographic_apostrophes(self):
+        # Models often write "I\u2019m" with U+2019 rather than "'".
+        score, meta = conversation_repetition([
+            {"output": "I\u2019m sorry, I can\u2019t help with that."}
+        ])
+        assert meta["turns"][1]["fallback_phrase"] == 1.0
+        assert score == 0.0
+
+    def test_custom_fallback_phrase_with_typographic_apostrophe(self):
+        score, meta = conversation_repetition(
+            [{"output": "That's outside what I can do here."}],
+            fallback_phrases=["that\u2019s outside what i can do"],
+        )
+        assert meta["turns"][1]["fallback_phrase"] == 1.0
+        assert score == 0.0
+
     def test_score_within_unit_interval(self):
         records = _records([
             ("a", "b c d e f g h"),
