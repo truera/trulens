@@ -1676,6 +1676,10 @@ class SQLAlchemyDB(core_db.DB):
             app_name=app_name,
             app_versions=app_versions,
         )
+        # Filter the parse-failure sentinel before grouping so the aggregates
+        # and confidence intervals describe successfully graded evaluations.
+        # Exclude only the exact sentinel, not other numeric score values.
+        conditions.append(score_col != constants_utils.UNPARSABLE_SCORE)
         if start_time is not None:
             conditions.append(self.orm.Event.start_timestamp >= start_time)
         if end_time is not None:
