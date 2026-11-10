@@ -18,8 +18,9 @@ def db(monkeypatch: pytest.MonkeyPatch) -> Generator[SQLAlchemyDB, None, None]:
     database = SQLAlchemyDB.from_db_url("sqlite:///:memory:")
     assert database.engine is not None
     engine = database.engine
-    database.orm.metadata.create_all(engine)
+
     try:
+        database.migrate_database()
         yield database
     finally:
         engine.dispose()
