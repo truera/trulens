@@ -11,7 +11,10 @@ from trulens.otel.semconv import trace as semconv_trace
 
 
 @pytest.fixture
-def db(tmp_path):
+def db(tmp_path, monkeypatch):
+    # test_feedback.py sets TRULENS_OTEL_TRACING=0 at import, which leaves
+    # the OTEL tables (trulens_events) uncreated for later tests.
+    monkeypatch.setenv("TRULENS_OTEL_TRACING", "1")
     database = db_sqlalchemy.SQLAlchemyDB.from_db_url(
         f"sqlite:///{tmp_path / 'trends.sqlite'}"
     )
