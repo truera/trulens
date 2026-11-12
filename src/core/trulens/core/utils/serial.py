@@ -1029,18 +1029,18 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         """
         try:
             existing = self.get_sole_item(obj)
-            if isinstance(existing, Sequence):
-                return self.set(obj, list(existing) + [val])
-            elif existing is None:
-                return self.set(obj, [val])
-            else:
-                raise ValueError(
-                    f"Trying to append to object which is not a list; "
-                    f"is of type {type(existing).__name__} instead."
-                )
-
         except Exception:
             return self.set(obj, [val])
+
+        if isinstance(existing, Sequence):
+            return self.set(obj, list(existing) + [val])
+        elif existing is None:
+            return self.set(obj, [val])
+        else:
+            raise ValueError(
+                f"Trying to append to object which is not a list; "
+                f"is of type {type(existing).__name__} instead."
+            )
 
     def set(self, obj: T, val: Union[Any, T]) -> T:
         """
