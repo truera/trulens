@@ -326,8 +326,11 @@ class OpenAICostComputer:
                 raise ValueError("OpenAI API returned non-200 status code!")
             response = response.parse()
 
-        endpoint = OpenAIEndpoint()
-        callback = OpenAICallback(endpoint=endpoint)
+        # Only the callback's token and cost counters are read here, so it
+        # needs no endpoint. Building an `OpenAIEndpoint` would create an
+        # `openai.OpenAI()` client, which raises when OPENAI_API_KEY is not
+        # set, even though the app's own client has a key.
+        callback = OpenAICallback()
         model_name = ""
 
         # The clock starts here rather than at the call site: by the time cost
@@ -525,6 +528,15 @@ class OpenAIClient(serial_utils.SerialModel):
 
 
 class OpenAICallback(core_endpoint.EndpointCallback):
+    endpoint: Optional[core_endpoint.Endpoint] = pydantic.Field(
+        default=None, exclude=True
+    )
+    """The endpoint owning this callback, if any.
+
+    OTEL cost tracking builds a callback per response without an endpoint, so
+    that it does not need an OpenAI client of its own.
+    """
+
     langchain_handler: OpenAICallbackHandler = pydantic.Field(
         default_factory=OpenAICallbackHandler, exclude=True
     )
