@@ -101,6 +101,60 @@ def _strip_scale_statement(
     return s
 
 
+_LABELLED_NUMBER = r"([0-9]+(?:\.[0-9]+)?)"
+"""A non-negative integer or decimal, as written after a score label."""
+
+
+def _labelled_rating(
+    s: str, min_score_val: int, max_score_val: int, allow_decimal: bool
+) -> Optional[float]:
+    """The score a judge states explicitly, if it states one in range.
+
+    A judge's reason often contains other numbers ("answers 2 of the 3 parts"),
+    so a score the judge labels as such is preferred over them. Two kinds of
+    label are read, in order of preference:
+
+    1. "Score: N" or "Rating: N", case-insensitive, with optional markdown
+       emphasis such as "**Score:** N".
+    2. "N/M" or "N out of M", only when M is the scale maximum.
+
+    Within the first kind that has an in-range value, the last one wins, since a
+    judge that revises itself states its final score last.
+
+    Args:
+        s: String to read the labelled score from.
+
+        min_score_val: Minimum value of the rating scale.
+
+        max_score_val: Maximum value of the rating scale.
+
+        allow_decimal: Whether to keep decimals rather than truncate them.
+
+    Returns:
+        The last in-range labelled score of the preferred kind, or `None` if the
+            string has no in-range labelled score.
+    """
+    hi = re.escape(str(max_score_val))
+    kinds = (
+        (rf"\b(?:score|rating)\**\s*:\s*\**\s*{_LABELLED_NUMBER}",),
+        (
+            rf"\b{_LABELLED_NUMBER}\s*/\s*{hi}\b",
+            rf"\b{_LABELLED_NUMBER}\s+out\s+of\s+{hi}\b",
+        ),
+    )
+    for patterns in kinds:
+        found = []
+        for pattern in patterns:
+            for match in re.finditer(pattern, s, flags=re.IGNORECASE):
+                value = float(match.group(1))
+                rating = value if allow_decimal else int(value)
+                if min_score_val <= rating <= max_score_val:
+                    found.append((match.start(), rating))
+        if found:
+            return max(found)[1]
+    return None
+
+
 def re_configured_rating(
     s: str,
     min_score_val: int = 0,
@@ -112,8 +166,10 @@ def re_configured_rating(
 
     If the string does not match an integer/a float or matches an integer/a
     float outside the {min_score_val} - {max_score_val} range, raises an error
-    instead. If multiple numbers are found within the expected 0-10 range, the
-    smallest is returned.
+    instead. If the string labels its score ("Score: N", "Rating: N", "N/M" or
+    "N out of M" with M the scale maximum), the last in-range labelled score is
+    returned. Otherwise, if multiple numbers are found within the expected range,
+    the smallest is returned.
 
     Args:
         s: String to extract rating from.
@@ -144,6 +200,15 @@ def re_configured_rating(
     # untouched and keeps its existing behaviour.
     without_scale = _strip_scale_statement(s, min_score_val, max_score_val)
     considered = without_scale if without_scale != s else s
+
+    # Prefer a score the judge labels explicitly over other numbers in its
+    # reason ("Score: 3. It answers 2 of the 3 parts"), which would otherwise win
+    # the min() below. Without a labelled score, the behaviour is unchanged.
+    labelled = _labelled_rating(
+        considered, min_score_val, max_score_val, allow_decimal
+    )
+    if labelled is not None:
+        return labelled
 
     vals = _ratings_in_range(
         considered, min_score_val, max_score_val, allow_decimal
