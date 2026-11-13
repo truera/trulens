@@ -10,10 +10,11 @@ This package provides `TruDSPyMetric`, a thin adapter that wraps a TruLens
 ## Installation
 
 ```bash
-pip install trulens-apps-dspy
+pip install trulens-apps-dspy trulens-providers-openai
 ```
 
-DSPy itself is installed separately:
+The examples below use the OpenAI provider from `trulens-providers-openai`;
+any TruLens provider works. DSPy itself is installed separately:
 
 ```bash
 pip install dspy
@@ -66,10 +67,10 @@ fields = {
 ```
 
 The mapping is checked when the metric is built. An unknown argument name, an
-argument already bound with `Metric.with_arguments`, a malformed path, or a
-required argument left unmapped raises a `ValueError`. A field missing from the
-example or prediction at call time raises an error that names the argument and
-its path.
+argument already bound with `Metric.with_arguments` or set as a metric setting
+such as `criteria`, a malformed path, or a required argument left unmapped
+raises a `ValueError`. A field missing from the example or prediction at call
+time raises an error that names the argument and its path.
 
 `metric` may also be a plain callable, which is wrapped as
 `Metric(implementation=callable)`.
@@ -133,12 +134,15 @@ compiled = optimizer.compile(program, trainset=trainset)
 
 ### GEPA
 
-`dspy.GEPA` scores candidates with the two- and three-argument calls above and
-asks for feedback with `metric(example, prediction, trace, pred_name,
-pred_trace)`. On that call the metric returns
-`dspy.Prediction(score=..., feedback=...)` when the TruLens result carries
-reasons, as the `*_with_cot_reasons` implementations do, so GEPA's reflection
-sees why a candidate scored as it did. Otherwise it returns the float.
+`dspy.GEPA` scores candidates with `metric(example, prediction)` or
+`metric(example, prediction, None)` and asks for feedback with
+`metric(example, prediction, trace, pred_name, pred_trace)`. On that call the
+metric returns `dspy.Prediction(score=..., feedback=...)` when the TruLens
+result carries reasons, as the `*_with_cot_reasons` implementations do, so
+GEPA's reflection sees why a candidate scored as it did. Otherwise it returns
+the float. If the judge returns no usable score on that call, the metric
+returns feedback saying so instead of raising, so the reflection step still
+runs.
 
 ```python
 optimizer = dspy.GEPA(
@@ -149,9 +153,8 @@ optimizer = dspy.GEPA(
 optimized = optimizer.compile(program, trainset=trainset)
 ```
 
-Leave `threshold` unset for GEPA. GEPA also passes a `trace` when it scores the
-minibatches it reflects on, so a threshold would reduce those scores to pass or
-fail.
+`threshold` has no effect on GEPA. GEPA scores candidates with `trace=None` and
+asks for feedback with a predictor name, so neither call returns a bool.
 
 ## Tracing optimizer runs
 

@@ -217,6 +217,22 @@ class TestValidation(TestCase):
         self.assertIn("style", str(ctx.exception))
         self.assertIn("with_arguments", str(ctx.exception))
 
+    def test_field_replaced_by_metric_setting_raises(self):
+        # Metric.__call__ would pass the metric's criteria over the mapped one.
+        def implementation(question: str, answer: str, criteria=None):
+            return 0.5
+
+        with self.assertRaises(ValueError) as ctx:
+            TruDSPyMetric(
+                Metric(implementation=implementation, criteria="Be brief."),
+                fields={**QA_FIELDS, "criteria": "example.rubric"},
+            )
+        self.assertIn("criteria", str(ctx.exception))
+        # Unset, the setting leaves the field to the mapping.
+        TruDSPyMetric(
+            implementation, fields={**QA_FIELDS, "criteria": "example.rubric"}
+        )
+
     def test_unmapped_required_argument_raises(self):
         with self.assertRaises(ValueError) as ctx:
             TruDSPyMetric(_overlap, fields={"question": "example.question"})
@@ -482,6 +498,45 @@ class TestWithDSPy(TestCase):
             self.examples[0], self.dspy.Prediction(answer="Paris")
         )
         self.assertEqual(score, 0.9)
+
+    def test_fields_named_like_example_methods(self):
+        received = {}
+
+        def capture(question, answer) -> float:
+            received.update(question=question, answer=answer)
+            return 0.5
+
+        metric = TruDSPyMetric(
+            capture,
+            fields={"question": "example.labels", "answer": "prediction.items"},
+        )
+        metric(
+            self.dspy.Example(question="q", labels="gold"),
+            self.dspy.Prediction(items=["a", "b"]),
+        )
+        self.assertEqual(received, {"question": "gold", "answer": ["a", "b"]})
+
+    def test_feedback_call_reports_unusable_score(self):
+        # GEPA does not catch errors from its feedback call, so a failed judge
+        # becomes feedback there while plain scoring still raises.
+        metric = TruDSPyMetric(
+            Metric(
+                implementation=_returning((UNPARSABLE_SCORE, {"reason": "x"})),
+                name="Groundedness",
+            ),
+            fields=QA_FIELDS,
+        )
+        example = self.examples[0]
+        prediction = self.dspy.Prediction(answer="a")
+        with self.assertLogs("trulens.apps.dspy.metric", "WARNING"):
+            feedback = metric(example, prediction, [], "qa", [])
+        self.assertIsInstance(feedback, self.dspy.Prediction)
+        self.assertEqual(feedback.score, 0.0)
+        self.assertEqual(
+            feedback.feedback, "Groundedness could not score this example."
+        )
+        with self.assertRaises(ValueError):
+            metric(example, prediction)
 
     def test_feedback_prediction_for_gepa(self):
         feedback = self.metric(

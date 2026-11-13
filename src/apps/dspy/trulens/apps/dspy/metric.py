@@ -32,16 +32,19 @@ FieldSource = Union[str, Callable[[Any, Any], Any]]
 _ROOTS = ("example", "prediction")
 
 # Metric.__call__ passes these to implementations that name them, so such
-# parameters need no field mapping when the metric sets them.
-_METRIC_SETTINGS = (
+# parameters need no field mapping when the metric sets them. Once set, the
+# overriding ones also replace any value passed in, so mapping them is an error.
+_OVERRIDING_SETTINGS = (
     "examples",
     "criteria",
     "additional_instructions",
+    "groundedness_configs",
+    "enable_trace_compression",
+)
+_METRIC_SETTINGS = _OVERRIDING_SETTINGS + (
     "min_score_val",
     "max_score_val",
     "temperature",
-    "groundedness_configs",
-    "enable_trace_compression",
 )
 
 _KEYWORD_KINDS = (
@@ -69,8 +72,10 @@ class TruDSPyMetric:
 
     A score that is not finite, or is the unparsable-score sentinel a judge
     reports when its reply held no score, raises `ValueError` instead of
-    reaching DSPy as a verdict. DSPy counts a metric that raises as a failed
-    example.
+    reaching DSPy as a verdict, and DSPy scores that example as failed. GEPA's
+    feedback call does not guard against errors per example, so there the
+    metric returns feedback saying the example could not be scored, and GEPA
+    keeps the score from its own scoring call.
 
     Example:
         ```python
@@ -111,8 +116,9 @@ class TruDSPyMetric:
         TypeError: If `metric` is not callable, `fields` is not a mapping of
             names, or a source is neither a path nor a callable.
         ValueError: If `fields` names an argument the implementation does not
-            take or that is already bound on the metric, holds a malformed
-            path, or leaves a required argument unmapped.
+            take, that is already bound on the metric, or that a metric
+            setting such as `criteria` would replace; holds a malformed path;
+            or leaves a required argument unmapped.
     """
 
     def __init__(
@@ -163,23 +169,47 @@ class TruDSPyMetric:
         Returns:
             The score as a float; a bool when `threshold` is set and `trace`
                 is given; or, when `pred_name` is given and the metric reports
-                reasons, a `dspy.Prediction` with `score` and `feedback`.
+                reasons or fails to score, a `dspy.Prediction` with `score`
+                and `feedback`.
+
+        Raises:
+            ValueError: If a mapped field is missing, or the result holds no
+                usable score outside a GEPA feedback call.
         """
         kwargs = {
             arg: self._resolve(arg, source, example, prediction)
             for arg, source in self._fields.items()
         }
         score, meta = self._score(self._metric(**kwargs))
+        failed = _is_failed(score)
 
         if pred_name is not None:
-            reasons = _format_reasons(meta)
-            if not reasons:
-                return score
+            if failed:
+                # GEPA asks for feedback outside its per-example error
+                # handling, so raising here would drop the whole reflection
+                # step. GEPA keeps the score of its own scoring call instead
+                # of this placeholder.
+                logger.warning(
+                    "%s produced no usable score (%r) for GEPA feedback.",
+                    self.name,
+                    score,
+                )
+                score = 0.0
+                feedback = f"{self.name} could not score this example."
+            else:
+                reasons = _format_reasons(meta)
+                if not reasons:
+                    return score
+                feedback = f"{self.name} score: {score:.2f}\n{reasons}"
             import dspy
 
-            return dspy.Prediction(
-                score=score,
-                feedback=f"{self.name} score: {score:.2f}\n{reasons}",
+            return dspy.Prediction(score=score, feedback=feedback)
+        if failed:
+            raise ValueError(
+                f"{self.name} produced no usable score ({score!r}). Non-finite "
+                "scores and the unparsable-score sentinel "
+                f"({constants_utils.UNPARSABLE_SCORE}) mark a failed "
+                "evaluation, not a verdict."
             )
         if self._threshold is not None and trace is not None:
             return score >= self._threshold
@@ -235,12 +265,19 @@ class TruDSPyMetric:
                 "with_arguments; remove them from fields."
             )
 
-        supplied = set(fields) | set(bound)
-        supplied.update(
+        settings = {
             setting
             for setting in _METRIC_SETTINGS
             if getattr(self._metric, setting, None) is not None
-        )
+        }
+        overridden = sorted(settings & set(fields) & set(_OVERRIDING_SETTINGS))
+        if overridden:
+            raise ValueError(
+                f"{overridden} are set on {self.name} and would replace the "
+                "mapped values; remove them from fields or from the metric."
+            )
+
+        supplied = set(fields) | set(bound) | settings
         unmapped = [
             n
             for n, p in params.items()
@@ -270,6 +307,13 @@ class TruDSPyMetric:
         root, *attrs = source.split(".")
         value = example if root == "example" else prediction
         for attr in attrs:
+            # Read DSPy fields by key first: a field named like an Example
+            # method (`items`, `labels`, `values`, ...) would otherwise resolve
+            # to the method.
+            keys = getattr(value, "keys", None)
+            if callable(keys) and attr in keys():
+                value = value[attr]
+                continue
             try:
                 value = getattr(value, attr)
             except AttributeError as exc:
@@ -288,18 +332,7 @@ class TruDSPyMetric:
             and isinstance(result[1], Mapping)
         ):
             result, meta = result
-
-        score = self._aggregate(result)
-        if not math.isfinite(score) or constants_utils.is_unparsable_score(
-            score
-        ):
-            raise ValueError(
-                f"{self.name} produced no usable score ({score!r}). Non-finite "
-                "scores and the unparsable-score sentinel "
-                f"({constants_utils.UNPARSABLE_SCORE}) mark a failed "
-                "evaluation, not a verdict."
-            )
-        return score, dict(meta)
+        return self._aggregate(result), dict(meta)
 
     def _aggregate(self, value: Any) -> float:
         """Turn a score or a sequence of scores into one float.
@@ -348,6 +381,12 @@ class TruDSPyMetric:
 def _is_number(value: Any) -> bool:
     """Whether `value` is a real or boolean scalar, numpy types included."""
     return isinstance(value, (numbers.Real, np.bool_))
+
+
+def _is_failed(score: float) -> bool:
+    """Whether `score` marks a failed evaluation rather than a verdict."""
+    finite = math.isfinite(score)
+    return not finite or constants_utils.is_unparsable_score(score)
 
 
 def _format_reasons(meta: Mapping[str, Any]) -> str:
