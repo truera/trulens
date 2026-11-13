@@ -97,10 +97,12 @@ labelled_score_data = [
         3,
         3,
     ),
-    # "2/5" is not on the 0-3 scale, so it is not read as a labelled score.
+    # A "Score:" label is preferred over fractions in the reason.
     ("The context covers 2/5 cases. Score: 3", 0, 3, 3),
-    # A "Score:" label is preferred over a fraction in the reason.
     ("Score: 3. It covers 2/3 of the question's parts.", 0, 3, 3),
+    # By design, a "Rating:" label is treated as the judge's score, even in a
+    # legend-like line, and wins over the other numbers in the reply.
+    ("Rating: 3 means fully relevant. The answer is 1.", 0, 3, 3),
 ]
 
 
@@ -131,6 +133,14 @@ labelled_score_control_data = [
     ("Final score: 2 (on a 0-3 scale)", 0, 3, 2),
     # The case the min() was written for.
     ("1 out of 3", 0, 3, 1),
+    # Without a label, a fraction is not read as the score: the scale maximum
+    # used as a reference does not override the leading score (review on #3074).
+    (
+        "2. A fully relevant answer would be 3/3; this one misses the date.",
+        0,
+        3,
+        2,
+    ),
 ]
 
 

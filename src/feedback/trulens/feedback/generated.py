@@ -111,15 +111,10 @@ def _labelled_rating(
     """The score a judge states explicitly, if it states one in range.
 
     A judge's reason often contains other numbers ("answers 2 of the 3 parts"),
-    so a score the judge labels as such is preferred over them. Two kinds of
-    label are read, in order of preference:
-
-    1. "Score: N" or "Rating: N", case-insensitive, with optional markdown
-       emphasis such as "**Score:** N".
-    2. "N/M" or "N out of M", only when M is the scale maximum.
-
-    Within the first kind that has an in-range value, the last one wins, since a
-    judge that revises itself states its final score last.
+    so a score the judge labels as such is preferred over them. The label is
+    "Score: N" or "Rating: N", case-insensitive, with optional markdown emphasis
+    such as "**Score:** N". If several labelled scores are in range, the last one
+    wins, since a judge that revises itself states its final score last.
 
     Args:
         s: String to read the labelled score from.
@@ -131,28 +126,20 @@ def _labelled_rating(
         allow_decimal: Whether to keep decimals rather than truncate them.
 
     Returns:
-        The last in-range labelled score of the preferred kind, or `None` if the
-            string has no in-range labelled score.
+        The last in-range labelled score, or `None` if the string has no
+            in-range labelled score.
     """
-    hi = re.escape(str(max_score_val))
-    kinds = (
-        (rf"\b(?:score|rating)\**\s*:\s*\**\s*{_LABELLED_NUMBER}",),
-        (
-            rf"\b{_LABELLED_NUMBER}\s*/\s*{hi}\b",
-            rf"\b{_LABELLED_NUMBER}\s+out\s+of\s+{hi}\b",
-        ),
-    )
-    for patterns in kinds:
-        found = []
-        for pattern in patterns:
-            for match in re.finditer(pattern, s, flags=re.IGNORECASE):
-                value = float(match.group(1))
-                rating = value if allow_decimal else int(value)
-                if min_score_val <= rating <= max_score_val:
-                    found.append((match.start(), rating))
-        if found:
-            return max(found)[1]
-    return None
+    rating = None
+    for match in re.finditer(
+        rf"\b(?:score|rating)\**\s*:\s*\**\s*{_LABELLED_NUMBER}",
+        s,
+        flags=re.IGNORECASE,
+    ):
+        value = float(match.group(1))
+        value = value if allow_decimal else int(value)
+        if min_score_val <= value <= max_score_val:
+            rating = value
+    return rating
 
 
 def re_configured_rating(
@@ -166,10 +153,9 @@ def re_configured_rating(
 
     If the string does not match an integer/a float or matches an integer/a
     float outside the {min_score_val} - {max_score_val} range, raises an error
-    instead. If the string labels its score ("Score: N", "Rating: N", "N/M" or
-    "N out of M" with M the scale maximum), the last in-range labelled score is
-    returned. Otherwise, if multiple numbers are found within the expected range,
-    the smallest is returned.
+    instead. If the string labels its score as "Score: N" or "Rating: N", the
+    last in-range labelled score is returned. Otherwise, if multiple numbers are
+    found within the expected range, the smallest is returned.
 
     Args:
         s: String to extract rating from.
@@ -237,8 +223,10 @@ def re_0_10_rating(s: str) -> int:
     """Extract a 0-10 rating from a string.
 
     If the string does not match an integer/a float or matches an integer/a
-    float outside the 0-10 range, raises an error instead. If multiple numbers
-    are found within the expected 0-10 range, the smallest is returned.
+    float outside the 0-10 range, raises an error instead. If the string labels
+    its score as "Score: N" or "Rating: N", the last in-range labelled score is
+    returned. Otherwise, if multiple numbers are found within the expected 0-10
+    range, the smallest is returned.
 
     Args:
         s: String to extract rating from.
