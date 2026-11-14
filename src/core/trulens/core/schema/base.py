@@ -95,6 +95,19 @@ class Cost(serial_utils.SerialModel, pydantic.BaseModel):
     These are typically included in the completion token count for billing purposes.
     """
 
+    n_cache_read_tokens: int = 0
+    """Number of prompt tokens served from the provider's prompt cache.
+
+    These are typically a subset of the prompt tokens (OpenAI) or reported
+    separately from them (Anthropic), and are usually billed at a discount.
+    """
+
+    n_cache_write_tokens: int = 0
+    """Number of prompt tokens written to the provider's prompt cache.
+
+    Only reported by some providers (e.g. Anthropic cache creation tokens).
+    """
+
     n_cortex_guardrails_tokens: int = 0
     """Number of guardrails tokens generated. This is only available for
     requests instrumented by the Cortex endpoint."""

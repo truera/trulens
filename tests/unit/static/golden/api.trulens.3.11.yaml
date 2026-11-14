@@ -1260,6 +1260,8 @@ trulens.core.schema.base.Cost:
   attributes:
     cost: builtins.float
     cost_currency: builtins.str
+    n_cache_read_tokens: builtins.int
+    n_cache_write_tokens: builtins.int
     n_classes: builtins.int
     n_classification_requests: builtins.int
     n_completion_requests: builtins.int

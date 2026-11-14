@@ -78,6 +78,16 @@ class GenAIAttributes:
         OUTPUT_TOKENS = GEN_AI_SCOPE + ".usage.output_tokens"
         """Number of completion/output tokens generated."""
 
+        CACHE_READ_INPUT_TOKENS = (
+            GEN_AI_SCOPE + ".usage.cache_read.input_tokens"
+        )
+        """Number of input tokens served from the provider's prompt cache."""
+
+        CACHE_CREATION_INPUT_TOKENS = (
+            GEN_AI_SCOPE + ".usage.cache_creation.input_tokens"
+        )
+        """Number of input tokens written to the provider's prompt cache."""
+
     class PROVIDER:
         """Current attribute identifying the GenAI provider."""
 
@@ -438,6 +448,12 @@ class SpanAttributes:
 
         NUM_REASONING_TOKENS = base + ".num_reasoning_tokens"
         """Number of reasoning tokens generated (for reasoning models)."""
+
+        NUM_CACHE_READ_TOKENS = base + ".num_cache_read_tokens"
+        """Number of prompt tokens served from the provider's prompt cache."""
+
+        NUM_CACHE_WRITE_TOKENS = base + ".num_cache_write_tokens"
+        """Number of prompt tokens written to the provider's prompt cache."""
 
     class CALL:
         """Instrumented method call attributes."""
