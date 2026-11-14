@@ -206,3 +206,25 @@ class TestLens(TestCase):
             )
 
         # Collect cannot be set.
+
+    def test_set_or_append_rejects_non_sequence(self):
+        for value in (42, {"preserve": "me"}, {1, 2}):
+            with self.subTest(value=value):
+                obj = {"value": value}
+                with self.assertRaisesRegex(ValueError, "not a list"):
+                    serial_utils.Lens().value.set_or_append(obj, "new")
+                self.assertEqual(obj, {"value": value})
+
+    def test_set_or_append_preserves_supported_values(self):
+        cases = (
+            ({}, {"value": ["new"]}),
+            ({"value": None}, {"value": ["new"]}),
+            ({"value": ["old"]}, {"value": ["old", "new"]}),
+            ({"value": ("old",)}, {"value": ["old", "new"]}),
+        )
+        for obj, expected in cases:
+            with self.subTest(obj=obj):
+                self.assertEqual(
+                    serial_utils.Lens().value.set_or_append(obj, "new"),
+                    expected,
+                )
