@@ -119,3 +119,127 @@ class TestOtelFeedback(OtelTestCase):
         )
         with self.assertRaises(RuntimeError):
             Feedback(self._mock_feedback_function_3).on_default()
+
+    def _mock_feedback_function_kwargs_1(self, x: str, **kwargs) -> float:
+        return 0.1
+
+    def _mock_feedback_function_kwargs_2(
+        self, x: str, y: str, **kwargs
+    ) -> float:
+        return 0.2
+
+    def _mock_feedback_function_args_first(self, *args, x: str) -> float:
+        return 0.1
+
+    def _mock_feedback_function_args_first_2(
+        self, *args, x: str, y: str
+    ) -> float:
+        return 0.2
+
+    def test_on_default_skips_var_keyword_parameters(self) -> None:
+        feedback = Feedback(self._mock_feedback_function_kwargs_1).on_default()
+        self.assertEqual(
+            feedback.selectors, {"x": Selector.select_record_output()}
+        )
+        feedback = Feedback(self._mock_feedback_function_kwargs_2).on_default()
+        self.assertEqual(
+            feedback.selectors,
+            {
+                "x": Selector.select_record_input(),
+                "y": Selector.select_record_output(),
+            },
+        )
+
+    def test_on_default_skips_var_positional_parameters(self) -> None:
+        feedback = Feedback(
+            self._mock_feedback_function_args_first
+        ).on_default()
+        self.assertEqual(
+            feedback.selectors, {"x": Selector.select_record_output()}
+        )
+        feedback = Feedback(
+            self._mock_feedback_function_args_first_2
+        ).on_default()
+        self.assertEqual(
+            feedback.selectors,
+            {
+                "x": Selector.select_record_input(),
+                "y": Selector.select_record_output(),
+            },
+        )
+
+    # Shaped like the LLM provider metrics: required inputs, then optional
+    # settings such as criteria and temperature.
+    def _mock_feedback_function_optional_1(
+        self,
+        text: str,
+        criteria: str = None,
+        temperature: float = 0.0,
+        **kwargs,
+    ) -> float:
+        return 0.1
+
+    def _mock_feedback_function_optional_2(
+        self,
+        prompt: str,
+        response: str,
+        criteria: str = None,
+        temperature: float = 0.0,
+        **kwargs,
+    ) -> float:
+        return 0.2
+
+    def test_on_default_uses_required_parameters_when_more_than_two(
+        self,
+    ) -> None:
+        feedback = Feedback(
+            self._mock_feedback_function_optional_1
+        ).on_default()
+        self.assertEqual(
+            feedback.selectors, {"text": Selector.select_record_output()}
+        )
+        feedback = Feedback(
+            self._mock_feedback_function_optional_2
+        ).on_default()
+        self.assertEqual(
+            feedback.selectors,
+            {
+                "prompt": Selector.select_record_input(),
+                "response": Selector.select_record_output(),
+            },
+        )
+
+    def _mock_feedback_function_default_2(
+        self, prompt: str, response: str = None
+    ) -> float:
+        return 0.2
+
+    def _mock_feedback_function_required_3(
+        self, x: str, y: str, z: str, threshold: float = 1.0
+    ) -> float:
+        return 0.3
+
+    def test_on_default_keeps_mapping_for_two_parameters(self) -> None:
+        feedback = Feedback(self._mock_feedback_function_default_2).on_default()
+        self.assertEqual(
+            feedback.selectors,
+            {
+                "prompt": Selector.select_record_input(),
+                "response": Selector.select_record_output(),
+            },
+        )
+
+    def test_on_default_raises_for_three_required_parameters(self) -> None:
+        with self.assertRaises(RuntimeError):
+            Feedback(self._mock_feedback_function_required_3).on_default()
+
+    class _UninitializedProvider:
+        def method(self, text: str) -> float:
+            return 0.1
+
+    def test_on_default_warns_about_self_argument(self) -> None:
+        with self.assertLogs(
+            "trulens.core.metric.metric", level="WARNING"
+        ) as logs:
+            Feedback(self._UninitializedProvider.method).on_default()
+        self.assertIn("has `self` as argument", "\n".join(logs.output))

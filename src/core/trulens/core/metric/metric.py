@@ -441,6 +441,11 @@ class Metric(feedback_schema.FeedbackDefinition):
         app output and two argument metrics should be evaluated on main input
         and main output in that order.
 
+        `*args` and `**kwargs` are not counted. If more than two parameters
+        are left, only the ones without a default value are counted, so a
+        metric with optional settings such as `criteria` or `temperature`
+        is still evaluated on its required inputs.
+
         Returns a new Metric object with this specification.
         """
 
@@ -449,20 +454,45 @@ class Metric(feedback_schema.FeedbackDefinition):
                 "Metric function implementation is required to determine default argument names."
             )
         sig: Signature = signature(self.imp)
-        num_remaining_parameters = len(
-            list(k for k in sig.parameters.keys() if k not in self.selectors)
-        )
-        if num_remaining_parameters == 0:
+        remaining = [
+            name
+            for name, param in sig.parameters.items()
+            if name not in self.selectors
+            and param.kind
+            not in (
+                inspect.Parameter.VAR_POSITIONAL,
+                inspect.Parameter.VAR_KEYWORD,
+            )
+        ]
+        if len(remaining) == 0:
             return self
-        if num_remaining_parameters == 1:
-            # If there is only one parameter left, we assume it is the output.
-            return self.on_output()
-        if num_remaining_parameters == 2:
-            # If there are two parameters left, we assume they are the input
-            # and output.
-            return self.on_input_output()
-        # If there are more than two parameters left, we cannot guess what to
-        # do.
+        self._warn_if_self_argument(remaining)
+        inputs = remaining
+        if len(inputs) > 2:
+            # If there are more than two parameters left, the ones with a
+            # default value are settings rather than inputs.
+            inputs = [
+                name
+                for name in remaining
+                if sig.parameters[name].default is inspect.Parameter.empty
+            ]
+        if len(inputs) == 1:
+            # If there is only one input, we assume it is the output.
+            self._print_guessed_selector(
+                inputs[0], select_schema.Select.RecordOutput
+            )
+            return self.on_output(inputs[0])
+        if len(inputs) == 2:
+            # If there are two inputs, we assume they are the input and
+            # output.
+            self._print_guessed_selector(
+                inputs[0], select_schema.Select.RecordInput
+            )
+            self._print_guessed_selector(
+                inputs[1], select_schema.Select.RecordOutput
+            )
+            return self.on_input(inputs[0]).on_output(inputs[1])
+        # Otherwise we cannot guess what to do.
         raise RuntimeError(
             f"Cannot determine default paths for metric function arguments. "
             f"The metric function has signature {sig}."
@@ -773,6 +803,14 @@ class Metric(feedback_schema.FeedbackDefinition):
             )
         )
 
+    def _warn_if_self_argument(self, par_names: List[str]) -> None:
+        if "self" in par_names:
+            logger.warning(
+                "Metric function `%s` has `self` as argument. "
+                "Perhaps it is static method or its Provider class was not initialized?",
+                python_utils.callable_name(self.imp),
+            )
+
     def _next_unselected_arg_name(self):
         if self.imp is not None:
             sig = signature(self.imp)
@@ -782,12 +820,7 @@ class Metric(feedback_schema.FeedbackDefinition):
                 if k not in self.selectors
                 and k not in self.implementation_kwargs
             )
-            if "self" in par_names:
-                logger.warning(
-                    "Metric function `%s` has `self` as argument. "
-                    "Perhaps it is static method or its Provider class was not initialized?",
-                    python_utils.callable_name(self.imp),
-                )
+            self._warn_if_self_argument(par_names)
             if len(par_names) == 0:
                 raise TypeError(
                     f"Metric implementation {self.imp} with signature {sig} has no more inputs. "
