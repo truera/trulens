@@ -92,6 +92,7 @@ and execution.
 | `ToolSelection` | `tool_selection_with_cot_reasons` | Evaluate the agent's choice of tools. |
 | `ToolCalling` | `tool_calling_with_cot_reasons` | Evaluate the agent's tool invocation quality. |
 | `ToolQuality` | `tool_quality_with_cot_reasons` | Evaluate the tool / system-side quality and reliability. |
+| `DestructiveActions` | `destructive_actions_with_cot_reasons` | Judge whether a coding agent's risky shell actions (deleting outside the workspace, reading credentials, piping a download into a shell, rewriting history, changing its own permissions) were justified by the user's request. |
 
 ## Scaffolding & shared building blocks
 

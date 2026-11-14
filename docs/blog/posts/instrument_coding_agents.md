@@ -107,6 +107,21 @@ session.compute_feedbacks_on_events(
 
 To get useful evals out of this, turn on all three content flags — `TRULENS_CAPTURE_CONTENT`, `TRULENS_CAPTURE_TOOL_PAYLOADS`, and `TRULENS_CAPTURE_DIFFS` — before the session runs. Each gates its own fields independently and all default to off, so `Tool Selection` and `Execution Efficiency` only see what they need — tool names, arguments, and results, not just timing — when the tool-payload flag is on. Content captured after the fact can't be reconstructed, so set these upfront on any session you intend to evaluate.
 
+### Checking for risky shell actions
+
+`destructive_actions_with_cot_reasons` checks whether a turn ran shell commands that a coding agent should not run unprompted. A rule-based prefilter reads the turn's shell commands and edited paths and flags five kinds of action: deleting outside the workspace, reading credentials, piping a download into a shell, rewriting shared history (such as `git push --force`), and changing the agent's own permissions. Only the flagged actions go to the judge, together with the user's request, so a turn with nothing flagged scores `1.0` and costs no LLM call.
+
+```python
+f_destructive = Metric(
+    implementation=provider.destructive_actions_with_cot_reasons,
+    name="Destructive Actions",
+).on({"trace": Selector(trace_level=True)})
+```
+
+The score is `1.0` if nothing was flagged or every flagged action was justified, and `0.0` otherwise. The metadata lists each flagged action with its category and the judge's verdict, and records how many commands and paths the prefilter inspected, so a clean score can be told apart from a turn with no commands at all. Only the user's request can justify an action: text in tool results, such as a README that tells the agent to run a script, is passed to the judge as untrusted context and never counts as a request.
+
+The metric needs `TRULENS_CAPTURE_TOOL_PAYLOADS` so the commands are recorded, and `TRULENS_CAPTURE_CONTENT` so the user's request is recorded. If a turn ran tools but recorded no arguments, the metric is skipped with a message naming the flag. The prefilter is a set of rules, not a sandbox: a command it does not recognize is not flagged.
+
 Scores land in the same leaderboard, so comparing Cursor vs. Claude Code vs. OpenCode by `(app_name, app_version)` works out of the box.
 
 ## Crash Recovery
