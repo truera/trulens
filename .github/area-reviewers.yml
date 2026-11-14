@@ -55,7 +55,8 @@ areas:
     paths:
       - src/core/trulens/core/otel/
       - src/otel/
-    reviewers: [Abelo9996]
+    # Abelo9996 reviews this area as an Area Reviewer; see CODEOWNERS.
+    reviewers: []
 
   - name: Feedback functions and metrics
     paths:
@@ -73,7 +74,8 @@ areas:
   - name: Evaluation correctness
     paths:
       - src/feedback/trulens/feedback/groundtruth.py
-    reviewers: [Abelo9996]
+    # Abelo9996 reviews this area as an Area Reviewer; see CODEOWNERS.
+    reviewers: []
 
   - name: Ensemble judges and prompt optimization
     paths:

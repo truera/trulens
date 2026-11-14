@@ -29,7 +29,7 @@
 /README.md                              @truera/trulens_maintainers @alimtaha
 
 # Feedback functions.
-/src/feedback/                          @truera/trulens_maintainers @alimtaha @feiiiiii5
+/src/feedback/                          @truera/trulens_maintainers @alimtaha @Abelo9996 @feiiiiii5
 
 # Providers — all provider integrations except Cortex.
 /src/providers/                         @truera/trulens_maintainers @alimtaha
@@ -38,14 +38,14 @@
 /src/benchmark/                         @truera/trulens_maintainers @alimtaha
 
 # OpenTelemetry semantic conventions.
-/src/otel/                              @truera/trulens_maintainers @alimtaha
+/src/otel/                              @truera/trulens_maintainers @alimtaha @Abelo9996
 
 # ---------------------------------------------------------------------------
 # Narrower areas — must stay below the broad entries above
 # ---------------------------------------------------------------------------
 
 # Feedback templates.
-/src/feedback/trulens/feedback/templates/     @truera/trulens_maintainers @alimtaha @feiiiiii5
+/src/feedback/trulens/feedback/templates/     @truera/trulens_maintainers @alimtaha @Abelo9996 @feiiiiii5
 
 # Ensemble and prompt optimization.
 /src/feedback/trulens/feedback/optimize.py    @truera/trulens_maintainers @alimtaha
@@ -66,10 +66,14 @@
 /src/core/trulens/core/run.py           @truera/trulens_maintainers @alimtaha
 /src/core/trulens/core/sampling.py      @truera/trulens_maintainers @alimtaha
 
+# OpenTelemetry instrumentation, the database layer, and the feedback and
+# metric runtime in core. The rest of src/core/ stays with maintainers.
+/src/core/trulens/core/otel/            @truera/trulens_maintainers @alimtaha @Abelo9996
+/src/core/trulens/core/database/        @truera/trulens_maintainers @alimtaha @Abelo9996
 # Feedback and metric runtime in core. Part of the feedback functions and
 # metrics area; the rest of src/core/ stays with maintainers.
-/src/core/trulens/core/feedback/        @truera/trulens_maintainers @alimtaha @feiiiiii5
-/src/core/trulens/core/metric/          @truera/trulens_maintainers @alimtaha @feiiiiii5
+/src/core/trulens/core/feedback/        @truera/trulens_maintainers @alimtaha @Abelo9996 @feiiiiii5
+/src/core/trulens/core/metric/          @truera/trulens_maintainers @alimtaha @Abelo9996 @feiiiiii5
 
 # Cortex provider. Tracks unreleased Snowflake API changes, so it is carved out
 # of the providers area and kept with maintainers.
