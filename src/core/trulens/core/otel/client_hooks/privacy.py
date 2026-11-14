@@ -5,15 +5,11 @@ from __future__ import annotations
 from dataclasses import replace
 import json
 import os
-import re
-from typing import Any, Dict, Mapping
+from typing import Any, Dict
 
+from trulens.core.otel import privacy as otel_privacy
 from trulens.core.otel.client_hooks import models
 
-_SECRET_KEY = re.compile(
-    r"(?:api[_-]?key|authorization|cookie|credential|password|private[_-]?key|secret|token)",
-    re.IGNORECASE,
-)
 _SAFE_METADATA_KEYS = {
     "is_interrupt",
     "loop_count",
@@ -25,27 +21,10 @@ _SAFE_METADATA_KEYS = {
 }
 
 
-def _enabled(name: str) -> bool:
-    return os.environ.get(name, "").lower() in {"1", "true", "yes"}
-
-
-def _redact(value: Any) -> Any:
-    if isinstance(value, Mapping):
-        return {
-            str(key): "[REDACTED]"
-            if _SECRET_KEY.search(str(key))
-            else _redact(item)
-            for key, item in value.items()
-        }
-    if isinstance(value, (list, tuple)):
-        return [_redact(item) for item in value]
-    return value
-
-
 def _bounded(value: Any, max_bytes: int) -> Any:
     if value is None:
         return None
-    redacted = _redact(value)
+    redacted = otel_privacy.redact_sensitive_data(value)
     encoded = json.dumps(
         redacted, default=str, sort_keys=True, separators=(",", ":")
     )
@@ -84,10 +63,18 @@ class CapturePolicy:
         except ValueError:
             parsed_max_bytes = 16_384
         return cls(
-            capture_content=_enabled("TRULENS_CAPTURE_CONTENT"),
-            capture_tool_payloads=_enabled("TRULENS_CAPTURE_TOOL_PAYLOADS"),
-            capture_diffs=_enabled("TRULENS_CAPTURE_DIFFS"),
-            capture_paths=_enabled("TRULENS_CAPTURE_PATHS"),
+            capture_content=otel_privacy.is_truthy_env_var(
+                "TRULENS_CAPTURE_CONTENT"
+            ),
+            capture_tool_payloads=otel_privacy.is_truthy_env_var(
+                "TRULENS_CAPTURE_TOOL_PAYLOADS"
+            ),
+            capture_diffs=otel_privacy.is_truthy_env_var(
+                "TRULENS_CAPTURE_DIFFS"
+            ),
+            capture_paths=otel_privacy.is_truthy_env_var(
+                "TRULENS_CAPTURE_PATHS"
+            ),
             max_field_bytes=parsed_max_bytes,
         )
 
