@@ -385,7 +385,6 @@ class MockManager:
             get_feedback_score_trends=Mock(return_value=pd.DataFrame()),
             get_feedback_defs=Mock(return_value=({}, {})),
             get_session=Mock(),
-            is_sis_compatibility_enabled=Mock(return_value=False),
             _show_no_records_error=Mock(),
             _check_cross_format_records=Mock(return_value=(0, 0)),
             ST_RECORDS_LIMIT="records_limit",
