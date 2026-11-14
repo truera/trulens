@@ -32,6 +32,11 @@ areas:
     paths:
       - src/providers/bedrock/
     reviewers: [kimnamu]
+  - name: Batch and guardrail correctness
+    paths:
+      - src/core/trulens/core/batch.py
+      - src/feedback/
+    reviewers: [Garyouki]
   - name: Shared core code
     paths:
       - src/core/
@@ -61,7 +66,7 @@ areas:
       - src/feedback/
       - src/core/trulens/core/feedback/
       - src/core/trulens/core/metric/
-    reviewers: [Payal2000, feiiiiii5]
+    reviewers: [Payal2000]
 
   - name: Feedback templates
     paths:
