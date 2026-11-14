@@ -129,5 +129,58 @@ class TestAnthropicCostComputerUnknownModel(unittest.TestCase):
         )
 
 
+class TestAnthropicCostComputerPromptCache(unittest.TestCase):
+    """Anthropic's input_tokens excludes tokens read from or written to the
+    prompt cache, so they are reported in separate usage fields."""
+
+    def setUp(self):
+        if AnthropicCostComputer is None:
+            self.skipTest("trulens-providers-anthropic not available.")
+
+    def test_cache_tokens_count_as_prompt_tokens_and_are_priced(self):
+        from trulens.providers.anthropic.endpoint import _get_model_pricing
+
+        model = "claude-sonnet-4-5"
+        response = SimpleNamespace(
+            usage=SimpleNamespace(
+                input_tokens=100,
+                cache_read_input_tokens=1000,
+                cache_creation_input_tokens=200,
+                output_tokens=50,
+            ),
+            model=model,
+        )
+
+        cost_info = AnthropicCostComputer.handle_response(response)
+
+        input_price, output_price, cache_read_price, cache_write_price = (
+            _get_model_pricing(model)
+        )
+        expected_cost = (
+            100 * input_price
+            + 1000 * cache_read_price
+            + 200 * cache_write_price
+            + 50 * output_price
+        )
+        self.assertEqual(cost_info[SpanAttributes.COST.NUM_PROMPT_TOKENS], 1300)
+        self.assertEqual(cost_info[SpanAttributes.COST.NUM_TOKENS], 1350)
+        self.assertAlmostEqual(
+            cost_info[SpanAttributes.COST.COST], round(expected_cost, 8)
+        )
+
+    def test_usage_without_cache_fields_is_unchanged(self):
+        response = SimpleNamespace(
+            usage=SimpleNamespace(input_tokens=100, output_tokens=50),
+            model="claude-sonnet-4-5",
+        )
+
+        cost_info = AnthropicCostComputer.handle_response(response)
+
+        self.assertEqual(cost_info[SpanAttributes.COST.NUM_PROMPT_TOKENS], 100)
+        self.assertEqual(cost_info[SpanAttributes.COST.NUM_TOKENS], 150)
+        self.assertIn(SpanAttributes.COST.COST, cost_info)
+        self.assertGreater(cost_info[SpanAttributes.COST.COST], 0)
+
+
 if __name__ == "__main__":
     unittest.main()
