@@ -406,3 +406,56 @@ def test_pii_detection_with_cot_reasons_stays_within_unit_interval(monkeypatch):
     assert 0.0 <= score <= 1.0
     assert score == pytest.approx(1.0, abs=1e-6)
     assert list(reasons) == ["NAME detected: Alice"]
+
+
+@pytest.mark.optional
+@pytest.mark.parametrize("statement", ["", "   ", "\n\t"])
+def test_groundedness_measure_with_nli_empty_statement_is_ungrounded(statement):
+    """A statement with no sentences is ungrounded, not ``nan``.
+
+    ``sent_tokenize`` yields nothing for an empty or whitespace-only statement,
+    so the score list was empty and ``np.mean`` returned ``nan`` (with a
+    "Mean of empty slice" warning). ``nan`` silently drops out of any aggregate
+    score instead of counting as ungrounded.
+    """
+    import warnings
+
+    from trulens.providers.huggingface.provider import Dummy
+
+    provider = Dummy()
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        score, reasons = provider.groundedness_measure_with_nli(
+            source="The sky is blue.", statement=statement
+        )
+
+    assert score == 0.0
+    assert "No non-trivial statements" in reasons["reasons"]
+    assert not [w for w in caught if "empty slice" in str(w.message).lower()]
+
+
+@pytest.mark.optional
+def test_groundedness_measure_with_nli_scores_each_sentence(monkeypatch):
+    """The empty-statement guard must not short-circuit real statements."""
+    from trulens.providers.huggingface.provider import Dummy
+
+    provider = Dummy()
+    seen = []
+
+    def fake_doc_groundedness(premise, hypothesis):
+        seen.append((premise, hypothesis))
+        return 0.5
+
+    monkeypatch.setattr(provider, "_doc_groundedness", fake_doc_groundedness)
+
+    score, reasons = provider.groundedness_measure_with_nli(
+        source="The sky is blue.", statement="The sky is blue. Grass is green."
+    )
+
+    assert score == pytest.approx(0.5)
+    assert seen == [
+        ("The sky is blue.", "The sky is blue."),
+        ("The sky is blue.", "Grass is green."),
+    ]
+    assert reasons["reasons"].count("[Doc NLI Used full source]") == 2
