@@ -28,6 +28,7 @@ Merge rights scoped to the paths listed in `CODEOWNERS`.
 | Name | Affiliation | GitHub | Area |
 | ---- | ----------- | ------ | ---- |
 | Abel Yagubyan | University of Georgia, Athens | Abelo9996 | OpenTelemetry instrumentation; database layer; feedback functions and metrics |
+| Fei | Sun Yat-sen University | feiiiiii5 | Feedback functions and metrics |
 
 ## Area Triagers
 
@@ -35,8 +36,6 @@ Issue and pull request triage in a named area. No write access to the codebase.
 
 | Name | Affiliation | GitHub | Area |
 | ---- | ----------- | ------ | ---- |
-| Abel Yagubyan | University of Georgia, Athens | Abelo9996 | Shared core code |
-| Fei | Sun Yat-sen University | feiiiiii5 | Feedback functions and metrics |
 | Nikhil Thakur | InviGrid | bashward | Ensemble judges and prompt optimization |
 | Payal Nagaonkar | Peeker AI | Payal2000 | Feedback functions and metrics; OpenTelemetry semantic conventions |
 | Sudhindra Desai | Not declared | connectsudhindra | Dashboard; Ollama provider |

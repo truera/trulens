@@ -1183,7 +1183,9 @@ class TestOtelInstrumentAsyncBehindDecorator(unittest.TestCase):
             spans[0].attributes[SpanAttributes.CALL.ERROR], "no more babies"
         )
 
-    def _assert_stream_protocol_forwarded(self, make_stream) -> None:
+    def _assert_stream_protocol_forwarded(
+        self, make_stream, traced: bool = True
+    ) -> None:
         # `asend`, `athrow`, and `aclose` reach the inner generator, as they
         # would without instrumentation.
         events = []
@@ -1217,10 +1219,31 @@ class TestOtelInstrumentAsyncBehindDecorator(unittest.TestCase):
             [("received", "Kojikun"), ("thrown", "Nolan"), ("closed",)],
         )
         spans = self.exporter.get_finished_spans()
+        if not traced:
+            self.assertEqual(len(spans), 0)
+            return
         self.assertEqual(len(spans), 1)
         self.assertEqual(
             spans[0].attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED], 3
         )
+
+    def test_async_generator_function_forwards_protocol(self) -> None:
+        async def make_stream(source):
+            return instrument()(source)()
+
+        self._assert_stream_protocol_forwarded(make_stream)
+
+    def test_async_generator_function_forwards_protocol_outside_recording(
+        self,
+    ) -> None:
+        async def make_stream(source):
+            return instrument()(source)()
+
+        token = context_api.attach(remove_baggage("__trulens_recording__"))
+        try:
+            self._assert_stream_protocol_forwarded(make_stream, traced=False)
+        finally:
+            context_api.detach(token)
 
     def test_async_generator_behind_sync_decorator_forwards_protocol(
         self,
