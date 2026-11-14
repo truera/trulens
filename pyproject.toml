@@ -80,6 +80,7 @@ mkdocs-literate-nav = ">=0.6"
 mkdocs-section-index = ">=0.3"
 
 [tool.poetry.group.apps.dependencies]
+trulens-apps-autogen = { path = "src/apps/autogen", develop = true }
 trulens-apps-claude = { path = "src/apps/claude", develop = true }
 trulens-apps-cursor = { path = "src/apps/cursor", develop = true }
 trulens-apps-opencode = { path = "src/apps/opencode", develop = true }

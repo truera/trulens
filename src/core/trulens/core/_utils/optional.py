@@ -18,6 +18,9 @@ REQUIREMENT_APPS_LANGGRAPH = import_utils.format_import_errors(
 REQUIREMENT_APPS_NEMO = import_utils.format_import_errors(
     "trulens-apps-nemo", purpose="instrumenting NeMo Guardrails apps"
 )
+REQUIREMENT_APPS_AUTOGEN = import_utils.format_import_errors(
+    "trulens-apps-autogen", purpose="instrumenting AutoGen apps"
+)
 
 REQUIREMENT_TQDM = import_utils.format_import_errors(
     "tqdm", purpose="displaying progress bars"
