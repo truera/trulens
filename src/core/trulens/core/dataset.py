@@ -10,6 +10,7 @@ the existing dataset APIs.
 
 from __future__ import annotations
 
+import datetime
 import json
 import logging
 import math
@@ -217,6 +218,15 @@ def _normalize_text(value: Any) -> str | None:
     encoded as a JSON string — are re-serialized with sorted keys so that key
     ordering does not change the content-addressed ground truth id.
 
+    A dataframe hands back a parquet list column as a numpy array and a struct
+    column as a dict whose values may still be arrays. Those reach the encoder
+    as types it does not know, so it is given a fallback that renders them as
+    the list they represent; without it an array goes through `str()` and
+    prints as `['a' 'b']` rather than as the JSON a list produces, and a nested
+    array raises. The fallback only converts what the encoder cannot already
+    handle, so values it does accept — empty strings and NaN among them — keep
+    the text they had before and existing curated ids do not change.
+
     Mirrors the normalization used for run comparison in
     `trulens.core.run`.
     """
@@ -225,7 +235,21 @@ def _normalize_text(value: Any) -> str | None:
         return None
 
     if isinstance(value, (dict, list)):
-        return json.dumps(value, sort_keys=True, ensure_ascii=False)
+        return json.dumps(
+            value,
+            sort_keys=True,
+            ensure_ascii=False,
+            default=_json_default,
+        )
+
+    elements = _as_elements(value)
+    if elements is not None:
+        return json.dumps(
+            elements,
+            sort_keys=True,
+            ensure_ascii=False,
+            default=_json_default,
+        )
 
     text = str(value).strip()
 
@@ -240,12 +264,77 @@ def _normalize_text(value: Any) -> str | None:
     return text
 
 
+def _as_elements(value: Any) -> list | None:
+    """The elements of an array-like value, or `None` if it is not one.
+
+    A list column read from a parquet export comes back as a numpy array
+    rather than a list, so the curation code cannot test for `list` alone.
+    Strings, bytes and dicts are containers too, but their elements are not
+    what the caller meant to pass as a sequence, so they are excluded.
+    """
+
+    if isinstance(value, (list, tuple)):
+        return list(value)
+
+    if isinstance(value, (str, bytes, bytearray, dict)):
+        return None
+
+    if hasattr(value, "tolist"):
+        try:
+            # A 1-D nanosecond datetime array's `.tolist()` returns int
+            # nanoseconds (numpy cannot represent ns as datetime objects),
+            # which would curate the same timestamp to different text — and a
+            # different ground truth id — than the equivalent Python list.
+            # pandas keeps the timestamps; `_json_default` renders them as
+            # text. Higher-dimensional arrays keep the plain `.tolist()`.
+            if getattr(value, "ndim", 1) == 1:
+                converted = pd.Series(value).tolist()
+            else:
+                converted = value.tolist()
+        except (AttributeError, TypeError, ValueError):
+            return None
+        if isinstance(converted, list):
+            return converted
+
+    return None
+
+
+def _json_default(value: Any) -> Any:
+    """Render one value the JSON encoder has no rule for, or refuse it.
+
+    Only parquet's array-likes and numpy scalars reach this: a list column is
+    read back as a numpy array, and a struct column's fields may still be
+    arrays. Returning the list an array represents is what makes the cell
+    serialize the same way an equivalent Python list would, so the same row
+    curated from a parquet export and from a JSON export yields one ground
+    truth id. Anything else is genuinely unserializable and keeps raising.
+    """
+
+    if isinstance(value, (datetime.datetime, datetime.date)):
+        # Timestamps from array elements render as text so every export
+        # format curates the same logical value to the same id.
+        return str(value)
+
+    elements = _as_elements(value)
+    if elements is not None:
+        return elements
+
+    if hasattr(value, "item"):  # numpy scalar
+        return value.item()
+
+    raise TypeError(
+        f"Object of type {type(value).__name__} is not JSON serializable"
+    )
+
+
 def _normalize_contexts(value: Any) -> list[dict[str, Any]] | None:
     """Normalize expected contexts into `GroundTruth.expected_chunks` shape.
 
     Accepts a list of dicts, a list of strings, a single string or dict, or a
     JSON encoding of any of those. Plain text becomes `{"text": ...}` so that
     every chunk is a dict, which is what `expected_chunks` is typed as.
+    Array-like values such as the numpy arrays a parquet export yields are
+    treated as the list they represent.
     """
 
     if _is_missing(value):
@@ -264,9 +353,10 @@ def _normalize_contexts(value: Any) -> list[dict[str, Any]] | None:
     if isinstance(value, dict):
         return [_json_safe(value)]
 
-    if isinstance(value, (list, tuple)):
+    elements = _as_elements(value)
+    if elements is not None:
         chunks = []
-        for element in value:
+        for element in elements:
             if _is_missing(element):
                 continue
             if isinstance(element, dict):
@@ -282,15 +372,18 @@ def _json_safe(value: Any) -> Any:
     """Coerce a value read out of a dataframe into something serializable.
 
     Pandas hands back numpy scalars and `NaT`, neither of which survives the
-    json encoding that ground truth metadata goes through.
+    json encoding that ground truth metadata goes through. Array-like values,
+    such as the numpy arrays a parquet export yields for a list column, are
+    preserved as lists instead of being reduced to their repr.
     """
 
     if _is_missing(value):
         return None
     if isinstance(value, dict):
         return {str(k): _json_safe(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_json_safe(v) for v in value]
+    elements = _as_elements(value)
+    if elements is not None:
+        return [_json_safe(element) for element in elements]
     if isinstance(value, (str, bool, int, float)):
         return value
     if hasattr(value, "item"):  # numpy scalar
