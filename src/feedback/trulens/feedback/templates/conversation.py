@@ -24,7 +24,11 @@ __all__ = [
 
 
 def conversation_to_prompt(records: list[Any] | str) -> str:
-    """Serialize conversation records or messages into a transcript."""
+    """Serialize conversation records or messages into a transcript.
+
+    Role/content messages without text, such as an assistant message that
+    only calls a tool, are left out.
+    """
     if isinstance(records, str):
         return records
 
@@ -44,7 +48,7 @@ def conversation_to_prompt(records: list[Any] | str) -> str:
         ):
             if record.get("input") is not None:
                 transcript_lines.append(f"Turn {idx} User: {record['input']}")
-            for tool_call in record.get("tool_calls", []):
+            for tool_call in record.get("tool_calls") or []:
                 transcript_lines.append(
                     f"Turn {idx} Tool call: {_tool_call_to_prompt(tool_call)}"
                 )
@@ -57,6 +61,8 @@ def conversation_to_prompt(records: list[Any] | str) -> str:
             content = record.get(
                 "content", record.get("text", record.get("message", ""))
             )
+            if content is None or not str(content).strip():
+                continue
             transcript_lines.append(f"{str(role).capitalize()}: {content}")
         else:
             transcript_lines.append(f"Turn {idx}: {record!s}")
@@ -97,6 +103,7 @@ def assistant_turn_numbers(records: list[Any] | str) -> list[int] | None:
     (`Turn 2 Assistant: ...`). Role/content messages are not numbered in the
     transcript, so their assistant messages are numbered 1, 2, 3, ... in order
     of appearance; the role adherence prompt asks the judge to do the same.
+    Messages without text are skipped, as they are in the transcript.
 
     Returns `None` when the assistant turns cannot be counted: a transcript
     string, a list that mixes the two styles, or items of another shape.
@@ -121,7 +128,14 @@ def assistant_turn_numbers(records: list[Any] | str) -> list[int] | None:
         elif isinstance(record, dict):
             seen_message = True
             role = record.get("role", record.get("speaker"))
-            if str(role).strip().lower() == "assistant":
+            content = record.get(
+                "content", record.get("text", record.get("message"))
+            )
+            if (
+                str(role).strip().lower() == "assistant"
+                and content is not None
+                and str(content).strip()
+            ):
                 messages.append(len(messages) + 1)
         else:
             return None
@@ -203,7 +217,7 @@ def _conversation_turns(records: list[Any]) -> list[tuple[int, str, Any]]:
                 ("user", record.get("input")),
                 *(
                     ("tool call", _tool_call_to_prompt(tool_call))
-                    for tool_call in record.get("tool_calls", [])
+                    for tool_call in record.get("tool_calls") or []
                 ),
                 ("assistant", record.get("output")),
             ]
