@@ -134,3 +134,118 @@ def test_validate_unflattened_inputs_zip_keeps_paired_inputs() -> None:
         combinations=feedback_schema.FeedbackCombinations.ZIP,
     )
     assert list(validated) == [(RECORD_ID, None)]
+
+
+_GENERATION_INPUT_ATTRIBUTE = "test.generation.input"
+_RECORD_ROOT_SPAN_ID = "span-root"
+
+
+def _events_row(
+    *,
+    span_id: str,
+    parent_id: str | None,
+    start_timestamp: float,
+    span_type: str,
+    name: str,
+    attributes: dict | None = None,
+) -> dict:
+    return {
+        "record_attributes": {
+            SpanAttributes.SPAN_TYPE: span_type,
+            SpanAttributes.RECORD_ID: RECORD_ID,
+            **(attributes or {}),
+        },
+        "trace": {"span_id": span_id, "parent_id": parent_id},
+        "record": {"name": name, "events": []},
+        "start_timestamp": start_timestamp,
+    }
+
+
+def _zip_pairs_from_events(events: pd.DataFrame) -> list[dict]:
+    """Collect spans from events and flatten them with ZIP combinations."""
+    selectors = {
+        "q": Selector(
+            span_type=SpanAttributes.SpanType.RETRIEVAL,
+            span_attribute=SpanAttributes.RETRIEVAL.QUERY_TEXT,
+        ),
+        "a": Selector(
+            span_type=SpanAttributes.SpanType.GENERATION,
+            span_attribute=_GENERATION_INPUT_ATTRIBUTE,
+        ),
+    }
+    groups: list[tuple[str]] = computer._group_kwargs_by_selectors(selectors)
+    unflattened = computer._collect_inputs_from_events(
+        events, groups, selectors
+    )
+    flattened = computer._flatten_inputs(
+        unflattened,
+        combinations=feedback_schema.FeedbackCombinations.ZIP,
+    )
+    return [
+        {name: value.value for name, value in inputs.items()}
+        for _, _, inputs in flattened
+    ]
+
+
+def test_zip_combinations_pair_spans_in_start_timestamp_order() -> None:
+    """ZIP pairing must not depend on the events table row order.
+
+    ``get_events`` has no ORDER BY, and concurrent retrievals can change
+    the order of event rows. ZIP pairs values by position, so traversal
+    must sort spans by start_timestamp (like the conversation tool spans
+    in ``_conversation_tool_spans_by_record_id``) instead of row order.
+    """
+    rows = [
+        _events_row(
+            span_id=_RECORD_ROOT_SPAN_ID,
+            parent_id=None,
+            start_timestamp=0.0,
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            name="record_root",
+        ),
+        _events_row(
+            span_id="span-r1",
+            parent_id=_RECORD_ROOT_SPAN_ID,
+            start_timestamp=1.0,
+            span_type=SpanAttributes.SpanType.RETRIEVAL,
+            name="retrieve",
+            attributes={SpanAttributes.RETRIEVAL.QUERY_TEXT: "q1"},
+        ),
+        _events_row(
+            span_id="span-r2",
+            parent_id=_RECORD_ROOT_SPAN_ID,
+            start_timestamp=2.0,
+            span_type=SpanAttributes.SpanType.RETRIEVAL,
+            name="retrieve",
+            attributes={SpanAttributes.RETRIEVAL.QUERY_TEXT: "q2"},
+        ),
+        _events_row(
+            span_id="span-g1",
+            parent_id=_RECORD_ROOT_SPAN_ID,
+            start_timestamp=1.5,
+            span_type=SpanAttributes.SpanType.GENERATION,
+            name="generate",
+            attributes={_GENERATION_INPUT_ATTRIBUTE: "a1"},
+        ),
+        _events_row(
+            span_id="span-g2",
+            parent_id=_RECORD_ROOT_SPAN_ID,
+            start_timestamp=2.5,
+            span_type=SpanAttributes.SpanType.GENERATION,
+            name="generate",
+            attributes={_GENERATION_INPUT_ATTRIBUTE: "a2"},
+        ),
+    ]
+    rows_by_span_id = {row["trace"]["span_id"]: row for row in rows}
+    expected = [{"q": "q1", "a": "a1"}, {"q": "q2", "a": "a2"}]
+
+    for order in (
+        ("span-r2", "span-g1", "span-r1", "span-g2"),
+        ("span-g2", "span-r1", "span-g1", "span-r2"),
+        ("span-g1", "span-r2", "span-g2", "span-r1"),
+    ):
+        events = pd.DataFrame(
+            [rows_by_span_id[_RECORD_ROOT_SPAN_ID]]
+            + [rows_by_span_id[span_id] for span_id in order]
+        )
+        assert _zip_pairs_from_events(events) == expected
