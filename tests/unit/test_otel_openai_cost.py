@@ -94,9 +94,10 @@ class _SyncApp:
 @pytest.mark.optional
 class TestOtelOpenAICost(tests.util.otel_test_case.OtelTestCase):
     def setUp(self) -> None:
-        # Cost tracking builds an OpenAIEndpoint, whose client insists on a key
-        # even though nothing here reaches the network.
-        patcher = mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"})
+        # The apps pass their key to the client directly, so cost tracking
+        # must not need OPENAI_API_KEY in the environment.
+        env = {k: v for k, v in os.environ.items() if k != "OPENAI_API_KEY"}
+        patcher = mock.patch.dict(os.environ, env, clear=True)
         patcher.start()
         self.addCleanup(patcher.stop)
         return super().setUp()
