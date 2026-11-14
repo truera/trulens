@@ -12611,6 +12611,25 @@ type = "directory"
 url = "src/providers/orcarouter"
 
 [[package]]
+name = "trulens-providers-typesafe"
+version = "2.16.0"
+description = "TypeSafe Jev feedback provider for TruLens."
+optional = false
+python-versions = "^3.10"
+groups = ["providers"]
+files = []
+develop = true
+
+[package.dependencies]
+trulens-core = "^2.0.0"
+trulens-feedback = "^2.0.0"
+typesafe-sdk = "^0.7.5"
+
+[package.source]
+type = "directory"
+url = "src/providers/typesafe"
+
+[[package]]
 name = "truststore"
 version = "0.10.4"
 description = "Verify certificates using native system trust stores"
@@ -12627,6 +12646,33 @@ files = [
 type = "legacy"
 url = "https://pypi.org/simple"
 reference = "pypi-public"
+
+[[package]]
+name = "typesafe-sdk"
+version = "0.7.5"
+description = "Python SDK for TypeSafe AI API."
+optional = false
+python-versions = ">=3.10"
+groups = ["providers"]
+files = [
+    {file = "typesafe_sdk-0.7.5-py3-none-any.whl", hash = "sha256:967a8b61494d536abb55ee3f3a2b10e81685cb6baad6ccdcab588bdc6c9b86d2"},
+    {file = "typesafe_sdk-0.7.5.tar.gz", hash = "sha256:1eeeb0dc80a7161d84896db42a5016dc0a7c8872fa16540b70163e5357b6d398"},
+]
+
+[package.dependencies]
+anyio = ">=4.0.0"
+httpx2 = ">=2.0.0"
+packaging = ">=24.0"
+pydantic = ">=2.12.0"
+pydantic-core = ">=2.41.1"
+tenacity = ">=9.0.0"
+truststore = {version = ">=0.10.0", markers = "sys_platform != \"emscripten\""}
+typing-extensions = ">=4.13.0"
+
+[package.extras]
+http2 = ["httpx2[http2] (>=2.0.0)"]
+pil = ["pillow (>=11.0.0)"]
+zstd = ["backports-zstd (>=1.0.0) ; python_full_version < \"3.14.0\""]
 
 [[package]]
 name = "twine"
@@ -13952,4 +13998,4 @@ otlp = ["opentelemetry-exporter-otlp-proto-grpc"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "12d92258b78f557474671ed9e04005fa1fb7c036c1b8cefa54288057c1351bdf"
+content-hash = "dd4d2d41ce0b4f640fec68233b2afb86e6274f0d55e40ad835ca52b66a37067f"
