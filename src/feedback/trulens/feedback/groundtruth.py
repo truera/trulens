@@ -14,6 +14,7 @@ from scipy import stats
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import roc_auc_score
+from trulens.core.utils import constants as constants_utils
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
@@ -1077,6 +1078,30 @@ class GroundTruthAggregator(
                 f"got {len(self.true_labels)} labels and {len(scores)} scores."
             )
 
+    def _graded_rows(self, scores: list[float], metric: str) -> list[int]:
+        """Indices of the rows whose judge reply produced a score.
+
+        A reply that could not be parsed is scored `UNPARSABLE_SCORE`. Fed into
+        an error or calibration metric as if it were a verdict, it is measured
+        against its label like any other prediction: `-1.0` against a label of
+        `0` adds a full unit of error to a judge that was right about every row
+        it graded. The row is left out, together with its label, and the count
+        is logged.
+        """
+        graded = [
+            i
+            for i, score in enumerate(scores)
+            if not constants_utils.is_unparsable_score(score)
+        ]
+        if len(graded) < len(scores):
+            logger.warning(
+                "%s ignored %d of %d scores that were unparsable judge replies.",
+                metric,
+                len(scores) - len(graded),
+                len(scores),
+            )
+        return graded
+
     def auc(self, scores: list[float]) -> float:
         """
         Calculate the area under the ROC curve. Can be used for meta-evaluation.
@@ -1329,12 +1354,17 @@ class GroundTruthAggregator(
             scores = [score for score, _ in scores]
         assert len(scores) == len(self.true_labels)
 
+        graded = self._graded_rows(scores, "brier_score")
+        # Every reply unparsable: no judge verdict to score, same as no scores.
+        if not graded:
+            return np.nan
+
         brier_score = 0
 
-        for score, truth in zip(scores, self.true_labels):
-            brier_score += (score - truth) ** 2
+        for i in graded:
+            brier_score += (scores[i] - self.true_labels[i]) ** 2
 
-        return brier_score / len(scores)
+        return brier_score / len(graded)
 
     def ece(self, score_confidence_pairs: list[tuple[float]]) -> float:
         """
@@ -1347,8 +1377,19 @@ class GroundTruthAggregator(
             float: Expected calibration error
         """
 
+        # Undefined for empty input, as for brier_score. `len` rather than
+        # truthiness: a NumPy array of pairs is accepted here.
+        if len(score_confidence_pairs) == 0:
+            return np.nan
+
         assert len(score_confidence_pairs) == len(self.true_labels)
         scores, confidences = zip(*score_confidence_pairs)
+
+        graded = self._graded_rows(list(scores), "ece")
+        if not graded:
+            return np.nan
+        scores = [scores[i] for i in graded]
+        confidences = [confidences[i] for i in graded]
 
         # uniform binning approach with M number of bins
         bin_boundaries = np.linspace(0, 1, self.n_bins + 1)
@@ -1358,7 +1399,7 @@ class GroundTruthAggregator(
         # get predictions from relevance scores
         relevance_scores = np.array(scores)
         confidences = np.array(confidences)
-        true_labels = np.array(self.true_labels)
+        true_labels = np.array([self.true_labels[i] for i in graded])
         predicted_labels = (relevance_scores >= 0.5).astype(int)
 
         # get a boolean list of correct/false predictions
@@ -1396,9 +1437,24 @@ class GroundTruthAggregator(
             float: Mean absolute error
         """
 
+        # Undefined for empty input, as for brier_score, whatever the labels
+        # hold. `len` rather than truthiness: a NumPy array is accepted here.
+        if len(scores) == 0:
+            return np.nan
+
         # TODO: refactor this, this is to deal with COT type of response from feedback functions
         if isinstance(scores[0], list):
             scores = [score for score, _ in scores]
-            print(f"flatten scores: {scores}")
 
-        return np.mean(np.abs(np.array(scores) - np.array(self.true_labels)))
+        self._check_length(scores)
+
+        graded = self._graded_rows(scores, "mae")
+        if not graded:
+            return np.nan
+
+        return np.mean(
+            np.abs(
+                np.array([scores[i] for i in graded])
+                - np.array([self.true_labels[i] for i in graded])
+            )
+        )
