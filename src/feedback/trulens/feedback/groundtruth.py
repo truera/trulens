@@ -1077,6 +1077,26 @@ class GroundTruthAggregator(
                 f"got {len(self.true_labels)} labels and {len(scores)} scores."
             )
 
+    def _binary_labels(self, threshold: float) -> list[int | None]:
+        """The true labels as 0 or 1, thresholded like the scores.
+
+        Graded labels (e.g. 0.8 for a mostly relevant context) would otherwise
+        be neither positive nor negative, and their rows would be left out of
+        precision and recall. Labels that are already 0 or 1 are kept as they
+        are, whatever the threshold; any other label at or above the threshold
+        (including one above 1) is positive. A NaN label has no class and
+        becomes None, so its row is still left out. self.true_labels is not
+        modified (see cohens_kappa).
+        """
+        return [
+            None
+            if np.isnan(label)
+            else int(label)
+            if label in (0, 1)
+            else int(label >= threshold)
+            for label in self.true_labels
+        ]
+
     def auc(self, scores: list[float]) -> float:
         """
         Calculate the area under the ROC curve. Can be used for meta-evaluation.
@@ -1212,6 +1232,8 @@ class GroundTruthAggregator(
         Parameters:
         - scores (list of float): A list of model-generated scores (0 to 1.0).
         - threshold (float): The threshold to convert scores to binary predictions. Default is 0.5.
+          Graded true labels (other than exactly 0 or 1) are thresholded the same way, as in
+          cohens_kappa; rows with a NaN label are left out.
 
         Returns:
         - float: The recall score.
@@ -1221,18 +1243,20 @@ class GroundTruthAggregator(
             scores = [score for score, _ in scores]
         self._check_length(scores)
 
+        true_labels = self._binary_labels(threshold)
+
         # Convert scores to binary predictions based on the threshold
         predictions = [1 if score >= threshold else 0 for score in scores]
 
         # Calculate true positives and false negatives
         true_positives = sum(
             1
-            for true, pred in zip(self.true_labels, predictions)
+            for true, pred in zip(true_labels, predictions)
             if true == 1 and pred == 1
         )
         false_negatives = sum(
             1
-            for true, pred in zip(self.true_labels, predictions)
+            for true, pred in zip(true_labels, predictions)
             if true == 1 and pred == 0
         )
 
@@ -1254,6 +1278,8 @@ class GroundTruthAggregator(
         Parameters:
         - scores (list of float): A list of model-generated scores (0 to 1.0).
         - threshold (float): The threshold to convert scores to binary predictions. Default is 0.5.
+          Graded true labels (other than exactly 0 or 1) are thresholded the same way, as in
+          cohens_kappa; rows with a NaN label are left out.
 
         Returns:
         - float: The precision score.
@@ -1262,18 +1288,20 @@ class GroundTruthAggregator(
             scores = [score for score, _ in scores]
         self._check_length(scores)
 
+        true_labels = self._binary_labels(threshold)
+
         # Convert scores to binary predictions based on the threshold
         predictions = [1 if score >= threshold else 0 for score in scores]
 
         # Calculate true positives and false positives
         true_positives = sum(
             1
-            for true, pred in zip(self.true_labels, predictions)
+            for true, pred in zip(true_labels, predictions)
             if true == 1 and pred == 1
         )
         false_positives = sum(
             1
-            for true, pred in zip(self.true_labels, predictions)
+            for true, pred in zip(true_labels, predictions)
             if true == 0 and pred == 1
         )
 
@@ -1295,6 +1323,8 @@ class GroundTruthAggregator(
         Parameters:
         - scores (list of float): A list of model-generated scores (0 to 1.0).
         - threshold (float): The threshold to convert scores to binary predictions. Default is 0.5.
+          Graded true labels (other than exactly 0 or 1) are thresholded the same way, as in
+          cohens_kappa; rows with a NaN label are left out.
 
         Returns:
         - float: The F1 score.
