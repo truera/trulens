@@ -122,6 +122,9 @@ class GenAIAttributes:
         CALL_RESULT = GEN_AI_SCOPE + ".tool.call.result"
         """Result returned by the tool (JSON-serialised)."""
 
+        DEFINITIONS = GEN_AI_SCOPE + ".tool.definitions"
+        """Tool names and parameter schemas available to a GenAI request."""
+
 
 class GenAIEvents:
     """OTEL GenAI semantic convention event names and event attribute keys.
