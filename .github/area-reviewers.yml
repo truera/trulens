@@ -79,6 +79,7 @@ areas:
 
   - name: Ensemble judges and prompt optimization
     paths:
+      - src/apps/dspy/
       - src/apps/gepa/
       - src/feedback/trulens/feedback/jury.py
       - src/feedback/trulens/feedback/optimize.py

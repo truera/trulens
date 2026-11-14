@@ -12096,6 +12096,23 @@ type = "directory"
 url = "src/apps/cursor"
 
 [[package]]
+name = "trulens-apps-dspy"
+version = "2.16.0"
+description = "Library to systematically track and evaluate LLM based applications."
+optional = false
+python-versions = "^3.10"
+groups = ["required"]
+files = []
+develop = true
+
+[package.dependencies]
+trulens-core = "^2.0.0"
+
+[package.source]
+type = "directory"
+url = "src/apps/dspy"
+
+[[package]]
 name = "trulens-apps-gepa"
 version = "2.16.0"
 description = "Library to systematically track and evaluate LLM based applications."
@@ -13952,4 +13969,4 @@ otlp = ["opentelemetry-exporter-otlp-proto-grpc"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "12d92258b78f557474671ed9e04005fa1fb7c036c1b8cefa54288057c1351bdf"
+content-hash = "6bc70b7af07d828d38c094f74482307b4b0a6798c3b92b948967c5f94b0b8382"
