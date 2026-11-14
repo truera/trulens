@@ -70,11 +70,8 @@ env-tests-basic:
 	make env-tests
 
 env-tests-optional: env env-tests
-	# NOTE: Excluding nemo group due to langchain 1.x incompatibility
-	# nemoguardrails requires langchain<0.4.0, but langgraph requires langchain>=1.0.0
-	# Install nemo separately with: poetry install --with nemo (requires langchain<1.0)
-	poetry install --with apps,providers --without nemo
-	poetry run pip install \
+	poetry install --with apps,providers && \
+	poetry run pip install --constraint <(poetry run pip freeze --exclude-editable) \
 		chromadb \
 	 	faiss-cpu \
 		"langchain-openai>=0.2.0" \
@@ -321,7 +318,7 @@ test-unit:
 		echo "Install with: poetry install --with dev"; \
 		echo "Attempting to run anyway (expect failures)..."; \
 		$(PYTEST) tests/unit/test_otel*.py; \
-	fi
+	fi && \
 	$(PYTEST) $(shell ls tests/unit/test_*.py tests/unit/providers/test_*.py | grep -v test_otel)
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
