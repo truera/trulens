@@ -40,6 +40,16 @@ def contains_answer(context: str, answer: str) -> float:
     return 1.0 if answer.lower() in context.lower() else 0.0
 
 
+def plain_int_item(value) -> float:
+    """Score 1.0 for a plain Python int; return the item as metadata."""
+    return (1.0 if type(value) is int else 0.0), {"value": value}
+
+
+def is_timestamp(value) -> float:
+    """Score 1.0 for a pandas Timestamp item."""
+    return 1.0 if isinstance(value, pd.Timestamp) else 0.0
+
+
 def num_contexts(context: list) -> float:
     """Score using the whole list of contexts at once."""
     return float(len(context))
@@ -224,6 +234,115 @@ def test_collect_list_false_aggregates_per_item():
     res = ev.evaluate(data)
     # 1 of 3 contexts contains "paris" -> mean = 1/3
     assert res["ctx"].iloc[0] == pytest.approx(1 / 3)
+
+
+@pytest.mark.parametrize(
+    "load",
+    [
+        pytest.param(
+            lambda df: _parquet_round_trip(df), id="parquet-round-trip"
+        ),
+        pytest.param(
+            lambda df: df.assign(contexts=df["contexts"].map(tuple)),
+            id="tuple-cell",
+        ),
+    ],
+)
+def test_collect_list_false_expands_array_and_tuple_cells(load):
+    # A list column that went through Arrow (pd.read_parquet,
+    # pa.Table.to_pandas) holds one numpy array per cell, not a list.
+    metric = Metric(
+        name="ctx",
+        implementation=contains_answer,
+        selectors={
+            "context": Selector.from_column("contexts", collect_list=False),
+            "answer": Selector.from_column("answer"),
+        },
+    )
+    ev = BatchEvaluator(metrics=[metric])
+    df = load(
+        pd.DataFrame([
+            {
+                "contexts": ["paris is nice", "berlin", "madrid"],
+                "answer": "paris",
+            }
+        ])
+    )
+    assert not isinstance(df["contexts"].iloc[0], list)
+    res = ev.evaluate(df)
+    assert res["ctx"].iloc[0] == pytest.approx(1 / 3)
+
+
+def _parquet_round_trip(df: pd.DataFrame) -> pd.DataFrame:
+    buf = io.BytesIO()
+    df.to_parquet(buf)
+    buf.seek(0)
+    return pd.read_parquet(buf)
+
+
+def test_collect_list_false_passes_native_items_from_array_cell():
+    metric = Metric(
+        name="plain_int",
+        implementation=plain_int_item,
+        selectors={
+            "value": Selector.from_column("values", collect_list=False),
+        },
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+    res = ev.evaluate(pd.DataFrame({"values": [np.array([1, 2, 3])]}))
+    # One call per item, each receiving an int rather than a numpy scalar.
+    assert len(res["plain_int_explanation"].iloc[0]) == 3
+    assert res["plain_int"].iloc[0] == pytest.approx(1.0)
+
+
+def test_collect_list_false_keeps_timestamps_from_array_cell():
+    metric = Metric(
+        name="ts",
+        implementation=is_timestamp,
+        selectors={"value": Selector.from_column("times", collect_list=False)},
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+    # What pd.read_parquet gives for a list<timestamp[ns]> column; its
+    # .tolist() would hand the metric integers, not timestamps.
+    cell = np.array(["2024-01-01", "2024-01-02"], dtype="datetime64[ns]")
+    res = ev.evaluate(pd.DataFrame({"times": [cell]}))
+    assert len(res["ts_explanation"].iloc[0]) == 2
+    assert res["ts"].iloc[0] == pytest.approx(1.0)
+
+
+def test_collect_list_false_expands_matrix_cell_along_first_axis():
+    metric = Metric(
+        name="plain_int",
+        implementation=plain_int_item,
+        selectors={
+            "value": Selector.from_column("values", collect_list=False),
+        },
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+    # A 2-D array cell is one item per row, as a list of lists would be.
+    res = ev.evaluate(pd.DataFrame({"values": [np.array([[1, 2], [3, 4]])]}))
+    expected = ev.evaluate(pd.DataFrame({"values": [[[1, 2], [3, 4]]]}))
+    calls = res["plain_int_explanation"].iloc[0]
+    assert calls == [{"value": [1, 2]}, {"value": [3, 4]}]
+    assert calls == expected["plain_int_explanation"].iloc[0]
+    assert res["plain_int"].iloc[0] == expected["plain_int"].iloc[0] == 0.0
+
+
+def test_collect_list_false_skips_empty_array_cell_like_empty_list():
+    metric = Metric(
+        name="ctx",
+        implementation=contains_answer,
+        selectors={
+            "context": Selector.from_column("contexts", collect_list=False),
+            "answer": Selector.from_column("answer"),
+        },
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+    res = ev.evaluate([{"contexts": np.array([]), "answer": "paris"}])
+    expected = ev.evaluate([{"contexts": [], "answer": "paris"}])
+    assert pd.isna(res["ctx"].iloc[0])
+    assert res["ctx_explanation"].iloc[0] == expected["ctx_explanation"].iloc[0]
+    assert "skipped" in res["ctx_explanation"].iloc[0]
 
 
 def test_collect_list_true_passes_whole_list():
