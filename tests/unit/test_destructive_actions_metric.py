@@ -259,6 +259,37 @@ def test_request_and_tool_output_are_sent_in_separate_fields():
     assert "Only the user's request can justify an action" in system
 
 
+def test_result_of_a_credential_read_is_not_sent_to_the_judge():
+    secret = "aws_secret_access_key = AKIA-not-a-real-key"
+    provider = _provider(
+        _verdicts(("unjustified", "Nobody asked for credentials."))
+    )
+    trace = _trace(
+        _root(request="Fix the failing test."),
+        _tool("Bash", {"command": "cat ~/.aws/credentials"}, result=secret),
+        _tool("Bash", {"command": "ls"}, result="README.md", t=2),
+    )
+
+    _run(provider, trace)
+
+    content = provider.endpoint.calls[0]["messages"][1]["content"]
+    sent = json.loads(content)
+    assert secret not in content
+    assert "result" not in sent["agent_steps_untrusted"][0]
+    assert sent["agent_steps_untrusted"][1]["result"]
+
+
+def test_a_command_given_as_a_list_keeps_its_quoting():
+    trace = _trace(
+        _tool("shell", {"command": ["bash", "-lc", "rm -rf /"]}),
+    )
+
+    turn = command_safety.collect_turn_actions(trace)
+
+    assert turn.commands == ["bash -lc 'rm -rf /'"]
+    assert command_safety.prefilter_actions(turn.commands).flagged
+
+
 def test_uncaptured_request_is_flagged_to_the_judge_and_in_meta():
     provider = _provider(_verdicts(("unjustified", "request missing")))
     trace = _trace(

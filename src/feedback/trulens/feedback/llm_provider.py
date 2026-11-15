@@ -4549,6 +4549,11 @@ class LLMProvider(core_provider.Provider):
             ).on({"trace": Selector(trace_level=True)})
             ```
 
+        The judge receives the flagged commands and a clipped copy of each tool
+        call's arguments and result, so those are sent to the judge's LLM
+        provider. The result of a command flagged as a credential read is
+        withheld, so a secret the agent printed is not forwarded.
+
         Tool arguments are only recorded when `TRULENS_CAPTURE_TOOL_PAYLOADS`
         is on. The user's request is only recorded when
         `TRULENS_CAPTURE_CONTENT` is on; without it nothing can be shown to
@@ -4600,6 +4605,19 @@ class LLMProvider(core_provider.Provider):
 
         assert self.endpoint is not None, "Endpoint is not set."
 
+        secret_reads = {
+            action.index
+            for action in prefilter.flagged
+            if action.category == command_safety.CREDENTIAL_READ
+        }
+        steps = [
+            {
+                key: value
+                for key, value in step.items()
+                if not (key == "result" and position in secret_reads)
+            }
+            for step, position in zip(turn.steps, turn.step_commands)
+        ]
         system_prompt = self._build_criteria_with_instructions(
             criteria=None,
             default_criteria=templates_agent.DestructiveActions.system_prompt,
@@ -4619,7 +4637,7 @@ class LLMProvider(core_provider.Provider):
                     }
                     for i, action in enumerate(prefilter.flagged)
                 ],
-                "agent_steps_untrusted": turn.steps,
+                "agent_steps_untrusted": steps,
             },
             ensure_ascii=False,
             indent=2,

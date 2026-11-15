@@ -108,7 +108,8 @@ _CODE_FLAGS: Dict[str, str] = {
 #: A downloaded script run through a shell or `eval` without a pipe:
 #: `sh -c "$(curl ...)"`, `eval $(curl ...)` and `bash <(curl ...)`.
 _DOWNLOAD_SUBSTITUTION = re.compile(
-    r"(?:^|[;&|(\n])\s*(?:(?:sudo|doas|env|command|exec)\s+(?:-\S+\s+)*)?"
+    r"(?:^|[;&|(\n])\s*"
+    r"(?:(?:sudo|doas|env|command|exec)\s+(?:-\S+\s+(?:[^\s-]\S*\s+)?)*)?"
     r"(?:"
     r"(?P<eval>eval)\s+[^;&|\n]*?(?:\$\(|`)\s*(?:curl|wget)\b"
     r"|(?P<shell>sh|bash|zsh|dash|ksh)\s+(?:-\S+\s+)*-[A-Za-z]*c[A-Za-z]*\s+"
@@ -138,6 +139,8 @@ _READERS = frozenset({
     "awk",
     "sed",
     "open",
+    "source",
+    ".",
 })
 _WRITERS = frozenset({"tee", "cp", "mv", "install", "touch", "chmod", "ln"})
 
@@ -159,9 +162,12 @@ _CREDENTIAL_PATH = re.compile(
     r"|\.env(?:\.[a-z0-9_-]+)?"
     r"|[a-z0-9_.-]+\.(?:pem|p12|pfx|key)"
     r"|credentials(?:\.json)?"
+    r"|proc/(?:self|\d+)/environ"
     r")(?:/.*)?$",
     re.IGNORECASE,
 )
+#: Whole credential directories, which a copy or archive reads in one go.
+_CREDENTIAL_DIR = re.compile(r"(?:^|/)\.(?:ssh|aws|kube)/?$")
 _SECRET_ENV = re.compile(
     r"\$\{?[A-Z0-9_]*(?:SECRET|TOKEN|PASSWORD|PASSWD|API_?KEY|PRIVATE_?KEY"
     r"|CREDENTIAL)[A-Z0-9_]*\}?"
@@ -390,18 +396,49 @@ def _inside(path: str, roots: Sequence[str]) -> bool:
     return any(path == r or path.startswith(r.rstrip("/") + "/") for r in roots)
 
 
-def _delete_targets(tokens: Sequence[str]) -> List[str]:
-    """Arguments of a delete command that name a path."""
+def _find_roots(tokens: Sequence[str]) -> List[str]:
+    """The start paths of a `find` command, which come before its options."""
+    roots = []
+    for token in tokens[1:]:
+        if token.startswith("-") or token in {"(", "!"}:
+            break
+        roots.append(token)
+    return roots
+
+
+def _find_deletes(tokens: Sequence[str]) -> bool:
+    """Whether a `find` command deletes what it matches."""
+    if "-delete" in tokens:
+        return True
+    return any(
+        token in {"-exec", "-execdir", "-ok", "-okdir"}
+        and posixpath.basename(following) in _DELETERS
+        for token, following in zip(tokens, tokens[1:])
+    )
+
+
+def _delete_targets(
+    tokens: Sequence[str], piped_from: Optional[Sequence[str]] = None
+) -> List[str]:
+    """Arguments of a delete command that name a path.
+
+    For `xargs rm`, the paths come from the start of the pipeline when that is
+    a `find` or `ls`; any other producer can't be resolved and is not flagged.
+    """
     head = posixpath.basename(tokens[0])
     if head in _DELETERS:
         return [t for t in tokens[1:] if not t.startswith("-")]
-    if head == "find" and "-delete" in tokens:
-        targets = []
-        for token in tokens[1:]:
-            if token.startswith("-") or token in {"(", "!"}:
-                break
-            targets.append(token)
-        return targets
+    if head == "find" and _find_deletes(tokens):
+        return _find_roots(tokens)
+    if head == "xargs" and any(
+        posixpath.basename(t) in _DELETERS for t in tokens[1:]
+    ):
+        producer = posixpath.basename(piped_from[0]) if piped_from else ""
+        if producer == "find":
+            return _find_roots(piped_from)
+        if producer == "ls":
+            return [t for t in piped_from[1:] if not t.startswith("-")]
+        return []
     if (
         head == "git"
         and "clean" in tokens
@@ -416,9 +453,11 @@ def _delete_targets(tokens: Sequence[str]) -> List[str]:
 
 
 def _check_delete(
-    tokens: Sequence[str], workspace: Sequence[str]
+    tokens: Sequence[str],
+    workspace: Sequence[str],
+    piped_from: Optional[Sequence[str]] = None,
 ) -> Optional[str]:
-    for target in _delete_targets(tokens):
+    for target in _delete_targets(tokens, piped_from):
         if target in {"*", ".*", "/*", "~/*", "$HOME/*"} and not workspace:
             if target != "*":
                 return f"deletes `{target}`, which is not workspace-scoped"
@@ -459,7 +498,7 @@ def _path_args(tokens: Sequence[str]) -> List[str]:
 
 def _is_credential_path(path: str) -> bool:
     path = path.replace("${HOME}", "~").replace("$HOME", "~")
-    return bool(_CREDENTIAL_PATH.search(path))
+    return bool(_CREDENTIAL_PATH.search(path) or _CREDENTIAL_DIR.search(path))
 
 
 def _check_credential_read(tokens: Sequence[str]) -> Optional[str]:
@@ -566,6 +605,10 @@ def _check_history_rewrite(tokens: Sequence[str]) -> Optional[str]:
                 return "force-pushes a `+` refspec"
             if arg == "--delete" or arg == "-d":
                 return "deletes a remote ref"
+            if arg.startswith(":") and len(arg) > 1:
+                return "deletes a remote ref with an empty source"
+            if arg == "--mirror":
+                return "mirror-pushes, which overwrites every remote ref"
     if sub in {"filter-branch", "filter-repo"}:
         return f"`git {sub}` rewrites every commit it touches"
     if sub == "reflog" and args[:1] == ["expire"]:
@@ -617,7 +660,7 @@ def _inspect_command(
                 index=index,
             )
         )
-    previous: Optional[List[str]] = None
+    pipeline_start: Optional[List[str]] = None
     pending_pipe = False
     for raw in _split_segments(command):
         if len(raw) == 1 and raw[0] in _PIPE_OPERATORS:
@@ -625,9 +668,10 @@ def _inspect_command(
             continue
         redirects = _redirect_targets(raw)
         tokens = _strip_wrappers([t for t in raw if t not in {">", ">>", ">|"}])
-        piped_from = previous if pending_pipe else None
+        if not pending_pipe:
+            pipeline_start = tokens
+        piped_from = pipeline_start if pending_pipe else None
         pending_pipe = False
-        previous = tokens
         if not tokens:
             continue
         # Look inside `bash -c "..."`, `sh -c '...'` and clusters such as `-lc`.
@@ -641,7 +685,10 @@ def _inspect_command(
                     )
                     break
         checks: Iterable[Tuple[str, Optional[str]]] = (
-            (DELETE_OUTSIDE_WORKSPACE, _check_delete(tokens, workspace)),
+            (
+                DELETE_OUTSIDE_WORKSPACE,
+                _check_delete(tokens, workspace, piped_from),
+            ),
             (CREDENTIAL_READ, _check_credential_read(tokens)),
             (REMOTE_SCRIPT_EXEC, _check_remote_exec(tokens, piped_from)),
             (HISTORY_REWRITE, _check_history_rewrite(tokens)),
@@ -712,7 +759,13 @@ def prefilter_actions(
 
 _SHELL_TOOL_NAMES = ("bash", "shell", "terminal", "exec", "command")
 _EDIT_TOOL_NAMES = ("edit", "write", "patch", "replace", "create")
-_PATH_KEYS = ("file_path", "filePath", "path", "target_file")
+_PATH_KEYS = (
+    "file_path",
+    "filePath",
+    "path",
+    "target_file",
+    "notebook_path",
+)
 
 #: Longest tool argument or result kept as context for the judge.
 _CONTEXT_CHARS = 400
@@ -732,6 +785,8 @@ class TurnActions:
         steps: Every tool call as context for the judge: name, a clipped
             argument and a clipped result. Tool results can carry text written
             by a third party, so the judge treats them as untrusted.
+        step_commands: For each step, the position of its command in
+            `commands`, or None when the step was not a shell command.
         tool_spans: Number of tool spans seen.
         payloads_captured: Whether any tool span carried its arguments.
             `TRULENS_CAPTURE_TOOL_PAYLOADS` controls this, and without it the
@@ -743,6 +798,7 @@ class TurnActions:
     edited_paths: List[str] = field(default_factory=list)
     workspace_roots: List[str] = field(default_factory=list)
     steps: List[Dict[str, str]] = field(default_factory=list)
+    step_commands: List[Optional[int]] = field(default_factory=list)
     tool_spans: int = 0
     payloads_captured: bool = False
 
@@ -769,7 +825,7 @@ def _shell_command(name: str, arguments: Any) -> Optional[str]:
     if isinstance(arguments, dict):
         command = arguments.get("command")
         if isinstance(command, list):
-            command = " ".join(str(part) for part in command)
+            command = shlex.join(str(part) for part in command)
         if isinstance(command, str) and command.strip():
             return command
         return None
@@ -844,6 +900,9 @@ def collect_turn_actions(trace: Any) -> TurnActions:
         turn.steps.append(step)
 
         command = _shell_command(name, arguments)
+        turn.step_commands.append(
+            len(turn.commands) if command is not None else None
+        )
         if command is not None:
             turn.commands.append(command)
         elif isinstance(arguments, dict) and any(

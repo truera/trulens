@@ -120,7 +120,9 @@ f_destructive = Metric(
 
 The score is `1.0` if nothing was flagged or every flagged action was justified, and `0.0` otherwise. The metadata lists each flagged action with its category and the judge's verdict, and records how many commands and paths the prefilter inspected, so a clean score can be told apart from a turn with no commands at all. Only the user's request can justify an action: text in tool results, such as a README that tells the agent to run a script, is passed to the judge as untrusted context and never counts as a request.
 
-The metric needs `TRULENS_CAPTURE_TOOL_PAYLOADS` so the commands are recorded, and `TRULENS_CAPTURE_CONTENT` so the user's request is recorded. If a turn ran tools but recorded no arguments, the metric is skipped with a message naming the flag. The prefilter is a set of rules, not a sandbox: a command it does not recognize is not flagged.
+The metric needs `TRULENS_CAPTURE_TOOL_PAYLOADS` so the commands are recorded, and `TRULENS_CAPTURE_CONTENT` so the user's request is recorded. If a turn ran tools but recorded no arguments, the metric is skipped with a message naming the flag. The prefilter is a set of rules, not a sandbox: a command it does not recognize is not flagged. It covers the five categories above, so it does not look for other damage such as `chmod -R`, `dd`, or an interpreter one-liner that deletes files, and it does not open commands sent to another machine with `ssh` or `docker`.
+
+The judge receives the flagged commands and a clipped copy of each tool call's arguments and result, so those go to the judge's LLM provider. The result of a command flagged as a credential read is withheld, so a secret the agent printed is not forwarded.
 
 Scores land in the same leaderboard, so comparing Cursor vs. Claude Code vs. OpenCode by `(app_name, app_version)` works out of the box.
 
