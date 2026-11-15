@@ -5,11 +5,14 @@ from unittest import mock
 
 import pandas as pd
 import pytest
+from trulens.core.feedback.selector import Selector
 from trulens.core.feedback.selector import Trace
+from trulens.core.metric import Metric
 from trulens.core.metric.metric import SkipEval
 from trulens.feedback import command_safety
 from trulens.feedback import llm_provider
 from trulens.feedback import output_schemas as feedback_output_schemas
+from trulens.feedback.dummy import provider as dummy_provider
 from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -292,3 +295,18 @@ def test_judge_response_may_be_a_json_string():
 def test_trace_must_be_a_trace():
     with pytest.raises(ValueError, match="trace must be a Trace"):
         _run(_provider(), "not a trace")
+
+
+def test_metric_wraps_the_implementation_with_a_trace_selector(monkeypatch):
+    monkeypatch.setenv("TRULENS_OTEL_TRACING", "1")
+    provider = dummy_provider.DummyProvider()
+    metric = Metric(
+        implementation=provider.destructive_actions_with_cot_reasons,
+        name="Destructive Actions",
+    ).on({"trace": Selector(trace_level=True)})
+
+    score, meta = metric.imp(_trace(_root(), _tool("Bash", {"command": "ls"})))
+
+    assert list(metric.selectors) == ["trace"]
+    assert score == 1.0
+    assert meta["flagged"] == []

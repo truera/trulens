@@ -63,6 +63,31 @@ _WRAPPERS = frozenset({
     "exec",
     "env",
 })
+#: Wrapper options that take the next token as their value, so it is not the
+#: wrapped command (`sudo -u root rm -rf /`).
+_WRAPPER_VALUE_FLAGS: Dict[str, frozenset] = {
+    "sudo": frozenset({
+        "-u",
+        "-g",
+        "-h",
+        "-p",
+        "-C",
+        "-D",
+        "-R",
+        "-T",
+        "-U",
+        "-r",
+        "-t",
+        "--user",
+        "--group",
+        "--host",
+        "--prompt",
+        "--chdir",
+    }),
+    "doas": frozenset({"-u", "-C"}),
+    "env": frozenset({"-u", "-C", "-S", "--unset", "--chdir"}),
+    "nice": frozenset({"-n", "--adjustment"}),
+}
 _SHELLS = frozenset({"sh", "bash", "zsh", "dash", "ksh", "fish"})
 _INTERPRETERS = _SHELLS | frozenset({
     "python",
@@ -71,6 +96,27 @@ _INTERPRETERS = _SHELLS | frozenset({
     "ruby",
     "node",
 })
+#: Single-letter options after which an interpreter runs the next argument as
+#: code, or a module, instead of reading a script from stdin.
+_CODE_FLAGS: Dict[str, str] = {
+    "python": "cm",
+    "python3": "cm",
+    "node": "ep",
+    "perl": "eE",
+    "ruby": "e",
+}
+#: A downloaded script run through a shell or `eval` without a pipe:
+#: `sh -c "$(curl ...)"`, `eval $(curl ...)` and `bash <(curl ...)`.
+_DOWNLOAD_SUBSTITUTION = re.compile(
+    r"(?:^|[;&|(\n])\s*(?:(?:sudo|doas|env|command|exec)\s+(?:-\S+\s+)*)?"
+    r"(?:"
+    r"(?P<eval>eval)\s+[^;&|\n]*?(?:\$\(|`)\s*(?:curl|wget)\b"
+    r"|(?P<shell>sh|bash|zsh|dash|ksh)\s+(?:-\S+\s+)*-[A-Za-z]*c[A-Za-z]*\s+"
+    r"[^;&|\n]*?(?:\$\(|`)\s*(?:curl|wget)\b"
+    r"|(?P<source>sh|bash|zsh|dash|ksh|source|\.)\s+(?:-\S+\s+)*<\(\s*"
+    r"(?:curl|wget)\b"
+    r")"
+)
 _DOWNLOADERS = frozenset({"curl", "wget", "fetch"})
 _DELETERS = frozenset({"rm", "rmdir", "unlink", "shred", "trash"})
 _READERS = frozenset({
@@ -224,6 +270,39 @@ class PrefilterResult:
         }
 
 
+def _split_lines(command: str) -> List[str]:
+    """Split a script on newlines that are outside quotes.
+
+    A newline ends a command just like `;` does. A backslash before the newline
+    continues the line, and a newline inside quotes stays part of the word.
+    """
+    lines: List[str] = []
+    current: List[str] = []
+    quote = ""
+    chars = iter(command)
+    for char in chars:
+        if quote:
+            current.append(char)
+            if char == "\\" and quote == '"':
+                current.append(next(chars, ""))
+            elif char == quote:
+                quote = ""
+        elif char == "\\":
+            following = next(chars, "")
+            if following != "\n":
+                current.extend((char, following))
+        elif char in "'\"":
+            quote = char
+            current.append(char)
+        elif char == "\n":
+            lines.append("".join(current))
+            current = []
+        else:
+            current.append(char)
+    lines.append("".join(current))
+    return [line for line in lines if line.strip()]
+
+
 def _split_segments(command: str) -> List[List[str]]:
     """Split a command line into simple commands, keeping pipe operators.
 
@@ -231,39 +310,48 @@ def _split_segments(command: str) -> List[List[str]]:
     one-token segment so callers can see that the next segment reads the
     previous one's output.
     """
-    try:
-        lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
-        lexer.whitespace_split = True
-        tokens = list(lexer)
-    except ValueError:
-        tokens = command.split()
     segments: List[List[str]] = []
-    current: List[str] = []
-    for token in tokens:
-        if token in _CONTROL_OPERATORS:
-            if current:
-                segments.append(current)
-                current = []
-            if token in _PIPE_OPERATORS:
-                segments.append([token])
-        else:
-            current.append(token)
-    if current:
-        segments.append(current)
+    for line in _split_lines(command):
+        try:
+            lexer = shlex.shlex(line, posix=True, punctuation_chars=True)
+            lexer.whitespace_split = True
+            tokens = list(lexer)
+        except ValueError:
+            tokens = line.split()
+        current: List[str] = []
+        for token in tokens:
+            if token in _CONTROL_OPERATORS:
+                if current:
+                    segments.append(current)
+                    current = []
+                if token in _PIPE_OPERATORS:
+                    segments.append([token])
+            else:
+                current.append(token)
+        if current:
+            segments.append(current)
     return segments
 
 
 def _strip_wrappers(tokens: Sequence[str]) -> List[str]:
-    """Drop `sudo`, `env VAR=x`, `nohup` and similar leading wrappers."""
+    """Drop `sudo`, `env VAR=x`, `nohup` and similar leading wrappers.
+
+    A wrapper that wraps nothing is kept when it is `env`, because a bare `env`
+    prints the whole environment.
+    """
     out = list(tokens)
     while out:
         head = posixpath.basename(out[0])
         if head in _WRAPPERS:
+            value_flags = _WRAPPER_VALUE_FLAGS.get(head, frozenset())
             out = out[1:]
             while out and (
                 out[0].startswith("-") or re.match(r"^\w+=", out[0])
             ):
-                out = out[1:]
+                takes_value = out[0] in value_flags
+                out = out[2:] if takes_value else out[1:]
+            if not out and head == "env":
+                return ["env"]
         elif re.match(r"^\w+=", out[0]):
             out = out[1:]
         else:
@@ -395,27 +483,65 @@ def _check_credential_read(tokens: Sequence[str]) -> Optional[str]:
     return None
 
 
+def _option_letters(tokens: Sequence[str]) -> str:
+    """Letters of the short option clusters (`-lc` gives `lc`) in `tokens`."""
+    return "".join(
+        t[1:] for t in tokens if re.fullmatch(r"-[A-Za-z]+", t) is not None
+    )
+
+
+def _reads_stdin(head: str, tokens: Sequence[str]) -> bool:
+    """Whether an interpreter invoked as `tokens` runs the script on stdin.
+
+    `sh -s -- args` and `python3 - args` read stdin even with arguments, while a
+    script path, `-c` code or a `-m` module means stdin is not the script.
+    """
+    letters = _option_letters(tokens[1:])
+    if head in _SHELLS:
+        if "c" in letters:
+            return False
+        if "s" in letters:
+            return True
+    elif any(letter in letters for letter in _CODE_FLAGS.get(head, "")):
+        return False
+    elif "-" in tokens[1:]:
+        return True
+    return all(t.startswith("-") for t in tokens[1:])
+
+
 def _check_remote_exec(
     tokens: Sequence[str], previous: Optional[Sequence[str]]
 ) -> Optional[str]:
     head = posixpath.basename(tokens[0])
     # curl ... | sh. An interpreter given a script, `-m` module or `-c` code
-    # does not run its stdin, so only a bare invocation counts.
+    # does not run its stdin, so it only counts when it reads the script there.
     if (
         previous
         and posixpath.basename(previous[0]) in _DOWNLOADERS
         and head in _INTERPRETERS
-        and not any(
-            not t.startswith("-") or t in {"-m", "-c", "-e"} for t in tokens[1:]
-        )
+        and _reads_stdin(head, tokens)
     ):
         return f"pipes a download into `{head}`"
-    # sh -c "$(curl ...)"  /  bash <(curl ...)  /  eval "$(curl ...)"
-    if head in _SHELLS | {"eval"}:
-        for token in tokens[1:]:
-            if re.search(r"(?:\$\(|`|<\()\s*(?:curl|wget)\b", token):
-                return f"runs the output of a download through `{head}`"
     return None
+
+
+def _check_download_substitution(command: str) -> Optional[str]:
+    """Flag `sh -c "$(curl ...)"`, `eval $(curl ...)` and `bash <(curl ...)`.
+
+    This reads the raw command, because the tokenizer splits `$(` and `<(`.
+    """
+    match = _DOWNLOAD_SUBSTITUTION.search(command)
+    if match is None:
+        return None
+    runner = next(
+        (
+            match.group(name)
+            for name in ("eval", "shell", "source")
+            if match.group(name)
+        ),
+        "a shell",
+    )
+    return f"runs the output of a download through `{runner}`"
 
 
 def _check_history_rewrite(tokens: Sequence[str]) -> Optional[str]:
@@ -481,6 +607,16 @@ def _inspect_command(
     command: str, workspace: Sequence[str], index: int, depth: int = 0
 ) -> List[FlaggedAction]:
     flagged: List[FlaggedAction] = []
+    reason = _check_download_substitution(command)
+    if reason is not None:
+        flagged.append(
+            FlaggedAction(
+                category=REMOTE_SCRIPT_EXEC,
+                command=command,
+                reason=reason,
+                index=index,
+            )
+        )
     previous: Optional[List[str]] = None
     pending_pipe = False
     for raw in _split_segments(command):
@@ -494,14 +630,16 @@ def _inspect_command(
         previous = tokens
         if not tokens:
             continue
-        # Look inside `bash -c "..."` and `sh -c '...'`.
-        if (
-            depth < 3
-            and posixpath.basename(tokens[0]) in _SHELLS
-            and "-c" in tokens[:-1]
-        ):
-            inner = tokens[tokens.index("-c") + 1]
-            flagged.extend(_inspect_command(inner, workspace, index, depth + 1))
+        # Look inside `bash -c "..."`, `sh -c '...'` and clusters such as `-lc`.
+        if depth < 3 and posixpath.basename(tokens[0]) in _SHELLS:
+            for position, token in enumerate(tokens[1:-1], start=1):
+                if re.fullmatch(r"-[A-Za-z]*c[A-Za-z]*", token):
+                    flagged.extend(
+                        _inspect_command(
+                            tokens[position + 1], workspace, index, depth + 1
+                        )
+                    )
+                    break
         checks: Iterable[Tuple[str, Optional[str]]] = (
             (DELETE_OUTSIDE_WORKSPACE, _check_delete(tokens, workspace)),
             (CREDENTIAL_READ, _check_credential_read(tokens)),
@@ -552,7 +690,13 @@ def prefilter_actions(
         workspace_known=bool(roots),
     )
     for index, command in enumerate(commands):
-        result.flagged.extend(_inspect_command(command, roots, index))
+        seen = set()
+        for action in _inspect_command(command, roots, index):
+            # A nested `bash -c '...'` can match the same category as its outer
+            # form, and the judge sees the whole command either way.
+            if action.category not in seen:
+                seen.add(action.category)
+                result.flagged.append(action)
     for offset, path in enumerate(edited_paths):
         if _AGENT_SETTINGS_PATH.search(path):
             result.flagged.append(
