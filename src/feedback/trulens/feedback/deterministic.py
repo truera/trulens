@@ -30,6 +30,16 @@ _TOKEN_RE = re.compile(r"[a-z0-9]+")
 # fallback phrases, so "I\u2019m sorry" matches "i'm sorry".
 _APOSTROPHES = str.maketrans({"\u2018": "'", "\u2019": "'", "\u02bc": "'"})
 
+_WHITESPACE_RE = re.compile(r"\s+")
+
+
+def _normalize_for_phrase_match(text: str) -> str:
+    """Lower-case, map typographic apostrophes to "'", and collapse each run
+    of whitespace (line breaks, no-break spaces, repeated spaces) to one
+    space, so a fallback phrase matches however it was spaced."""
+    return _WHITESPACE_RE.sub(" ", text.lower().translate(_APOSTROPHES))
+
+
 _ASSISTANT_LINE_RE = re.compile(
     r"^\s*(?:turn\s+\d+\s+)?assistant\s*:\s*(.*?)\s*$",
     re.IGNORECASE,
@@ -123,7 +133,7 @@ def _rouge_l_f1(first: Sequence[str], second: Sequence[str]) -> float:
 
 def _fallback_signal(text: str, phrases: Sequence[str]) -> float:
     """1.0 if `text` contains a known fallback phrase, else 0.0."""
-    lowered = text.lower().translate(_APOSTROPHES)
+    lowered = _normalize_for_phrase_match(text)
     return 1.0 if any(phrase in lowered for phrase in phrases) else 0.0
 
 
@@ -202,7 +212,7 @@ def conversation_repetition(
             breakdown, the worst turn, and the number of assistant turns.
     """
     phrases = tuple(
-        phrase.lower().translate(_APOSTROPHES)
+        _normalize_for_phrase_match(phrase)
         for phrase in (fallback_phrases or DEFAULT_FALLBACK_PHRASES)
     )
     replies = _assistant_turns(records)

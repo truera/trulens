@@ -1,5 +1,6 @@
 """Tests for deterministic (non-LLM) feedback metrics."""
 
+import pytest
 from trulens.feedback.deterministic import conversation_repetition
 
 
@@ -122,6 +123,35 @@ class TestConversationRepetition:
         )
         assert meta["turns"][1]["fallback_phrase"] == 1.0
         assert score == 0.0
+
+    @pytest.mark.parametrize(
+        "output",
+        [
+            "I'm sorry, but I can't\nhelp with that.",
+            "I'm sorry, but I can't\u00a0help with that.",
+            "I'm sorry, but I can't  help with that.",
+            "I\u2019m sorry,\r\n but I can\u2019t help with that.",
+        ],
+    )
+    def test_fallback_phrase_with_other_whitespace(self, output):
+        score, meta = conversation_repetition([{"output": output}])
+        assert meta["turns"][1]["fallback_phrase"] == 1.0
+        assert score == 0.0
+
+    def test_custom_fallback_phrase_whitespace_is_collapsed(self):
+        _, meta = conversation_repetition(
+            [{"output": "Please ask\nsomeone else."}],
+            fallback_phrases=["please  ask someone"],
+        )
+        assert meta["turns"][1]["fallback_phrase"] == 1.0
+
+    def test_custom_fallback_phrase_keeps_its_edge_space(self):
+        # A leading space in a custom phrase still means a word boundary.
+        _, meta = conversation_repetition(
+            [{"output": "The answer is unhelpful."}],
+            fallback_phrases=[" help"],
+        )
+        assert meta["turns"][1]["fallback_phrase"] == 0.0
 
     def test_score_within_unit_interval(self):
         records = _records([
