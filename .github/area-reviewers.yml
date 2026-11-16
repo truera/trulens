@@ -28,6 +28,13 @@
 
 areas:
 
+  - name: Conversation and tool-call evaluation
+    paths:
+      - src/core/trulens/core/schema/conversation.py
+      - src/core/trulens/core/feedback/
+      - src/feedback/
+      - src/otel/
+    reviewers: [bhargavikalicheti]
   - name: Bedrock provider
     paths:
       - src/providers/bedrock/
