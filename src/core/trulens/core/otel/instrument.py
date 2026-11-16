@@ -474,22 +474,30 @@ def _wraps_async_generator_function(func: Callable) -> bool:
 
 
 async def _stream_in_call(
-    result: AsyncGenerator, call: _DetachedFunctionCall, finish: Callable
+    start: Callable[
+        [], tuple[AsyncGenerator, _DetachedFunctionCall | None, Callable | None]
+    ],
 ) -> AsyncGenerator:
     """Re-yield an async generator inside a detached function call span.
 
-    Each step of `result` runs with the span current, so spans it creates are
-    children of it. Values passed to `asend`, exceptions passed to `athrow`,
-    and `aclose` are forwarded to `result`, so the stream behaves like
-    `result` itself. When the stream ends, raises, or is abandoned by the
-    consumer, `finish` is called with the consumed chunks, the exception (if
-    any), and the time of the first yield, and ends the span.
+    `start` runs when the caller first advances the stream and returns the
+    async generator to re-yield, the call holding its span, and the `finish`
+    that ends the span. With no call, the stream is passed through untraced.
+
+    Each step of the generator runs with the span current, so spans it
+    creates are children of it. Values passed to `asend`, exceptions passed
+    to `athrow`, and `aclose` are forwarded to it, so the stream behaves like
+    the generator itself. When the stream ends, raises, or is abandoned by
+    the consumer, `finish` is called with the consumed chunks, the exception
+    (if any), and the time of the first yield, and ends the span.
     """
+    result, call, finish = start()
+    step = call.step if call is not None else contextlib.nullcontext
     chunks = []
     first_yield: float | None = None
     func_exception: Exception | None = None
     try:
-        with call.step():
+        with step():
             try:
                 curr = await result.__anext__()
             except StopAsyncIteration:
@@ -501,17 +509,17 @@ async def _stream_in_call(
             try:
                 sent = yield curr
             except GeneratorExit:
-                with call.step():
+                with step():
                     await result.aclose()
                 raise
             except BaseException as e:
-                with call.step():
+                with step():
                     try:
                         curr = await result.athrow(e)
                     except StopAsyncIteration:
                         return
                 continue
-            with call.step():
+            with step():
                 try:
                     if sent is None:
                         curr = await result.__anext__()
@@ -520,11 +528,14 @@ async def _stream_in_call(
                 except StopAsyncIteration:
                     return
     except Exception as e:
+        if finish is None:
+            raise
         func_exception = e
     finally:
         # Also runs when the consumer abandons the stream, so a partially
         # consumed stream is still measured.
-        finish(chunks, func_exception, first_yield=first_yield)
+        if finish is not None:
+            finish(chunks, func_exception, first_yield=first_yield)
 
 
 class _DetachedFunctionCall:
@@ -803,7 +814,7 @@ class instrument:
             # yielding itself, just as a sync function can return a
             # generator. Keep this span open until the caller is done with
             # the stream, and record what they actually consumed.
-            return _stream_in_call(ret, call, finish)
+            return _stream_in_call(lambda: (ret, call, finish))
 
         @wrapt.decorator
         def coroutine_returning_wrapper(func, instance, args, kwargs):
@@ -877,7 +888,7 @@ class instrument:
             except Exception as e:
                 return finish(None, e)
             if inspect.isasyncgen(result):
-                return _stream_in_call(result, call, finish)
+                return _stream_in_call(lambda: (result, call, finish))
             if not inspect.iscoroutine(result):
                 return finish(result, None)
 
@@ -894,66 +905,66 @@ class instrument:
             return await_in_span()
 
         @wrapt.decorator
-        async def async_generator_wrapper(func, instance, args, kwargs):
-            if not self.enabled or get_baggage("__trulens_recording__") is None:
-                async for curr in func(*args, **kwargs):
-                    yield curr
-                return
-            span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
-            func_name_for_call = _func_name_for_instance(instance)
-            call = _DetachedFunctionCall(
-                create_function_call_context_manager(
-                    self.create_new_span,
-                    func_name_for_call,
-                    span_type=self.span_type,
+        def async_generator_wrapper(func, instance, args, kwargs):
+            # Like the async generator function it wraps, calling this runs
+            # nothing: the span opens when the caller first advances the
+            # stream, in the caller's context at that point.
+            def start():
+                if (
+                    not self.enabled
+                    or get_baggage("__trulens_recording__") is None
+                ):
+                    return func(*args, **kwargs), None, None
+                span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
+                func_name_for_call = _func_name_for_instance(instance)
+                call = _DetachedFunctionCall(
+                    create_function_call_context_manager(
+                        self.create_new_span,
+                        func_name_for_call,
+                        span_type=self.span_type,
+                    )
                 )
-            )
-            with call as span:
-                ret = None
-                func_exception: Exception | None = None
+                span = call.__enter__()
                 started = time.perf_counter()
-                first_yield: float | None = None
-                # Run function.
-                try:
-                    result = func(*args, **kwargs)
-                    ret = []
-                    while True:
+
+                def finish(ret, func_exception, first_yield=None):
+                    # Set the span attributes, then end the span, raising
+                    # `func_exception` once it has ended.
+                    try:
                         with call.step():
-                            try:
-                                curr = await result.__anext__()
-                            except StopAsyncIteration:
-                                break
-                        if first_yield is None:
-                            first_yield = time.perf_counter()
-                        ret.append(curr)
-                        yield curr
-                except Exception as e:
-                    # We want to get into the next clause to allow the users
-                    # to still add attributes. It's on the user to deal with
-                    # None as a return value.
-                    func_exception = e
-                finally:
+                            _set_streaming_attributes(
+                                span,
+                                started,
+                                first_yield,
+                                len(ret) if ret else 0,
+                            )
+                            _finalize_span(
+                                span,
+                                self.span_type,
+                                func_name_for_call,
+                                func,
+                                func_exception,
+                                self.attributes,
+                                instance,
+                                args,
+                                kwargs,
+                                ret,
+                                self.only_set_user_defined_attributes,
+                                span_end_callbacks,
+                            )
+                    except BaseException as e:
+                        call.__exit__(type(e), e, e.__traceback__)
+                        raise
+                    call.__exit__(None, None, None)
+
+                try:
                     with call.step():
-                        _set_streaming_attributes(
-                            span,
-                            started,
-                            first_yield,
-                            len(ret) if ret else 0,
-                        )
-                        _finalize_span(
-                            span,
-                            self.span_type,
-                            func_name_for_call,
-                            func,
-                            func_exception,
-                            self.attributes,
-                            instance,
-                            args,
-                            kwargs,
-                            ret,
-                            self.only_set_user_defined_attributes,
-                            span_end_callbacks,
-                        )
+                        result = func(*args, **kwargs)
+                except Exception as e:
+                    finish(None, e)
+                return result, call, finish
+
+            return _stream_in_call(start)
 
         # Check if already wrapped if not allowing multiple wrappers.
         if self.must_be_first_wrapper:
