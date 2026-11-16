@@ -75,6 +75,37 @@ class TestConversationRepetition:
         assert score < 0.5
         assert meta["num_assistant_turns"] == 2
 
+    def test_transcript_scores_multiline_replies_like_records(self):
+        # Two different replies that open with the same line. A transcript
+        # used to keep only that first line of each reply, which made them
+        # look like an exact repeat. The `Note:` line is part of the reply,
+        # and the second line of the user's message is not.
+        replies = [
+            "Here is what I suggest:\n"
+            "a light raincoat and comfortable walking shoes\n"
+            "Note: it rains often in spring",
+            "Here is what I suggest:\n"
+            "sunscreen, a hat and sandals for the warm afternoons",
+        ]
+        expected = conversation_repetition(
+            _records([("Paris?", replies[0]), ("Rome?", replies[1])])
+        )
+        # The two forms conversation_to_prompt writes: input/output records
+        # and role/content messages.
+        transcripts = [
+            "Turn 1 User: What should I pack for Paris?\n"
+            f"Turn 1 Assistant: {replies[0]}\n"
+            "Turn 2 User: And for Rome?\nWe go in July.\n"
+            f"Turn 2 Assistant: {replies[1]}",
+            "User: What should I pack for Paris?\n"
+            f"Assistant: {replies[0]}\n"
+            "User: And for Rome?\nWe go in July.\n"
+            f"Assistant: {replies[1]}",
+        ]
+        for transcript in transcripts:
+            assert conversation_repetition(transcript) == expected
+        assert expected[0] > 0.5
+
     def test_no_assistant_turns_returns_none(self):
         score, meta = conversation_repetition([{"input": "hi"}])
         assert score is None

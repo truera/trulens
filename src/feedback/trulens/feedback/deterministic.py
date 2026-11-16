@@ -31,6 +31,16 @@ _ASSISTANT_LINE_RE = re.compile(
     re.IGNORECASE,
 )
 
+# A transcript line that starts another message: a speaker label, with or
+# without a `Turn N` prefix (`User:`, `Turn 2 Tool call:`), or a bare
+# `Turn N:`. Any other line continues the message above it.
+_SPEAKER_LINE_RE = re.compile(
+    r"^\s*(?:turn\s+\d+\s*:|(?:turn\s+\d+\s+)?"
+    r"(?:user|human|system|developer|assistant|ai|bot"
+    r"|tool(?:\s+call)?|function)\s*:)",
+    re.IGNORECASE,
+)
+
 _ASSISTANT_ROLES = frozenset({"assistant", "ai", "bot"})
 
 
@@ -60,15 +70,25 @@ def _assistant_text(record: Any) -> Optional[str]:
 def _assistant_turns_from_transcript(transcript: str) -> List[str]:
     """Extract assistant utterances from a transcript string.
 
+    A reply continues on the lines below its `assistant:` line until the
+    next line that starts another message, so a reply that spans several
+    lines is scored whole, as in the records path.
+
     Returns an empty list when no `assistant:` line is present, so a
     transcript with only user turns agrees with the records path on
     "no assistant turns" instead of being scored as one turn.
     """
-    return [
-        match.group(1)
-        for line in transcript.splitlines()
-        if (match := _ASSISTANT_LINE_RE.match(line)) and match.group(1)
-    ]
+    replies: List[List[str]] = []
+    reply: Optional[List[str]] = None
+    for line in transcript.splitlines():
+        if match := _ASSISTANT_LINE_RE.match(line):
+            reply = [match.group(1)]
+            replies.append(reply)
+        elif _SPEAKER_LINE_RE.match(line):
+            reply = None
+        elif reply is not None:
+            reply.append(line)
+    return [text for lines in replies if (text := "\n".join(lines).strip())]
 
 
 def _assistant_turns(records: List[Any] | str) -> List[str]:
@@ -182,7 +202,10 @@ def conversation_repetition(
     Args:
         records: The ordered conversation records, or a transcript string.
             Records may be objects with `main_input`/`main_output`, dicts
-            with `input`/`output`, or dicts with `role`/`content`.
+            with `input`/`output`, or dicts with `role`/`content`. In a
+            transcript, a reply runs from its `assistant:` line to the next
+            line that starts another message, such as `User:` or
+            `Turn 2 User:`.
         fallback_phrases: Phrases marking a fallback reply, matched
             case-insensitively. Defaults to
             [DEFAULT_FALLBACK_PHRASES][trulens.feedback.deterministic.
