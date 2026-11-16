@@ -41,3 +41,14 @@ class TestLensedDict(TestCase):
         d[Lens().a.b] = 20
         self.assertEqual(d[Lens().a.b], 20)
         self.assertTrue(Lens().a.b in d)
+
+    def test_lensed_dict_ambiguous_lens(self):
+        d = LensedDict({"items": [1, 2]})
+        ambiguous = Lens()["items"][:]
+        # When a lens matches multiple items, get_sole_item raises AssertionError.
+        # contains returns False and get returns default, while direct indexing raises AssertionError.
+        self.assertFalse(ambiguous in d)
+        self.assertEqual(d.get(ambiguous, "fallback"), "fallback")
+        self.assertIsNone(d.get(ambiguous))
+        with self.assertRaises(AssertionError):
+            _ = d[ambiguous]
