@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from collections.abc import Sequence
 import logging
 from typing import (
     TYPE_CHECKING,
@@ -52,9 +53,24 @@ def _dcg(scores: list[float]) -> float:
     return sum(score / np.log2(i + 2) for i, score in enumerate(scores))
 
 
+def _relevant_golden_chunks(
+    golden_chunks_and_scores: list[tuple[str, float]],
+) -> set[str]:
+    """Golden chunks whose relevance score is above 0.
+
+    A chunk annotated with a score of 0 was judged not relevant, so it must not
+    count as a hit, the same as in ``ndcg_at_k``, where it adds no gain. A chunk
+    annotated more than once keeps its first score, as in ``ndcg_at_k``.
+    """
+    first_scores: dict[str, float] = {}
+    for chunk, score in golden_chunks_and_scores:
+        first_scores.setdefault(chunk, score)
+    return {chunk for chunk, score in first_scores.items() if score > 0}
+
+
 def _validate_relevance_scores(
     retrieved_context_chunks: list[str],
-    relevance_scores: list[float] | None,
+    relevance_scores: Sequence[float] | None,
 ) -> None:
     """Require one score per retrieved chunk when scores are supplied."""
     if relevance_scores is not None and len(relevance_scores) != len(
@@ -66,6 +82,22 @@ def _validate_relevance_scores(
             f"got {len(retrieved_context_chunks)} chunks and "
             f"{len(relevance_scores)} scores."
         )
+
+
+def _validate_k(k: int | None) -> None:
+    """Require a positive `k` when one is supplied.
+
+    `None` means "use every retrieved chunk". A `k` below 1 used to be
+    treated the same way (`0`) or sliced from the end (negative), so a
+    metric asked about the top 0 chunks reported the score of all of them.
+    """
+    if k is not None and k < 1:
+        raise ValueError(f"k must be a positive integer; got {k}.")
+
+
+def _has_scores(relevance_scores: Sequence[float] | None) -> bool:
+    """Whether relevance scores were supplied (a NumPy array is allowed)."""
+    return relevance_scores is not None and len(relevance_scores) > 0
 
 
 # TODEP
@@ -334,7 +366,7 @@ class GroundTruthAgreement(
         self,
         query: str,
         retrieved_context_chunks: list[str],
-        relevance_scores: list[float] | None = None,
+        relevance_scores: Sequence[float] | None = None,
         k: int | None = None,
     ) -> float:
         """
@@ -350,9 +382,11 @@ class GroundTruthAgreement(
             float: Computed NDCG@k score.
 
         Raises:
-            ValueError: If supplied relevance scores and chunks differ in length.
+            ValueError: If supplied relevance scores and chunks differ in
+                length, or if `k` is given and is below 1.
         """
         _validate_relevance_scores(retrieved_context_chunks, relevance_scores)
+        _validate_k(k)
         # Step 1: Find the ground truth context chunks for the given query
         ground_truth_context_chunks_and_scores = (
             self._find_golden_context_chunks_and_scores(query)
@@ -371,7 +405,7 @@ class GroundTruthAgreement(
             ]
 
             # Step 3: If relevance scores are provided, sort retrieved chunks by scores in descending order
-            if relevance_scores:
+            if _has_scores(relevance_scores):
                 # Zip together retrieved chunks and relevance scores
                 retrieved_with_scores = list(
                     zip(retrieved_context_chunks, relevance_scores)
@@ -431,7 +465,7 @@ class GroundTruthAgreement(
         self,
         query: str,
         retrieved_context_chunks: list[str],
-        relevance_scores: list[float] | None = None,
+        relevance_scores: Sequence[float] | None = None,
         k: int | None = None,
     ) -> float:
         """
@@ -447,20 +481,22 @@ class GroundTruthAgreement(
             float: Computed Precision@k score.
 
         Raises:
-            ValueError: If supplied relevance scores and chunks differ in length.
+            ValueError: If supplied relevance scores and chunks differ in
+                length, or if `k` is given and is below 1.
         """
         _validate_relevance_scores(retrieved_context_chunks, relevance_scores)
+        _validate_k(k)
         ground_truth_context_chunks = (
             self._find_golden_context_chunks_and_scores(query)
         )
         if ground_truth_context_chunks:
             k = k or len(retrieved_context_chunks)
 
-            # Extract ground truth chunks
-            golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
+            # Extract the relevant ground truth chunks
+            golden_chunks = _relevant_golden_chunks(ground_truth_context_chunks)
 
             # Sort retrieved chunks by relevance scores if scores are provided
-            if relevance_scores:
+            if _has_scores(relevance_scores):
                 # Get the top-k threshold score (with tie handling)
                 sorted_scores = sorted(relevance_scores, reverse=True)
                 kth_score = sorted_scores[min(k - 1, len(sorted_scores) - 1)]
@@ -495,7 +531,7 @@ class GroundTruthAgreement(
         self,
         query: str,
         retrieved_context_chunks: list[str],
-        relevance_scores: list[float] | None = None,
+        relevance_scores: Sequence[float] | None = None,
         k: int | None = None,
     ) -> float:
         """
@@ -511,20 +547,22 @@ class GroundTruthAgreement(
             float: Computed Recall@k score.
 
         Raises:
-            ValueError: If supplied relevance scores and chunks differ in length.
+            ValueError: If supplied relevance scores and chunks differ in
+                length, or if `k` is given and is below 1.
         """
         _validate_relevance_scores(retrieved_context_chunks, relevance_scores)
+        _validate_k(k)
         ground_truth_context_chunks = (
             self._find_golden_context_chunks_and_scores(query)
         )
         if ground_truth_context_chunks:
             k = k or len(retrieved_context_chunks)
 
-            # Extract ground truth chunks
-            golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
+            # Extract the relevant ground truth chunks
+            golden_chunks = _relevant_golden_chunks(ground_truth_context_chunks)
 
             # Sort retrieved chunks by relevance scores if scores are provided
-            if relevance_scores:
+            if _has_scores(relevance_scores):
                 # Get the top-k threshold score (with tie handling)
                 sorted_scores = sorted(relevance_scores, reverse=True)
                 kth_score = sorted_scores[min(k - 1, len(sorted_scores) - 1)]
@@ -560,7 +598,7 @@ class GroundTruthAgreement(
         self,
         query: str,
         retrieved_context_chunks: list[str],
-        relevance_scores: list[float] | None = None,
+        relevance_scores: Sequence[float] | None = None,
     ) -> float:
         """
         Compute Mean Reciprocal Rank (MRR) for a given query and retrieved context chunks.
@@ -581,11 +619,11 @@ class GroundTruthAgreement(
             self._find_golden_context_chunks_and_scores(query)
         )
         if ground_truth_context_chunks:
-            # Extract ground truth chunks
-            golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
+            # Extract the relevant ground truth chunks
+            golden_chunks = _relevant_golden_chunks(ground_truth_context_chunks)
 
             # Sort the retrieved chunks by relevance scores if provided
-            if relevance_scores:
+            if _has_scores(relevance_scores):
                 retrieved_with_scores = list(
                     zip(retrieved_context_chunks, relevance_scores)
                 )
@@ -627,15 +665,19 @@ class GroundTruthAgreement(
 
         Returns:
             float: Computed Hit Rate@k score.
+
+        Raises:
+            ValueError: If `k` is given and is below 1.
         """
+        _validate_k(k)
         ground_truth_context_chunks = (
             self._find_golden_context_chunks_and_scores(query)
         )
         if ground_truth_context_chunks:
             k = k or len(retrieved_context_chunks)
 
-            # Extract ground truth chunks
-            golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
+            # Extract the relevant ground truth chunks
+            golden_chunks = _relevant_golden_chunks(ground_truth_context_chunks)
 
             # Calculate hit rate at k (1 if at least one relevant item is retrieved, 0 otherwise)
             # Same split as mrr: an empty golden set is undefined, a miss is 0.
