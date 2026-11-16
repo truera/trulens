@@ -52,6 +52,21 @@ def _dcg(scores: list[float]) -> float:
     return sum(score / np.log2(i + 2) for i, score in enumerate(scores))
 
 
+def _relevant_golden_chunks(
+    golden_chunks_and_scores: list[tuple[str, float]],
+) -> set[str]:
+    """Golden chunks whose relevance score is above 0.
+
+    A chunk annotated with a score of 0 was judged not relevant, so it must not
+    count as a hit, the same as in ``ndcg_at_k``, where it adds no gain. A chunk
+    annotated more than once keeps its first score, as in ``ndcg_at_k``.
+    """
+    first_scores: dict[str, float] = {}
+    for chunk, score in golden_chunks_and_scores:
+        first_scores.setdefault(chunk, score)
+    return {chunk for chunk, score in first_scores.items() if score > 0}
+
+
 def _validate_relevance_scores(
     retrieved_context_chunks: list[str],
     relevance_scores: list[float] | None,
@@ -456,8 +471,8 @@ class GroundTruthAgreement(
         if ground_truth_context_chunks:
             k = k or len(retrieved_context_chunks)
 
-            # Extract ground truth chunks
-            golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
+            # Extract the relevant ground truth chunks
+            golden_chunks = _relevant_golden_chunks(ground_truth_context_chunks)
 
             # Sort retrieved chunks by relevance scores if scores are provided
             if relevance_scores:
@@ -520,8 +535,8 @@ class GroundTruthAgreement(
         if ground_truth_context_chunks:
             k = k or len(retrieved_context_chunks)
 
-            # Extract ground truth chunks
-            golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
+            # Extract the relevant ground truth chunks
+            golden_chunks = _relevant_golden_chunks(ground_truth_context_chunks)
 
             # Sort retrieved chunks by relevance scores if scores are provided
             if relevance_scores:
@@ -581,8 +596,8 @@ class GroundTruthAgreement(
             self._find_golden_context_chunks_and_scores(query)
         )
         if ground_truth_context_chunks:
-            # Extract ground truth chunks
-            golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
+            # Extract the relevant ground truth chunks
+            golden_chunks = _relevant_golden_chunks(ground_truth_context_chunks)
 
             # Sort the retrieved chunks by relevance scores if provided
             if relevance_scores:
@@ -634,8 +649,8 @@ class GroundTruthAgreement(
         if ground_truth_context_chunks:
             k = k or len(retrieved_context_chunks)
 
-            # Extract ground truth chunks
-            golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
+            # Extract the relevant ground truth chunks
+            golden_chunks = _relevant_golden_chunks(ground_truth_context_chunks)
 
             # Calculate hit rate at k (1 if at least one relevant item is retrieved, 0 otherwise)
             # Same split as mrr: an empty golden set is undefined, a miss is 0.
