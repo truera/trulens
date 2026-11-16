@@ -105,7 +105,7 @@ class Jury:
             jurors=[
                 OpenAI(model_engine="gpt-4o-mini"),
                 OpenAI(model_engine="gpt-4.1-mini"),
-                LiteLLM(model_engine="anthropic/claude-3-haiku-20240307"),
+                LiteLLM(model_engine="anthropic/claude-haiku-5-5"),
             ],
             method="relevance",
             aggregation="median",

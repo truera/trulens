@@ -241,7 +241,7 @@ class TruGraph(TruChain):
         from langchain_community.tools.tavily_search import TavilySearchResults
 
         # Create agents
-        llm = ChatOpenAI(model="gpt-4")
+        llm = ChatOpenAI(model="gpt-5.6-sol")
         search_tool = TavilySearchResults()
         research_agent = create_react_agent(llm, [search_tool])
 

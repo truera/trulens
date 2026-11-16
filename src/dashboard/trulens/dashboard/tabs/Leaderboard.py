@@ -30,6 +30,11 @@ APP_AGG_COLS = [
     "Total Cost (USD)",
     "Total Cost (Snowflake Credits)",
 ]
+TOOL_STAT_COLS = [
+    "Tool Error Rate",
+    "Average Repeated Tool Calls",
+    "Average Tool Calls per Record",
+]
 
 
 def _get_nonzero_cost_columns(df: pd.DataFrame) -> List[str]:
@@ -106,6 +111,13 @@ def _preprocess_df(
         "Total Tokens": ("total_tokens", "sum"),
         "tags": ("tags", lambda x: ",".join(x.drop_duplicates())),
     }
+    if "tool_calls" in records_df.columns:
+        agg_dict.update({
+            "Tool Calls": ("tool_calls", "sum"),
+            "Tool Errors": ("tool_errors", "sum"),
+            "Average Repeated Tool Calls": ("repeated_tool_calls", "mean"),
+            "Average Tool Calls per Record": ("tool_calls", "mean"),
+        })
     for col in feedback_col_names:
         if col in records_df:
             agg_dict[col] = (col, "mean")
@@ -121,6 +133,12 @@ def _preprocess_df(
         .aggregate(**agg_dict)
         .reset_index()
     )
+    if "Tool Calls" in app_agg_df.columns:
+        app_agg_df["Tool Error Rate"] = (
+            app_agg_df["Tool Errors"]
+            / app_agg_df["Tool Calls"].where(app_agg_df["Tool Calls"] > 0)
+        ).fillna(0.0)
+        app_agg_df = app_agg_df.drop(columns=["Tool Calls", "Tool Errors"])
 
     df = app_agg_df.join(
         app_versions_df.set_index(["app_id", "app_name", "app_version"])[
@@ -166,6 +184,7 @@ def _build_grid_options(
         + [
             "records",
             "latency",
+            *TOOL_STAT_COLS,
             *cost_cols_to_show,
         ],
         filter="agNumberColumnFilter",
@@ -536,6 +555,7 @@ def _render_grid_tab(
     agg_cost_cols: List[str] = [
         "Records",
         "Average Latency (s)",
+        *[column for column in TOOL_STAT_COLS if column in df.columns],
         *_get_nonzero_cost_columns(df),
     ]
 

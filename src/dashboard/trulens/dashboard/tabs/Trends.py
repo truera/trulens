@@ -317,6 +317,49 @@ def _render_latency_chart(metrics: pd.DataFrame, bucket: str) -> list | None:
     return _selection_metadata(event)
 
 
+def _render_tool_error_rate_chart(metrics: pd.DataFrame) -> None:
+    """Render deterministic tool failure rate by app version."""
+    fig = go.Figure()
+    metrics = metrics.drop_duplicates(
+        subset=["app_version", "time_bucket", "tool_error_rate"]
+    )
+    for index, version in enumerate(sorted(metrics["app_version"].unique())):
+        version_data = metrics[metrics["app_version"] == version].sort_values(
+            "time_bucket"
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=version_data["time_bucket"],
+                y=version_data["tool_error_rate"],
+                mode="lines+markers",
+                name=version,
+                line={
+                    "color": METRIC_COLORS[index % len(METRIC_COLORS)],
+                    "dash": VERSION_DASHES[index % len(VERSION_DASHES)],
+                },
+                hovertemplate=(
+                    "%{x}<br>Tool error rate: %{y:.1%}"
+                    "<extra>%{fullData.name}</extra>"
+                ),
+            )
+        )
+    fig.update_layout(
+        height=380,
+        hovermode="x unified",
+        xaxis_title="Time",
+        yaxis_title="Tool error rate",
+        yaxis_tickformat=".0%",
+        yaxis_range=[0, 1],
+        legend={"orientation": "h", "y": -0.2},
+        margin={"b": 100},
+    )
+    st.plotly_chart(
+        fig,
+        key=f"{page_name}.tool_error_rate_chart",
+        width="stretch",
+    )
+
+
 def _render_cost_chart(
     costs: pd.DataFrame,
     value_column: str,
@@ -442,16 +485,27 @@ def render_trends(app_name: str) -> None:
     available_trends = dashboard_utils.get_feedback_score_trends(
         app_name=app_name, app_versions=app_versions, bucket="day"
     )
-    if available_trends.empty:
-        st.info("No score trend data available.")
+    available_app_metrics = dashboard_utils.get_app_metric_trends(
+        app_name=app_name, app_versions=app_versions, bucket="day"
+    )
+    if available_trends.empty and available_app_metrics.empty:
+        st.info("No trend data available.")
         return
+    available_buckets = pd.concat(
+        [
+            frame[["time_bucket"]]
+            for frame in (available_trends, available_app_metrics)
+            if not frame.empty
+        ],
+        ignore_index=True,
+    )
     header_cols = st.columns([6, 1], vertical_alignment="bottom")
     with header_cols[0]:
         st.title(page_name)
         st.markdown(f"Showing app `{app_name}`")
     with header_cols[1]:
         selected_versions, start_date, end_date, bucket = _render_controls(
-            versions_df, aggregates_df, available_trends
+            versions_df, aggregates_df, available_buckets
         )
     st.caption(_filter_summary(selected_versions, start_date, end_date, bucket))
     if start_date > end_date:
@@ -468,35 +522,36 @@ def render_trends(app_name: str) -> None:
         start_time=pd.Timestamp(start_date),
         end_time=end_exclusive,
     )
-    if trends.empty:
-        st.info("No score trend data available for the selected time range.")
-        return
     _, feedback_directions = dashboard_utils.get_feedback_defs()
     st.subheader("Evaluation Metrics")
-    evaluation_selections = _render_trend_chart(
-        trends, bucket, feedback_directions
-    )
-    if evaluation_selections:
-        selected_versions_set = {item[2] for item in evaluation_selections}
-        selected_start = min(
-            pd.Timestamp(item[3]) for item in evaluation_selections
+    evaluation_selections = None
+    if trends.empty:
+        st.info("No score trend data available for the selected time range.")
+    else:
+        evaluation_selections = _render_trend_chart(
+            trends, bucket, feedback_directions
         )
-        selected_end = max(
-            pd.Timestamp(item[4]) for item in evaluation_selections
-        )
-        evaluation_selections = [
-            [
-                "feedback",
-                metric,
-                version,
-                selected_start.isoformat(),
-                selected_end.isoformat(),
-                "asc" if feedback_directions.get(metric, True) else "desc",
-                "",
+        if evaluation_selections:
+            selected_versions_set = {item[2] for item in evaluation_selections}
+            selected_start = min(
+                pd.Timestamp(item[3]) for item in evaluation_selections
+            )
+            selected_end = max(
+                pd.Timestamp(item[4]) for item in evaluation_selections
+            )
+            evaluation_selections = [
+                [
+                    "feedback",
+                    metric,
+                    version,
+                    selected_start.isoformat(),
+                    selected_end.isoformat(),
+                    "asc" if feedback_directions.get(metric, True) else "desc",
+                    "",
+                ]
+                for metric in sorted(trends["metric_name"].unique())
+                for version in sorted(selected_versions_set)
             ]
-            for metric in sorted(trends["metric_name"].unique())
-            for version in sorted(selected_versions_set)
-        ]
     _render_investigation(evaluation_selections, "evaluation")
     app_metrics = dashboard_utils.get_app_metric_trends(
         app_name=app_name,
@@ -512,6 +567,13 @@ def render_trends(app_name: str) -> None:
         _render_investigation(
             _render_latency_chart(app_metrics, bucket), "latency"
         )
+    st.subheader("Tool Error Rate")
+    if app_metrics.empty or "tool_error_rate" not in app_metrics.columns:
+        st.info("No tool-use data available for the selected time range.")
+    elif not (app_metrics["tool_calls"] > 0).any():
+        st.info("No tool calls were recorded for the selected time range.")
+    else:
+        _render_tool_error_rate_chart(app_metrics)
     st.subheader("App Cost")
     if app_metrics.empty or not (app_metrics["total_app_cost"] > 0).any():
         st.info(

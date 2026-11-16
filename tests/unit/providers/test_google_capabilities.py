@@ -346,3 +346,22 @@ def test_cost_calculation_unknown_model(monkeypatch):
     assert callback.cost.cost == 0.0
     assert callback.cost.n_prompt_tokens == 100
     assert callback.cost.n_completion_tokens == 200
+
+
+@pytest.mark.optional
+def test_default_model_engine(monkeypatch):
+    """Without `model_engine`, requests go to a model that both the Gemini
+    Developer API and Vertex AI still serve, and that has a price."""
+    from litellm import model_cost
+
+    provider = _make_provider(monkeypatch, model_engine=None)
+
+    provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}],
+    )
+
+    sent = provider.endpoint.client.models.generate_calls[0]["model"]
+    # Vertex AI retires gemini-2.5-pro, gemini-2.5-flash and
+    # gemini-2.5-flash-lite on 2026-10-20.
+    assert sent == "gemini-3.8-flash"
+    assert "input_cost_per_token" in model_cost[sent]
