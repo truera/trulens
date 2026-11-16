@@ -28,6 +28,10 @@
 
 areas:
 
+  - name: Bedrock provider
+    paths:
+      - src/providers/bedrock/
+    reviewers: [kimnamu]
   - name: Batch and guardrail correctness
     paths:
       - src/core/trulens/core/batch.py
