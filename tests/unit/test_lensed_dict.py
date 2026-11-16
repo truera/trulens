@@ -45,10 +45,12 @@ class TestLensedDict(TestCase):
     def test_lensed_dict_ambiguous_lens(self):
         d = LensedDict({"items": [1, 2]})
         ambiguous = Lens()["items"][:]
-        # When a lens matches multiple items, get_sole_item raises AssertionError.
-        # contains returns False and get returns default, while direct indexing raises AssertionError.
+        # When a lens matches multiple items:
+        # contains returns False and get returns default.
         self.assertFalse(ambiguous in d)
         self.assertEqual(d.get(ambiguous, "fallback"), "fallback")
         self.assertIsNone(d.get(ambiguous))
-        with self.assertRaises(AssertionError):
-            _ = d[ambiguous]
+        # Under normal (non-optimized) execution, direct indexing raises AssertionError from Lens.get_sole_item.
+        if __debug__:
+            with self.assertRaises(AssertionError):
+                _ = d[ambiguous]

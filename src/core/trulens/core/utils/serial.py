@@ -1186,13 +1186,12 @@ class LensedDict(dict, Generic[T]):
     def __contains__(self, __name: Union[Any, Lens]) -> bool:
         if isinstance(__name, Lens):
             try:
-                __name.get_sole_item(self)
-                return True
+                matches = list(__name.get(self))
+                return len(matches) == 1
             except (
                 KeyError,
                 IndexError,
                 AttributeError,
-                AssertionError,
                 ValueError,
             ):
                 return False
@@ -1204,12 +1203,14 @@ class LensedDict(dict, Generic[T]):
     ) -> Any:
         if isinstance(__name, Lens):
             try:
-                return __name.get_sole_item(self)
+                matches = list(__name.get(self))
+                if len(matches) == 1:
+                    return matches[0]
+                return default
             except (
                 KeyError,
                 IndexError,
                 AttributeError,
-                AssertionError,
                 ValueError,
             ):
                 return default
