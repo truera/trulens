@@ -245,6 +245,8 @@ class GoogleEndpoint(core_endpoint.Endpoint):
 
         super().__init__(**kwargs_for_super)
 
+        self._instrument_class(genai.models.Models, "generate_content")
+
     def handle_wrapped_call(
         self,
         func: Callable[..., Any],
