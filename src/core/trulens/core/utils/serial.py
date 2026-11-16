@@ -1183,6 +1183,39 @@ class LensedDict(dict, Generic[T]):
 
         return super().__getitem__(__name)
 
+    def __contains__(self, __name: Union[Any, Lens]) -> bool:
+        if isinstance(__name, Lens):
+            try:
+                __name.get_sole_item(self)
+                return True
+            except (
+                KeyError,
+                IndexError,
+                AttributeError,
+                AssertionError,
+                ValueError,
+            ):
+                return False
+
+        return super().__contains__(__name)
+
+    def get(
+        self, __name: Union[Any, Lens], default: Optional[Any] = None
+    ) -> Any:
+        if isinstance(__name, Lens):
+            try:
+                return __name.get_sole_item(self)
+            except (
+                KeyError,
+                IndexError,
+                AttributeError,
+                AssertionError,
+                ValueError,
+            ):
+                return default
+
+        return super().get(__name, default)
+
 
 # TODO: Deprecate old name.
 JSONPath = Lens
