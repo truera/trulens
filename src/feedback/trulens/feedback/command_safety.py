@@ -88,6 +88,19 @@ _WRAPPER_VALUE_FLAGS: Dict[str, frozenset] = {
     "env": frozenset({"-u", "-C", "-S", "--unset", "--chdir"}),
     "nice": frozenset({"-n", "--adjustment"}),
 }
+#: Compound-command words that can start a segment before the real command, as
+#: in `if ...; then rm -rf /; fi` and `for d in a b; do rm -rf /; done`.
+_KEYWORDS = frozenset({
+    "if",
+    "then",
+    "else",
+    "elif",
+    "do",
+    "while",
+    "until",
+    "{",
+    "!",
+})
 _SHELLS = frozenset({"sh", "bash", "zsh", "dash", "ksh", "fish"})
 _INTERPRETERS = _SHELLS | frozenset({
     "python",
@@ -340,7 +353,7 @@ def _split_segments(command: str) -> List[List[str]]:
 
 
 def _strip_wrappers(tokens: Sequence[str]) -> List[str]:
-    """Drop `sudo`, `env VAR=x`, `nohup` and similar leading wrappers.
+    """Drop `sudo`, `env VAR=x`, `nohup`, `then`, `do` and similar leading words.
 
     A wrapper that wraps nothing is kept when it is `env`, because a bare `env`
     prints the whole environment.
@@ -348,7 +361,9 @@ def _strip_wrappers(tokens: Sequence[str]) -> List[str]:
     out = list(tokens)
     while out:
         head = posixpath.basename(out[0])
-        if head in _WRAPPERS:
+        if out[0] in _KEYWORDS:
+            out = out[1:]
+        elif head in _WRAPPERS:
             value_flags = _WRAPPER_VALUE_FLAGS.get(head, frozenset())
             out = out[1:]
             while out and (
