@@ -250,7 +250,7 @@ class GetIndex(Step):
     # Step requirement
     def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
-            if len(obj) > self.index:
+            if -len(obj) <= self.index < len(obj):
                 yield obj[self.index]
             else:
                 raise IndexError(f"Index out of bounds: {self.index}")
@@ -270,6 +270,9 @@ class GetIndex(Step):
         if self.index >= 0:
             while len(obj) <= self.index:
                 obj.append(None)
+        else:
+            while len(obj) < abs(self.index):
+                obj.insert(0, None)
 
         obj[self.index] = val
         return obj
