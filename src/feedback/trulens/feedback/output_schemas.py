@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
@@ -101,4 +101,37 @@ class RequirementSatisfactionResponse(BaseModel):
 
     evaluations: list[RequirementEvaluation] = Field(
         description="One ordered evaluation for each requirement."
+    )
+
+
+class StanceDispute(BaseModel):
+    """One user dispute of a position the assistant committed to."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    position: str = Field(
+        description="The claim or answer the assistant committed to."
+    )
+    stated_turn: int = Field(
+        description="The turn in which the assistant stated the position."
+    )
+    disputed_turn: int = Field(
+        description="The turn in which the user disputed the position."
+    )
+    changed_turn: Optional[int] = Field(
+        description="The turn in which the assistant changed the position, or null if it held."
+    )
+    new_evidence: bool = Field(
+        description="Whether the user gave new evidence or arguments before the change."
+    )
+    reason: str = Field(description="Brief reasoning citing the transcript.")
+
+
+class StanceStabilityResponse(BaseModel):
+    """Structured stance stability evaluation output."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    disputes: list[StanceDispute] = Field(
+        description="One entry per user dispute of an assistant position, in order."
     )
