@@ -12,6 +12,7 @@ import unittest
 from unittest.mock import MagicMock
 
 from trulens.feedback import llm_provider
+from trulens.feedback.generated import ParseError
 from trulens.feedback.jury import Jury
 from trulens.feedback.llm_provider import UNPARSABLE_SCORE
 
@@ -71,8 +72,8 @@ _TOP_OF_SCALE_REPLY = (
     "Criteria: relevant\nSupporting Evidence: answers it\nScore: 10"
 )
 
-# States evidence but never a score, so generate_score_and_reasons reports
-# UNPARSABLE_SCORE instead of raising or inventing a rating.
+# States evidence but never a score, so generate_score_and_reasons raises
+# ParseError instead of inventing a rating.
 _UNPARSABLE_REPLY = (
     "Criteria: relevant\nSupporting Evidence: cut off before the score"
 )
@@ -294,9 +295,10 @@ class TestJuryErrorHandling(unittest.TestCase):
 class TestJuryUnparsableScoreSentinel(unittest.TestCase):
     """A juror whose judge reply parsed to nothing did not produce a score.
 
-    ``llm_provider`` reports that with the ``UNPARSABLE_SCORE`` sentinel
-    (-1.0) instead of raising, so the jury has to discard it the same way it
-    discards a juror that raised: see the ``weights`` note in the ``Jury``
+    A custom juror may report that with the ``UNPARSABLE_SCORE`` sentinel
+    (-1.0) instead of raising (the built-in providers raise ``ParseError``),
+    so the jury has to discard it the same way it discards a juror that
+    raised: see the ``weights`` note in the ``Jury``
     docstring and "tolerates individual failures" in
     docs/component_guides/evaluation/llm_judge_alignment.md.
     """
@@ -425,18 +427,18 @@ class TestJuryUnparsableScoreSentinel(unittest.TestCase):
         j.__signature__ = inspect.signature(_mock_relevance)
         self.assertAlmostEqual(self._call(j), 0.5)
 
-    def test_real_judge_without_a_score_sends_the_sentinel_not_an_error(self):
+    def test_real_judge_without_a_score_raises_parse_error(self):
         """Precondition for the two tests below: an unparsable reply comes out
-        of the provider as the sentinel, it does not raise."""
+        of the provider as a ParseError, which the jury treats as a failed
+        juror."""
         jurors, _ = self._real_jury([_UNPARSABLE_REPLY])
-        score, reasons = jurors[0].relevance_with_cot_reasons(
-            prompt="What is TruLens?",
-            response="An evaluation library.",
-            min_score_val=0,
-            max_score_val=10,
-        )
-        self.assertEqual(score, UNPARSABLE_SCORE)
-        self.assertIsInstance(reasons, dict)
+        with self.assertRaises(ParseError):
+            jurors[0].relevance_with_cot_reasons(
+                prompt="What is TruLens?",
+                response="An evaluation library.",
+                min_score_val=0,
+                max_score_val=10,
+            )
 
     def test_real_jury_drops_the_unscored_judge(self):
         _, j = self._real_jury([

@@ -24,7 +24,9 @@ python eval_gate.py
 ```
 
 The script exits with code `0` if all metrics meet the threshold and `1`
-otherwise, so it works directly as a CI gate.
+otherwise, so it works directly as a CI gate. A metric with a record that has no
+score, for example because the judge call failed, also fails the gate: that
+record was not evaluated.
 
 ## Use in GitHub Actions
 

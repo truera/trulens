@@ -4,7 +4,9 @@ from datetime import datetime
 from datetime import timedelta
 import json
 
+from trulens.apps.app import TruApp
 from trulens.core import session as core_session
+from trulens.core.otel.instrument import instrument
 from trulens.core.schema import event as event_schema
 from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import SpanAttributes
@@ -147,3 +149,53 @@ class TestRecordToolStats(OtelTestCase):
 
         self.assertEqual(row["tool_calls"], 2)
         self.assertIsNone(row["repeated_tool_calls"])
+
+    def test_counts_exception_raised_by_instrumented_tool(self):
+        class _Agent:
+            @instrument()
+            def run(self, query: str) -> str:
+                try:
+                    self.failing_tool(query)
+                except ValueError:
+                    pass
+                return self.working_tool(query)
+
+            @instrument(span_type=SpanAttributes.SpanType.TOOL)
+            def failing_tool(self, query: str) -> str:
+                raise ValueError("tool failed")
+
+            @instrument(span_type=SpanAttributes.SpanType.TOOL)
+            def working_tool(self, query: str) -> str:
+                return "ok"
+
+        agent = _Agent()
+        tru_app = TruApp(
+            agent,
+            app_name=APP["ai.observability.app_name"],
+            app_version=APP["ai.observability.app_version"],
+            main_method=agent.run,
+        )
+        with tru_app:
+            agent.run("query")
+        session = core_session.TruSession()
+        session.force_flush()
+        db = session.connector.db
+
+        records, _ = db.get_records_and_feedback()
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records["tool_calls"].iloc[0], 2)
+        self.assertEqual(records["tool_errors"].iloc[0], 1)
+
+        leaderboard, _ = db.get_leaderboard_aggregates()
+        self.assertAlmostEqual(leaderboard["Tool Error Rate"].iloc[0], 0.5)
+
+    def test_falsy_call_error_is_not_a_tool_error(self):
+        record_id = "record-with-falsy-call-error"
+        tool = _tool(record_id, 1, "search", '{"q":"one"}')
+        tool.record_attributes[SpanAttributes.CALL.ERROR] = ""
+        row = self._records([_root(record_id), tool]).loc[record_id]
+
+        self.assertEqual(row["tool_calls"], 1)
+        self.assertEqual(row["tool_errors"], 0)
+        leaderboard, _ = self.db.get_leaderboard_aggregates()
+        self.assertEqual(leaderboard["Tool Error Rate"].iloc[0], 0.0)
