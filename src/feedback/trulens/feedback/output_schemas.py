@@ -131,7 +131,9 @@ class ProjectRuleAdherenceResponse(BaseModel):
 
     evaluations: list[ProjectRuleEvaluation] = Field(
         description="One evaluation for every checkable project rule."
-      
+    )
+
+
 class StanceDispute(BaseModel):
     """One user dispute of a position the assistant committed to."""
 
