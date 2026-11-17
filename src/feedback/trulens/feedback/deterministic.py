@@ -31,16 +31,6 @@ _ASSISTANT_LINE_RE = re.compile(
     re.IGNORECASE,
 )
 
-# A transcript line that starts another message: a speaker label, with or
-# without a `Turn N` prefix (`User:`, `Turn 2 Tool call:`), or a bare
-# `Turn N:`. Any other line continues the message above it.
-_SPEAKER_LINE_RE = re.compile(
-    r"^\s*(?:turn\s+\d+\s*:|(?:turn\s+\d+\s+)?"
-    r"(?:user|human|system|developer|assistant|ai|bot"
-    r"|tool(?:\s+call)?|function)\s*:)",
-    re.IGNORECASE,
-)
-
 _ASSISTANT_ROLES = frozenset({"assistant", "ai", "bot"})
 
 
@@ -70,9 +60,11 @@ def _assistant_text(record: Any) -> Optional[str]:
 def _assistant_turns_from_transcript(transcript: str) -> List[str]:
     """Extract assistant utterances from a transcript string.
 
-    A reply continues on the lines below its `assistant:` line until the
-    next line that starts another message, so a reply that spans several
-    lines is scored whole, as in the records path.
+    A message continues on the blank lines and on the lines indented deeper
+    than its first line, which is how `conversation_to_prompt` writes a
+    message that spans several lines. Any other line starts another
+    message, whatever its speaker label, so a line such as `Critic: ...`
+    is not added to the reply above it.
 
     Returns an empty list when no `assistant:` line is present, so a
     transcript with only user turns agrees with the records path on
@@ -80,14 +72,19 @@ def _assistant_turns_from_transcript(transcript: str) -> List[str]:
     """
     replies: List[List[str]] = []
     reply: Optional[List[str]] = None
+    message_indent: Optional[int] = None
     for line in transcript.splitlines():
-        if match := _ASSISTANT_LINE_RE.match(line):
-            reply = [match.group(1)]
+        text = line.strip()
+        indent = len(line) - len(line.lstrip())
+        if not text or (message_indent is not None and indent > message_indent):
+            if reply is not None:
+                reply.append(text)
+            continue
+        message_indent = indent
+        match = _ASSISTANT_LINE_RE.match(line)
+        reply = [match.group(1)] if match else None
+        if reply is not None:
             replies.append(reply)
-        elif _SPEAKER_LINE_RE.match(line):
-            reply = None
-        elif reply is not None:
-            reply.append(line)
     return [text for lines in replies if (text := "\n".join(lines).strip())]
 
 
@@ -203,9 +200,9 @@ def conversation_repetition(
         records: The ordered conversation records, or a transcript string.
             Records may be objects with `main_input`/`main_output`, dicts
             with `input`/`output`, or dicts with `role`/`content`. In a
-            transcript, a reply runs from its `assistant:` line to the next
-            line that starts another message, such as `User:` or
-            `Turn 2 User:`.
+            transcript, a reply continues on the lines indented below its
+            `assistant:` line, as `conversation_to_prompt` writes them, and
+            the next unindented line starts another message.
         fallback_phrases: Phrases marking a fallback reply, matched
             case-insensitively. Defaults to
             [DEFAULT_FALLBACK_PHRASES][trulens.feedback.deterministic.

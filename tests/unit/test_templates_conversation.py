@@ -115,6 +115,28 @@ def test_conversation_to_prompt_records() -> None:
     )
 
 
+def test_conversation_to_prompt_indents_the_rest_of_a_multiline_message() -> (
+    None
+):
+    # Indenting a message's later lines keeps one such as `Note: ...` from
+    # reading as another speaker's line.
+    records = [
+        {"input": "Plan a day", "output": "Start early.\nNote: book ahead."},
+    ]
+    messages = [
+        {"role": "assistant", "content": "Start early.\nNote: book ahead."},
+        {"role": "critic", "content": "Too short."},
+    ]
+
+    assert templates_conversation.conversation_to_prompt(records) == (
+        "Turn 1 User: Plan a day\nTurn 1 Assistant: Start early.\n"
+        "  Note: book ahead."
+    )
+    assert templates_conversation.conversation_to_prompt(messages) == (
+        "Assistant: Start early.\n  Note: book ahead.\nCritic: Too short."
+    )
+
+
 def test_conversation_to_prompt_renders_tool_calls_between_turn_lines() -> None:
     records = [
         {"input": "Start", "output": "Ready"},

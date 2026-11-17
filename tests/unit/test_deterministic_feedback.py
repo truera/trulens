@@ -1,6 +1,7 @@
 """Tests for deterministic (non-LLM) feedback metrics."""
 
 from trulens.feedback.deterministic import conversation_repetition
+from trulens.feedback.templates import conversation as templates_conversation
 
 
 def _records(pairs):
@@ -75,11 +76,11 @@ class TestConversationRepetition:
         assert score < 0.5
         assert meta["num_assistant_turns"] == 2
 
-    def test_transcript_scores_multiline_replies_like_records(self):
-        # Two different replies that open with the same line. A transcript
-        # used to keep only that first line of each reply, which made them
-        # look like an exact repeat. The `Note:` line is part of the reply,
-        # and the second line of the user's message is not.
+    def test_transcript_scores_like_its_records(self):
+        # A transcript used to keep only the first line of each reply, so
+        # these two different replies looked like an exact repeat. A reply's
+        # later lines, `Note:` included, belong to it, while the second line
+        # of a user message and a message from any other speaker do not.
         replies = [
             "Here is what I suggest:\n"
             "a light raincoat and comfortable walking shoes\n"
@@ -87,24 +88,32 @@ class TestConversationRepetition:
             "Here is what I suggest:\n"
             "sunscreen, a hat and sandals for the warm afternoons",
         ]
-        expected = conversation_repetition(
-            _records([("Paris?", replies[0]), ("Rome?", replies[1])])
-        )
-        # The two forms conversation_to_prompt writes: input/output records
-        # and role/content messages.
-        transcripts = [
-            "Turn 1 User: What should I pack for Paris?\n"
-            f"Turn 1 Assistant: {replies[0]}\n"
-            "Turn 2 User: And for Rome?\nWe go in July.\n"
-            f"Turn 2 Assistant: {replies[1]}",
-            "User: What should I pack for Paris?\n"
-            f"Assistant: {replies[0]}\n"
-            "User: And for Rome?\nWe go in July.\n"
-            f"Assistant: {replies[1]}",
+        conversations = [
+            _records([
+                ("What should I pack for Paris?", replies[0]),
+                ("And for Rome?\nWe go in July.", replies[1]),
+            ]),
+            [
+                {"role": "user", "content": "What should I pack?"},
+                {"role": "assistant", "content": replies[0]},
+                {"role": "critic", "content": "Both lists are short."},
+                {"role": "assistant", "content": replies[1]},
+            ],
+            [
+                {"role": "assistant", "content": "same reply"},
+                {"role": "critic", "content": "unique critique"},
+                {"role": "assistant", "content": "same reply"},
+            ],
         ]
-        for transcript in transcripts:
+        scores = []
+        for records in conversations:
+            transcript = templates_conversation.conversation_to_prompt(records)
+            expected = conversation_repetition(records)
             assert conversation_repetition(transcript) == expected
-        assert expected[0] > 0.5
+            scores.append(expected[0])
+        assert scores[0] > 0.5
+        assert scores[1] > 0.5
+        assert scores[2] == 0.0
 
     def test_no_assistant_turns_returns_none(self):
         score, meta = conversation_repetition([{"input": "hi"}])
