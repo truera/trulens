@@ -32,6 +32,8 @@ __all__ = [
     "TurnActions",
     "collect_turn_actions",
     "prefilter_actions",
+    "redact_and_clip",
+    "redact_secrets",
 ]
 
 DELETE_OUTSIDE_WORKSPACE = "delete_outside_workspace"
@@ -222,6 +224,10 @@ _PROTECTED_ROOTS = frozenset({
     "/Users",
     "/home",
 })
+
+#: System locations whose contents a delete should never reach. `/Users` and
+#: `/home` are left out, because projects live under them.
+_SYSTEM_ROOTS = _PROTECTED_ROOTS - {"/", "/Users", "/home"}
 
 
 @dataclass(frozen=True)
@@ -489,7 +495,10 @@ def _check_delete(
                 return f"deletes `{target}`, outside the workspace"
         elif resolved.startswith("../") or resolved == "..":
             return f"deletes `{target}`, which climbs out of the project"
-        elif posixpath.isabs(resolved) and resolved.count("/") <= 2:
+        elif posixpath.isabs(resolved) and (
+            resolved.count("/") <= 2
+            or any(resolved.startswith(r + "/") for r in _SYSTEM_ROOTS)
+        ):
             return f"deletes `{target}`, a top-level system path"
     return None
 
@@ -670,7 +679,7 @@ def _inspect_command(
         flagged.append(
             FlaggedAction(
                 category=REMOTE_SCRIPT_EXEC,
-                command=command,
+                command=redact_and_clip(command, _REPORT_CHARS),
                 reason=reason,
                 index=index,
             )
@@ -717,7 +726,10 @@ def _inspect_command(
                 flagged.append(
                     FlaggedAction(
                         category=category,
-                        command=command if depth == 0 else " ".join(tokens),
+                        command=redact_and_clip(
+                            command if depth == 0 else " ".join(tokens),
+                            _REPORT_CHARS,
+                        ),
                         reason=reason,
                         index=index,
                     )
@@ -785,6 +797,9 @@ _PATH_KEYS = (
 #: Longest tool argument or result kept as context for the judge.
 _CONTEXT_CHARS = 400
 
+#: Longest command kept in a flagged action and sent to the judge.
+_REPORT_CHARS = 1000
+
 
 @dataclass
 class TurnActions:
@@ -828,11 +843,99 @@ def _load(value: Any) -> Any:
     return value
 
 
+_REDACTED = "[redacted]"
+_KEY_WORDS = (
+    r"(?:password|passwd|secret|token(?!s\b)|api[-_]?key|access[-_]?key"
+    r"|private[-_]?key|credential)"
+)
+# Every pattern below bounds its repeats, so the time to redact grows linearly
+# with the length of the text.
+_SECRET_PATTERNS: Tuple[Tuple[re.Pattern, str], ...] = (
+    # `Authorization: <value>` and `Bearer abc123`. A plain word such as "Basic
+    # authentication" is left alone because a token carries at least one digit.
+    (
+        re.compile(
+            r"(?i)(\bauthorization[\"']?\s{0,5}[:=]\s{0,5}"
+            r"(?:(?:bearer|basic|token)\s{1,5})?)[^\s'\"]{4,}"
+        ),
+        rf"\1{_REDACTED}",
+    ),
+    (
+        re.compile(
+            r"(?i)\b(bearer|basic|token)(\s{1,5})"
+            r"(?=[A-Za-z0-9._~+/=-]*\d)[A-Za-z0-9._~+/=-]{8,}"
+        ),
+        rf"\1\2{_REDACTED}",
+    ),
+    # `password=x`, `API_KEY: x`, `aws_secret_access_key = x`, `"password": "x"`
+    # and `--token=x`.
+    (
+        re.compile(
+            r"(?i)(\"?'?[\w-]{0,40}"
+            + _KEY_WORDS
+            + r"[\w-]{0,40}\"?'?\s{0,5}[=:]\s{0,5})([\"']?)[^\s'\",}&]+"
+        ),
+        rf"\1\2{_REDACTED}",
+    ),
+    (
+        re.compile(
+            r"(?i)(--(?:password|passwd|token|secret|api-key|access-key)"
+            r"\s{1,5})\S+"
+        ),
+        rf"\1{_REDACTED}",
+    ),
+    # `user:pass@host` in a URL.
+    (
+        re.compile(r"(://[^/\s:@]{1,100}:)[^/\s@]{1,200}(@)"),
+        rf"\1{_REDACTED}\2",
+    ),
+    # Well-known key shapes.
+    (
+        re.compile(
+            r"\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}"
+            r"|sk-[A-Za-z0-9_-]{16,}|AKIA[0-9A-Z]{16}"
+            r"|xox[baprs]-[A-Za-z0-9-]{10,})"
+        ),
+        _REDACTED,
+    ),
+)
+_DB_PASSWORD_FLAG = re.compile(
+    r"(\b(?:mysql|mysqldump|mysqladmin)\b[^|;&\n]{0,120}?\s-p)"
+    r"[^\s;&|'\"-][^\s;&|]*"
+)
+_DOCKER_PASSWORD_FLAG = re.compile(
+    r"(\bdocker\s+login\b[^|;&\n]{0,120}?\s-p\s{0,3})\S+"
+)
+
+
+def redact_secrets(text: str) -> str:
+    """Replace common secret forms in `text` with `[redacted]`.
+
+    This is best effort: bearer tokens and `Authorization` headers, `key=value`
+    pairs (also with spaces around the `=` or as JSON), `--password x` flags,
+    `mysql -p` and `docker login -p` passwords, URL credentials and a few
+    well-known key shapes. A secret in any other form is not caught.
+    """
+    for pattern, replacement in _SECRET_PATTERNS:
+        text = pattern.sub(replacement, text)
+    text = _DB_PASSWORD_FLAG.sub(rf"\1{_REDACTED}", text)
+    return _DOCKER_PASSWORD_FLAG.sub(rf"\1{_REDACTED}", text)
+
+
+def redact_and_clip(text: str, limit: int) -> str:
+    """Redact secrets in the first part of `text`, then keep at most `limit`
+    characters.
+
+    Only twice `limit` characters are scanned, so a very long tool result costs
+    no more than a short one.
+    """
+    text = redact_secrets(text[: limit * 2])
+    return text if len(text) <= limit else text[:limit] + "..."
+
+
 def _clip(value: Any) -> str:
     text = value if isinstance(value, str) else json.dumps(value, default=str)
-    return (
-        text if len(text) <= _CONTEXT_CHARS else text[:_CONTEXT_CHARS] + "..."
-    )
+    return redact_and_clip(text, _CONTEXT_CHARS)
 
 
 def _shell_command(name: str, arguments: Any) -> Optional[str]:

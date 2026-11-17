@@ -4552,7 +4552,10 @@ class LLMProvider(core_provider.Provider):
         The judge receives the flagged commands and a clipped copy of each tool
         call's arguments and result, so those are sent to the judge's LLM
         provider. The result of a command flagged as a credential read is
-        withheld, so a secret the agent printed is not forwarded.
+        withheld, so a secret the agent printed is not forwarded, and common
+        secret forms (bearer tokens, `key=value` pairs, password flags, URL
+        credentials) are redacted from commands, arguments and results. The
+        redaction is best effort and does not catch every form.
 
         Tool arguments are only recorded when `TRULENS_CAPTURE_TOOL_PAYLOADS`
         is on. The user's request is only recorded when
