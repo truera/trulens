@@ -245,6 +245,8 @@ class GoogleEndpoint(core_endpoint.Endpoint):
 
         super().__init__(**kwargs_for_super)
 
+        self._instrument_class(genai.models.Models, "generate_content")
+
     def handle_wrapped_call(
         self,
         func: Callable[..., Any],
@@ -264,10 +266,9 @@ class GoogleEndpoint(core_endpoint.Endpoint):
             and "usage_metadata" in response_dict
         ):
             candidate = response_dict["candidates"][0]
-            if (
-                "finish_reason" in candidate
-                and candidate["finish_reason"] == "STOP"
-            ):
+            # Any finish reason (STOP, MAX_TOKENS, SAFETY, ...) marks the final
+            # response; a truncated or blocked response is billed as well.
+            if candidate.get("finish_reason"):
                 self.global_callback.handle_generation(response=response_dict)
 
                 if callback is not None:
