@@ -145,16 +145,14 @@ class Bedrock(llm_provider.LLMProvider):
                 raise ValueError(
                     "`messages` argument must be supplied for Anthropic Bedrock models."
                 )
-            if messages[0]["role"] == "system":
-                system_prompt = messages[0]["content"]
-            _messages = messages[1:] if len(messages) > 1 else []
-
             anthropic_body = {
-                "system": system_prompt,
-                "messages": _messages,
+                "messages": messages,
                 "max_tokens": 4095,
                 "anthropic_version": "bedrock-2023-05-31",
             }
+            if messages[0]["role"] == "system":
+                anthropic_body["system"] = messages[0]["content"]
+                anthropic_body["messages"] = messages[1:]
             # Claude 4.5+ rejects `temperature` together with `top_p`, so only
             # `temperature` is sent, and not to the models that reject it.
             if not base_model_id.startswith(_CLAUDE_NO_TEMPERATURE_PREFIXES):

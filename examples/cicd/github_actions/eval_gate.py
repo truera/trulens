@@ -1,7 +1,7 @@
 """TruLens CI/CD evaluation gate.
 
 Runs a tiny TruLens evaluation over a fixed test set and exits non-zero if any
-feedback score falls below a configurable threshold. Designed to be dropped into
+feedback score falls below a configurable threshold or was not computed. Designed to be dropped into
 a CI pipeline (GitHub Actions, GitLab CI, etc.) as a quality gate.
 
 Usage:
@@ -18,6 +18,7 @@ from __future__ import annotations
 import os
 import sys
 
+import pandas as pd
 from trulens.apps.app import TruApp
 from trulens.core import Metric
 from trulens.core import Selector
@@ -114,6 +115,46 @@ def build_feedbacks():
     return [f_answer_relevance, f_context_relevance, f_groundedness]
 
 
+def check_scores(
+    results: pd.DataFrame, metric_names: list[str], min_score: float
+) -> list[tuple[str, float, str | None]]:
+    """Check each configured metric against the threshold.
+
+    The scores come from the per-record results, not the leaderboard. The
+    leaderboard also has numeric columns that are not metrics, such as tool-call
+    counts, and a metric whose judge failed on every record is not numeric there.
+
+    Args:
+        results: Per-record scores from `retrieve_feedback_results`, one column
+            per metric.
+        metric_names: Names of the metrics the app was recorded with.
+        min_score: Lowest acceptable mean score.
+
+    Returns:
+        One `(metric, mean score, failure reason)` per metric. The reason is
+        `None` when the metric passes. A record without a score fails the
+        metric, because it was not evaluated.
+    """
+    checks = []
+    for name in metric_names:
+        if name in results.columns:
+            scores = pd.to_numeric(results[name], errors="coerce")
+        else:
+            scores = pd.Series(float("nan"), index=results.index)
+        mean = float(scores.mean())
+        unscored = int(scores.isna().sum())
+        if scores.empty:
+            reason = "no records were evaluated"
+        elif unscored:
+            reason = f"no score for {unscored} of {len(scores)} record(s)"
+        elif mean < min_score:
+            reason = f"{mean:.3f} < {min_score:.3f}"
+        else:
+            reason = None
+        checks.append((name, mean, reason))
+    return checks
+
+
 def main() -> int:
     if not os.environ.get("OPENAI_API_KEY"):
         print("ERROR: OPENAI_API_KEY is not set.", file=sys.stderr)
@@ -125,11 +166,12 @@ def main() -> int:
     session.reset_database()
 
     app = TinyRAG()
+    feedbacks = build_feedbacks()
     tru_app = TruApp(
         app,
         app_name="CI Eval Gate",
         app_version="v1",
-        feedbacks=build_feedbacks(),
+        feedbacks=feedbacks,
     )
 
     with tru_app as recording:
@@ -137,31 +179,25 @@ def main() -> int:
             app.answer(query, key)
 
     # Block until all feedback evaluations have completed.
-    recording.retrieve_feedback_results(timeout=300)
+    results = recording.retrieve_feedback_results(timeout=300)
 
     leaderboard = session.get_leaderboard()
     print("\nLeaderboard:\n", leaderboard.to_string())
 
-    # Compare every feedback column against the threshold. Non-feedback columns
-    # (latency, cost) are ignored.
-    ignore = {"latency", "total_cost", "total_tokens", "Latency", "Cost (USD)"}
-    feedback_cols = [
-        c
-        for c in leaderboard.columns
-        if c not in ignore and leaderboard[c].dtype.kind in "fi"
-    ]
-
-    failures = []
-    for col in feedback_cols:
-        score = float(leaderboard[col].mean())
-        status = "PASS" if score >= min_score else "FAIL"
-        print(f"  {status}  {col}: {score:.3f} (min {min_score})")
-        if score < min_score:
-            failures.append((col, score))
+    checks = check_scores(
+        results, [feedback.name for feedback in feedbacks], min_score
+    )
+    failures = [(name, reason) for name, _, reason in checks if reason]
+    for name, mean, reason in checks:
+        if reason:
+            print(f"  FAIL  {name}: {reason}")
+        else:
+            print(f"  PASS  {name}: {mean:.3f} (min {min_score})")
 
     if failures:
         print(
-            f"\nEval gate FAILED: {len(failures)} metric(s) below {min_score}.",
+            f"\nEval gate FAILED: {len(failures)} metric(s) below {min_score} "
+            "or not scored.",
             file=sys.stderr,
         )
         return 1
