@@ -68,6 +68,38 @@ class TestLens(TestCase):
                 serial_utils.Lens()["outerstr", "outerint"].collect(),
             )
 
+    def testParseNegativeIndex(self):
+        # A Lens is serialized as its string, so each one must parse back to
+        # itself, negative indices included.
+        for lens in [
+            serial_utils.Lens().outerkey.seqkey[-1],
+            serial_utils.Lens().outerkey.seqkey[-2].real,
+            serial_utils.Lens().outerkey.seqkey[0, -1],
+            serial_utils.Lens()[-1],
+        ]:
+            with self.subTest(str(lens)):
+                self.assertEqual(serial_utils.Lens.of_string(str(lens)), lens)
+                self.assertEqual(
+                    serial_utils.Lens.model_validate(lens.model_dump()), lens
+                )
+
+        self.assertEqual(
+            serial_utils.Lens.of_string("outerkey.seqkey[-1]").get_sole_item(
+                self.obj1
+            ),
+            5,
+        )
+
+    def testParseRejectsOtherUnaryOperators(self):
+        for text in [
+            "outerkey.seqkey[+1]",
+            "outerkey.seqkey[+1:]",
+            "outerkey.seqkey[~1]",
+        ]:
+            with self.subTest(text):
+                with self.assertRaises(serial_utils.ParseException):
+                    serial_utils.Lens.of_string(text)
+
     def testStepsGet(self):
         # GetItem, GetAttribute
         with self.subTest("GetItem,GetAttribute"):

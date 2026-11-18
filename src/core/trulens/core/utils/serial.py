@@ -852,6 +852,10 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
                     return GetIndex(index=-oper.index)
 
+                # Only `-` makes an index. Returning `None` here would make a
+                # slice such as `[+1:]` read it as a missing bound.
+                raise ParseException(s, idx)
+
             elif idx is None:
                 return None
 
@@ -897,7 +901,9 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                 elif isinstance(sub, ast.Tuple):
                     path.append(of_index(sub))
 
-                elif isinstance(sub, ast.Constant):
+                elif isinstance(sub, (ast.Constant, ast.UnaryOp)):
+                    # A negative index such as `[-1]` is a unary minus
+                    # applied to a constant.
                     path.append(of_index(sub))
 
                 else:
@@ -910,39 +916,35 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                 # but instead go directly to something bracketed, which is a
                 # list in python syntax.
 
-                if not all(isinstance(el, ast.Constant) for el in exp.elts):
+                if not all(
+                    isinstance(el, (ast.Constant, ast.UnaryOp))
+                    for el in exp.elts
+                ):
                     raise ParseException(s, exp)
 
-                if len(exp.elts) == 0:
+                steps = [of_index(el) for el in exp.elts]
+
+                if len(steps) == 0:
                     logger.warning(
                         f"Path {s} is getting zero items/indices, it will not produce anything."
                     )
                     path.append(GetIndices(indices=()))
 
-                elif len(exp.elts) == 1:
-                    el = exp.elts[0]
-                    if isinstance(el.value, int):
-                        path.append(GetIndex(index=el.value))
-                    elif isinstance(el.value, str):
-                        path.append(GetItem(item=el.value))
-                    else:
-                        raise ParseException(s, exp)
+                elif len(steps) == 1:
+                    path.append(steps[0])
+
+                elif all(isinstance(step, GetIndex) for step in steps):
+                    path.append(
+                        GetIndices(indices=tuple(step.index for step in steps))
+                    )
+
+                elif all(isinstance(step, GetItem) for step in steps):
+                    path.append(
+                        GetItems(items=tuple(step.item for step in steps))
+                    )
 
                 else:
-                    if all(isinstance(el.value, int) for el in exp.elts):
-                        path.append(
-                            GetIndices(
-                                indices=tuple(el.value for el in exp.elts)
-                            )
-                        )
-
-                    elif all(isinstance(el.value, str) for el in exp.elts):
-                        path.append(
-                            GetItems(items=tuple(el.value for el in exp.elts))
-                        )
-
-                    else:
-                        raise ParseException(s, exp)
+                    raise ParseException(s, exp)
 
                 exp = None
 
