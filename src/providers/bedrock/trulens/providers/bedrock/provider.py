@@ -20,6 +20,17 @@ _CLAUDE_NO_TEMPERATURE_PREFIXES = (
     "anthropic.claude-fable-5",
 )
 
+# Mistral models that still use the legacy text-completion schema (`prompt` in,
+# `outputs[0].text` out). Every other `mistral.*` model (Mistral Large 3,
+# Ministral 3, Magistral, ...) uses the chat schema (`messages` in,
+# `choices[0].message.content` out).
+_MISTRAL_LEGACY_PREFIXES = (
+    "mistral.mistral-7b",
+    "mistral.mixtral",
+    "mistral.mistral-large-2402",
+    "mistral.mistral-small-2402",
+)
+
 
 class Bedrock(llm_provider.LLMProvider):
     """A set of AWS Feedback Functions.
@@ -173,6 +184,17 @@ class Bedrock(llm_provider.LLMProvider):
                 "maxTokens": 8191,
             })
 
+        elif base_model_id.startswith("mistral") and not (
+            base_model_id.startswith(_MISTRAL_LEGACY_PREFIXES)
+        ):
+            body = json.dumps({
+                "messages": messages
+                or [{"role": "user", "content": messages_str}],
+                "temperature": 0,
+                "top_p": 1,
+                "max_tokens": 4095,
+            })
+
         elif base_model_id.startswith("mistral"):
             body = json.dumps({
                 "prompt": messages_str,
@@ -238,6 +260,12 @@ class Bedrock(llm_provider.LLMProvider):
                 "generations"
             )[0]["text"]
 
+        elif base_model_id.startswith("mistral") and not (
+            base_model_id.startswith(_MISTRAL_LEGACY_PREFIXES)
+        ):
+            response_body = json.loads(response.get("body").read())["choices"][
+                0
+            ]["message"]["content"]
         elif base_model_id.startswith("mistral"):
             response_body = json.loads(response.get("body").read()).get(
                 "outputs"
