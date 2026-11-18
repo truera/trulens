@@ -46,7 +46,9 @@ def _make_provider(model_id: str, response_payload: Dict[str, Any]):
     [
         "mistral.mistral-large-3-675b-instruct",
         "mistral.ministral-3-8b-instruct",
-        "us.mistral.magistral-small-2509",
+        "mistral.magistral-small-2509",
+        "mistral.mistral-large-2407-v1:0",
+        "us.mistral.pixtral-large-2502-v1:0",
     ],
 )
 def test_new_mistral_uses_chat_schema(model_id):

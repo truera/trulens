@@ -28,7 +28,6 @@ _MISTRAL_LEGACY_PREFIXES = (
     "mistral.mistral-7b",
     "mistral.mixtral",
     "mistral.mistral-large-2402",
-    "mistral.mistral-large-2407",
     "mistral.mistral-small-2402",
 )
 
