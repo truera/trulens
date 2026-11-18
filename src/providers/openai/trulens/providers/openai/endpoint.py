@@ -7,6 +7,11 @@ the involved classes will need to be adapted here. The important classes are:
 - `langchain.schema.LLMResult`
 - `langchain.callbacks.openai_info.OpenAICallbackHandler`
 
+Prices come from the `llm-prices` table first. langchain-community's
+`MODEL_COST_PER_1K_TOKENS` is archived and has no rows for models released
+after gpt-5, so it is only used for models `llm-prices` does not list, such as
+fine-tuned `ft:` ids.
+
 ## Changes for openai 1.0
 
 - Previously we instrumented classes `openai.*` and their methods `create` and
@@ -65,6 +70,7 @@ except ImportError:
     # `is_completion` flag instead of a token type.
     TokenType = None
 
+import llm_prices
 from opentelemetry import trace
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
@@ -128,16 +134,85 @@ TOpenAIResponse = TOpenAIReturn
 T = TypeVar("T")  # TODO bound
 
 
-def token_cost_for_model(
-    model_name: str, prompt_tokens: int, completion_tokens: int
-) -> Optional[float]:
-    """Price a prompt/completion token split using langchain's model table.
+def cached_prompt_tokens(usage: Any) -> int:
+    """Number of cached prompt tokens in an openai usage dict, if any.
 
-    Returns None when the model is unknown to langchain, in which case the
+    Chat completions report them under `prompt_tokens_details`, the Responses
+    API under `input_tokens_details`. Both count them inside the prompt total.
+    """
+    if not isinstance(usage, dict):
+        return 0
+
+    for key in ("prompt_tokens_details", "input_tokens_details"):
+        details = usage.get(key)
+        if isinstance(details, pydantic.BaseModel):
+            details = details.model_dump()
+        if isinstance(details, dict) and details.get("cached_tokens"):
+            return int(details["cached_tokens"])
+
+    return 0
+
+
+def llm_prices_cost(
+    model_name: str,
+    prompt_tokens: int,
+    completion_tokens: int,
+    cached_tokens: int = 0,
+) -> Optional[float]:
+    """Price a call with the `llm-prices` table.
+
+    Cached prompt tokens are part of `prompt_tokens` in openai's usage, so they
+    are taken out of the full-price input and billed at the cached-input rate.
+
+    Returns None when the table has no price for the model.
+    """
+    if not model_name:
+        return None
+
+    try:
+        price = llm_prices.lookup_provider("openai", model_name)
+        if price is None:
+            return None
+
+        cached_tokens = min(max(cached_tokens, 0), prompt_tokens)
+        breakdown = price.cost_usage(
+            llm_prices.Usage(
+                input=prompt_tokens - cached_tokens,
+                cache_read=cached_tokens,
+                output=completion_tokens,
+            )
+        )
+    except Exception:
+        logger.debug(
+            "Could not price model %s with llm-prices.",
+            model_name,
+            exc_info=True,
+        )
+        return None
+
+    return None if breakdown is None else breakdown.total
+
+
+def token_cost_for_model(
+    model_name: str,
+    prompt_tokens: int,
+    completion_tokens: int,
+    cached_tokens: int = 0,
+) -> Optional[float]:
+    """Price a prompt/completion token split.
+
+    Uses the `llm-prices` table, then langchain's model table for models it
+    does not list. Returns None when neither knows the model, in which case the
     caller should leave the recorded cost alone rather than reporting zero.
     """
     if not model_name:
         return None
+
+    cost = llm_prices_cost(
+        model_name, prompt_tokens, completion_tokens, cached_tokens
+    )
+    if cost is not None:
+        return cost
 
     try:
         standardized = standardize_model_name(model_name)
@@ -574,7 +649,10 @@ class OpenAICallback(core_endpoint.EndpointCallback):
         self.cost.n_reasoning_tokens += reasoning_tokens
 
         cost = token_cost_for_model(
-            model_name, prompt_tokens, completion_tokens
+            model_name,
+            prompt_tokens,
+            completion_tokens,
+            cached_prompt_tokens(usage),
         )
         if cost is not None:
             self.cost.cost += cost
@@ -635,6 +713,19 @@ class OpenAICallback(core_endpoint.EndpointCallback):
         })
 
         # n_successful_requests comes from langchain handler.
+
+        # langchain's handler adds nothing for models missing from its frozen
+        # price table, so price this call's tokens with llm-prices when it
+        # lists the model and keep langchain's cost otherwise.
+        llm_output = response.llm_output or {}
+        cost = llm_prices_cost(
+            llm_output.get("model_name") or "",
+            addl_cost.n_prompt_tokens,
+            addl_cost.n_completion_tokens,
+            cached_prompt_tokens(llm_output.get("token_usage")),
+        )
+        if cost is not None:
+            addl_cost.cost = cost
 
         self.cost += addl_cost
 

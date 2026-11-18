@@ -206,5 +206,78 @@ class TestOpenAICallbackCostAccumulation(unittest.TestCase):
                 )
 
 
+class TestOpenAICallbackPricing(unittest.TestCase):
+    """Models newer than gpt-5 are missing from langchain-community's archived
+    price table, which recorded their cost as zero (or None when streamed)."""
+
+    # gpt-5.1 per 1M tokens: $1.25 input, $0.125 cached input, $10 output
+    # (https://developers.openai.com/api/docs/pricing). 1000 prompt tokens of
+    # which 200 are cached, and 100 completion tokens:
+    # (800 * 1.25 + 200 * 0.125 + 100 * 10) / 1e6.
+    GPT_5_1_COST = 0.002025
+
+    USAGE = {
+        "prompt_tokens": 1000,
+        "completion_tokens": 100,
+        "total_tokens": 1100,
+        "prompt_tokens_details": {"cached_tokens": 200},
+    }
+
+    def setUp(self):
+        if OpenAICallback is None:
+            self.skipTest("trulens-providers-openai not available.")
+
+    def test_handle_generation_prices_model_missing_from_langchain(self):
+        callback = OpenAICallback(
+            endpoint=core_endpoint.Endpoint(name="test-endpoint")
+        )
+        callback.handle_generation(
+            LLMResult(
+                generations=[[Generation(text="hi")]],
+                llm_output={
+                    "token_usage": dict(self.USAGE),
+                    "model_name": "gpt-5.1-2025-11-13",
+                },
+            )
+        )
+
+        self.assertEqual(callback.cost.n_prompt_tokens, 1000)
+        self.assertEqual(callback.cost.n_completion_tokens, 100)
+        self.assertAlmostEqual(callback.cost.cost, self.GPT_5_1_COST)
+
+    def test_stream_usage_prices_model_missing_from_langchain(self):
+        callback = OpenAICallback(
+            endpoint=core_endpoint.Endpoint(name="test-endpoint")
+        )
+        callback.handle_generation_usage("gpt-5.1", dict(self.USAGE))
+
+        self.assertAlmostEqual(callback.cost.cost, self.GPT_5_1_COST)
+
+    def test_responses_api_cached_input_is_priced(self):
+        usage = {
+            "input_tokens": 1000,
+            "output_tokens": 100,
+            "input_tokens_details": {"cached_tokens": 200},
+        }
+        self.assertEqual(openai_endpoint.cached_prompt_tokens(usage), 200)
+        self.assertAlmostEqual(
+            openai_endpoint.token_cost_for_model("gpt-5.1", 1000, 100, 200),
+            self.GPT_5_1_COST,
+        )
+
+    def test_fine_tuned_model_falls_back_to_langchain_table(self):
+        model = "ft:gpt-4o-mini-2024-07-18:org::abc123"
+        self.assertIsNone(openai_endpoint.llm_prices_cost(model, 1000, 100))
+
+        cost = openai_endpoint.token_cost_for_model(model, 1000, 100)
+        self.assertIsNotNone(cost)
+        self.assertGreater(cost, 0.0)
+
+    def test_unknown_model_has_no_cost(self):
+        self.assertIsNone(
+            openai_endpoint.token_cost_for_model("my-azure-deployment", 10, 5)
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

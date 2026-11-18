@@ -32,6 +32,7 @@ trulens-core = { version = "^2.0.0" }
 trulens-feedback = { version = "^2.0.0" }
 openai = ">=1.52.1,<2.0.0"
 langchain-community = ">=0.3.29"          # Support both <1.0 and >=1.0 for langchain 1.x migration
+llm-prices = "^1.8.0"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }
