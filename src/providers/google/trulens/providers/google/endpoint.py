@@ -59,7 +59,11 @@ class GoogleCostComputer:
 
         model_name = response.model_version
         n_total_tokens = usage.total_token_count or 0
-        n_prompt_tokens = usage.prompt_token_count or 0
+        # Tokens fed back from built-in tools are billed as input but are
+        # reported outside prompt_token_count.
+        n_prompt_tokens = (usage.prompt_token_count or 0) + (
+            getattr(usage, "tool_use_prompt_token_count", None) or 0
+        )
         n_completion_tokens = usage.candidates_token_count or 0
         n_reasoning_tokens = usage.thoughts_token_count or 0
         # Pricing needs no client, so do not build a GoogleEndpoint here: that
@@ -101,17 +105,21 @@ class GoogleCallback(core_endpoint.EndpointCallback):
         for cost_field, google_field in [
             ("n_tokens", "total_token_count"),
             ("n_prompt_tokens", "prompt_token_count"),
+            ("n_prompt_tokens", "tool_use_prompt_token_count"),
             ("n_completion_tokens", "candidates_token_count"),
             ("n_reasoning_tokens", "thoughts_token_count"),
         ]:
             setattr(
                 self.cost,
                 cost_field,
-                getattr(self.cost, cost_field, 0) + usage.get(google_field, 0),
+                getattr(self.cost, cost_field, 0)
+                + (usage.get(google_field) or 0),
             )
 
         model_name = response_dict.get("model_version")
-        n_prompt_tokens = usage.get("prompt_token_count", 0)
+        n_prompt_tokens = (usage.get("prompt_token_count") or 0) + (
+            usage.get("tool_use_prompt_token_count") or 0
+        )
         n_completion_tokens = usage.get("candidates_token_count", 0)
         n_reasoning_tokens = usage.get("thoughts_token_count", 0)
 
