@@ -21,7 +21,10 @@ from trulens.core.schema.feedback import FeedbackResultStatus
 
 
 @pytest.fixture
-def db():
+def db(monkeypatch):
+    # test_feedback.py sets TRULENS_OTEL_TRACING=0 at import, which leaves
+    # the OTEL tables (trulens_events) uncreated for later tests.
+    monkeypatch.setenv("TRULENS_OTEL_TRACING", "1")
     with tempfile.TemporaryDirectory() as tempdir:
         database = db_sqlalchemy.SQLAlchemyDB.from_db_url(
             f"sqlite:///{os.path.join(tempdir, 'trulens.sqlite')}"
