@@ -263,9 +263,11 @@ def _stance_evidence_matches(
 ) -> list[dict[str, str]]:
     """Find explicit new evidence in a user message, without an LLM.
 
-    This is the deterministic pre-check for stance stability. It is
-    deliberately conservative: a match means the message cites something
-    checkable, and no match means the judge decides. It matches:
+    This is the deterministic pre-check for stance stability. Matches
+    are split into checkable sources (``url``, ``doi``, ``arxiv``) that can
+    independently mark a stance change as supported, and audit signals or
+    evidence candidates (``citation``, ``quote``) where the judge's verdict
+    decides. It matches:
 
     - ``url``: a link starting with ``http://``, ``https://``, or ``www.``
     - ``doi``: a DOI such as ``10.1000/xyz123``
