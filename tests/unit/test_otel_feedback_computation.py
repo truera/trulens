@@ -34,14 +34,6 @@ from tests.util.mock_otel_feedback_computation import (
 from tests.util.mock_otel_feedback_computation import feedback_function
 from tests.util.otel_test_case import OtelTestCase
 
-try:
-    # These imports require optional dependencies to be installed.
-    from trulens.apps.langchain import TruChain
-
-    import tests.unit.test_otel_tru_chain
-except Exception:
-    pass
-
 
 def _convert_events_to_MinimalSpanInfos(
     events: pd.DataFrame,
@@ -115,6 +107,11 @@ class _TestApp:
 class TestOtelFeedbackComputation(OtelTestCase):
     @pytest.mark.skip(reason="Golden file content mismatch in CI")
     def test_feedback_computation(self) -> None:
+        pytest.importorskip("trulens.apps.langchain")
+        from trulens.apps.langchain import TruChain
+
+        import tests.unit.test_otel_tru_chain
+
         # Create app.
         rag_chain = (
             tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
@@ -495,6 +492,11 @@ class TestOtelFeedbackComputation(OtelTestCase):
     def _create_invoked_app_with_custom_feedback(
         self, higher_is_better: bool = True
     ) -> TruApp:
+        pytest.importorskip("trulens.apps.langchain")
+        from trulens.apps.langchain import TruChain
+
+        import tests.unit.test_otel_tru_chain
+
         # Create feedback function.
         def custom(input: str, output: str) -> float:
             if (
