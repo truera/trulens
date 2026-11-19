@@ -218,6 +218,62 @@ def test_assistant_turn_numbers_counts_role_content_messages() -> None:
     assert numbers(["not a record"]) is None
 
 
+# The OpenAI chat format gives an assistant message that only calls a tool no
+# content.
+_TOOL_CALL_MESSAGES = [
+    {"role": "user", "content": "What's the weather in Paris?"},
+    {
+        "role": "assistant",
+        "content": None,
+        "tool_calls": [
+            {
+                "id": "call_1",
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "arguments": '{"city": "Paris"}',
+                },
+            }
+        ],
+    },
+    {"role": "tool", "tool_call_id": "call_1", "content": '{"temp_c": 18}'},
+    {"role": "assistant", "content": "It is 18 C in Paris."},
+]
+
+
+@pytest.mark.parametrize(
+    "empty_message",
+    [
+        _TOOL_CALL_MESSAGES[1],
+        {"role": "assistant", "content": ""},
+        {"role": "assistant", "content": "   "},
+        {"role": "assistant"},
+    ],
+    ids=["tool_call_only", "empty", "blank", "no_content_key"],
+)
+def test_assistant_turn_numbers_skips_messages_without_content(
+    empty_message,
+) -> None:
+    messages = [
+        {"role": "user", "content": "Hi"},
+        empty_message,
+        {"role": "assistant", "content": "Hello"},
+    ]
+
+    assert templates_conversation.assistant_turn_numbers(messages) == [1]
+
+
+def test_tool_call_only_message_is_not_judged_as_a_turn() -> None:
+    provider = _ScriptedJudgeProvider(_verdicts_json(True))
+
+    score, meta = provider.role_adherence_with_cot_reasons(
+        _TOOL_CALL_MESSAGES, role="A friendly weather assistant."
+    )
+
+    assert score == 1.0
+    assert [t["turn"] for t in meta["turns"]] == [1]
+
+
 _MESSAGES = [
     {"role": "user", "content": "Hi"},
     {"role": "assistant", "content": "Hello! How can I help?"},
