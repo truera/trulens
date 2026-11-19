@@ -63,6 +63,13 @@ def tool_argument_validity(
         if name not in validators:
             continue
         arguments = call.get("arguments")
+        # Tool providers may omit arguments for a no-parameter call or record
+        # them as an empty string. Treat those representations as an empty
+        # object and let the recorded schema decide whether that is valid.
+        if arguments is None or (
+            isinstance(arguments, str) and not arguments.strip()
+        ):
+            arguments = {}
         if isinstance(arguments, str):
             try:
                 arguments = json.loads(arguments)
@@ -93,7 +100,7 @@ def tool_argument_validity(
             "errors": [error.message for error in errors],
         })
 
-    score = round(valid_calls / known_calls, 2) if known_calls else None
+    score = valid_calls / known_calls if known_calls else None
     return score, {
         "invalid_calls": invalid_calls,
         "schema_errors": [
