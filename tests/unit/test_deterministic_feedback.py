@@ -1,5 +1,6 @@
 """Tests for deterministic (non-LLM) feedback metrics."""
 
+import pytest
 from trulens.feedback.deterministic import conversation_repetition
 from trulens.feedback.templates import conversation as templates_conversation
 
@@ -146,6 +147,51 @@ class TestConversationRepetition:
         assert custom_score < default_score
         assert custom_score < 0.5
         assert custom_meta["turns"][2]["fallback_phrase"] == 1.0
+
+    def test_fallback_phrase_with_typographic_apostrophes(self):
+        # Models often write "I\u2019m" with U+2019 rather than "'".
+        score, meta = conversation_repetition([
+            {"output": "I\u2019m sorry, I can\u2019t help with that."}
+        ])
+        assert meta["turns"][1]["fallback_phrase"] == 1.0
+        assert score == 0.0
+
+    def test_custom_fallback_phrase_with_typographic_apostrophe(self):
+        score, meta = conversation_repetition(
+            [{"output": "That's outside what I can do here."}],
+            fallback_phrases=["that\u2019s outside what i can do"],
+        )
+        assert meta["turns"][1]["fallback_phrase"] == 1.0
+        assert score == 0.0
+
+    @pytest.mark.parametrize(
+        "output",
+        [
+            "I'm sorry, but I can't\nhelp with that.",
+            "I'm sorry, but I can't\u00a0help with that.",
+            "I'm sorry, but I can't  help with that.",
+            "I\u2019m sorry,\r\n but I can\u2019t help with that.",
+        ],
+    )
+    def test_fallback_phrase_with_other_whitespace(self, output):
+        score, meta = conversation_repetition([{"output": output}])
+        assert meta["turns"][1]["fallback_phrase"] == 1.0
+        assert score == 0.0
+
+    def test_custom_fallback_phrase_whitespace_is_collapsed(self):
+        _, meta = conversation_repetition(
+            [{"output": "Please ask\nsomeone else."}],
+            fallback_phrases=["please  ask someone"],
+        )
+        assert meta["turns"][1]["fallback_phrase"] == 1.0
+
+    def test_custom_fallback_phrase_keeps_its_edge_space(self):
+        # A leading space in a custom phrase still means a word boundary.
+        _, meta = conversation_repetition(
+            [{"output": "The answer is unhelpful."}],
+            fallback_phrases=[" help"],
+        )
+        assert meta["turns"][1]["fallback_phrase"] == 0.0
 
     def test_score_within_unit_interval(self):
         records = _records([
