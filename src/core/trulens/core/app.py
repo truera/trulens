@@ -606,7 +606,12 @@ class App(
 
         if self.instrument is not None:
             self.instrument.instrument_object(
-                obj=self.app, query=select_schema.Select.Query().app
+                obj=self.app,
+                # Legacy recording places components by Lens path; under OTEL
+                # the path is only a debug label.
+                query="app"
+                if otel_enabled
+                else select_schema.Select.Query().app,
             )
         else:
             pass

@@ -458,6 +458,22 @@ def class_filter_matches(f: ClassFilter, obj: Union[Type, object]) -> bool:
     raise ValueError(f"Invalid filter {f}. Type, or a Tuple of Types expected.")
 
 
+def _child_path(
+    path: Union[serial_utils.Lens, str], key: Union[str, int]
+) -> Union[serial_utils.Lens, str]:
+    """Extend a component path by one attribute, item, or index.
+
+    Legacy (non-OTEL) recording stores component locations as `Lens` paths.
+    Under OTEL the path is only a label for debug logging, so a string is
+    used there to keep the OTEL path free of `Lens`.
+    """
+    if isinstance(path, str):
+        if isinstance(key, int):
+            return f"{path}[{key}]"
+        return f"{path}.{key}"
+    return path[key]
+
+
 class Instrument:
     """Instrumentation tools."""
 
@@ -731,7 +747,7 @@ class Instrument:
 
     def tracked_method_wrapper(
         self,
-        query: serial_utils.Lens,
+        query: Union[serial_utils.Lens, str],
         func: Callable,
         method_name: str,
         cls: type,
@@ -1283,7 +1299,10 @@ class Instrument:
         return tru_wrapper
 
     def instrument_method(
-        self, method_name: str, obj: Any, query: serial_utils.Lens
+        self,
+        method_name: str,
+        obj: Any,
+        query: Union[serial_utils.Lens, str],
     ):
         """Instrument a method."""
 
@@ -1356,7 +1375,10 @@ class Instrument:
         cls.__new__ = wrapped_new
 
     def instrument_object(
-        self, obj, query: serial_utils.Lens, done: Optional[Set[int]] = None
+        self,
+        obj,
+        query: Union[serial_utils.Lens, str],
+        done: Optional[Set[int]] = None,
     ):
         """Instrument the given object `obj` and its components."""
 
@@ -1396,7 +1418,7 @@ class Instrument:
                 if any(
                     isinstance(attr_value, cls) for cls in self.include_classes
                 ):
-                    inner_query = query[attr_name]
+                    inner_query = _child_path(query, attr_name)
                     self.instrument_object(attr_value, inner_query, done)
 
         for base in mro:
@@ -1535,13 +1557,17 @@ class Instrument:
                     pass
 
                 elif self.to_instrument_module(type(v).__module__):
-                    self.instrument_object(obj=v, query=query[k], done=done)
+                    self.instrument_object(
+                        obj=v, query=_child_path(query, k), done=done
+                    )
 
                 elif isinstance(v, Sequence):
                     for i, sv in enumerate(v):
                         if self.to_instrument_class(type(sv)):
                             self.instrument_object(
-                                obj=sv, query=query[k][i], done=done
+                                obj=sv,
+                                query=_child_path(_child_path(query, k), i),
+                                done=done,
                             )
 
                 elif isinstance(v, Dict):
@@ -1549,7 +1575,7 @@ class Instrument:
                         # Skip keys that aren't valid for Lens (like TypedDict metaclasses)
                         if not isinstance(k2, (str, int)):
                             continue
-                        subquery = query[k][k2]
+                        subquery = _child_path(_child_path(query, k), k2)
                         if self.to_instrument_class(type(sv)):
                             self.instrument_object(
                                 obj=sv, query=subquery, done=done
