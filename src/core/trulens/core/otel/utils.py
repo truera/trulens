@@ -1,5 +1,6 @@
 import logging
 import os
+import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,16 @@ def is_otel_tracing_enabled() -> bool:
                 " will find nothing. OTEL tracing is enabled by default; unset"
                 " TRULENS_OTEL_TRACING to restore it.",
                 os.getenv("TRULENS_OTEL_TRACING"),
+            )
+            warnings.warn(
+                "Non-OTEL (legacy) mode, enabled by TRULENS_OTEL_TRACING=0, is"
+                " deprecated and will be removed in a future release. This"
+                " includes legacy instrumentation, Lens/Select-based feedback"
+                " selectors, and legacy record storage. Use OTEL tracing (the"
+                " default) with `trulens.core.feedback.selector.Selector`. See"
+                " https://www.trulens.org/contributing/policies/.",
+                DeprecationWarning,
+                stacklevel=2,
             )
         return False
 
