@@ -1,5 +1,7 @@
 """Unit tests for criteria A/B testing. No model or API key needed."""
 
+import math
+
 import pytest
 
 criteria_ab_test = pytest.importorskip("trulens.benchmark.criteria_ab_test")
@@ -38,6 +40,16 @@ def test_significance_identical_is_not_significant():
     sig = report.significance()
     assert sig["mean_difference"] == pytest.approx(0.0)
     assert sig["p_value"] == pytest.approx(1.0)
+
+
+def test_significance_with_a_nan_score_is_not_significant():
+    # _to_score returns nan for a result with no numeric value.
+    report = CriteriaABTestReport(
+        "a", [0.2, 0.5, 0.8, 0.4], "b", [0.2, 0.5, 0.8, float("nan")]
+    )
+    sig = report.significance()
+    assert math.isnan(sig["p_value"])
+    assert not sig["p_value"] < criteria_ab_test.SIGNIFICANCE_ALPHA
 
 
 def test_significance_consistent_shift_is_significant():

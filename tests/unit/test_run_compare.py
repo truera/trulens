@@ -71,6 +71,15 @@ class TestPairedPermutationPvalue(unittest.TestCase):
                     stats_utils.paired_permutation_pvalue(thirds, seed),
                 )
 
+    def test_non_finite_difference_returns_nan(self):
+        # A missing or infinite score gives no p-value, rather than one
+        # that looks highly significant.
+        for bad in (float("nan"), float("inf"), float("-inf")):
+            with self.subTest(bad=bad):
+                diffs = np.array([0.0, 0.1, -0.1, 0.0, bad])
+                p = stats_utils.paired_permutation_pvalue(diffs)
+                self.assertTrue(math.isnan(p))
+
 
 class TestBootstrapCi(unittest.TestCase):
     def test_empty_returns_nan(self):

@@ -31,9 +31,14 @@ def paired_permutation_pvalue(
 
     Returns:
         The two-sided p-value in ``(0, 1]``.  Returns ``1.0`` when there are
-        no differences or all differences are zero.
+        no differences or all differences are zero, and ``nan`` when any
+        difference is ``nan`` or infinite.
     """
     diffs = np.asarray(diffs, dtype=float)
+    if not np.all(np.isfinite(diffs)):
+        # Every comparison with nan is False, so a missing score would
+        # otherwise produce the smallest possible p-value.
+        return float("nan")
     n = len(diffs)
     if n == 0 or np.allclose(diffs, 0.0):
         return 1.0
