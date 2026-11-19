@@ -17,6 +17,12 @@ logger = logging.getLogger(__name__)
 class Select:
     """
     Utilities for creating selectors using Lens and aliases/shortcuts.
+
+    !!! warning "Deprecated"
+        `Select` and `Lens` selectors only apply in legacy (non-OTEL) mode and
+        are deprecated. Use `trulens.core.feedback.selector.Selector`, or the
+        `Metric.on_input()` / `on_output()` / `on_context()` shortcuts, with
+        OTEL tracing (the default).
     """
 
     Lens: TypeAlias = serial_utils.Lens

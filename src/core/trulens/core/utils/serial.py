@@ -705,6 +705,13 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     """
     Lenses into Python objects.
 
+    !!! warning "Deprecated"
+        `Lens` belongs to the legacy (non-OTEL) code path and is deprecated.
+        It is frozen: only security and critical bug fixes are accepted. Use
+        `trulens.core.feedback.selector.Selector` for feedback selection under
+        OTEL tracing (the default). See the Deprecation section of
+        `POLICIES.md`.
+
     Example:
         ```python
         path = Lens().record[5]['somekey']
