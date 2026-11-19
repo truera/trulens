@@ -49,6 +49,7 @@
 
 # Ensemble and prompt optimization.
 /src/feedback/trulens/feedback/optimize.py    @truera/trulens_maintainers @alimtaha
+/src/apps/dspy/                         @truera/trulens_maintainers @alimtaha
 /src/apps/gepa/                         @truera/trulens_maintainers @alimtaha
 
 # LLM judge alignment.

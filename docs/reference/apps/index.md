@@ -48,7 +48,7 @@ Apps derive from [AppDefinition][trulens.core.schema.app.AppDefinition] and
 
 ## 🧬 Prompt optimization
 
-Not a recorder — this wraps a feedback function instead of an app.
+Not recorders — these wrap a feedback function or metric instead of an app.
 
 - [TruGEPA][trulens.apps.gepa.TruGEPA] in package `trulens-apps-gepa`. Adapts a
   TruLens feedback function into a GEPA fitness function, and logs each candidate
@@ -57,4 +57,15 @@ Not a recorder — this wraps a feedback function instead of an app.
 
     ```bash
     pip install trulens-apps-gepa
+    ```
+
+- [TruDSPyMetric][trulens.apps.dspy.TruDSPyMetric] in package
+  `trulens-apps-dspy`. Wraps a TruLens [Metric][trulens.core.Metric] as a DSPy
+  metric for `dspy.Evaluate`, the bootstrap optimizers, `dspy.MIPROv2` and
+  `dspy.GEPA`, with an explicit mapping from metric arguments to DSPy example
+  and prediction fields. Optimizer candidates are not recorded; record the
+  baseline and optimized programs as app versions instead.
+
+    ```bash
+    pip install trulens-apps-dspy
     ```

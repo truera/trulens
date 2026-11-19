@@ -114,6 +114,7 @@ trulens-hotspots = { path = "src/hotspots", develop = true }
 [tool.poetry.group.required.dependencies]
 trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
+trulens-apps-dspy = { path = "src/apps/dspy", develop = true }
 trulens-apps-gepa = { path = "src/apps/gepa", develop = true }
 trulens-apps-rl = { path = "src/apps/rl", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true }
