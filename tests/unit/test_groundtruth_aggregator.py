@@ -1198,11 +1198,24 @@ class TestGroundTruthAggregator(TestCase):
             msg="Recall is undefined when no actual positives exist",
         )
 
-        # f1_score needs no guard of its own: nan falls through its
-        # precision + recall == 0 check and propagates.
+        # F1 is only undefined when precision and recall both are.
         self.assertTrue(
             np.isnan(negative_aggregator.f1_score(all_negative_predictions)),
             msg="F1 is undefined when precision and recall are undefined",
+        )
+
+        # With only one side undefined, TP is 0 and F1 = 2TP / (2TP + FP + FN)
+        # is a measured 0.0, matching sklearn's f1_score(zero_division=nan).
+        missed_all = GroundTruthAggregator(true_labels=[1, 1, 0, 0])
+        self.assertEqual(
+            missed_all.f1_score([0.1, 0.1, 0.1, 0.1]),
+            0.0,
+            msg="F1 is 0.0 when no positives are predicted but some exist",
+        )
+        self.assertEqual(
+            negative_aggregator.f1_score([0.9, 0.1, 0.1, 0.1, 0.1]),
+            0.0,
+            msg="F1 is 0.0 when positives are predicted but none exist",
         )
 
         # The measured zeros are unchanged.
