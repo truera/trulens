@@ -233,10 +233,15 @@ class LiteLLM(llm_provider.LLMProvider):
                 model=_model_name, custom_llm_provider=_model_provider
             )
             params = required_params + (supported_params or [])
+            # The filter is for the OpenAI-style params TruLens adds per call.
+            # Keys set in completion_kwargs (aws_region_name, vertex_project,
+            # keep_alive, ...) are passed as given, as for unprefixed models.
             completion_args = {
                 k: v
                 for k, v in completion_args.items()
-                if k in params or k in self._LITELLM_ROUTING_PARAMS
+                if k in params
+                or k in self._LITELLM_ROUTING_PARAMS
+                or k in self.completion_args
             }
 
         # Handle reasoning models vs non-reasoning defaults

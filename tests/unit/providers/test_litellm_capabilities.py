@@ -287,6 +287,80 @@ def test_api_base_preserved_with_prefixed_model(monkeypatch):
 
 
 @pytest.mark.optional
+@pytest.mark.parametrize(
+    "model_engine,completion_kwargs",
+    [
+        (
+            "bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0",
+            {"aws_region_name": "us-west-2", "aws_profile_name": "dev"},
+        ),
+        (
+            "vertex_ai/gemini-2.0-flash",
+            {"vertex_project": "my-project", "vertex_location": "europe-west4"},
+        ),
+        ("ollama/llama3.1:8b", {"keep_alive": "10m"}),
+        ("openai/gpt-4o-mini", {"organization": "org-123"}),
+    ],
+)
+def test_completion_kwargs_preserved_with_prefixed_model(
+    monkeypatch, model_engine, completion_kwargs
+):
+    """completion_kwargs must reach litellm.completion() for models with a
+    provider prefix, as they do for unprefixed models."""
+    from trulens.providers.litellm import (
+        LiteLLM,  # type: ignore[import-not-found]
+    )
+
+    dummy = _DummyLiteLLM()
+    import trulens.providers.litellm.provider as provider_mod  # type: ignore[import-not-found]
+
+    monkeypatch.setattr(
+        provider_mod,
+        "completion",
+        lambda **kw: dummy.completion(**kw),
+    )
+
+    provider = LiteLLM(
+        model_engine=model_engine, completion_kwargs=completion_kwargs
+    )
+    provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}]
+    )
+    for key, value in completion_kwargs.items():
+        assert dummy.calls[-1].get(key) == value
+
+
+@pytest.mark.optional
+def test_unsupported_per_call_param_still_filtered_with_prefixed_model(
+    monkeypatch,
+):
+    """Per-call params the model does not support are still dropped; only
+    keys set in completion_kwargs bypass the filter."""
+    from trulens.providers.litellm import (
+        LiteLLM,  # type: ignore[import-not-found]
+    )
+
+    dummy = _DummyLiteLLM()
+    import trulens.providers.litellm.provider as provider_mod  # type: ignore[import-not-found]
+
+    monkeypatch.setattr(
+        provider_mod,
+        "completion",
+        lambda **kw: dummy.completion(**kw),
+    )
+
+    provider = LiteLLM(
+        model_engine="ollama/llama3.1:8b",
+        completion_kwargs={"keep_alive": "10m"},
+    )
+    provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}], presence_penalty=0.5
+    )
+    assert "presence_penalty" not in dummy.calls[-1]
+    assert dummy.calls[-1].get("keep_alive") == "10m"
+
+
+@pytest.mark.optional
 def test_completion_kwargs_takes_precedence_over_direct_kwarg(
     monkeypatch,
 ):
