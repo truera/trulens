@@ -3,10 +3,12 @@ Tests for OTEL instrument decorator and custom app.
 """
 
 import gc
+from unittest import mock
 import weakref
 
 from trulens.apps.app import TruApp
 from trulens.core.otel.instrument import instrument
+from trulens.core.utils import serial as serial_utils
 from trulens.otel.semconv.trace import SpanAttributes
 
 import tests.util.otel_tru_app_test_case
@@ -106,6 +108,18 @@ class TestOtelTruCustom(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         self._compare_record_attributes_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"
         )
+
+    def test_otel_path_does_not_construct_lens(self) -> None:
+        """Instrumenting and recording under OTEL must not depend on `Lens`."""
+        with mock.patch.object(
+            serial_utils.Lens,
+            "__init__",
+            side_effect=AssertionError("Lens constructed on the OTEL path"),
+        ):
+            test_app = TestApp()
+            custom_app = TruApp(test_app, app_name="no_lens", app_version="v1")
+            with custom_app:
+                test_app.respond_to_query("test")
 
     def test_incorrect_span_attributes(self) -> None:
         class MyProblematicApp:
