@@ -65,12 +65,10 @@ Deprecated components:
 Some newer features like `App.run()`, `App.input()`, and
 `App.instrumented_invoke_main_method()` only work with OTEL instrumentation.
 
-Parts of the core still use `Lens` internally (object walking, legacy record
-reads, and the dashboard's handling of older data). Those internals will be
-migrated before the error and removal stages begin, so the timing of those
-stages will be announced separately rather than following the default
-schedule. Reading data recorded by older versions will remain supported for a
-migration window after the legacy write path is removed.
+The OTEL recording, evaluation, and read paths do not use `Lens`; remaining
+`Lens` code serves only non-OTEL mode and legacy records. Reading data recorded
+by older versions will remain supported for a migration window after the
+legacy write path is removed.
 
 Contribution policy: deprecated components are frozen. Pull requests that add
 features to, refactor, or extend `Lens`, `Select`, or other non-OTEL code paths
