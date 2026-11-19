@@ -32,7 +32,9 @@ class ParseError(Exception):
 PATTERN_0_10: re.Pattern = re.compile(r"([0-9]+)(?=\D*$)")
 """Regex that matches the last integer."""
 
-PATTERN_NUMBER: re.Pattern = re.compile(r"([+-]?[0-9]+\.[0-9]*|[1-9][0-9]*|0)")
+PATTERN_NUMBER: re.Pattern = re.compile(
+    r"([+-]?[0-9]+\.[0-9]*|[+-]?[1-9][0-9]*|0)"
+)
 """Regex that matches floating point and integer numbers."""
 
 PATTERN_INTEGER: re.Pattern = re.compile(r"([+-]?[1-9][0-9]*|0)")
@@ -148,7 +150,11 @@ def re_configured_rating(
     vals = _ratings_in_range(
         considered, min_score_val, max_score_val, allow_decimal
     )
-    if not vals and considered is not s:
+    if (
+        not vals
+        and considered is not s
+        and not PATTERN_NUMBER.search(considered)
+    ):
         # Stripping took the only numbers with it, so fall back to the whole string
         # rather than raising on text the old behaviour could read.
         considered = s

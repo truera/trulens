@@ -102,6 +102,28 @@ def test_re_configured_rating_stripped_text_used_throughout(
     )
 
 
+# Raised in review on #3008: a rating outside the stated scale fell back to the whole
+# string, so the stated bounds came back and the floor won.
+out_of_range_after_scale_data = [
+    ("Rating (0-3): -1", 0, 3),
+    ("On a scale of 0 to 3, I rate this 5", 0, 3),
+]
+
+
+@pytest.mark.parametrize(
+    "test_input,min_score_val,max_score_val", out_of_range_after_scale_data
+)
+def test_re_configured_rating_raises_on_out_of_range_rating_after_scale(
+    test_input, min_score_val, max_score_val
+):
+    """The stated bounds are not read when the rating is out of range."""
+
+    with pytest.raises(feedback_generated.ParseError):
+        feedback_generated.re_configured_rating(
+            test_input, min_score_val, max_score_val
+        )
+
+
 out_of_data = [
     ("The rating is 1 out of 3.", 1),
 ]
@@ -112,6 +134,38 @@ def test_re_configured_rating_keeps_out_of_phrasing(test_input, expected):
     """ "N out of M" is not a scale statement and keeps its existing handling."""
 
     result = feedback_generated.re_configured_rating(test_input)
+
+    assert result == expected, (
+        f"Failed on {test_input}: expected {expected}, got {result}"
+    )
+
+
+# The minus sign belongs to the number, so "-2" is out of range and not a 2.
+signed_data = [
+    ("Rating: -2", 0, 3, None),
+    ("Score: 3 (-1 for repetition)", 0, 3, 3),
+    ("-1", -1, 1, -1),
+    # A date is not a rating, so its "-10" month is not read as 10.
+    ("2026-10-27", 0, 10, None),
+    # In "3-1" the "-1" is out of range, so it is not read as 1.
+    ("3-1", 0, 10, 3),
+]
+
+
+@pytest.mark.parametrize(
+    "test_input,min_score_val,max_score_val,expected", signed_data
+)
+def test_re_configured_rating_keeps_the_sign(
+    test_input, min_score_val, max_score_val, expected
+):
+    """A negative integer is not read as its absolute value."""
+
+    try:
+        result = feedback_generated.re_configured_rating(
+            test_input, min_score_val, max_score_val
+        )
+    except feedback_generated.ParseError:
+        result = None
 
     assert result == expected, (
         f"Failed on {test_input}: expected {expected}, got {result}"
