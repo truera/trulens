@@ -185,10 +185,9 @@ class CortexEndpoint(core_endpoint.Endpoint):
         if isinstance(response_dict, dict) and "usage" in response_dict:
             if "choices" in response_dict:
                 choice = response_dict["choices"][0]
-                if (
-                    "finish_reason" in choice
-                    and choice["finish_reason"] == "stop"
-                ):
+                # Any terminal finish reason ("stop", "length", "tool_calls",
+                # ...) carries billed usage; intermediate chunks have none.
+                if choice.get("finish_reason"):
                     self.global_callback.handle_generation(
                         response=response_dict
                     )
