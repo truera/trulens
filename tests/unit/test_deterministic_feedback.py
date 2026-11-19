@@ -1,6 +1,7 @@
 """Tests for deterministic (non-LLM) feedback metrics."""
 
 from trulens.feedback.deterministic import conversation_repetition
+from trulens.feedback.templates import conversation as templates_conversation
 
 
 def _records(pairs):
@@ -74,6 +75,45 @@ class TestConversationRepetition:
         score, meta = conversation_repetition(transcript)
         assert score < 0.5
         assert meta["num_assistant_turns"] == 2
+
+    def test_transcript_scores_like_its_records(self):
+        # A transcript used to keep only the first line of each reply, so
+        # these two different replies looked like an exact repeat. A reply's
+        # later lines, `Note:` included, belong to it, while the second line
+        # of a user message and a message from any other speaker do not.
+        replies = [
+            "Here is what I suggest:\n"
+            "a light raincoat and comfortable walking shoes\n"
+            "Note: it rains often in spring",
+            "Here is what I suggest:\n"
+            "sunscreen, a hat and sandals for the warm afternoons",
+        ]
+        conversations = [
+            _records([
+                ("What should I pack for Paris?", replies[0]),
+                ("And for Rome?\nWe go in July.", replies[1]),
+            ]),
+            [
+                {"role": "user", "content": "What should I pack?"},
+                {"role": "assistant", "content": replies[0]},
+                {"role": "critic", "content": "Both lists are short."},
+                {"role": "assistant", "content": replies[1]},
+            ],
+            [
+                {"role": "assistant", "content": "same reply"},
+                {"role": "critic", "content": "unique critique"},
+                {"role": "assistant", "content": "same reply"},
+            ],
+        ]
+        scores = []
+        for records in conversations:
+            transcript = templates_conversation.conversation_to_prompt(records)
+            expected = conversation_repetition(records)
+            assert conversation_repetition(transcript) == expected
+            scores.append(expected[0])
+        assert scores[0] > 0.5
+        assert scores[1] > 0.5
+        assert scores[2] == 0.0
 
     def test_no_assistant_turns_returns_none(self):
         score, meta = conversation_repetition([{"input": "hi"}])

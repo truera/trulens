@@ -60,15 +60,32 @@ def _assistant_text(record: Any) -> Optional[str]:
 def _assistant_turns_from_transcript(transcript: str) -> List[str]:
     """Extract assistant utterances from a transcript string.
 
+    A message continues on the blank lines and on the lines indented deeper
+    than its first line, which is how `conversation_to_prompt` writes a
+    message that spans several lines. Any other line starts another
+    message, whatever its speaker label, so a line such as `Critic: ...`
+    is not added to the reply above it.
+
     Returns an empty list when no `assistant:` line is present, so a
     transcript with only user turns agrees with the records path on
     "no assistant turns" instead of being scored as one turn.
     """
-    return [
-        match.group(1)
-        for line in transcript.splitlines()
-        if (match := _ASSISTANT_LINE_RE.match(line)) and match.group(1)
-    ]
+    replies: List[List[str]] = []
+    reply: Optional[List[str]] = None
+    message_indent: Optional[int] = None
+    for line in transcript.splitlines():
+        text = line.strip()
+        indent = len(line) - len(line.lstrip())
+        if not text or (message_indent is not None and indent > message_indent):
+            if reply is not None:
+                reply.append(text)
+            continue
+        message_indent = indent
+        match = _ASSISTANT_LINE_RE.match(line)
+        reply = [match.group(1)] if match else None
+        if reply is not None:
+            replies.append(reply)
+    return [text for lines in replies if (text := "\n".join(lines).strip())]
 
 
 def _assistant_turns(records: List[Any] | str) -> List[str]:
@@ -182,7 +199,10 @@ def conversation_repetition(
     Args:
         records: The ordered conversation records, or a transcript string.
             Records may be objects with `main_input`/`main_output`, dicts
-            with `input`/`output`, or dicts with `role`/`content`.
+            with `input`/`output`, or dicts with `role`/`content`. In a
+            transcript, a reply continues on the lines indented below its
+            `assistant:` line, as `conversation_to_prompt` writes them, and
+            the next unindented line starts another message.
         fallback_phrases: Phrases marking a fallback reply, matched
             case-insensitively. Defaults to
             [DEFAULT_FALLBACK_PHRASES][trulens.feedback.deterministic.
