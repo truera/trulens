@@ -18,13 +18,16 @@ pp = pprint.PrettyPrinter()
 class LiteLLMCostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
-        usage = response.usage
+        # Some providers send no usage; count those tokens as zero.
+        usage = getattr(response, "usage", None) or {}
         return {
-            SpanAttributes.COST.NUM_TOKENS: usage["total_tokens"],
-            SpanAttributes.COST.NUM_PROMPT_TOKENS: usage["prompt_tokens"],
-            SpanAttributes.COST.NUM_COMPLETION_TOKENS: usage[
-                "completion_tokens"
-            ],
+            SpanAttributes.COST.NUM_TOKENS: usage.get("total_tokens", 0),
+            SpanAttributes.COST.NUM_PROMPT_TOKENS: usage.get(
+                "prompt_tokens", 0
+            ),
+            SpanAttributes.COST.NUM_COMPLETION_TOKENS: usage.get(
+                "completion_tokens", 0
+            ),
             SpanAttributes.COST.COST: completion_cost(response),
             SpanAttributes.COST.CURRENCY: "USD",
             SpanAttributes.COST.MODEL: response.get("model"),
@@ -40,7 +43,8 @@ class LiteLLMCallback(core_endpoint.EndpointCallback):
 
         response_dict = response.model_dump()
 
-        usage = response_dict.get("usage")
+        # Some providers send no usage; count those tokens as zero.
+        usage = response_dict.get("usage") or {}
 
         self.endpoint: LiteLLMEndpoint
         if self.endpoint.litellm_provider not in ["openai", "azure", "bedrock"]:
