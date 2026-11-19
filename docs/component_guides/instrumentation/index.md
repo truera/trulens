@@ -162,7 +162,7 @@ The lambda function dynamically processes both the function's return value and i
 
 ## Instrumenting Common App Frameworks
 
-In cases where you are leveraging frameworks like `LangChain`, `LangGraph` and `LlamaIndex`, TruLens instruments the framework for you. To take advantage of this instrumentation, you can simply use `TruChain` ([Read more](langchain.md)) for `LangChain`, `TruGraph` ([Read more](langgraph.md)) for `LangGraph`, or `TruLlama` ([Read more](llama_index.md)) for `LlamaIndex` to wrap your application.
+In cases where you are leveraging frameworks like `LangChain`, `LangGraph`, `LlamaIndex` and `AutoGen`, TruLens instruments the framework for you. To take advantage of this instrumentation, you can simply use `TruChain` ([Read more](langchain.md)) for `LangChain`, `TruGraph` ([Read more](langgraph.md)) for `LangGraph`, `TruLlama` ([Read more](llama_index.md)) for `LlamaIndex`, or `TruAutoGen` ([Read more](autogen.md)) for `AutoGen` to wrap your application.
 
 !!! example
 
@@ -205,6 +205,19 @@ In cases where you are leveraging frameworks like `LangChain`, `LangGraph` and `
 
         tru_query_engine_recorder = TruLlama(
             query_engine, app_name="LlamaIndex_App", app_version="base"
+        )
+        ```
+
+    === "_AutoGen_"
+
+        ```python
+        from trulens.apps.autogen import TruAutoGen
+
+        tru_recorder = TruAutoGen(
+            user_proxy,
+            app_name="AutoGen_Agents",
+            app_version="base",
+            main_method=user_proxy.initiate_chat,
         )
         ```
 

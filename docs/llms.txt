@@ -28,6 +28,7 @@ Notes for interpreting these docs:
 ## Instrumentation
 
 - [Instrumentation overview](https://www.trulens.org/component_guides/instrumentation/): The @instrument decorator, span types and attributes
+- [AutoGen](https://www.trulens.org/component_guides/instrumentation/autogen/): TruAutoGen, for AutoGen (AG2) multi-agent conversations
 - [LangChain](https://www.trulens.org/component_guides/instrumentation/langchain/): TruChain
 - [LangGraph](https://www.trulens.org/component_guides/instrumentation/langgraph/): TruGraph, for graph and agent workflows
 - [LlamaIndex](https://www.trulens.org/component_guides/instrumentation/llama_index/): TruLlama

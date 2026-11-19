@@ -20,6 +20,9 @@ nbconvert   >= 7.14.2  # for llama_index example using SimlpleDirectoryReader
 llama-index-readers-file >= 0.1.5 # tests and notebooks
 llama-index-readers-web  >= 0.1.6 # tests and notebooks
 
+# Apps: AutoGen (AG2)
+autogen >= 0.4, < 1.0
+
 # Apps: NeMo Guardrails
 nemoguardrails >= 0.7.1
 
@@ -87,6 +90,7 @@ snowflake-core >= 0.8.0
 snowflake-sqlalchemy >= 1.6.0
 
 # Optional trulens packages
+trulens-apps-autogen >= 1.0.0
 trulens-apps-llamaindex >= 1.0.0
 trulens-apps-langchain >= 1.0.0
 trulens-apps-langgraph >= 1.0.0

@@ -24,6 +24,7 @@ _SPECIAL_FORMATTING = {
     "litellm": f"{pack_symbol} LiteLLM",
     "openai": f"{pack_symbol} OpenAI",
     "huggingface": f"{pack_symbol} HuggingFace",
+    "autogen": f"{pack_symbol} AutoGen",
     "langchain": f"{pack_symbol} LangChain",
     "llamaindex": f"{pack_symbol} LlamaIndex",
     "nemo": f"{pack_symbol} NeMo Guardrails",
