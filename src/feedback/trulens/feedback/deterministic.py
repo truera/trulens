@@ -24,14 +24,17 @@ DEFAULT_FALLBACK_PHRASES: Tuple[str, ...] = (
     "as an ai language model",
 )
 
+#: Roles read as the assistant, in records and as transcript speaker labels.
+_ASSISTANT_ROLES = frozenset({"assistant", "ai", "bot"})
+
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
 
 _ASSISTANT_LINE_RE = re.compile(
-    r"^\s*(?:turn\s+\d+\s+)?assistant\s*:\s*(.*?)\s*$",
+    r"^\s*(?:turn\s+\d+\s+)?(?:"
+    + "|".join(map(re.escape, sorted(_ASSISTANT_ROLES)))
+    + r")\s*:\s*(.*?)\s*$",
     re.IGNORECASE,
 )
-
-_ASSISTANT_ROLES = frozenset({"assistant", "ai", "bot"})
 
 
 def _tokenize(text: str) -> List[str]:
@@ -66,9 +69,11 @@ def _assistant_turns_from_transcript(transcript: str) -> List[str]:
     message, whatever its speaker label, so a line such as `Critic: ...`
     is not added to the reply above it.
 
-    Returns an empty list when no `assistant:` line is present, so a
-    transcript with only user turns agrees with the records path on
-    "no assistant turns" instead of being scored as one turn.
+    A reply starts at a line labeled with an assistant role (`assistant:`,
+    `ai:` or `bot:`, as for records). Returns an empty list when no such
+    line is present, so a transcript with only user turns agrees with the
+    records path on "no assistant turns" instead of being scored as one
+    turn.
     """
     replies: List[List[str]] = []
     reply: Optional[List[str]] = None
@@ -199,10 +204,12 @@ def conversation_repetition(
     Args:
         records: The ordered conversation records, or a transcript string.
             Records may be objects with `main_input`/`main_output`, dicts
-            with `input`/`output`, or dicts with `role`/`content`. In a
-            transcript, a reply continues on the lines indented below its
-            `assistant:` line, as `conversation_to_prompt` writes them, and
-            the next unindented line starts another message.
+            with `input`/`output`, or dicts with `role`/`content`, where the
+            roles assistant, ai and bot are the assistant. In a transcript,
+            a reply starts at an `assistant:`, `ai:` or `bot:` line and
+            continues on the lines indented below it, as
+            `conversation_to_prompt` writes them, and the next unindented
+            line starts another message.
         fallback_phrases: Phrases marking a fallback reply, matched
             case-insensitively. Defaults to
             [DEFAULT_FALLBACK_PHRASES][trulens.feedback.deterministic.
