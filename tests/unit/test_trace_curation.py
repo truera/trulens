@@ -68,6 +68,7 @@ class CurationTestCase(unittest.TestCase):
 
         db_path = os.path.join(self._tempdir.name, "trulens.sqlite")
         self.db = db_sqlalchemy.SQLAlchemyDB.from_db_url(f"sqlite:///{db_path}")
+        self.addCleanup(self.db.engine.dispose)
         self.db.migrate_database()
 
         _clear_tru_session_singletons()

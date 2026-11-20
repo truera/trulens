@@ -23,7 +23,10 @@ def db():
             f"sqlite:///{os.path.join(tempdir, 'trulens.sqlite')}"
         )
         database.migrate_database()
-        yield database
+        try:
+            yield database
+        finally:
+            database.engine.dispose()
 
 
 def test_get_feedback_accepts_a_single_status(db, monkeypatch):
