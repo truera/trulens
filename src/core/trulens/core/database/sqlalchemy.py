@@ -1476,12 +1476,40 @@ class SQLAlchemyDB(core_db.DB):
             ).label("mcp_output_is_error"),
         ).where(sa.and_(*tool_conditions))
 
+        # Coding-agent verification is derived per record from the TOOL
+        # spans' CODING_AGENT attributes, like the tool statistics below,
+        # so the spans are fetched and summarized in Python.
+        verification_conditions = self._build_otel_conditions(
+            SpanAttributes.SpanType.TOOL.value,
+            app_name=app_name,
+            app_versions=app_versions,
+        )
+        verification_stmt = sa.select(
+            app_name_col,
+            app_version_col,
+            app_id_col,
+            record_id_col.label("record_id"),
+            self.orm.Event.start_timestamp,
+            self.orm.Event.timestamp,
+            self.orm.Event.event_id,
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.CODING_AGENT.COMMAND_KIND
+            ).label("command_kind"),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.CODING_AGENT.EXIT_CODE
+            ).label("exit_code"),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.CODING_AGENT.IS_TEST_FILE
+            ).label("is_test_file"),
+        ).where(sa.and_(*verification_conditions))
+
         with self.session.begin() as session:
             base_rows = session.execute(base_stmt).all()
             cost_rows = session.execute(cost_stmt).all()
             eval_rows = session.execute(eval_stmt).all()
             decision_rows = session.execute(decision_stmt).all()
             tool_rows = session.execute(tool_stmt).all()
+            verification_rows = session.execute(verification_stmt).all()
 
         base_df = pd.DataFrame(
             base_rows,
@@ -1508,6 +1536,66 @@ class SQLAlchemyDB(core_db.DB):
             cost_df, on=["app_name", "app_version", "app_id"], how="left"
         )
         base_df[cost_cols] = base_df[cost_cols].fillna(0.0)
+
+        if verification_rows:
+            spans_by_record: Dict[Tuple[str, str, str, str], List[dict]] = {}
+            for row in verification_rows:
+                key = (
+                    row.app_name,
+                    row.app_version,
+                    row.app_id,
+                    row.record_id,
+                )
+                spans_by_record.setdefault(key, []).append({
+                    "sort_key": (
+                        row.start_timestamp,
+                        row.timestamp,
+                        row.event_id,
+                    ),
+                    "is_edit": row.is_test_file is not None,
+                    "is_test_file": self._is_true_otel_attribute(
+                        row.is_test_file
+                    ),
+                    "command_kind": row.command_kind,
+                    "exit_code": self._coerce_exit_code_otel_attribute(
+                        row.exit_code
+                    ),
+                })
+            record_verification_rows = []
+            for key, spans in spans_by_record.items():
+                summary = self._summarize_coding_agent_verification(spans)
+                record_verification_rows.append({
+                    "app_name": key[0],
+                    "app_version": key[1],
+                    "app_id": key[2],
+                    "verification": summary["verification"],
+                })
+            record_verification = pd.DataFrame(record_verification_rows)
+            group_cols = ["app_name", "app_version", "app_id"]
+            verification_totals = record_verification.groupby(
+                group_cols, as_index=False, dropna=False
+            ).agg(
+                records_with_edits=("verification", "count"),
+                passed_records=(
+                    "verification",
+                    lambda values: (values == "passed").sum(),
+                ),
+            )
+            base_df = base_df.merge(
+                verification_totals, on=group_cols, how="left"
+            )
+            base_df["Verified %"] = (
+                100.0
+                * base_df["passed_records"]
+                / base_df["records_with_edits"].where(
+                    base_df["records_with_edits"] > 0
+                )
+            ).fillna(0.0)
+            base_df = base_df.drop(
+                columns=["records_with_edits", "passed_records"]
+            )
+        else:
+            base_df["Verified %"] = 0.0
 
         tool_stat_cols = [
             "Tool Error Rate",
