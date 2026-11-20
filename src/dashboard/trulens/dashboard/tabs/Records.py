@@ -573,6 +573,18 @@ def _build_grid_options(
                 header_name=header,
                 filter="agNumberColumnFilter",
             )
+    if "verification" in df.columns:
+        gb.configure_column(
+            "verification",
+            header_name="Verification",
+            filter="agSetColumnFilter",
+        )
+    if "test_file_edits" in df.columns:
+        gb.configure_column(
+            "test_file_edits",
+            header_name="Test File Edits (#)",
+            filter="agNumberColumnFilter",
+        )
     # Dynamically include all nonzero eval cost columns and hide zero/missing ones
     has_eval_sf = (
         "eval_cost_snowflake" in df.columns
