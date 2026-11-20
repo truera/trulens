@@ -27,7 +27,10 @@ def db():
             f"sqlite:///{os.path.join(tempdir, 'trulens.sqlite')}"
         )
         database.migrate_database()
-        yield database
+        try:
+            yield database
+        finally:
+            database.engine.dispose()
 
 
 def _seed_scores(db, name, scores):
