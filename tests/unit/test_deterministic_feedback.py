@@ -81,6 +81,8 @@ class TestConversationRepetition:
         # these two different replies looked like an exact repeat. A reply's
         # later lines, `Note:` included, belong to it, while the second line
         # of a user message and a message from any other speaker do not.
+        # Records with the role ai or bot are assistant turns, and so are
+        # the `Ai:` and `Bot:` lines written for them.
         replies = [
             "Here is what I suggest:\n"
             "a light raincoat and comfortable walking shoes\n"
@@ -104,6 +106,17 @@ class TestConversationRepetition:
                 {"role": "critic", "content": "unique critique"},
                 {"role": "assistant", "content": "same reply"},
             ],
+            [
+                {"role": "user", "content": "Hi"},
+                {"role": "ai", "content": "same reply"},
+                {"role": "user", "content": "Hi again"},
+                {"role": "AI", "content": "same reply"},
+            ],
+            [
+                {"speaker": "bot", "text": "same reply"},
+                {"speaker": "user", "text": "unique question"},
+                {"speaker": "bot", "text": "same reply"},
+            ],
         ]
         scores = []
         for records in conversations:
@@ -114,6 +127,8 @@ class TestConversationRepetition:
         assert scores[0] > 0.5
         assert scores[1] > 0.5
         assert scores[2] == 0.0
+        assert scores[3] == 0.0
+        assert scores[4] == 0.0
 
     def test_no_assistant_turns_returns_none(self):
         score, meta = conversation_repetition([{"input": "hi"}])
