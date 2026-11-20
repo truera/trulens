@@ -96,6 +96,10 @@ class RewardFunction:
 
     def _inspect_signature(self) -> None:
         """Inspect feedback_fn signature once to set dispatch mode for fast, debuggable execution."""
+        # Names the feedback function takes as keywords, or None when it takes
+        # any (`**kwargs`) or its signature cannot be read.
+        self._keyword_names: set[str] | None = None
+
         try:
             sig = inspect.signature(self.feedback_fn)
             params = list(sig.parameters.keys())
@@ -103,6 +107,16 @@ class RewardFunction:
                 p.kind == inspect.Parameter.VAR_KEYWORD
                 for p in sig.parameters.values()
             )
+            if not has_var_kwargs:
+                self._keyword_names = {
+                    name
+                    for name, p in sig.parameters.items()
+                    if p.kind
+                    in (
+                        inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                        inspect.Parameter.KEYWORD_ONLY,
+                    )
+                }
 
             if "prompt" in params and "response" in params:
                 self._call_mode = "prompt_response"
@@ -289,3 +303,34 @@ class TRLRewardAdapter(RewardFunction):
             args=GRPOConfig(output_dir="./results"),
         )
     """
+
+    def __call__(
+        self,
+        prompts: list[str],
+        completions: list[str],
+        **kwargs: Any,
+    ) -> list[float]:
+        """Evaluate a batch as a TRL reward function.
+
+        TRL calls every reward function with keyword arguments of its own next
+        to the two batches: `completion_ids`, `trainer_state`, `log_extra`,
+        `log_metric` and one per extra dataset column. A reward function has
+        to accept them all, so this one does, and forwards to the feedback
+        function only those it names (all of them if it takes `**kwargs`).
+
+        Args:
+            prompts: The prompts of the batch.
+            completions: The completions generated for the prompts.
+            **kwargs: The other keyword arguments of the trainer.
+
+        Returns:
+            One reward per completion.
+        """
+        if self._keyword_names is not None:
+            kwargs = {
+                name: value
+                for name, value in kwargs.items()
+                if name in self._keyword_names
+            }
+
+        return super().__call__(prompts, completions, **kwargs)
