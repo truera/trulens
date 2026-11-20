@@ -2,6 +2,7 @@
 Tests for OTEL instrument decorator.
 """
 
+import json
 import os
 from unittest import TestCase
 from unittest.mock import Mock
@@ -220,6 +221,59 @@ class TestGenAIHelpers(TestCase):
         set_genai_generation_attributes(span)
         # Nothing should be set when all params are None.
         span.set_attribute.assert_not_called()
+
+    def test_set_genai_generation_attributes_records_tool_schemas(self) -> None:
+        span = self._make_span()
+        set_genai_generation_attributes(
+            span,
+            tools=[
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "search",
+                        "description": "Not recorded",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"query": {"type": "string"}},
+                        },
+                    },
+                }
+            ],
+        )
+        set_attribute_calls = {
+            call.args[0]: call.args[1]
+            for call in span.set_attribute.call_args_list
+        }
+        definitions = set_attribute_calls[GenAIAttributes.TOOL.DEFINITIONS]
+        self.assertIn('"name": "search"', definitions)
+        self.assertIn('"parameters"', definitions)
+        self.assertNotIn("Not recorded", definitions)
+
+    def test_tool_definitions_size_cap_preserves_valid_json(self) -> None:
+        span = self._make_span()
+        set_genai_generation_attributes(
+            span,
+            tools=[
+                {
+                    "name": "oversized",
+                    "parameters": {"description": "x" * 16_000},
+                },
+                {
+                    "name": "small",
+                    "parameters": {"type": "object"},
+                },
+            ],
+        )
+        set_attribute_calls = {
+            call.args[0]: call.args[1]
+            for call in span.set_attribute.call_args_list
+        }
+        serialized = set_attribute_calls[GenAIAttributes.TOOL.DEFINITIONS]
+
+        assert len(serialized) <= 16_000
+        assert json.loads(serialized) == [
+            {"name": "small", "parameters": {"type": "object"}}
+        ]
 
     def test_set_genai_generation_attributes_operation_name_none_not_emitted(
         self,
