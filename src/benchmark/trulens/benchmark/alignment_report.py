@@ -219,6 +219,17 @@ def _pairwise(
         previous = current
 
 
+def _bin_edges(n_bins: int) -> np.ndarray:
+    """Return ``n_bins + 1`` equal-width bin edges over ``[0.0, 1.0]``.
+
+    ``np.linspace`` builds the edges as ``i * (1 / n_bins)``, which leaves some
+    just above ``i / n_bins`` (``0.30000000000000004`` for 10 bins), so a score
+    of exactly 0.3 would fall into the bin below. Dividing gives each edge as
+    the same float as a score of ``i / n_bins``.
+    """
+    return np.arange(n_bins + 1) / n_bins
+
+
 class AlignmentReport:
     """Generate alignment diagnostics for benchmark predictions.
 
@@ -358,7 +369,7 @@ class AlignmentReport:
         return (values >= lower) & (values < upper)
 
     def _calibration_df(self) -> pd.DataFrame:
-        bin_edges = np.linspace(0.0, 1.0, self.n_bins + 1)
+        bin_edges = _bin_edges(self.n_bins)
         rows = []
 
         for bin_index, (lower, upper) in enumerate(_pairwise(bin_edges)):
@@ -399,7 +410,7 @@ class AlignmentReport:
         )
 
     def _score_distribution_df(self) -> pd.DataFrame:
-        bin_edges = np.linspace(0.0, 1.0, self.n_bins + 1)
+        bin_edges = _bin_edges(self.n_bins)
         rows = []
 
         for bin_index, (lower, upper) in enumerate(_pairwise(bin_edges)):
@@ -631,7 +642,7 @@ class AlignmentReport:
         figures["calibration"] = calibration_fig
 
         distribution_fig, distribution_ax = plt.subplots()
-        bins = np.linspace(0.0, 1.0, self.n_bins + 1)
+        bins = _bin_edges(self.n_bins)
         distribution_ax.hist(
             self.predicted_scores,
             bins=bins,

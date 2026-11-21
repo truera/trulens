@@ -39,6 +39,18 @@ def test_histogram_counts_sum_to_n():
     assert sum(count for _, _, count in report.histogram()) == len(predicted)
 
 
+def test_score_on_a_bin_edge_falls_into_the_bin_it_starts():
+    # Judge scores on a 0-10 scale; 0.3, 0.6 and 0.7 sit on bin edges.
+    scores = [score / 10 for score in range(11)]
+    report = ScoreDistributionReport(scores, scores, num_bins=10)
+
+    assert [count for _, _, count in report.histogram()] == [1] * 9 + [2]
+    assert [low for low, _, _ in report.histogram()] == scores[:-1]
+    assert [mean for _, mean, _ in report.calibration_curve()] == pytest.approx(
+        scores[:-2] + [0.95]
+    )
+
+
 def test_calibration_curve_reveals_miscalibration():
     # judge says ~0.9 for examples humans scored ~0.25
     predicted = [0.9, 0.9, 0.9, 0.1, 0.1, 0.1]
