@@ -195,6 +195,10 @@ def test_llama_instruct_chat_prompt(model_id):
             "<|begin_of_text|><|start_header_id|>assistant<|end_header_id|>\n\n",
             "<|begin_of_text|><|start_header_id|>assistant<|end_header_id|>\n\n",
         ),
+        (
+            "\n<|begin_of_text|><|start_header_id|>user<|end_header_id|>\nHi\n",
+            "\n<|begin_of_text|><|start_header_id|>user<|end_header_id|>\nHi\n",
+        ),
     ],
 )
 def test_llama_instruct_string_prompt(prompt, expected):

@@ -208,7 +208,8 @@ class Bedrock(llm_provider.LLMProvider):
                 base_model_id.startswith(("meta.llama3-", "meta.llama4-"))
                 and "-instruct" in base_model_id
                 and (
-                    messages or not messages_str.startswith("<|begin_of_text|>")
+                    messages
+                    or not messages_str.lstrip().startswith("<|begin_of_text|>")
                 )
             ):
                 # Bedrock's Llama Instruct template ends with an open assistant turn.
