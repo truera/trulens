@@ -151,6 +151,81 @@ def test_response_format_is_disclosed_not_silently_dropped(caplog):
 
 
 @pytest.mark.optional
+@pytest.mark.parametrize(
+    "model_id",
+    [
+        "us.meta.llama4-maverick-17b-instruct-v1:0",
+        "meta.llama4-scout-17b-instruct-v1:0",
+        "meta.llama3-8b-instruct-v1:0",
+        "us.meta.llama3-2-3b-instruct-v1:0",
+    ],
+)
+def test_llama_instruct_chat_prompt(model_id):
+    """Keep each chat turn and open the assistant turn for generation."""
+    provider = _make_provider(model_id, {"generation": "1"})
+    provider._create_chat_completion(
+        messages=[
+            {"role": "system", "content": "Give a score."},
+            {"role": "user", "content": "Paris?"},
+            {"role": "assistant", "content": "1"},
+            {"role": "user", "content": "London?"},
+        ]
+    )
+    call = provider.endpoint.client.calls[0]
+    assert call["modelId"] == model_id
+    assert json.loads(call["body"])["prompt"] == (
+        "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
+        "Give a score.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n"
+        "Paris?<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+        "1<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n"
+        "London?<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+    )
+
+
+@pytest.mark.optional
+@pytest.mark.parametrize(
+    "prompt,expected",
+    [
+        (
+            "Score this.",
+            "<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n"
+            "Score this.<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+        ),
+        (
+            "<|begin_of_text|><|start_header_id|>assistant<|end_header_id|>\n\n",
+            "<|begin_of_text|><|start_header_id|>assistant<|end_header_id|>\n\n",
+        ),
+        (
+            "\n<|begin_of_text|><|start_header_id|>user<|end_header_id|>\nHi\n",
+            "\n<|begin_of_text|><|start_header_id|>user<|end_header_id|>\nHi\n",
+        ),
+    ],
+)
+def test_llama_instruct_string_prompt(prompt, expected):
+    """Wrap a plain prompt once and preserve an already formatted prompt."""
+    provider = _make_provider(
+        "us.meta.llama4-maverick-17b-instruct-v1:0", {"generation": "1"}
+    )
+    provider._create_chat_completion(prompt=prompt)
+    assert (
+        json.loads(provider.endpoint.client.calls[0]["body"])["prompt"]
+        == expected
+    )
+
+
+@pytest.mark.optional
+def test_llama2_keeps_legacy_chat_prompt():
+    """Llama 2 does not use the Llama 3 header template."""
+    provider = _make_provider("meta.llama2-13b-chat-v1", {"generation": "1"})
+    provider._create_chat_completion(
+        messages=[{"role": "user", "content": "Hi"}]
+    )
+    assert json.loads(provider.endpoint.client.calls[0]["body"])["prompt"] == (
+        "user: Hi"
+    )
+
+
+@pytest.mark.optional
 def test_amazon_text_generation_config():
     """The amazon family nests generation params under textGenerationConfig."""
     provider = _make_provider(

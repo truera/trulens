@@ -204,6 +204,25 @@ class Bedrock(llm_provider.LLMProvider):
             })
 
         elif base_model_id.startswith("meta"):
+            if (
+                base_model_id.startswith(("meta.llama3-", "meta.llama4-"))
+                and "-instruct" in base_model_id
+                and (
+                    messages
+                    or not messages_str.lstrip().startswith("<|begin_of_text|>")
+                )
+            ):
+                # Bedrock's Llama Instruct template ends with an open assistant turn.
+                chat = messages or [{"role": "user", "content": messages_str}]
+                turns = "".join(
+                    f"<|start_header_id|>{message['role']}<|end_header_id|>\n\n"
+                    f"{message['content']}<|eot_id|>"
+                    for message in chat
+                )
+                messages_str = (
+                    f"<|begin_of_text|>{turns}"
+                    "<|start_header_id|>assistant<|end_header_id|>\n\n"
+                )
             body = json.dumps({
                 "prompt": messages_str,
                 "temperature": 0,
