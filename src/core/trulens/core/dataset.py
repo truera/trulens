@@ -470,11 +470,12 @@ def _resolve_records(
     if not add:
         return records
 
-    return records.merge(
-        resolved[["record_id"] + add].drop_duplicates(subset=["record_id"]),
-        on="record_id",
-        how="left",
+    resolved_columns = (
+        resolved[["record_id"] + add]
+        .drop_duplicates(subset=["record_id"])
+        .set_index("record_id")
     )
+    return records.join(resolved_columns, on="record_id", how="left")
 
 
 def curate_records_to_dataset(

@@ -752,6 +752,26 @@ class TestRecordIdInput(CurationTestCase):
             self.ground_truths().iloc[0]["query"], "what is trulens?"
         )
 
+    def test_record_id_resolution_preserves_input_row_index(self):
+        review = pd.DataFrame(
+            {"record_id": ["record-1", "missing-record"]},
+            index=pd.Index([101, 205], name="review_row"),
+        )
+
+        with mock.patch.object(
+            core_session.TruSession,
+            "get_records_and_feedback",
+            return_value=(RECORDS.iloc[:1], []),
+        ):
+            result = self.curate(
+                records=review,
+                mapping=core_dataset.TraceDatasetMapping(),
+                on_error="collect",
+            )
+
+        self.assertEqual((result.accepted, result.rejected), (1, 1))
+        self.assertEqual(result.errors_df()["row_index"].tolist(), [205])
+
 
 class TestCsvAndJsonInputs(CurationTestCase):
     def test_csv_export(self):
