@@ -101,8 +101,11 @@ class ScoreDistributionReport:
         self.unique_count: int = int(
             np.unique(np.round(self.predicted, 2)).size
         )
+        # Explicit edges: with ``bins=num_bins``, np.histogram builds them with
+        # np.linspace, which leaves some just above i / num_bins, so a score of
+        # 0.3 would be counted in the [0.2, 0.3) bin.
         self.counts, self.bin_edges = np.histogram(
-            self.predicted, bins=num_bins, range=(0.0, 1.0)
+            self.predicted, bins=np.arange(num_bins + 1) / num_bins
         )
         self.entropy: float = _normalized_entropy(self.counts)
         # bin index in [0, num_bins - 1] for each predicted score

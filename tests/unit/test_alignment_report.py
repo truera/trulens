@@ -142,6 +142,25 @@ def test_calibration_output_has_bins_and_counts() -> None:
     }.issubset(calibration.columns)
 
 
+def test_score_on_a_bin_edge_falls_into_the_bin_it_starts() -> None:
+    # Judge scores on a 0-10 scale; 0.3, 0.6 and 0.7 sit on bin edges.
+    scores = [score / 10 for score in range(11)]
+    frames = AlignmentReport(
+        predicted_scores=scores, true_labels=scores, n_bins=10
+    ).to_dataframe()
+
+    calibration = frames["calibration"]
+    assert calibration["count"].tolist() == [1] * 9 + [2]
+    assert calibration["bin_lower"].tolist() == scores[:-1]
+    np.testing.assert_allclose(
+        calibration["mean_predicted_score"], scores[:-2] + [0.95]
+    )
+
+    distribution = frames["score_distribution"]
+    assert distribution["predicted_count"].tolist() == [1] * 9 + [2]
+    assert distribution["true_label_count"].tolist() == [1] * 9 + [2]
+
+
 def test_difficulty_breakdown_has_expected_buckets() -> None:
     difficulty = _report().to_dataframe()["difficulty_breakdown"]
 
@@ -189,5 +208,22 @@ def test_plot_returns_matplotlib_figures() -> None:
     assert all(isinstance(value, figure.Figure) for value in figures.values())
 
     pyplot = pytest.importorskip("matplotlib.pyplot")
+    for value in figures.values():
+        pyplot.close(value)
+
+
+def test_plot_histogram_puts_edge_scores_in_the_bin_they_start() -> None:
+    matplotlib = pytest.importorskip("matplotlib")
+    matplotlib.use("Agg", force=True)
+    pyplot = pytest.importorskip("matplotlib.pyplot")
+
+    scores = [score / 10 for score in range(11)]
+    figures = AlignmentReport(
+        predicted_scores=scores, true_labels=scores, n_bins=10
+    ).plot()
+    predicted_bars = figures["score_distribution"].axes[0].patches[:10]
+
+    assert [bar.get_height() for bar in predicted_bars] == [1] * 9 + [2]
+
     for value in figures.values():
         pyplot.close(value)
