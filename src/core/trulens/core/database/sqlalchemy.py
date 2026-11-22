@@ -1584,18 +1584,23 @@ class SQLAlchemyDB(core_db.DB):
             base_df = base_df.merge(
                 verification_totals, on=group_cols, how="left"
             )
+            # "Verified %" is null when an app version has no records
+            # with edits: 0.0 is reserved for "records with edits
+            # existed, but none passed". The division by a `where`d
+            # denominator leaves those rows NaN, like "Average Repeated
+            # Tool Calls" below.
             base_df["Verified %"] = (
                 100.0
                 * base_df["passed_records"]
                 / base_df["records_with_edits"].where(
                     base_df["records_with_edits"] > 0
                 )
-            ).fillna(0.0)
+            )
             base_df = base_df.drop(
                 columns=["records_with_edits", "passed_records"]
             )
         else:
-            base_df["Verified %"] = 0.0
+            base_df["Verified %"] = np.nan
 
         tool_stat_cols = [
             "Tool Error Rate",
