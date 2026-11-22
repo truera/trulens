@@ -9,6 +9,7 @@ attributes the client hooks record on TOOL spans, and the Leaderboard
 from datetime import datetime
 from datetime import timedelta
 
+import pandas as pd
 from trulens.core import session as core_session
 from trulens.core.schema import event as event_schema
 from trulens.otel.semconv.trace import GenAIAttributes
@@ -22,8 +23,14 @@ APP = {
     "ai.observability.app_id": "app-coding-agent-verification",
 }
 
+APP_V2 = {
+    "ai.observability.app_name": "coding-agent-verification",
+    "ai.observability.app_version": "v2",
+    "ai.observability.app_id": "app-coding-agent-verification-v2",
+}
 
-def _span(record_id, index, span_type, attributes):
+
+def _span(record_id, index, span_type, attributes, app=APP):
     start = datetime(2026, 1, 1) + timedelta(seconds=index)
     return event_schema.Event.model_validate({
         "event_id": f"event-{record_id}-{index}",
@@ -34,13 +41,13 @@ def _span(record_id, index, span_type, attributes):
             "status": "STATUS_CODE_UNSET",
         },
         "record_attributes": {
-            **APP,
+            **app,
             SpanAttributes.RECORD_ID: record_id,
             SpanAttributes.SPAN_TYPE: span_type.value,
             **attributes,
         },
         "record_type": "SPAN",
-        "resource_attributes": APP,
+        "resource_attributes": app,
         "start_timestamp": start,
         "timestamp": start + timedelta(milliseconds=100),
         "trace": {
@@ -51,7 +58,7 @@ def _span(record_id, index, span_type, attributes):
     })
 
 
-def _root(record_id):
+def _root(record_id, app=APP):
     return _span(
         record_id,
         0,
@@ -60,10 +67,11 @@ def _root(record_id):
             SpanAttributes.RECORD_ROOT.INPUT: "input",
             SpanAttributes.RECORD_ROOT.OUTPUT: "output",
         },
+        app=app,
     )
 
 
-def _edit(record_id, index, is_test_file):
+def _edit(record_id, index, is_test_file, app=APP):
     return _span(
         record_id,
         index,
@@ -72,17 +80,20 @@ def _edit(record_id, index, is_test_file):
             GenAIAttributes.TOOL.NAME: "edit",
             SpanAttributes.CODING_AGENT.IS_TEST_FILE: is_test_file,
         },
+        app=app,
     )
 
 
-def _shell(record_id, index, command_kind, exit_code):
+def _shell(record_id, index, command_kind, exit_code, app=APP):
     attributes = {
         GenAIAttributes.TOOL.NAME: "bash",
         SpanAttributes.CODING_AGENT.COMMAND_KIND: command_kind,
     }
     if exit_code is not None:
         attributes[SpanAttributes.CODING_AGENT.EXIT_CODE] = exit_code
-    return _span(record_id, index, SpanAttributes.SpanType.TOOL, attributes)
+    return _span(
+        record_id, index, SpanAttributes.SpanType.TOOL, attributes, app=app
+    )
 
 
 class TestRecordCodingAgentVerification(OtelTestCase):
@@ -155,7 +166,7 @@ class TestRecordCodingAgentVerification(OtelTestCase):
         ])
 
         self.assertEqual(records.loc[no_runs]["verification"], "none")
-        self.assertIsNone(records.loc[no_edits]["verification"])
+        self.assertTrue(pd.isna(records.loc[no_edits]["verification"]))
         self.assertEqual(records.loc[no_edits]["test_file_edits"], 0)
 
     def test_test_file_edits_counts_only_test_file_edits(self):
@@ -211,3 +222,28 @@ class TestRecordCodingAgentVerification(OtelTestCase):
         self.assertAlmostEqual(
             leaderboard["Verified %"].iloc[0], 100.0 / 3, places=2
         )
+
+    def test_leaderboard_verified_percent_null_without_edits(self):
+        events = []
+        # v1: records with edits, but none passed -> 0.0.
+        events += [
+            _root("lb2-failed"),
+            _edit("lb2-failed", 1, False),
+            _shell("lb2-failed", 2, "test", 1),
+        ]
+        events += [
+            _root("lb2-none"),
+            _edit("lb2-none", 1, False),
+        ]
+        # v2: records without edits -> null, not 0.0.
+        events += [
+            _root("lb2-no-edits", app=APP_V2),
+            _shell("lb2-no-edits", 1, "test", 0, app=APP_V2),
+        ]
+        events += [_root("lb2-plain", app=APP_V2)]
+        self._records(events)
+
+        leaderboard, _ = self.db.get_leaderboard_aggregates()
+        by_version = leaderboard.set_index("app_version")
+        self.assertEqual(by_version.loc["v1", "Verified %"], 0.0)
+        self.assertTrue(pd.isna(by_version.loc["v2", "Verified %"]))
