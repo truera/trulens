@@ -4998,7 +4998,9 @@ class LLMProvider(core_provider.Provider):
 
         Turn numbers follow the ``Turn N`` labels of the transcript, which
         `{"input", "output"}` records produce. For a transcript string or
-        role-based messages, the judge numbers user messages from 1.
+        role-based messages, the judge numbers user messages from 1. A turn
+        the judge reports below 1, or after the last labelled turn, is an
+        invalid evaluation.
 
         Example:
             ```python
@@ -5033,7 +5035,8 @@ class LLMProvider(core_provider.Provider):
         Raises:
             TypeError: If `escalation_policy` is not a string.
             ValueError: If the conversation is empty, or the judge does not
-                return a valid structured evaluation.
+                return a valid structured evaluation, including a turn outside
+                the conversation.
         """
         from trulens.feedback.templates import (
             conversation as templates_conversation,
@@ -5088,10 +5091,35 @@ class LLMProvider(core_provider.Provider):
             response,
             response_model,
             "escalation evaluation",
-            preserved="triggers, unnecessary escalations, turn numbers, and "
-            "evidence",
+            preserved="triggers, unnecessary escalations, unneeded offers, "
+            "turn numbers, and evidence",
             extra_kwargs=extra_kwargs,
         )
+
+        turn_count = templates_conversation._labelled_turn_count(records)
+        reported_turns = [
+            turn
+            for trigger in response.triggers
+            for turn in (
+                trigger.trigger_turn,
+                trigger.escalation_turn,
+                trigger.offered_turn,
+            )
+            if turn is not None
+        ]
+        reported_turns += [e.turn for e in response.unnecessary_escalations]
+        reported_turns += [offer.turn for offer in response.unneeded_offers]
+        outside = sorted({
+            turn
+            for turn in reported_turns
+            if turn < 1 or (turn_count is not None and turn > turn_count)
+        })
+        if outside:
+            last = f" to {turn_count}" if turn_count is not None else ""
+            raise ValueError(
+                "The judge reported turns outside the conversation: "
+                f"{outside}. Turns run from 1{last}."
+            )
 
         def answering_turn(trigger):
             if (

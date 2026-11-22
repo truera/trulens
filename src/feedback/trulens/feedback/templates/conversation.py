@@ -138,6 +138,27 @@ def assistant_turn_numbers(records: list[Any] | str) -> list[int] | None:
     return messages if seen_message else positional
 
 
+def _labelled_turn_count(records: list[Any] | str) -> int | None:
+    """Number of turns in `records` when they are all input/output records.
+
+    Each such record is one `Turn N` in the transcript. Returns `None` for a
+    transcript string, role/content messages, or items of any other shape,
+    so only turns below 1 can be ruled out for them.
+    """
+    if isinstance(records, str):
+        return None
+    for record in records:
+        if not (
+            (hasattr(record, "main_input") and hasattr(record, "main_output"))
+            or (
+                isinstance(record, dict)
+                and ("input" in record or "output" in record)
+            )
+        ):
+            return None
+    return len(records)
+
+
 def _conversation_user_turns_to_prompt(records: list[Any] | str) -> str:
     """Serialize only user inputs for requirement extraction.
 

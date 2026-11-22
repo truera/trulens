@@ -716,9 +716,13 @@ def test_positional_temperature_keeps_keyword_additional_instructions() -> None:
     )
 
 
+# Five turns, so the tests below can use turns 1 to 5.
 _ESCALATION_RECORDS = [
     {"input": "I want to talk to a person.", "output": "I can help you here."},
     {"input": "Please get me a human.", "output": "Transferring you now."},
+    {"input": "Is anyone there?", "output": "A specialist will join soon."},
+    {"input": "I need a refund today.", "output": "I can start that refund."},
+    {"input": "Thanks.", "output": "You're welcome."},
 ]
 
 
@@ -748,11 +752,13 @@ def _unneeded_offer(turn):
     )
 
 
-def _run_escalation_correctness(response, **kwargs):
+def _run_escalation_correctness(
+    response, records=_ESCALATION_RECORDS, **kwargs
+):
     provider = _provider_with_response(response)
     score, metadata = (
         llm_provider.LLMProvider.escalation_correctness_with_cot_reasons(
-            provider, records=_ESCALATION_RECORDS, **kwargs
+            provider, records=records, **kwargs
         )
     )
     return provider, score, metadata
@@ -917,6 +923,8 @@ def test_escalation_correctness_repairs_unstructured_judge_response() -> None:
         provider.endpoint.calls[1]["response_format"]
         is feedback_output_schemas.EscalationCorrectnessResponse
     )
+    repair_prompt = provider.endpoint.calls[1]["messages"][0]["content"]
+    assert "unneeded offers" in repair_prompt
 
 
 def test_escalation_correctness_ignores_unnecessary_label_on_answered_trigger() -> (
@@ -1064,3 +1072,64 @@ def test_escalation_correctness_early_handoff_hides_no_labels() -> None:
     assert score == 0.0
     assert [e["turn"] for e in metadata["unnecessary_escalations"]] == [2]
     assert [offer["turn"] for offer in metadata["unneeded_offers"]] == [2]
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        _escalation_response(triggers=[_escalation_trigger(6)]),
+        _escalation_response(triggers=[_escalation_trigger(40, 41)]),
+        _escalation_response(triggers=[_escalation_trigger(0, 0)]),
+        _escalation_response(triggers=[_escalation_trigger(-3, -3)]),
+        _escalation_response(triggers=[_escalation_trigger(2, 9)]),
+        _escalation_response(triggers=[_escalation_trigger(2, None, 9)]),
+        _escalation_response(
+            unnecessary_escalations=[
+                feedback_output_schemas.UnnecessaryEscalation(
+                    turn=50, reason="Not needed."
+                )
+            ]
+        ),
+        _escalation_response(unneeded_offers=[_unneeded_offer(7)]),
+    ],
+    ids=[
+        "trigger-past-end",
+        "trigger-and-handoff-past-end",
+        "turn-zero",
+        "negative-turn",
+        "handoff-past-end",
+        "offer-past-end",
+        "unnecessary-handoff-past-end",
+        "unneeded-offer-past-end",
+    ],
+)
+def test_escalation_correctness_rejects_turns_outside_the_conversation(
+    response,
+) -> None:
+    with pytest.raises(ValueError, match="outside the conversation"):
+        _run_escalation_correctness(response)
+
+
+@pytest.mark.parametrize(
+    "records",
+    [
+        "User: I want a human.\nAssistant: Transferring you now.",
+        [
+            {"role": "user", "content": "I want a human."},
+            {"role": "assistant", "content": "Transferring you now."},
+        ],
+    ],
+    ids=["transcript-string", "role-content-messages"],
+)
+def test_escalation_correctness_numbers_unlabelled_turns_from_one(
+    records,
+) -> None:
+    # Without "Turn N" labels the judge numbers user messages, so only turns
+    # below 1 can be checked.
+    response = _escalation_response(triggers=[_escalation_trigger(9, 9)])
+    _, score, _ = _run_escalation_correctness(response, records=records)
+    assert score == 1.0
+
+    response = _escalation_response(triggers=[_escalation_trigger(0, 0)])
+    with pytest.raises(ValueError, match="outside the conversation"):
+        _run_escalation_correctness(response, records=records)
