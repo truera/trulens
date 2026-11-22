@@ -87,6 +87,8 @@ class BaseAppsExtractor:
         "eval_cost",
         "eval_cost_snowflake",
         "num_events",
+        "verification",
+        "test_file_edits",
     ]
     all_cols = app_cols + rec_cols + extra_cols
 
@@ -1056,6 +1058,9 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             record_data.update(
                 self._get_tool_call_stats_otel(record_data["events"])
             )
+            record_data.update(
+                self._get_coding_agent_verification_otel(record_data["events"])
+            )
 
         # Process feedback results
         feedback_col_names = []
@@ -1278,6 +1283,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 "tool_errors": record_data["tool_errors"],
                 "repeated_tool_calls": record_data["repeated_tool_calls"],
                 "failed_then_retried": record_data["failed_then_retried"],
+                "verification": record_data["verification"],
+                "test_file_edits": record_data["test_file_edits"],
                 # The EVAL_ROOT total is the authoritative figure for the
                 # record; the EVAL children are its components, so they are
                 # only used when no EVAL_ROOT span carried a cost.
@@ -1599,6 +1606,107 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             "repeated_tool_calls": repeated_tool_calls,
             "failed_then_retried": failed_then_retried,
         }
+
+    def _get_coding_agent_verification_otel(
+        self, events: Iterable[Event]
+    ) -> Dict[str, Any]:
+        """Compute coding-agent verification statistics for one record.
+
+        Reads the `CODING_AGENT` attributes the client hooks record: edit
+        TOOL spans carry `IS_TEST_FILE` and shell TOOL spans carry
+        `COMMAND_KIND` and `EXIT_CODE`.
+        """
+        tool_spans = []
+        for event in events:
+            attributes = self._get_event_record_attributes_otel(event)
+            if (
+                attributes.get(SpanAttributes.SPAN_TYPE)
+                != SpanAttributes.SpanType.TOOL.value
+            ):
+                continue
+            tool_spans.append({
+                "sort_key": (
+                    event.start_timestamp,
+                    event.timestamp,
+                    event.event_id,
+                ),
+                "is_edit": (
+                    SpanAttributes.CODING_AGENT.IS_TEST_FILE in attributes
+                ),
+                "is_test_file": self._is_true_otel_attribute(
+                    attributes.get(SpanAttributes.CODING_AGENT.IS_TEST_FILE)
+                ),
+                "command_kind": attributes.get(
+                    SpanAttributes.CODING_AGENT.COMMAND_KIND
+                ),
+                "exit_code": self._coerce_exit_code_otel_attribute(
+                    attributes.get(SpanAttributes.CODING_AGENT.EXIT_CODE)
+                ),
+            })
+        return self._summarize_coding_agent_verification(tool_spans)
+
+    @staticmethod
+    def _summarize_coding_agent_verification(
+        tool_spans: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """Summarize coding-agent verification for one record.
+
+        `verification` is decided by the test/build runs that come after
+        the record's last edit: `passed` if the last such run exited 0,
+        `failed` if it did not, and `none` if no test or build ran after
+        the last edit. It is null for records with no edits, since there
+        was nothing to verify. `test_file_edits` counts the edit spans
+        whose file was classified as a test file.
+        """
+        tool_spans.sort(key=lambda span: span["sort_key"])
+        test_file_edits = sum(
+            1 for span in tool_spans if span["is_edit"] and span["is_test_file"]
+        )
+        last_edit_index = None
+        for index, span in enumerate(tool_spans):
+            if span["is_edit"]:
+                last_edit_index = index
+        verification: Optional[str]
+        if last_edit_index is None:
+            verification = None
+        else:
+            runs = [
+                span
+                for span in tool_spans[last_edit_index + 1 :]
+                if span["command_kind"] in ("test", "build")
+                and span["exit_code"] is not None
+            ]
+            if not runs:
+                verification = "none"
+            elif runs[-1]["exit_code"] == 0:
+                verification = "passed"
+            else:
+                verification = "failed"
+        return {
+            "verification": verification,
+            "test_file_edits": test_file_edits,
+        }
+
+    @staticmethod
+    def _coerce_exit_code_otel_attribute(value: Any) -> Optional[int]:
+        """Interpret an exit-code attribute returned by a connector.
+
+        Exit codes may come back as ints, integral floats, or numeric
+        strings depending on the connector. Anything else means the run's
+        outcome was not recorded.
+        """
+        if isinstance(value, bool):
+            return None
+        if isinstance(value, int):
+            return value
+        if isinstance(value, float) and value.is_integer():
+            return int(value)
+        if isinstance(value, str):
+            try:
+                return int(value.strip())
+            except ValueError:
+                return None
+        return None
 
     @staticmethod
     def _is_true_otel_attribute(value: Any) -> bool:
