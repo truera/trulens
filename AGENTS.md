@@ -236,7 +236,10 @@ f_relevance = (
 Shortcuts:
 - `on_input()` - selects `RECORD_ROOT.INPUT`
 - `on_output()` - selects `RECORD_ROOT.OUTPUT`
-- `on_context()` - selects `RETRIEVAL.RETRIEVED_CONTEXTS`
+- `on_context(collect_list=...)` - selects `RETRIEVAL.RETRIEVED_CONTEXTS`.
+  `collect_list` is required: `True` passes all contexts in one call (as in
+  groundedness), `False` calls once per context and aggregates the scores (as
+  in context relevance)
 
 #### Selecting span attributes with Selector
 

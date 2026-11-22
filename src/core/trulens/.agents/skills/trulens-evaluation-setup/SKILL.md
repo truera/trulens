@@ -216,7 +216,7 @@ f_groundedness = Metric(
 |----------|---------|-------------------|
 | `on_input()` | App input | `RECORD_ROOT` |
 | `on_output()` | App output | `RECORD_ROOT` |
-| `on_context()` | Retrieved contexts | `RETRIEVAL` |
+| `on_context(collect_list=...)` | Retrieved contexts. `collect_list` is required: `True` passes all contexts in one call, `False` calls once per context | `RETRIEVAL` |
 
 **⚠️ IMPORTANT: `.on_input()` and `.on_output()` require `RECORD_ROOT` spans!**
 
