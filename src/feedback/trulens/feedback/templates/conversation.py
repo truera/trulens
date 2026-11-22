@@ -62,7 +62,13 @@ def conversation_to_prompt(records: list[Any] | str) -> str:
         else:
             transcript_lines.append(f"Turn {idx}: {record!s}")
 
-    return "\n".join(transcript_lines)
+    # The lines after a message's first line are indented, so a line inside
+    # a message, such as `Note: ...` in a reply, cannot be read as another
+    # speaker. conversation_repetition relies on this to find where a reply
+    # ends.
+    return "\n".join(
+        message.replace("\n", "\n  ") for message in transcript_lines
+    )
 
 
 def _tool_call_to_prompt(tool_call: dict[str, Any]) -> str:
