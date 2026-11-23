@@ -34,7 +34,8 @@ def is_otel_tracing_enabled() -> bool:
                 "OTEL tracing is DISABLED because TRULENS_OTEL_TRACING is set to"
                 " %r. No spans will be recorded, and evaluations that read spans"
                 " will find nothing. OTEL tracing is enabled by default; unset"
-                " TRULENS_OTEL_TRACING to restore it.",
+                " TRULENS_OTEL_TRACING to restore it. Non-OTEL mode is"
+                " deprecated and will be removed in a future release.",
                 os.getenv("TRULENS_OTEL_TRACING"),
             )
             warnings.warn(
@@ -44,7 +45,7 @@ def is_otel_tracing_enabled() -> bool:
                 " selectors, and legacy record storage. Use OTEL tracing (the"
                 " default) with `trulens.core.feedback.selector.Selector`. See"
                 " https://www.trulens.org/contributing/policies/.",
-                DeprecationWarning,
+                FutureWarning,
                 stacklevel=2,
             )
         return False

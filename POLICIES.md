@@ -43,7 +43,7 @@ deprecation process described above.
 OpenTelemetry (OTEL) tracing is the default and the only supported recording
 path. Everything that exists only to support non-OTEL mode is deprecated and
 in the warning period. Setting `TRULENS_OTEL_TRACING=0` emits a
-`DeprecationWarning`.
+`FutureWarning`.
 
 Deprecated components:
 
@@ -65,8 +65,10 @@ Deprecated components:
 Some newer features like `App.run()`, `App.input()`, and
 `App.instrumented_invoke_main_method()` only work with OTEL instrumentation.
 
-The OTEL recording, evaluation, and read paths do not use `Lens`; remaining
-`Lens` code serves only non-OTEL mode and legacy records. Reading data recorded
+The OTEL recording, evaluation, and read paths do not use `Lens`. App
+construction under OTEL stopped building `Lens` paths in
+[#3088](https://github.com/truera/trulens/pull/3088). Remaining `Lens` code
+serves only non-OTEL mode and legacy records. Reading data recorded
 by older versions will remain supported for a migration window after the
 legacy write path is removed.
 

@@ -707,10 +707,10 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
     !!! warning "Deprecated"
         `Lens` belongs to the legacy (non-OTEL) code path and is deprecated.
-        It is frozen: only security and critical bug fixes are accepted. Use
-        `trulens.core.feedback.selector.Selector` for feedback selection under
-        OTEL tracing (the default). See the Deprecation section of
-        `POLICIES.md`.
+        It is frozen: only security fixes and fixes for crashes that affect
+        OTEL users are accepted. Use `trulens.core.feedback.selector.Selector`
+        for feedback selection under OTEL tracing (the default). See "Legacy
+        (Non-OTEL) Mode" in `POLICIES.md`.
 
     Example:
         ```python

@@ -59,11 +59,15 @@ class TestOtelUtils(TestCase):
         )
 
     def test_emits_deprecation_warning_when_disabled(self) -> None:
-        """Non-OTEL mode is deprecated and must say so."""
+        """Non-OTEL mode is deprecated and must say so.
+
+        `FutureWarning` rather than `DeprecationWarning`, because Python hides
+        `DeprecationWarning` raised from library code by default.
+        """
         with mock.patch.dict(
             os.environ, {"TRULENS_OTEL_TRACING": "0"}, clear=True
         ):
-            with self.assertWarns(DeprecationWarning):
+            with self.assertWarns(FutureWarning):
                 otel_utils.is_otel_tracing_enabled()
 
     def test_warns_only_once(self) -> None:
@@ -80,7 +84,7 @@ class TestOtelUtils(TestCase):
         with mock.patch.dict(os.environ, {}, clear=True):
             with mock.patch.object(otel_utils.logger, "warning") as warn:
                 with warnings.catch_warnings():
-                    warnings.simplefilter("error", DeprecationWarning)
+                    warnings.simplefilter("error", FutureWarning)
                     otel_utils.is_otel_tracing_enabled()
         warn.assert_not_called()
 
