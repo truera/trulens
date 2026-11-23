@@ -1,7 +1,6 @@
 """Tests for GroundTruthAggregator class."""
 
 from unittest import TestCase
-import unittest.mock as mock
 
 import numpy as np
 import pytest
@@ -683,37 +682,36 @@ class TestGroundTruthAggregator(TestCase):
     @pytest.mark.optional
     def test_real_world_dataset_sizes(self):
         """Test with realistic dataset sizes used in production."""
-        # Use fixed seed for reproducibility
-        with mock.patch("numpy.random.seed"):
-            np.random.seed(42)  # Set seed for this test only
+        # A local generator gives the same data on every run without
+        # changing numpy's global random state for other tests.
+        rng = np.random.RandomState(42)
 
-            # Large balanced dataset (common in benchmarking)
-            large_labels = [i % 2 for i in range(1000)]
-            large_scores = [
-                0.3 + (i % 2) * 0.4 + np.random.normal(0, 0.1)
-                for i in range(1000)
-            ]
-            large_aggregator = GroundTruthAggregator(true_labels=large_labels)
+        # Large balanced dataset (common in benchmarking)
+        large_labels = [i % 2 for i in range(1000)]
+        large_scores = [
+            0.3 + (i % 2) * 0.4 + rng.normal(0, 0.1) for i in range(1000)
+        ]
+        large_aggregator = GroundTruthAggregator(true_labels=large_labels)
 
-            # Test that metrics work with large datasets
-            auc_result = large_aggregator.auc(large_scores)
-            self.assertGreater(
-                auc_result,
-                0.6,
-                msg="Large dataset with pattern should achieve decent AUC",
-            )
+        # Test that metrics work with large datasets
+        auc_result = large_aggregator.auc(large_scores)
+        self.assertGreater(
+            auc_result,
+            0.6,
+            msg="Large dataset with pattern should achieve decent AUC",
+        )
 
-            brier_result = large_aggregator.brier_score(large_scores)
-            self.assertGreater(
-                brier_result,
-                0.0,
-                msg="Large dataset should have some Brier score error",
-            )
-            self.assertLess(
-                brier_result,
-                0.5,
-                msg="Large dataset with pattern should have reasonable Brier score",
-            )
+        brier_result = large_aggregator.brier_score(large_scores)
+        self.assertGreater(
+            brier_result,
+            0.0,
+            msg="Large dataset should have some Brier score error",
+        )
+        self.assertLess(
+            brier_result,
+            0.5,
+            msg="Large dataset with pattern should have reasonable Brier score",
+        )
 
     @pytest.mark.optional
     def test_imbalanced_datasets(self):
@@ -771,61 +769,61 @@ class TestGroundTruthAggregator(TestCase):
     @pytest.mark.optional
     def test_noisy_real_world_data(self):
         """Test with noisy data that reflects real-world conditions."""
-        # Use fixed seed for reproducibility
-        with mock.patch("numpy.random.seed"):
-            np.random.seed(42)  # Set seed for this test only
+        # A local generator gives the same data on every run without
+        # changing numpy's global random state for other tests.
+        rng = np.random.RandomState(42)
 
-            # Simulate noisy labels (some annotation errors)
-            clean_labels = [i % 2 for i in range(100)]
-            noisy_labels = clean_labels.copy()
-            # Flip 5% of labels to simulate annotation errors
-            flip_indices = np.random.choice(100, size=5, replace=False)
-            for idx in flip_indices:
-                noisy_labels[idx] = 1 - noisy_labels[idx]
+        # Simulate noisy labels (some annotation errors)
+        clean_labels = [i % 2 for i in range(100)]
+        noisy_labels = clean_labels.copy()
+        # Flip 5% of labels to simulate annotation errors
+        flip_indices = rng.choice(100, size=5, replace=False)
+        for idx in flip_indices:
+            noisy_labels[idx] = 1 - noisy_labels[idx]
 
-            # Noisy scores with realistic variance
-            noisy_scores = [
-                label * 0.7 + (1 - label) * 0.3 + np.random.normal(0, 0.15)
-                for label in clean_labels
-            ]
-            # Clip to valid range
-            noisy_scores = [max(0, min(1, score)) for score in noisy_scores]
+        # Noisy scores with realistic variance
+        noisy_scores = [
+            label * 0.7 + (1 - label) * 0.3 + rng.normal(0, 0.15)
+            for label in clean_labels
+        ]
+        # Clip to valid range
+        noisy_scores = [max(0, min(1, score)) for score in noisy_scores]
 
-            noisy_aggregator = GroundTruthAggregator(true_labels=noisy_labels)
+        noisy_aggregator = GroundTruthAggregator(true_labels=noisy_labels)
 
-            # Compare with clean data to verify noise impact
-            clean_aggregator = GroundTruthAggregator(true_labels=clean_labels)
-            clean_auc = clean_aggregator.auc(noisy_scores)
-            noisy_auc = noisy_aggregator.auc(noisy_scores)
+        # Compare with clean data to verify noise impact
+        clean_aggregator = GroundTruthAggregator(true_labels=clean_labels)
+        clean_auc = clean_aggregator.auc(noisy_scores)
+        noisy_auc = noisy_aggregator.auc(noisy_scores)
 
-            # Noisy labels should perform worse than clean labels
-            self.assertLess(
-                noisy_auc,
-                clean_auc,
-                msg="Noisy labels should achieve lower AUC than clean labels",
-            )
+        # Noisy labels should perform worse than clean labels
+        self.assertLess(
+            noisy_auc,
+            clean_auc,
+            msg="Noisy labels should achieve lower AUC than clean labels",
+        )
 
-            # But still better than random
-            self.assertGreater(
-                noisy_auc,
-                0.5,
-                msg="Even noisy data should achieve AUC better than random",
-            )
+        # But still better than random
+        self.assertGreater(
+            noisy_auc,
+            0.5,
+            msg="Even noisy data should achieve AUC better than random",
+        )
 
-            # Brier score should be worse (higher) with noisy labels
-            clean_brier = clean_aggregator.brier_score(noisy_scores)
-            noisy_brier = noisy_aggregator.brier_score(noisy_scores)
+        # Brier score should be worse (higher) with noisy labels
+        clean_brier = clean_aggregator.brier_score(noisy_scores)
+        noisy_brier = noisy_aggregator.brier_score(noisy_scores)
 
-            self.assertGreater(
-                noisy_brier,
-                clean_brier,
-                msg="Noisy labels should have higher Brier score (worse)",
-            )
-            self.assertLess(
-                noisy_brier,
-                0.5,
-                msg="Even noisy data should have reasonable Brier score",
-            )
+        self.assertGreater(
+            noisy_brier,
+            clean_brier,
+            msg="Noisy labels should have higher Brier score (worse)",
+        )
+        self.assertLess(
+            noisy_brier,
+            0.5,
+            msg="Even noisy data should have reasonable Brier score",
+        )
 
     @pytest.mark.optional
     def test_statistical_properties(self):
@@ -1058,68 +1056,66 @@ class TestGroundTruthAggregator(TestCase):
         # Create a large dataset that would be typical in production
         large_size = 10000
 
-        # Use fixed seed for reproducibility
-        with mock.patch("numpy.random.seed"):
-            np.random.seed(42)  # Set seed for this test only
+        # A local generator gives the same data on every run without
+        # changing numpy's global random state for other tests.
+        rng = np.random.RandomState(42)
 
-            # Create realistic ground truth and scores
-            large_labels = np.random.binomial(
-                1, 0.3, large_size
-            ).tolist()  # 30% positive
-            # Scores that correlate with labels but have realistic noise
-            large_scores = [
-                label * 0.6 + (1 - label) * 0.4 + np.random.normal(0, 0.2)
-                for label in large_labels
-            ]
-            large_scores = [max(0, min(1, score)) for score in large_scores]
+        # Create realistic ground truth and scores
+        large_labels = rng.binomial(1, 0.3, large_size).tolist()  # 30% positive
+        # Scores that correlate with labels but have realistic noise
+        large_scores = [
+            label * 0.6 + (1 - label) * 0.4 + rng.normal(0, 0.2)
+            for label in large_labels
+        ]
+        large_scores = [max(0, min(1, score)) for score in large_scores]
 
-            large_aggregator = GroundTruthAggregator(true_labels=large_labels)
+        large_aggregator = GroundTruthAggregator(true_labels=large_labels)
 
-            # Test that computation completes in reasonable time
-            import time
+        # Test that computation completes in reasonable time
+        import time
 
-            start_time = time.time()
+        start_time = time.time()
 
-            auc_result = large_aggregator.auc(large_scores)
-            brier_result = large_aggregator.brier_score(large_scores)
+        auc_result = large_aggregator.auc(large_scores)
+        brier_result = large_aggregator.brier_score(large_scores)
 
-            end_time = time.time()
-            computation_time = end_time - start_time
+        end_time = time.time()
+        computation_time = end_time - start_time
 
-            # Should complete in reasonable time (less than 5 seconds)
-            self.assertLess(
-                computation_time,
-                5.0,
-                msg="Large dataset computation should complete in reasonable time",
-            )
+        # Should complete in reasonable time (less than 5 seconds)
+        self.assertLess(
+            computation_time,
+            5.0,
+            msg="Large dataset computation should complete in reasonable time",
+        )
 
-            # Results should be reasonable for this synthetic data
-            # With this correlation pattern, AUC should be well above random
-            self.assertGreater(
-                auc_result,
-                0.6,
-                msg="Large dataset with correlation should achieve decent AUC",
-            )
+        # Results should be reasonable for this synthetic data
+        # With this correlation pattern, AUC should be well above random
+        self.assertGreater(
+            auc_result,
+            0.6,
+            msg="Large dataset with correlation should achieve decent AUC",
+        )
 
-            # Brier score should be reasonable (not too high)
-            self.assertLess(
-                brier_result,
-                0.3,
-                msg="Large dataset with correlation should have reasonable Brier score",
-            )
+        # Brier score should be reasonable (not too high)
+        self.assertLess(
+            brier_result,
+            0.3,
+            msg="Large dataset with correlation should have reasonable Brier score",
+        )
 
-            # Test that results are consistent with expectations
-            # For this data generation pattern, we expect moderate but clear discrimination
-            self.assertLess(
-                auc_result,
-                0.9,
-                msg="Noisy large dataset should not achieve perfect AUC",
-            )
-            self.assertGreater(
-                brier_result,
-                0.1,
-                msg="Noisy large dataset should have some Brier score error",
-            )
+        # Test that results are consistent with expectations
+        # For this data generation pattern, we expect moderate but clear discrimination
+        self.assertLess(
+            auc_result,
+            0.9,
+            msg="Noisy large dataset should not achieve perfect AUC",
+        )
+        self.assertGreater(
+            brier_result,
+            0.1,
+            msg="Noisy large dataset should have some Brier score error",
+        )
 
     @pytest.mark.optional
     def test_score_format_consistency(self):
