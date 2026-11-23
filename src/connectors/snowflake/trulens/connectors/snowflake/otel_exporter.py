@@ -201,7 +201,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         app_name: str,
         app_version: str,
         run_name: str,
-        input_records_count: int,
+        input_records_count: Optional[int],
         dry_run: bool,
     ):
         database = clean_up_snowflake_identifier(
@@ -210,6 +210,23 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         schema = clean_up_snowflake_identifier(
             snowpark_session.get_current_schema()
         )
+
+        params = [
+            f"{database}.{schema}.{app_name.upper()}",
+            app_version,
+            run_name,
+            f"@{database}.{schema}.trulens_spans/{tmp_file_basename}.gz",
+        ]
+        # Eval spans from client-side metrics carry no input records count.
+        # Binding `None` works locally (SQL NULL), but inside a stored
+        # procedure Snowpark binds it as the string "None", which the
+        # ingestion procedure fails to deserialize as an integer. Emit a
+        # literal NULL instead of binding `None`.
+        if input_records_count is None:
+            input_records_count_sql = "NULL"
+        else:
+            input_records_count_sql = "?"
+            params.append(input_records_count)
 
         sql_cmd = snowpark_session.sql(
             f"""
@@ -225,19 +242,13 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 OBJECT_CONSTRUCT(
                     'type', 'stage_file',
                     'stage_file_path', ?,
-                    'input_record_count', ?
+                    'input_record_count', {input_records_count_sql}
                 ),
                 ARRAY_CONSTRUCT(),
                 ARRAY_CONSTRUCT('{EvaluationPhase.INGESTION_MULTIPLE_BATCHES.value}')
             )
             """,
-            params=[
-                f"{database}.{schema}.{app_name.upper()}",
-                app_version,
-                run_name,
-                f"@{database}.{schema}.trulens_spans/{tmp_file_basename}.gz",
-                input_records_count,
-            ],
+            params=params,
         )
         if not dry_run:
             sql_cmd.collect()  # Blocking call: ensures spans are ingested before process exit; may delay if ingestion hangs and force_flush is called
@@ -282,7 +293,11 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 dry_run,
             )
         except Exception as e:
-            logger.error(f"Error running stored procedure to ingest spans: {e}")
+            logger.error(
+                "Error running stored procedure to ingest spans for app "
+                f"{app_name} version {app_version} run {run_name}; these "
+                f"spans were not saved: {e}"
+            )
             if dry_run:
                 raise e
             return SpanExportResult.FAILURE
