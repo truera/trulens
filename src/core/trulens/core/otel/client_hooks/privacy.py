@@ -113,6 +113,9 @@ class CapturePolicy:
             tool_output=_bounded(event.tool_output, self.max_field_bytes)
             if self.capture_tool_payloads
             else None,
+            command=_bounded(event.command, self.max_field_bytes)
+            if self.capture_tool_payloads
+            else None,
             diff=_bounded(event.diff, self.max_field_bytes)
             if self.capture_diffs
             else None,

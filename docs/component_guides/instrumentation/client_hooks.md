@@ -123,6 +123,29 @@ with a floor of 256. Note that tool payloads carry whole tool results, so a file
 the agent reads is journaled up to that bound, and captured paths include the
 native transcript path.
 
+### Test and build signals
+
+With every capture flag off, TruLens still records whether the agent tested its
+change. Each shell command is classified as `test`, `build`, `lint`, `vcs` or
+`other` and each edited path is checked against test-file globs while the hook
+runs; only those labels and the exit code are kept, never the command or the
+path. The command itself is recorded only with `TRULENS_CAPTURE_TOOL_PAYLOADS`.
+
+Add your own command prefixes with a JSON object; they are tried before the
+defaults:
+
+```bash
+export TRULENS_COMMAND_KIND_PATTERNS='{"test": ["./scripts/e2e"], "build": ["bazel run //:gen"]}'
+```
+
+Replace the default test-file globs (`test_*.py`, `*_test.py`, `tests/**`,
+`**/__tests__/**`, `*.spec.*`, `*.test.*`, `conftest.py`) with a comma-separated
+list:
+
+```bash
+export TRULENS_TEST_FILE_GLOBS="spec/**,*_spec.rb"
+```
+
 ## Identity and correlation
 
 TruLens preserves the native client identity instead of creating a separate
