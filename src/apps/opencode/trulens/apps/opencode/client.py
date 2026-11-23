@@ -145,6 +145,21 @@ function textFromParts(parts) {{
     .join("\\n") || undefined
 }}
 
+// Older OpenCode releases put the exit code in metadata.exit; newer ones also
+// return it as exitCode on the structured output.
+function exitCodeOf(output) {{
+  if (!output) {{
+    return undefined
+  }}
+  const metadata = output.metadata || {{}}
+  const structured =
+    output.output && typeof output.output === "object" ? output.output : {{}}
+  const code = [metadata.exit, metadata.exitCode, structured.exitCode].find(
+    (value) => typeof value === "number",
+  )
+  return code
+}}
+
 export const TruLensClientHooks = async ({{ directory }}) => {{
   let lastSessionId
   const send = async (payload) => {{
@@ -180,6 +195,7 @@ export const TruLensClientHooks = async ({{ directory }}) => {{
         tool_call_id: input.callID,
         tool_input: input.args,
         tool_output: output && output.output,
+        exit_code: exitCodeOf(output),
       }})
     }},
     "experimental.text.complete": async (input, output) => {{

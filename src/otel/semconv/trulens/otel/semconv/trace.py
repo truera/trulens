@@ -669,6 +669,26 @@ class SpanAttributes:
         WORKSPACE = base + ".workspace"
         """Workspace path or identifier when path capture is enabled."""
 
+        EXIT_CODE = base + ".exit_code"
+        """Exit code of a shell command, recorded on shell TOOL spans."""
+
+        COMMAND_KIND = base + ".command_kind"
+        """Kind of shell command: `test`, `build`, `lint`, `vcs` or `other`.
+
+        Classified from the command text before the capture policy discards it,
+        so it is recorded even when the command itself is not.
+        """
+
+        COMMAND = base + ".command"
+        """Shell command text, recorded only when tool payload capture is on."""
+
+        IS_TEST_FILE = base + ".is_test_file"
+        """Whether an edit TOOL span changed a test file.
+
+        Classified from the edited path before the capture policy discards it,
+        so it is recorded even when the path itself is not.
+        """
+
     class GUARDRAIL:
         """Attributes relevant for guardrail check spans."""
 

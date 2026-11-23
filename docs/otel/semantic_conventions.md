@@ -430,6 +430,10 @@ for a namespace rather than a leaf attribute.
 | `ai.observability.coding_agent.diff` | Privacy-controlled source diff or old/new edit pairs. | Diff capture is enabled and a native edit or patch contains a diff. | Edit/tool span | str |
 | `ai.observability.coding_agent.editor_version` | Native editor or CLI version. | The native event or launcher reports a client version. | Coding-agent operation span | str |
 | `ai.observability.coding_agent.workspace` | Privacy-controlled workspace path or identifier. | Path capture is enabled and the event reports a workspace or working directory. | Coding-agent operation span | str |
+| `ai.observability.coding_agent.exit_code` | Exit code of a shell command. | A shell command finished and the client reports, or implies, its exit code. | Shell tool span | int |
+| `ai.observability.coding_agent.command_kind` | Kind of shell command: `test`, `build`, `lint`, `vcs` or `other`, classified before the command is discarded. | Every shell tool span with a command. | Shell tool span | str |
+| `ai.observability.coding_agent.command` | Privacy-controlled shell command text. | Tool payload capture is enabled. | Shell tool span | str |
+| `ai.observability.coding_agent.is_test_file` | Whether the edit changed a test file, classified before the path is discarded. | Every edit tool span with a path. | Edit tool span | bool |
 | `ai.observability.generation` | Namespace for attributes specific to a generation span. | | Y | |
 | `ai.observability.generation.is_streaming` | Whether the generation was streamed back incrementally. | Never | | bool |
 | `ai.observability.generation.time_to_first_token_ms` | Milliseconds spent waiting for the first chunk of a streamed generation. | Never | | float |

@@ -513,6 +513,28 @@ class TraceAssembler:
             )
         if workspace:
             attributes[SpanAttributes.CODING_AGENT.WORKSPACE] = _json(workspace)
+        exit_code = (
+            finish.exit_code
+            if finish.exit_code is not None
+            else start.exit_code
+        )
+        if exit_code is not None:
+            attributes[SpanAttributes.CODING_AGENT.EXIT_CODE] = exit_code
+        command_kind = start.command_kind or finish.command_kind
+        if command_kind:
+            attributes[SpanAttributes.CODING_AGENT.COMMAND_KIND] = command_kind
+        command = start.command or finish.command
+        if command is not None:
+            attributes[SpanAttributes.CODING_AGENT.COMMAND] = (
+                command if isinstance(command, str) else _json(command)
+            )
+        is_test_file = (
+            finish.is_test_file
+            if finish.is_test_file is not None
+            else start.is_test_file
+        )
+        if is_test_file is not None:
+            attributes[SpanAttributes.CODING_AGENT.IS_TEST_FILE] = is_test_file
         if is_tool_operation:
             attributes[GenAIAttributes.TOOL.NAME] = tool_name
         if start.tool_input is not None:

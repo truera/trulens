@@ -39,6 +39,10 @@ class HookEvent:
     diff: Optional[Any] = None
     paths: Optional[Any] = None
     error: Optional[str] = None
+    command: Optional[str] = None
+    exit_code: Optional[int] = None
+    command_kind: Optional[str] = None
+    is_test_file: Optional[bool] = None
     traceparent: Optional[str] = None
     tracestate: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)

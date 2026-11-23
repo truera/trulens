@@ -6,8 +6,10 @@ from datetime import datetime
 from datetime import timezone
 import hashlib
 import json
+import re
 from typing import Any, Mapping, Optional
 
+from trulens.core.otel.client_hooks import classify
 from trulens.core.otel.client_hooks import clients
 from trulens.core.otel.client_hooks import models
 
@@ -39,6 +41,14 @@ _END_EVENTS = {
     "tool.execute.after",
     "file.edited",
 }
+_SHELL_EVENTS = {"beforeshellexecution", "aftershellexecution"}
+_SHELL_TOOLS = {"bash", "shell"}
+_EDIT_EVENTS = {"afterfileedit", "file.edited"}
+_EDIT_TOOLS = {"edit", "multiedit", "write", "notebookedit"}
+_EXIT_CODE_KEYS = ("exit_code", "exitCode", "exit", "returncode")
+_EXIT_CODE_IN_ERROR = re.compile(
+    r"exit(?:ed)?(?:\s+with)?(?:\s+code)?[\s:]+(-?\d+)", re.IGNORECASE
+)
 
 
 def _first(payload: Mapping[str, Any], *keys: str) -> Any:
@@ -133,6 +143,50 @@ def _diff(payload: Mapping[str, Any]) -> Any:
     return None
 
 
+def _command(tool_input: Any) -> Optional[str]:
+    if isinstance(tool_input, str):
+        return tool_input
+    if isinstance(tool_input, Mapping):
+        command = tool_input.get("command")
+        if isinstance(command, str):
+            return command
+    return None
+
+
+def _edited_path(payload: Mapping[str, Any], tool_input: Any) -> Optional[str]:
+    path = payload.get("file_path")
+    if path is None and isinstance(tool_input, Mapping):
+        path = _first(tool_input, "file_path", "filePath", "notebook_path")
+    return path if isinstance(path, str) else None
+
+
+def _exit_code(
+    payload: Mapping[str, Any],
+    tool_output: Any,
+    *,
+    normalized_name: str,
+    failed: bool,
+) -> Optional[int]:
+    """Read a finished shell command's exit code.
+
+    Cursor and OpenCode report it directly. Claude Code does not: a command
+    that exits non-zero ends in PostToolUseFailure, usually with the code in
+    the error text, and a command that exits zero ends in PostToolUse.
+    """
+
+    explicit = _integer(_first(payload, *_EXIT_CODE_KEYS))
+    if explicit is None and isinstance(tool_output, Mapping):
+        explicit = _integer(_first(tool_output, *_EXIT_CODE_KEYS))
+    if explicit is not None:
+        return explicit
+    if failed:
+        match = _EXIT_CODE_IN_ERROR.search(str(payload.get("error") or ""))
+        return int(match.group(1)) if match else 1
+    if normalized_name == "posttooluse":
+        return 0
+    return None
+
+
 def _parse(
     client: str,
     payload: Mapping[str, Any],
@@ -173,6 +227,32 @@ def _parse(
     failed = normalized_name in _FAILED_EVENTS or str(
         payload.get("status", "")
     ).lower() in {"error", "failed"}
+    tool_input = overrides.get("tool_input") or _first(
+        payload, "tool_input", "command", "args"
+    )
+    tool_output = overrides.get("tool_output") or _first(
+        payload, "tool_output", "tool_response", "result_json", "output"
+    )
+    # Classify now, while the command and path are still here. The capture
+    # policy drops both by default, and only these labels are kept.
+    normalized_tool = str(tool_name or "").lower()
+    phase = _phase(event_name)
+    command = None
+    exit_code = None
+    command_kind = None
+    if normalized_name in _SHELL_EVENTS or normalized_tool in _SHELL_TOOLS:
+        command = _command(tool_input) or _command(payload.get("command"))
+        command_kind = classify.classify_command(command)
+        if phase == "end":
+            exit_code = _exit_code(
+                payload,
+                tool_output,
+                normalized_name=normalized_name,
+                failed=failed,
+            )
+    is_test_file = None
+    if normalized_name in _EDIT_EVENTS or normalized_tool in _EDIT_TOOLS:
+        is_test_file = classify.is_test_file(_edited_path(payload, tool_input))
     event_id = str(
         _first(payload, "event_id", "hook_id")
         or f"{event_name}:{operation_id or _fingerprint(client, payload)}"
@@ -231,6 +311,10 @@ def _parse(
         "cwd",
         "workspace_roots",
         "transcript_path",
+        "exit_code",
+        "exitCode",
+        "exit",
+        "returncode",
         "error",
         "status",
         "timestamp",
@@ -253,7 +337,7 @@ def _parse(
         turn_id=str(turn_id) if turn_id is not None else None,
         operation_id=str(operation_id) if operation_id is not None else None,
         observed_at=_timestamp(payload),
-        phase=_phase(event_name),
+        phase=phase,
         category=_category(event_name, str(tool_name) if tool_name else None),
         terminal=normalized_name in _TERMINAL_EVENTS,
         failed=failed,
@@ -275,12 +359,8 @@ def _parse(
         prompt=overrides.get("prompt", payload.get("prompt")),
         response=overrides.get("response")
         or _first(payload, *aliases.response),
-        tool_input=overrides.get("tool_input")
-        or _first(payload, "tool_input", "command", "args"),
-        tool_output=overrides.get("tool_output")
-        or _first(
-            payload, "tool_output", "tool_response", "result_json", "output"
-        ),
+        tool_input=tool_input,
+        tool_output=tool_output,
         diff=_diff(payload),
         paths={
             "file_path": payload.get("file_path"),
@@ -289,6 +369,10 @@ def _parse(
             "transcript_path": payload.get("transcript_path"),
         },
         error=str(payload["error"]) if payload.get("error") else None,
+        command=command,
+        exit_code=exit_code,
+        command_kind=command_kind,
+        is_test_file=is_test_file,
         metadata=metadata,
     )
 
