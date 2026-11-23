@@ -38,19 +38,44 @@ The `trulens-hotspots` package is deprecated and has no direct replacement. It
 will continue to work during the warning period and will be removed after the
 deprecation process described above.
 
-### Legacy Instrumentation
+### Legacy (Non-OTEL) Mode
 
-The legacy stack-based instrumentation system is deprecated in favor of
-OpenTelemetry (OTEL). This includes:
+OpenTelemetry (OTEL) tracing is the default and the only supported recording
+path. Everything that exists only to support non-OTEL mode is deprecated and
+in the warning period. Setting `TRULENS_OTEL_TRACING=0` emits a
+`FutureWarning`.
 
+Deprecated components:
+
+- Non-OTEL mode itself (`TRULENS_OTEL_TRACING=0`) → leave tracing at its
+  default
+- `Lens` (`trulens.core.utils.serial`), `Select`
+  (`trulens.core.schema.select`), and Lens-based feedback selectors such as
+  `Select.RecordInput` or `Select.RecordCalls...` → use
+  `trulens.core.feedback.selector.Selector` or the `on_input()`,
+  `on_output()`, and `on_context()` shortcuts
 - `_RecordingContext` class → Use OTEL-based `OtelRecordingContext`
 - `Instrument` class-based method wrapping → Use `@instrument` decorator from
   `trulens.core.otel.instrument`
 - Custom thread/async context tracking (`TP`, `ThreadPoolExecutor`,
   `tru_new_event_loop`) → OTEL handles context propagation automatically
+- Legacy record and feedback-result writes to the pre-OTEL database tables →
+  the OTEL events table
 
 Some newer features like `App.run()`, `App.input()`, and
 `App.instrumented_invoke_main_method()` only work with OTEL instrumentation.
+
+The OTEL recording, evaluation, and read paths do not use `Lens`. App
+construction under OTEL stopped building `Lens` paths in
+[#3088](https://github.com/truera/trulens/pull/3088). Remaining `Lens` code
+serves only non-OTEL mode and legacy records. Reading data recorded
+by older versions will remain supported for a migration window after the
+legacy write path is removed.
+
+Contribution policy: deprecated components are frozen. Pull requests that add
+features to, refactor, or extend `Lens`, `Select`, or other non-OTEL code paths
+will be closed. Security fixes and fixes for crashes that affect OTEL users are
+still accepted. Contributions should target the OTEL path instead.
 
 ### Core/Session
 

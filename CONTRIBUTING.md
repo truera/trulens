@@ -117,6 +117,12 @@ TruLens uses OpenTelemetry for tracing. Work in this area includes:
 
 See [Design Principles](docs/contributing/design.md) for architecture context.
 
+Non-OTEL (legacy) code, including `Lens`, `Select`, and the legacy
+instrumentation and record path, is deprecated and frozen. We do not accept
+feature or refactoring PRs against it; only security fixes and fixes for
+crashes that affect OTEL users. See
+[Legacy (Non-OTEL) Mode](POLICIES.md#legacy-non-otel-mode).
+
 ### Experimental Features
 
 Have an idea that pushes TruLens in a new direction? Experimental features use

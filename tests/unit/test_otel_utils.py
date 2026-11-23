@@ -4,6 +4,7 @@ import logging
 import os
 from unittest import TestCase
 from unittest import mock
+import warnings
 
 from trulens.core.otel import utils as otel_utils
 
@@ -57,6 +58,18 @@ class TestOtelUtils(TestCase):
             f"warning should name the variable, got: {cm.output}",
         )
 
+    def test_emits_deprecation_warning_when_disabled(self) -> None:
+        """Non-OTEL mode is deprecated and must say so.
+
+        `FutureWarning` rather than `DeprecationWarning`, because Python hides
+        `DeprecationWarning` raised from library code by default.
+        """
+        with mock.patch.dict(
+            os.environ, {"TRULENS_OTEL_TRACING": "0"}, clear=True
+        ):
+            with self.assertWarns(FutureWarning):
+                otel_utils.is_otel_tracing_enabled()
+
     def test_warns_only_once(self) -> None:
         """Called from many hot paths; must not spam the log."""
         with mock.patch.dict(
@@ -70,7 +83,9 @@ class TestOtelUtils(TestCase):
     def test_no_warning_when_enabled(self) -> None:
         with mock.patch.dict(os.environ, {}, clear=True):
             with mock.patch.object(otel_utils.logger, "warning") as warn:
-                otel_utils.is_otel_tracing_enabled()
+                with warnings.catch_warnings():
+                    warnings.simplefilter("error", FutureWarning)
+                    otel_utils.is_otel_tracing_enabled()
         warn.assert_not_called()
 
     def test_backwards_compatibility_default(self) -> None:
