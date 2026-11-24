@@ -1444,12 +1444,9 @@ class LLMProvider(core_provider.Provider):
         agreement_txt = self._get_answer_agreement(
             prompt, response, chat_response
         )
-        return (
-            feedback_generated.re_configured_rating(
-                agreement_txt, min_score_val=0, max_score_val=3
-            )
-            / 3
-        )
+        # `AGREEMENT_SYSTEM` asks for an integer out of 10; read it on that
+        # scale, as `GroundTruthAgreement.agreement_measure` does.
+        return feedback_generated.re_0_10_rating(agreement_txt) / 10
 
     def _build_criteria_with_instructions(
         self,

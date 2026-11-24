@@ -139,3 +139,48 @@ def test_missing_ground_truth_still_returns_nan():
 
     assert result != result  # NaN
     assert provider.prompts == []
+
+
+@pytest.mark.parametrize(
+    ("reply", "expected"),
+    [
+        ("0", 0.0),
+        ("2", 0.2),
+        ("3", 0.3),
+        ("7", 0.7),
+        ("8.5", 0.85),
+        ("10", 1.0),
+    ],
+)
+def test_model_agreement_reads_the_0_10_grade_it_asks_for(reply, expected):
+    """The judge's grade is normalised on the scale the prompt asks for.
+
+    `model_agreement` sends `AGREEMENT_SYSTEM`, which asks for an integer out
+    of 10. It used to be read as a 0-3 rating: 2/10 came back as 0.667, 3/10
+    as 1.0, and 4-10 raised `ParseError`.
+    """
+    provider = _RecordingProvider(reply=reply)
+
+    with pytest.deprecated_call():
+        score = provider.model_agreement(_QUESTION, _ANSWER)
+
+    assert score == pytest.approx(expected)
+    # One call for the model's own answer, one for the agreement grade.
+    assert len(provider.prompts) == 2
+    assert "from 1 to 10" in provider.prompts[1]
+
+
+def test_model_agreement_matches_agreement_measure():
+    """The deprecated method grades a judge reply like its replacement."""
+    provider = _RecordingProvider(reply="8")
+    agreement = feedback_groundtruth.GroundTruthAgreement(
+        [{"query": _QUESTION, "expected_response": _EXPECTED}],
+        provider=provider,
+    )
+
+    with pytest.deprecated_call():
+        old = provider.model_agreement(_QUESTION, _ANSWER)
+    new, _ = agreement.agreement_measure(_QUESTION, _ANSWER)
+
+    assert new == pytest.approx(0.8)
+    assert old == pytest.approx(new)
