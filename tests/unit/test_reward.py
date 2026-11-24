@@ -110,3 +110,94 @@ class TestRewardFunction:
         adapter = RewardFunction(buggy_feedback, transform="identity")
         with pytest.raises(TypeError, match="Internal provider argument error"):
             adapter.evaluate_sample("p", "c")
+
+    def test_trl_adapter_drops_trainer_keyword_arguments(self):
+        """TRL's GRPOTrainer calls a reward function with `completion_ids`,
+        `trainer_state`, `log_extra`, `log_metric` and the dataset columns
+        next to the two batches."""
+        seen = []
+        state = object()
+
+        def relevance(prompt: str, response: str, trainer_state=None) -> float:
+            seen.append((prompt, response, trainer_state))
+            return 0.8
+
+        adapter = TRLRewardAdapter(relevance, transform="identity")
+        rewards = adapter(
+            prompts=["p1", "p2"],
+            completions=["c1", "c2"],
+            completion_ids=[[1, 2], [3]],
+            trainer_state=state,
+            log_extra=lambda name, values: None,
+            log_metric=lambda name, value: None,
+            answer=["a1", "a2"],
+        )
+        assert rewards == [pytest.approx(0.8), pytest.approx(0.8)]
+        assert seen == [("p1", "c1", state), ("p2", "c2", state)]
+
+    def test_trl_adapter_keeps_keyword_arguments_for_var_kwargs(self):
+        seen = {}
+
+        def feedback(prompt: str, response: str, **kwargs) -> float:
+            seen.update(kwargs)
+            return 0.8
+
+        adapter = TRLRewardAdapter(feedback, transform="identity")
+        adapter(["p"], ["c"], trainer_state="state")
+        assert seen == {"trainer_state": "state"}
+
+    def test_trl_adapter_passes_dataset_columns_per_sample(self):
+        """TRL passes each dataset column as a list aligned with `completions`."""
+        seen = []
+        state = object()
+
+        def correctness(
+            prompt: str, response: str, answer=None, trainer_state=None
+        ) -> float:
+            seen.append((prompt, answer, trainer_state))
+            return 1.0 if response == answer else 0.0
+
+        adapter = TRLRewardAdapter(correctness, transform="identity")
+        rewards = adapter(
+            prompts=["p1", "p2"],
+            completions=["a1", "wrong"],
+            completion_ids=[[1, 2], [3]],
+            trainer_state=state,
+            answer=["a1", "a2"],
+        )
+        assert rewards == [pytest.approx(1.0), pytest.approx(0.0)]
+        assert seen == [("p1", "a1", state), ("p2", "a2", state)]
+
+    def test_trl_adapter_passes_per_sample_values_to_var_kwargs(self):
+        seen = []
+
+        def feedback(prompt: str, response: str, **kwargs) -> float:
+            seen.append(kwargs)
+            return 0.8
+
+        adapter = TRLRewardAdapter(feedback, transform="identity")
+        adapter(
+            ["p1", "p2"],
+            ["c1", "c2"],
+            completion_ids=[[1, 2], [3]],
+            trainer_state="state",
+            answer=["a1", "a2"],
+        )
+        assert seen == [
+            {
+                "completion_ids": [1, 2],
+                "trainer_state": "state",
+                "answer": "a1",
+            },
+            {"completion_ids": [3], "trainer_state": "state", "answer": "a2"},
+        ]
+
+    def test_reward_function_still_rejects_unknown_keyword_arguments(self):
+        """Outside a trainer, a misspelled keyword argument is an error."""
+
+        def relevance(prompt: str, response: str, criteria: str = "") -> float:
+            return 0.8
+
+        adapter = RewardFunction(relevance, transform="identity")
+        with pytest.raises(TypeError, match="critera"):
+            adapter(["p"], ["c"], critera="be strict")
