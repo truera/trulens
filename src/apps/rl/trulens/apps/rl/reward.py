@@ -238,11 +238,22 @@ class RewardFunction:
             )
 
         rewards: list[float] = []
-        for prompt, completion in zip(prompts, completions):
-            reward = self.evaluate_sample(prompt, completion, **kwargs)
+        for index, (prompt, completion) in enumerate(zip(prompts, completions)):
+            sample_kwargs = self._sample_kwargs(kwargs, index, len(completions))
+            reward = self.evaluate_sample(prompt, completion, **sample_kwargs)
             rewards.append(reward)
 
         return rewards
+
+    def _sample_kwargs(
+        self, kwargs: dict[str, Any], index: int, batch_size: int
+    ) -> dict[str, Any]:
+        """Keyword arguments for the sample at `index` of the batch.
+
+        Every sample gets the same ones here; `TRLRewardAdapter` splits the
+        per-completion ones.
+        """
+        return kwargs
 
     def _log_reward(
         self, prompt: str, completion: str, score: float, reward: float
@@ -318,6 +329,10 @@ class TRLRewardAdapter(RewardFunction):
         to accept them all, so this one does, and forwards to the feedback
         function only those it names (all of them if it takes `**kwargs`).
 
+        The dataset columns and `completion_ids` hold one entry per completion,
+        and each sample gets its own entry. `trainer_state`, `log_extra` and
+        `log_metric` go to every sample unchanged.
+
         Args:
             prompts: The prompts of the batch.
             completions: The completions generated for the prompts.
@@ -334,3 +349,19 @@ class TRLRewardAdapter(RewardFunction):
             }
 
         return super().__call__(prompts, completions, **kwargs)
+
+    def _sample_kwargs(
+        self, kwargs: dict[str, Any], index: int, batch_size: int
+    ) -> dict[str, Any]:
+        # GRPOTrainer builds each dataset column as
+        # `[example[key] for example in inputs]`, and `completion_ids` and
+        # `environments` the same way, so they line up with `completions`.
+        # The values that belong to the whole batch (`trainer_state`,
+        # `log_extra`, `log_metric`) are not lists, so a list as long as the
+        # batch is taken to be per completion.
+        return {
+            name: value[index]
+            if isinstance(value, list) and len(value) == batch_size
+            else value
+            for name, value in kwargs.items()
+        }
