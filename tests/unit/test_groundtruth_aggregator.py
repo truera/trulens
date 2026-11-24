@@ -483,6 +483,47 @@ class TestGroundTruthAggregator(TestCase):
         )
 
     @pytest.mark.optional
+    def test_matthews_correlation_with_float_scores(self):
+        """Float scores from a feedback function are binarized, as in cohens_kappa."""
+        scores = [0.9, 0.2, 0.7, 0.4, 0.6]
+        self.assertEqual(self.aggregator.matthews_correlation(scores), 1.0)
+        self.assertEqual(
+            self.aggregator.matthews_correlation([
+                [score, 0.9] for score in scores
+            ]),
+            1.0,
+        )
+        # threshold 0.65: predictions [1, 0, 1, 0, 0] against [1, 0, 1, 0, 1]
+        # TP=2, TN=2, FP=0, FN=1 -> MCC = 4 / sqrt(2 * 3 * 2 * 3)
+        self.assertAlmostEqual(
+            self.aggregator.matthews_correlation(scores, threshold=0.65),
+            4 / 6,
+        )
+        # np.float32 is not a subclass of Python float
+        self.assertEqual(
+            self.aggregator.matthews_correlation([
+                np.float32(score) for score in scores
+            ]),
+            1.0,
+        )
+
+    @pytest.mark.optional
+    def test_matthews_correlation_with_float_multiclass_labels(self):
+        """Integer-valued float labels and scores are classes and are not binarized."""
+        # labels [0, 1, 2, 0, 1], predictions [0, 2, 1, 0, 1]: 3 of 5 correct,
+        # class counts 2/2/1 on both sides, so sum(p_k * t_k) = sum(t_k^2) = 9
+        # -> MCC = (3 * 5 - 9) / sqrt((5^2 - 9) * (5^2 - 9)) = 6 / 16
+        for labels, scores in [
+            ([0, 1, 2, 0, 1], [0, 2, 1, 0, 1]),
+            ([0.0, 1.0, 2.0, 0.0, 1.0], [0.0, 2.0, 1.0, 0.0, 1.0]),
+            ([0, 1, 2, 0, 1], [0.0, 2.0, 1.0, 0.0, 1.0]),
+        ]:
+            aggregator = GroundTruthAggregator(true_labels=labels)
+            self.assertAlmostEqual(
+                aggregator.matthews_correlation(scores), 6 / 16
+            )
+
+    @pytest.mark.optional
     def test_cohens_kappa_does_not_mutate_true_labels(self):
         """Cohen's kappa must not mutate the stored true_labels in place.
 
