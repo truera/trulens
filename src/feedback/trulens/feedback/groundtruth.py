@@ -14,6 +14,7 @@ from scipy import stats
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import roc_auc_score
+from sklearn.utils.multiclass import type_of_target
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
@@ -1156,8 +1157,10 @@ class GroundTruthAggregator(
 
         Args:
             scores (List[float]): scores returned by feedback function
-            threshold (float): float scores and labels are binarized at this
-                threshold, as in `cohens_kappa`
+            threshold (float): scores or labels with a non-integer value,
+                which `matthews_corrcoef` rejects as continuous, are binarized
+                at this threshold. Integer-valued scores and labels (binary or
+                multiclass, int or float) are used as they are.
 
         Returns:
             float: Matthews correlation coefficient
@@ -1166,11 +1169,13 @@ class GroundTruthAggregator(
         if isinstance(scores[0], list):
             scores = [score for score, _ in scores]
         self._check_length(scores)
-        if any(isinstance(score, float) for score in scores):
+        # only binarize what sklearn would reject as continuous, so that
+        # integer-valued (e.g. multiclass) inputs give the same result as before
+        if type_of_target(scores) == "continuous":
             scores = [1 if score >= threshold else 0 for score in scores]
         # binarize into a local list so that self.true_labels is not mutated
         true_labels = self.true_labels
-        if any(isinstance(label, float) for label in true_labels):
+        if type_of_target(true_labels) == "continuous":
             true_labels = [
                 1 if label >= threshold else 0 for label in true_labels
             ]
