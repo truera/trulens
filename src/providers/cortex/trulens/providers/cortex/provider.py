@@ -223,26 +223,37 @@ class Cortex(
     def _get_answer_agreement(
         self, prompt: str, response: str, check_response: str
     ) -> str:
-        """
-        Uses chat completion model. A function that completes a template to
-        check if two answers agree.
+        """Ask the judge how well a response agrees with the expected one.
+
+        Same prompt and empty-response rule as
+        `LLMProvider._get_answer_agreement`, but the response is sent as a
+        user message so the Cortex request always ends with a user turn.
 
         Args:
-            text (str): A prompt to an agent.
+            prompt (str): A prompt to an agent.
             response (str): The agent's response to the prompt.
-            check_response(str): The response to check against.
+            check_response (str): The response to check against.
 
         Returns:
-            str
+            str: The judge's rating text, or "0" for an empty response.
         """
 
         assert self.endpoint is not None, "Endpoint is not set."
 
+        # An empty response agrees with nothing; score it without a judge call.
+        if not response.strip():
+            return "0"
+
         messages = [
-            {"role": "system", "content": templates_quality.AGREEMENT_SYSTEM},
-            {"role": "user", "content": prompt},
-            {"role": "assistant", "content": response},
-            {"role": "user", "content": check_response},
+            {
+                "role": "system",
+                "content": templates_quality.AGREEMENT_SYSTEM
+                % (prompt, check_response),
+            },
+            {
+                "role": "user",
+                "content": f"The response to grade is:\n{response}\n",
+            },
         ]
 
         return self.endpoint.run_in_pace(
