@@ -131,3 +131,62 @@ def test_response_format_parse_failure_returns_raw(monkeypatch):
         messages=[{"role": "user", "content": "x"}], response_format=_Out
     )
     assert out == "not json"
+
+
+@pytest.mark.optional
+def test_answer_agreement_prompt_is_filled(monkeypatch):
+    """The agreement template is filled and the response sent as a user turn.
+
+    Cortex used to send `AGREEMENT_SYSTEM` unformatted, so the judge saw both
+    `%s` slots literally.
+    """
+    from trulens.feedback.templates import quality as templates_quality
+
+    provider, calls = _make_provider(monkeypatch, complete_return="8")
+
+    rating = provider._get_answer_agreement(
+        "QUESTION-SENTINEL", "RESPONSE-SENTINEL", "EXPECTED-SENTINEL"
+    )
+
+    assert rating == "8"
+    assert len(calls) == 1
+    assert calls[0]["prompt"] == [
+        {
+            "role": "system",
+            "content": templates_quality.AGREEMENT_SYSTEM
+            % ("QUESTION-SENTINEL", "EXPECTED-SENTINEL"),
+        },
+        {
+            "role": "user",
+            "content": "The response to grade is:\nRESPONSE-SENTINEL\n",
+        },
+    ]
+
+
+@pytest.mark.optional
+@pytest.mark.parametrize("blank", ["", "  ", "\n\t "])
+def test_answer_agreement_empty_response_skips_the_judge(monkeypatch, blank):
+    """An empty response scores "0" without a Cortex call, as in the base."""
+    provider, calls = _make_provider(monkeypatch, complete_return="10")
+
+    rating = provider._get_answer_agreement("question", blank, "expected")
+
+    assert rating == "0"
+    assert calls == []
+
+
+@pytest.mark.optional
+def test_ground_truth_agreement_with_cortex(monkeypatch):
+    """GroundTruthAgreement on Cortex scores a blank answer 0.0."""
+    from trulens.feedback import groundtruth as feedback_groundtruth
+
+    provider, _ = _make_provider(monkeypatch, complete_return="10")
+    agreement = feedback_groundtruth.GroundTruthAgreement(
+        [{"query": "q", "expected_response": "Paris"}], provider=provider
+    )
+
+    blank, _ = agreement.agreement_measure("q", "")
+    graded, _ = agreement.agreement_measure("q", "Paris")
+
+    assert blank == 0.0
+    assert graded == pytest.approx(1.0)
