@@ -154,6 +154,47 @@ or any reverse-proxy that speaks `/v1/chat/completions`.
     )
     ```
 
+!!! warning "Caveats for OpenAI-compatible hosts"
+
+    - **Set `model_engine` explicitly.** If you omit it, the provider uses
+      `gpt-4o-mini`, which most other hosts do not serve.
+    - **Moderation needs `/v1/moderations`.** The `moderation_*` feedback
+      functions (`moderation_hate`, `moderation_hatethreatening`,
+      `moderation_selfharm`, `moderation_sexual`, `moderation_sexualminors`,
+      `moderation_violence`, `moderation_violencegraphic`,
+      `moderation_harassment`, `moderation_harassment_threatening`) call the
+      moderations endpoint. Skip them if your host does not expose it.
+    - **Embeddings are configured separately.** The OpenAI provider has no
+      embedding feedback functions. If you use
+      [Embeddings][trulens.feedback.embeddings.Embeddings], give it an
+      embedding model from a host that serves embeddings.
+    - **Structured output tries the Responses API first.** Score-based
+      feedback functions first call `/v1/responses` and fall back to Chat
+      Completions only when the error message says the Responses API is
+      not supported, not enabled or not available. A host that answers
+      with a bare `404 Not Found` makes the feedback call fail instead. In
+      that case, use the LiteLLM route above, which only calls Chat
+      Completions.
+
+!!! example "DeepSeek"
+
+    ```python
+    import os
+
+    from trulens.providers.openai import OpenAI
+
+    provider = OpenAI(
+        model_engine="deepseek-flash",
+        api_key=os.environ["DEEPSEEK_API_KEY"],
+        base_url="https://api.deepseek.com",
+    )
+
+    score, reasons = provider.relevance_with_cot_reasons(
+        "What is the capital of France?",
+        "Paris is the capital of France.",
+    )
+    ```
+
 ### Using OrcaRouter
 
 [OrcaRouter](https://www.orcarouter.ai) is an OpenAI-compatible gateway that
