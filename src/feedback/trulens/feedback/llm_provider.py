@@ -1439,7 +1439,10 @@ class LLMProvider(core_provider.Provider):
             stacklevel=2,
         )
         chat_response = self._create_chat_completion(
-            prompt=templates_quality.CORRECT_SYSTEM
+            messages=[
+                {"role": "system", "content": templates_quality.CORRECT_SYSTEM},
+                {"role": "user", "content": prompt},
+            ]
         )
         agreement_txt = self._get_answer_agreement(
             prompt, response, chat_response
