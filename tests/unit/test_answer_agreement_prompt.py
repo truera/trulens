@@ -167,7 +167,7 @@ def test_model_agreement_reads_the_0_10_grade_it_asks_for(reply, expected):
     assert score == pytest.approx(expected)
     # One call for the model's own answer, one for the agreement grade.
     assert len(provider.prompts) == 2
-    assert "from 1 to 10" in provider.prompts[1]
+    assert "from 0 to 10" in provider.prompts[1]
 
 
 def test_model_agreement_matches_agreement_measure():
