@@ -22,6 +22,13 @@ quality drops below a threshold.
 The job runs for merge requests and the default branch. It writes a JUnit report
 to `reports/trulens-eval-gate.xml` so failures show up in GitLab's test report UI.
 
+## How the gate decides
+
+The gate checks each metric the script configures, by name, using the per-record
+results. A metric fails if it has no column, if any record has no score (the
+judge failed on it), or if its mean is below `TRULENS_MIN_SCORE`. Other numeric
+leaderboard columns, such as tool-call counts, are not treated as metrics.
+
 ## Local run
 
 ```bash
@@ -30,3 +37,11 @@ export OPENAI_API_KEY=sk-...
 export TRULENS_MIN_SCORE=0.7
 python eval_gate.py
 ```
+
+## CI variables and cost
+
+A protected variable is not available to unprotected branches or to merge
+requests from forks. Keep it that way: do not expose a paid judge key to
+untrusted code. Each run calls the judge model, which costs money. If the key is
+missing the script exits with an error before any evaluation, and no JUnit
+report is written.
