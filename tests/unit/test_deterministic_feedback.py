@@ -147,6 +147,11 @@ class TestConversationRepetition:
         assert custom_score < 0.5
         assert custom_meta["turns"][2]["fallback_phrase"] == 1.0
 
+    def test_empty_fallback_phrases_disables_the_signal(self):
+        records = _records([("Hi", "I don't understand, could you rephrase?")])
+        _, meta = conversation_repetition(records, fallback_phrases=[])
+        assert meta["turns"][1]["fallback_phrase"] == 0.0
+
     def test_score_within_unit_interval(self):
         records = _records([
             ("a", "b c d e f g h"),

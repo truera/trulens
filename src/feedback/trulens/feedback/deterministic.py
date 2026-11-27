@@ -206,7 +206,8 @@ def conversation_repetition(
         fallback_phrases: Phrases marking a fallback reply, matched
             case-insensitively. Defaults to
             [DEFAULT_FALLBACK_PHRASES][trulens.feedback.deterministic.
-            DEFAULT_FALLBACK_PHRASES].
+            DEFAULT_FALLBACK_PHRASES]. An empty sequence turns the
+            fallback signal off.
         ngram_orders: n-gram orders used for the within-reply repetition
             signal.
 
@@ -217,10 +218,9 @@ def conversation_repetition(
             measure -- and a meta dict with the per-turn signal
             breakdown, the worst turn, and the number of assistant turns.
     """
-    phrases = tuple(
-        phrase.lower()
-        for phrase in (fallback_phrases or DEFAULT_FALLBACK_PHRASES)
-    )
+    if fallback_phrases is None:
+        fallback_phrases = DEFAULT_FALLBACK_PHRASES
+    phrases = tuple(phrase.lower() for phrase in fallback_phrases)
     replies = _assistant_turns(records)
 
     if not replies:
