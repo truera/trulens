@@ -88,6 +88,28 @@ def _mean_graded_score(scores: Iterable[float]) -> float:
     return float(np.mean(graded))
 
 
+_LIST_MARKER = re.compile(r"^\s*\d+[\.)]?\s*$")
+
+
+def _drop_list_markers(hypotheses: List[str]) -> List[str]:
+    """Drop numbered-list markers that a sentence splitter emits on their own.
+
+    `sent_tokenize("1. The sky is blue. 2. Grass is green.")` gives
+    `["1.", "The sky is blue.", "2.", "Grass is green."]`, so items that are
+    only an unsigned integer are dropped. The one exception: when the only
+    non-blank item is such a number, it is kept as a candidate answer (for
+    example "1969." or "42") so it still gets graded. Several bare numbers
+    are still dropped, since they may be the labels of a numbered list.
+    """
+    kept = [h for h in hypotheses if not _LIST_MARKER.match(h)]
+    if any(h.strip() for h in kept):
+        return kept
+    non_blank = [h for h in hypotheses if h.strip()]
+    if len(non_blank) == 1:
+        return non_blank
+    return kept
+
+
 _TURN_VERDICT_LINE = re.compile(
     r"^\W*turn\s*(\d+)\s*[:.)-]\s*\**\s*(adheres|breaks)\b\**\s*[-:–—]?\s*(.*)$",
     re.IGNORECASE,
@@ -3517,10 +3539,9 @@ class LLMProvider(core_provider.Provider):
                 temperature=temperature,
             ).split("\n")
 
-        # Remove simple numeric list markers such as "1." or "2)"
-        hypotheses = [
-            h for h in hypotheses if not re.match(r"^\s*\d+[\.)]?\s*$", h)
-        ]
+        # Remove numeric list markers such as "1." or "2)", but keep a single
+        # bare number as a candidate answer.
+        hypotheses = _drop_list_markers(hypotheses)
 
         if filter_trivial_statements:
             hypotheses = self._remove_trivial_statements(hypotheses)
@@ -3717,10 +3738,9 @@ class LLMProvider(core_provider.Provider):
                 temperature=temperature,
             ).split("\n")
 
-        # Remove numeric list markers
-        hypotheses = [
-            h for h in hypotheses if not re.match(r"^\s*\d+[\.)]?\s*$", h)
-        ]
+        # Remove numeric list markers such as "1." or "2)", but keep a single
+        # bare number as a candidate answer.
+        hypotheses = _drop_list_markers(hypotheses)
 
         groundedness_scores = {}
         reasons_list = []
