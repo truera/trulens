@@ -1,10 +1,13 @@
 """Tests for :class:`SnowflakeEventTableDB` that need no Snowflake account."""
 
 from collections import namedtuple
+import json
 import unittest
+from unittest import mock
 
 import pandas as pd
 import pytest
+from trulens.otel.semconv.trace import SpanAttributes
 
 try:
     from trulens.connectors.snowflake.dao.sql_utils import execute_query
@@ -127,3 +130,69 @@ class TestSnowflakeEventTableDBGetApps(unittest.TestCase):
         apps = list(db.get_apps())
 
         self.assertEqual([str(app["app_name"]) for app in apps], ["AGENT_2"])
+
+
+def _event_row(record_id, minute):
+    """A ``RECORD_ROOT`` row as ``_get_events`` hands it out: VARIANT columns
+    already parsed into dicts."""
+    start = pd.Timestamp("2026-01-01") + pd.Timedelta(minutes=minute)
+    return {
+        "record": {"name": "root"},
+        "record_attributes": {
+            SpanAttributes.RECORD_ID: record_id,
+            SpanAttributes.SPAN_TYPE: SpanAttributes.SpanType.RECORD_ROOT.value,
+        },
+        "record_type": "SPAN",
+        "resource_attributes": {},
+        "start_timestamp": start,
+        "timestamp": start + pd.Timedelta(seconds=1),
+        "trace": {"span_id": f"span_{record_id}", "trace_id": record_id},
+    }
+
+
+@pytest.mark.snowflake
+class TestSnowflakeEventTableDBGetRecords(unittest.TestCase):
+    def setUp(self):
+        if SnowflakeEventTableDB is None:
+            self.skipTest(
+                "SnowflakeEventTableDB is not available because snowflake "
+                "tests are disabled."
+            )
+
+    def _record_ids(self, as_json=False, **kwargs):
+        rows = [_event_row("r1", 1), _event_row("r3", 3), _event_row("r2", 2)]
+        if as_json:
+            for row in rows:
+                for column in ("record", "record_attributes", "trace"):
+                    row[column] = json.dumps(row[column])
+
+        def get_events(_, record_ids=None, **__):
+            return pd.DataFrame([
+                row
+                for row in rows
+                if record_ids is None or row["trace"]["trace_id"] in record_ids
+            ])
+
+        with mock.patch.object(
+            SnowflakeEventTableDB, "_get_events", get_events
+        ):
+            df, _ = SnowflakeEventTableDB(
+                FakeSession()
+            ).get_records_and_feedback(app_name="app", **kwargs)
+        return sorted(df["record_id"])
+
+    def test_reads_variant_columns_parsed_or_not(self):
+        self.assertEqual(self._record_ids(), ["r1", "r2", "r3"])
+        self.assertEqual(self._record_ids(as_json=True), ["r1", "r2", "r3"])
+
+    def test_offset_and_limit_page_through_newest_records_first(self):
+        self.assertEqual(self._record_ids(limit=2), ["r2", "r3"])
+        self.assertEqual(self._record_ids(offset=1, limit=1), ["r2"])
+        self.assertEqual(self._record_ids(offset=2), ["r1"])
+        self.assertEqual(self._record_ids(offset=3, limit=1), [])
+
+    def test_offset_and_limit_slice_requested_record_ids(self):
+        self.assertEqual(
+            self._record_ids(record_ids=["r1", "r2", "r3"], offset=1, limit=1),
+            ["r2"],
+        )
