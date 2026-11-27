@@ -133,6 +133,10 @@ class BlockingSet(set, Generic[T]):
             item = next(iter(self.content))
             self.content.remove(item)
 
+            # Popping frees a slot, so wake any `add` waiting on a full set,
+            # as `remove` does.
+            self.event_nonfull.set()
+
             if len(self.content) == 0:
                 self.event_nonempty.clear()
 
