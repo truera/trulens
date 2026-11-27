@@ -106,6 +106,12 @@ class SnowflakeEventTableDB(core_db.DB):
             )
         if matched_record_ids is not None:
             record_ids = matched_record_ids
+        page = slice(
+            offset or 0,
+            None if limit is None else (offset or 0) + limit,
+        )
+        if record_ids is not None:
+            record_ids = record_ids[page]
         df = self._get_events(
             app_ids=app_ids,
             app_name=app_name,
@@ -118,7 +124,9 @@ class SnowflakeEventTableDB(core_db.DB):
         )
         events = []
         for _, row in df.iterrows():
-            trace = json.loads(row["trace"])
+            # `_get_events` already parses the VARIANT columns, so these may be
+            # dicts rather than JSON strings.
+            trace = _parse_variant_value(row["trace"])
             if "parent_id" not in trace:
                 trace["parent_id"] = ""
             if "trace_id" not in trace:
@@ -126,18 +134,61 @@ class SnowflakeEventTableDB(core_db.DB):
             events.append(
                 Event(
                     event_id=trace["span_id"],
-                    record=json.loads(row["record"]),
-                    record_attributes=json.loads(row["record_attributes"]),
+                    record=_parse_variant_value(row["record"]),
+                    record_attributes=_parse_variant_value(
+                        row["record_attributes"]
+                    ),
                     record_type=row["record_type"],
-                    resource_attributes=json.loads(row["resource_attributes"]),
+                    resource_attributes=_parse_variant_value(
+                        row["resource_attributes"]
+                    ),
                     start_timestamp=row["start_timestamp"],
                     timestamp=row["timestamp"],
                     trace=trace,
                 )
             )
+        if record_ids is None and (offset is not None or limit is not None):
+            events = self._get_events_of_record_page(events, page)
         return self._get_records_and_feedback_otel_from_events(
             events=events, app_ids=app_ids, app_name=app_name
         )
+
+    def _get_events_of_record_page(
+        self, events: List[Event], page: slice
+    ) -> List[Event]:
+        """Keep the events of one page of records.
+
+        Records are the ones with a `RECORD_ROOT` span, newest first with ties
+        broken by record id, as in the SQLAlchemy event table.
+        """
+        record_ids = [
+            self._get_event_record_attributes_otel(event).get(
+                SpanAttributes.RECORD_ID
+            )
+            for event in events
+        ]
+        root_starts = {}
+        for record_id, event in zip(record_ids, events):
+            span_type = self._get_event_record_attributes_otel(event).get(
+                SpanAttributes.SPAN_TYPE
+            )
+            if (
+                record_id
+                and span_type == SpanAttributes.SpanType.RECORD_ROOT.value
+            ):
+                root_starts[record_id] = min(
+                    event.start_timestamp,
+                    root_starts.get(record_id, event.start_timestamp),
+                )
+        newest_first = sorted(
+            sorted(root_starts), key=root_starts.get, reverse=True
+        )
+        selected = set(newest_first[page])
+        return [
+            event
+            for record_id, event in zip(record_ids, events)
+            if record_id in selected
+        ]
 
     def get_events(
         self,
