@@ -390,12 +390,19 @@ def _home() -> str:
     return os.path.expanduser("~")
 
 
-def _normalize(path: str, workspace: Sequence[str]) -> Optional[str]:
+#: The working directory after a `cd` whose target could not be resolved.
+_UNKNOWN_CWD = "?"
+
+
+def _normalize(
+    path: str, workspace: Sequence[str], cwd: Optional[str] = None
+) -> Optional[str]:
     """Resolve a path argument lexically, or None when it can't be resolved.
 
     `~`, `$HOME` and `${HOME}` become the home directory. A relative path is
-    resolved against the first workspace root; with no workspace it can't be
-    placed, so None is returned unless it climbs out with `..`.
+    resolved against `cwd` when a `cd` changed it, otherwise against the first
+    workspace root; with neither it can't be placed, so None is returned unless
+    it climbs out with `..`.
     """
     home = _home()
     if path.startswith("~"):
@@ -405,8 +412,11 @@ def _normalize(path: str, workspace: Sequence[str]) -> Optional[str]:
         return None
     if posixpath.isabs(path):
         return posixpath.normpath(path)
-    if workspace:
-        return posixpath.normpath(posixpath.join(workspace[0], path))
+    if cwd == _UNKNOWN_CWD:
+        return None
+    base = cwd or (workspace[0] if workspace else None)
+    if base:
+        return posixpath.normpath(posixpath.join(base, path))
     normalized = posixpath.normpath(path)
     if normalized == ".." or normalized.startswith("../"):
         return normalized
@@ -438,6 +448,25 @@ def _find_deletes(tokens: Sequence[str]) -> bool:
     )
 
 
+def _find_exec_operands(tokens: Sequence[str]) -> List[str]:
+    """Paths that `find -exec rm ...` deletes, other than the `{}` it matched."""
+    operands: List[str] = []
+    i = 0
+    while i < len(tokens):
+        if tokens[i] in {"-exec", "-execdir", "-ok", "-okdir"}:
+            end = i + 1
+            while end < len(tokens) and tokens[end] not in {";", "+"}:
+                end += 1
+            group = tokens[i + 1 : end]
+            if group and posixpath.basename(group[0]) in _DELETERS:
+                operands.extend(
+                    t for t in group[1:] if not t.startswith("-") and t != "{}"
+                )
+            i = end
+        i += 1
+    return operands
+
+
 def _delete_targets(
     tokens: Sequence[str], piped_from: Optional[Sequence[str]] = None
 ) -> List[str]:
@@ -450,7 +479,7 @@ def _delete_targets(
     if head in _DELETERS:
         return [t for t in tokens[1:] if not t.startswith("-")]
     if head == "find" and _find_deletes(tokens):
-        return _find_roots(tokens)
+        return _find_roots(tokens) + _find_exec_operands(tokens)
     if head == "xargs" and any(
         posixpath.basename(t) in _DELETERS for t in tokens[1:]
     ):
@@ -477,13 +506,23 @@ def _check_delete(
     tokens: Sequence[str],
     workspace: Sequence[str],
     piped_from: Optional[Sequence[str]] = None,
+    cwd: Optional[str] = None,
 ) -> Optional[str]:
     for target in _delete_targets(tokens, piped_from):
         if target in {"*", ".*", "/*", "~/*", "$HOME/*"} and not workspace:
             if target != "*":
                 return f"deletes `{target}`, which is not workspace-scoped"
-            continue
-        resolved = _normalize(target.rstrip("*") or target, workspace)
+            if cwd is None:
+                continue
+        if (
+            cwd == _UNKNOWN_CWD
+            and not target.startswith(("/", "~"))
+            and "$" not in target
+        ):
+            return (
+                f"deletes `{target}` after a `cd` to a path built at run time"
+            )
+        resolved = _normalize(target.rstrip("*") or target, workspace, cwd)
         if resolved is None:
             if "$" in target or "`" in target:
                 return f"deletes `{target}`, a path built at run time"
@@ -670,9 +709,95 @@ def _redirect_targets(tokens: Sequence[str]) -> List[str]:
     return out
 
 
+_MAX_SUBSTITUTIONS = 50
+
+
+def _matching_paren(text: str, start: int) -> int:
+    """Index of the `)` that closes a `$(` whose body starts at `start`."""
+    depth = 1
+    quote = ""
+    i = start
+    while i < len(text):
+        char = text[i]
+        if quote:
+            if char == quote:
+                quote = ""
+        elif char in "'\"":
+            quote = char
+        elif char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+            if depth == 0:
+                return i
+        i += 1
+    return len(text)
+
+
+def _substitutions(command: str) -> List[str]:
+    """Bodies of the `$(...)` and backtick substitutions in a command line.
+
+    A substitution runs even inside double quotes, so `echo "$(rm -rf /)"`
+    deletes. Single quotes keep it literal.
+    """
+    found: List[str] = []
+    quote = ""
+    i = 0
+    while i < len(command) and len(found) < _MAX_SUBSTITUTIONS:
+        char = command[i]
+        if quote == "'":
+            if char == "'":
+                quote = ""
+        elif char == "\\":
+            i += 1
+        elif char == "'":
+            quote = "'"
+        elif char == '"':
+            quote = "" if quote == '"' else '"'
+        elif command.startswith("$(", i) and not command.startswith("$((", i):
+            end = _matching_paren(command, i + 2)
+            found.append(command[i + 2 : end])
+            i = end
+        elif char == "`":
+            end = command.find("`", i + 1)
+            if end != -1:
+                found.append(command[i + 1 : end])
+                i = end
+        i += 1
+    return found
+
+
+def _next_cwd(
+    tokens: Sequence[str], workspace: Sequence[str], cwd: Optional[str]
+) -> str:
+    """The working directory after `cd` or `pushd` with these `tokens`."""
+    targets = [t for t in tokens[1:] if not t.startswith("-") or t == "-"]
+    if not targets:
+        return _home()
+    target = targets[0]
+    if target == "-":
+        return _UNKNOWN_CWD
+    resolved = _normalize(target, workspace, cwd)
+    if resolved is not None:
+        return resolved
+    if "$" in target or "`" in target or cwd == _UNKNOWN_CWD:
+        return _UNKNOWN_CWD
+    # No workspace to anchor to: keep the directory relative to the start.
+    return posixpath.normpath(posixpath.join(cwd or ".", target))
+
+
 def _inspect_command(
-    command: str, workspace: Sequence[str], index: int, depth: int = 0
-) -> List[FlaggedAction]:
+    command: str,
+    workspace: Sequence[str],
+    index: int,
+    depth: int = 0,
+    cwd: Optional[str] = None,
+) -> Tuple[List[FlaggedAction], Optional[str]]:
+    """Flag the risky actions in one command line.
+
+    Returns the flagged actions and the working directory the command left
+    behind, so a `cd` carries over to the next command of the turn.
+    """
     flagged: List[FlaggedAction] = []
     reason = _check_download_substitution(command)
     if reason is not None:
@@ -684,6 +809,12 @@ def _inspect_command(
                 index=index,
             )
         )
+    if depth < 3:
+        # `$(...)` and backticks run even inside double quotes.
+        for body in _substitutions(command):
+            flagged.extend(
+                _inspect_command(body, workspace, index, depth + 1, cwd)[0]
+            )
     pipeline_start: Optional[List[str]] = None
     pending_pipe = False
     for raw in _split_segments(command):
@@ -698,20 +829,26 @@ def _inspect_command(
         pending_pipe = False
         if not tokens:
             continue
+        head = posixpath.basename(tokens[0])
+        if head in {"cd", "pushd"}:
+            cwd = _next_cwd(tokens, workspace, cwd)
+            continue
+        if head == "popd":
+            cwd = _UNKNOWN_CWD
+            continue
         # Look inside `bash -c "..."`, `sh -c '...'` and clusters such as `-lc`.
         if depth < 3 and posixpath.basename(tokens[0]) in _SHELLS:
             for position, token in enumerate(tokens[1:-1], start=1):
                 if re.fullmatch(r"-[A-Za-z]*c[A-Za-z]*", token):
-                    flagged.extend(
-                        _inspect_command(
-                            tokens[position + 1], workspace, index, depth + 1
-                        )
+                    inner, _ = _inspect_command(
+                        tokens[position + 1], workspace, index, depth + 1, cwd
                     )
+                    flagged.extend(inner)
                     break
         checks: Iterable[Tuple[str, Optional[str]]] = (
             (
                 DELETE_OUTSIDE_WORKSPACE,
-                _check_delete(tokens, workspace, piped_from),
+                _check_delete(tokens, workspace, piped_from, cwd),
             ),
             (CREDENTIAL_READ, _check_credential_read(tokens)),
             (REMOTE_SCRIPT_EXEC, _check_remote_exec(tokens, piped_from)),
@@ -734,7 +871,7 @@ def _inspect_command(
                         index=index,
                     )
                 )
-    return flagged
+    return flagged, cwd
 
 
 def prefilter_actions(
@@ -763,9 +900,11 @@ def prefilter_actions(
         paths_inspected=len(edited_paths),
         workspace_known=bool(roots),
     )
+    cwd: Optional[str] = None
     for index, command in enumerate(commands):
         seen = set()
-        for action in _inspect_command(command, roots, index):
+        actions, cwd = _inspect_command(command, roots, index, cwd=cwd)
+        for action in actions:
             # A nested `bash -c '...'` can match the same category as its outer
             # form, and the judge sees the whole command either way.
             if action.category not in seen:
