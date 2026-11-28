@@ -233,6 +233,34 @@ class TestOtelFeedback(OtelTestCase):
         with self.assertRaises(RuntimeError):
             Feedback(self._mock_feedback_function_required_3).on_default()
 
+    def _mock_feedback_function_threshold_1(
+        self, text: str, threshold: float = 1.0
+    ) -> float:
+        return len(text) * threshold
+
+    def test_on_default_skips_arguments_bound_by_with_arguments(self) -> None:
+        feedback = (
+            Feedback(self._mock_feedback_function_threshold_1)
+            .with_arguments(threshold=0.125)
+            .on_default()
+        )
+        self.assertEqual(
+            feedback.selectors, {"text": Selector.select_record_output()}
+        )
+        self.assertEqual(feedback(text="test"), 0.5)
+        feedback = (
+            Feedback(self._mock_feedback_function_3)
+            .with_arguments(z="bound")
+            .on_default()
+        )
+        self.assertEqual(
+            feedback.selectors,
+            {
+                "x": Selector.select_record_input(),
+                "y": Selector.select_record_output(),
+            },
+        )
+
     class _UninitializedProvider:
         def method(self, text: str) -> float:
             return 0.1

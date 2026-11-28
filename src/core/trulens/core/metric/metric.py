@@ -441,10 +441,11 @@ class Metric(feedback_schema.FeedbackDefinition):
         app output and two argument metrics should be evaluated on main input
         and main output in that order.
 
-        `*args` and `**kwargs` are not counted. If more than two parameters
-        are left, only the ones without a default value are counted, so a
-        metric with optional settings such as `criteria` or `temperature`
-        is still evaluated on its required inputs.
+        `*args`, `**kwargs` and arguments bound with `with_arguments()` are
+        not counted. If more than two parameters are left, only the ones
+        without a default value are counted, so a metric with optional
+        settings such as `criteria` or `temperature` is still evaluated on
+        its required inputs.
 
         Returns a new Metric object with this specification.
         """
@@ -458,6 +459,7 @@ class Metric(feedback_schema.FeedbackDefinition):
             name
             for name, param in sig.parameters.items()
             if name not in self.selectors
+            and name not in self.implementation_kwargs
             and param.kind
             not in (
                 inspect.Parameter.VAR_POSITIONAL,
