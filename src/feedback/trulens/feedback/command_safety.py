@@ -392,6 +392,7 @@ def _home() -> str:
 
 #: The working directory after a `cd` whose target could not be resolved.
 _UNKNOWN_CWD = "?"
+_MAX_CWD_CHARS = 1024
 
 
 def _normalize(
@@ -778,12 +779,14 @@ def _next_cwd(
     if target == "-":
         return _UNKNOWN_CWD
     resolved = _normalize(target, workspace, cwd)
-    if resolved is not None:
-        return resolved
-    if "$" in target or "`" in target or cwd == _UNKNOWN_CWD:
-        return _UNKNOWN_CWD
-    # No workspace to anchor to: keep the directory relative to the start.
-    return posixpath.normpath(posixpath.join(cwd or ".", target))
+    if resolved is None:
+        if "$" in target or "`" in target or cwd == _UNKNOWN_CWD:
+            return _UNKNOWN_CWD
+        # No workspace to anchor to: keep the directory relative to the start.
+        resolved = posixpath.normpath(posixpath.join(cwd or ".", target))
+    # Normalizing a path costs time in its length, so an absurdly deep one is
+    # treated as unknown. That also bounds the work for a long chain of `cd`.
+    return resolved if len(resolved) <= _MAX_CWD_CHARS else _UNKNOWN_CWD
 
 
 def _inspect_command(

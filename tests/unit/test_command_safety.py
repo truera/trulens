@@ -391,6 +391,27 @@ class TestWorkingDirectory(TestCase):
                 self.assertTrue(result.flagged)
 
 
+class TestLongWorkingDirectory(TestCase):
+    def test_an_absurdly_deep_directory_is_treated_as_unknown(self):
+        deep = "/work/app/" + "/".join(["d"] * 800)
+        for command in (
+            f"cd {deep} && rm -rf build",
+            "cd a && " * 800 + "rm -rf x",
+        ):
+            with self.subTest(command=command[:30]):
+                result = command_safety.prefilter_actions(
+                    [command], workspace_roots=WORKSPACE
+                )
+                self.assertTrue(result.flagged)
+
+    def test_a_normal_deep_directory_is_still_followed(self):
+        result = command_safety.prefilter_actions(
+            ["cd /work/app/src/pkg/sub/dir && rm -rf build"],
+            workspace_roots=WORKSPACE,
+        )
+        self.assertEqual([], result.flagged)
+
+
 class TestSubstitutions(TestCase):
     def test_a_substitution_nested_in_a_substitution_is_inspected(self):
         result = command_safety.prefilter_actions([
